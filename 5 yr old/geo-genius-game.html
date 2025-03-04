@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Geo-Genius: Country Guessing Game</title>
+    
+    <!-- Leaflet Map CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    
+    <!-- Tailwind CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+    
+    <!-- GSAP for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    
+    <!-- Howler.js for sounds -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Fredoka One', cursive;
+        }
+        
+        .game-container {
+            max-width: 1000px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        #map {
+            height: 350px;
+            width: 100%;
+            border-radius: 12px;
+            border: 4px solid #FFF;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .option-btn {
+            background-color: #fefefe;
+            border: 3px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 10px 15px;
+            margin: 8px;
+            min-height: 70px;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2d3748;
+            cursor: pointer;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .option-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e0;
+        }
+        
+        .option-btn img {
+            height: 30px;
+            margin-bottom: 5px;
+        }
+        
+        .correct {
+            background-color: #c6f6d5;
+            border-color: #68d391;
+        }
+        
+        .incorrect {
+            background-color: #fed7d7;
+            border-color: #fc8181;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: confetti 5s ease-in-out forwards;
+        }
+        
+        @keyframes confetti {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .progress-container {
+            height: 16px;
+            width: 100%;
+            background-color: #e2e8f0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78, #38b2ac);
+            border-radius: 8px;
+            transition: width 0.3s ease;
+        }
+        
+        .flag-container {
+            width: 80px;
+            height: 50px;
+            margin: 0 auto;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 80%;
+            text-align: center;
+            position: relative;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+        
+        .fun-fact {
+            background-color: #ebf8ff;
+            border-left: 4px solid #4299e1;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 1rem;
+        }
+        
+        .trophy {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background-color: #4299e1;
+            color: white;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #3182ce;
+            transform: translateY(-2px);
+        }
+        
+        .country-info-img {
+            max-width: 120px;
+            max-height: 80px;
+            margin: 0 auto 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .level-select {
+            border: 2px solid #4299e1;
+            border-radius: 10px;
+            padding: 4px 8px;
+            font-family: 'Nunito', sans-serif;
+            font-weight: bold;
+            color: #2d3748;
+            margin-left: 10px;
+        }
+        
+        .congrats-text {
+            font-family: 'Fredoka One', cursive;
+            background: linear-gradient(45deg, #f6d365 0%, #fda085 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .animate-bounce {
+            animation: bounce 1s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+    </style>
+</head>
+<body class="p-4">
+    <!-- Game header -->
+    <div class="game-container mx-auto p-5">
+        <div class="flex flex-col md:flex-row items-center justify-between mb-6">
+            <h1 class="text-3xl md:text-4xl text-indigo-700 mb-3 md:mb-0">Geo-Genius 🌍</h1>
+            <div class="flex items-center">
+                <div>
+                    <span class="font-bold text-gray-700">Level:</span>
+                    <select id="level-select" class="level-select">
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                <div class="ml-6">
+                    <span class="font-bold text-gray-700">Score:</span>
+                    <span id="score" class="text-xl text-indigo-600 font-bold ml-2">0</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Progress bar -->
+        <div class="mb-4">
+            <div class="flex justify-between mb-1">
+                <span class="text-sm font-bold text-gray-600">Progress</span>
+                <span id="progress-text" class="text-sm font-bold text-gray-600">1/10</span>
+            </div>
+            <div class="progress-container">
+                <div id="progress-bar" class="progress-bar" style="width: 10%;"></div>
+            </div>
+        </div>
+        
+        <!-- Game question -->
+        <div class="mb-4 text-center">
+            <h2 class="text-xl text-gray-800 mb-2">Which country is highlighted on the map?</h2>
+        </div>
+        
+        <!-- Map container -->
+        <div id="map" class="mb-6"></div>
+        
+        <!-- Answer options -->
+        <div id="options-container" class="grid grid-cols-2 gap-3 mb-4"></div>
+        
+        <!-- Next button -->
+        <div class="text-center">
+            <button id="next-btn" class="btn hidden">Next Country</button>
+        </div>
+    </div>
+    
+    <!-- Correct answer modal -->
+    <div id="correct-modal" class="modal">
+        <div class="modal-content">
+            <div class="country-info">
+                <div class="congrats-text animate-bounce">Correct! 🎉</div>
+                <div class="flag-container mb-3">
+                    <img id="country-flag" src="" alt="Country flag" class="w-full h-full object-cover">
+                </div>
+                <h3 id="country-name" class="text-2xl font-bold text-gray-800 mb-2"></h3>
+                <div class="fun-fact">
+                    <p id="country-fact"></p>
+                </div>
+            </div>
+            <button id="continue-btn" class="btn mt-4">Continue</button>
+        </div>
+    </div>
+    
+    <!-- End game modal -->
+    <div id="end-game-modal" class="modal">
+        <div class="modal-content">
+            <div class="trophy">🏆</div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Congratulations!</h2>
+            <p class="text-gray-600 mb-4">You completed the game with a score of <span id="final-score">0</span> out of 10!</p>
+            <div id="message" class="text-lg font-bold text-indigo-600 mb-4"></div>
+            <button id="play-again-btn" class="btn">Play Again</button>
+        </div>
+    </div>
+    
+    <!-- Leaflet Map JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <script>
+        // Game state
+        const gameState = {
+            score: 0,
+            currentQuestion: 1,
+            totalQuestions: 10,
+            level: 'easy',
+            countries: [],
+            currentCountry: null,
+            options: [],
+            answered: false,
+            map: null,
+            countryLayer: null,
+        };
+        
+        // Country data with GeoJSON outlines and fun facts
+        const countryData = {
+            easy: [
+                {
+                    name: "United States",
+                    code: "US",
+                    center: [39.8283, -98.5795],
+                    fact: "The United States has 50 states and is home to the world's tallest tree, a redwood called Hyperion!"
+                },
+                {
+                    name: "Canada",
+                    code: "CA",
+                    center: [56.1304, -106.3468],
+                    fact: "Canada has more lakes than any other country in the world - over 2 million lakes!"
+                },
+                {
+                    name: "Australia",
+                    code: "AU",
+                    center: [-25.2744, 133.7751],
+                    fact: "Australia is the only country that is also a continent, and it's home to unique animals like kangaroos and koalas!"
+                },
+                {
+                    name: "Brazil",
+                    code: "BR",
+                    center: [-14.2350, -51.9253],
+                    fact: "Brazil is home to the Amazon rainforest, which produces about 20% of the Earth's oxygen!"
+                },
+                {
+                    name: "Russia",
+                    code: "RU",
+                    center: [61.5240, 105.3188],
+                    fact: "Russia is the largest country in the world - it covers 11 time zones from east to west!"
+                },
+                {
+                    name: "China",
+                    code: "CN",
+                    center: [35.8617, 104.1954],
+                    fact: "The Great Wall of China is so long that it would take about 18 months to walk its entire length!"
+                },
+                {
+                    name: "India",
+                    code: "IN",
+                    center: [20.5937, 78.9629],
+                    fact: "India has over 1.4 billion people and is famous for the beautiful Taj Mahal!"
+                },
+                {
+                    name: "Egypt",
+                    code: "EG",
+                    center: [26.8206, 30.8025],
+                    fact: "Egypt is home to the Great Pyramids, which were built over 4,500 years ago!"
+                },
+                {
+                    name: "South Africa",
+                    code: "ZA",
+                    center: [-30.5595, 22.9375],
+                    fact: "South Africa has 11 official languages and is home to lions, elephants, and rhinos!"
+                },
+                {
+                    name: "Mexico",
+                    code: "MX",
+                    center: [23.6345, -102.5528],
+                    fact: "Mexico invented chocolate over 3,000 years ago. Yum!"
+                },
+                {
+                    name: "United Kingdom",
+                    code: "GB",
+                    center: [55.3781, -3.4360],
+                    fact: "The United Kingdom includes England, Scotland, Wales, and Northern Ireland and is home to the royal family!"
+                },
+                {
+                    name: "France",
+                    code: "FR",
+                    center: [46.2276, 2.2137],
+                    fact: "France is famous for the Eiffel Tower in Paris, which was built in 1889!"
+                },
+                {
+                    name: "Italy",
+                    code: "IT",
+                    center: [41.8719, 12.5674],
+                    fact: "Italy is shaped like a boot and is famous for pizza and pasta!"
+                },
+                {
+                    name: "Japan",
+                    code: "JP",
+                    center: [36.2048, 138.2529],
+                    fact: "Japan is made up of 6,852 islands and is home to Mount Fuji, a beautiful volcano!"
+                },
+                {
+                    name: "Germany",
+                    code: "DE",
+                    center: [51.1657, 10.4515],
+                    fact: "Germany invented the printing press and gummy bears!"
+                }
+            ],
+            medium: [
+                {
+                    name: "Spain",
+                    code: "ES",
+                    center: [40.4637, -3.7492],
+                    fact: "Spain is famous for flamenco dancing and running with the bulls!"
+                },
+                {
+                    name: "Argentina",
+                    code: "AR",
+                    center: [-38.4161, -63.6167],
+                    fact: "Argentina is home to the highest mountain in the Americas, called Aconcagua!"
+                },
+                {
+                    name: "Thailand",
+                    code: "TH",
+                    center: [15.8700, 100.9925],
+                    fact: "Thailand is the only Southeast Asian country that was never colonized by Europeans!"
+                },
+                {
+                    name: "New Zealand",
+                    code: "NZ",
+                    center: [-40.9006, 174.8860],
+                    fact: "New Zealand has more sheep than people - about 5 sheep for every person!"
+                },
+                {
+                    name: "Turkey",
+                    code: "TR",
+                    center: [38.9637, 35.2433],
+                    fact: "Turkey is on two continents - part in Europe and part in Asia!"
+                },
+                {
+                    name: "Morocco",
+                    code: "MA",
+                    center: [31.7917, -7.0926],
+                    fact: "Morocco has the oldest university in the world, founded in 859 CE!"
+                },
+                {
+                    name: "Greece",
+                    code: "GR",
+                    center: [39.0742, 21.8243],
+                    fact: "Greece is known as the birthplace of democracy and the Olympic Games!"
+                },
+                {
+                    name: "Vietnam",
+                    code: "VN",
+                    center: [14.0583, 108.2772],
+                    fact: "Vietnam is shaped like the letter 'S' and has over 3,000 kilometers of coastline!"
+                },
+                {
+                    name: "Peru",
+                    code: "PE",
+                    center: [-9.1900, -75.0152],
+                    fact: "Peru is home to Machu Picchu, an ancient city built high in the Andes Mountains!"
+                },
+                {
+                    name: "Sweden",
+                    code: "SE",
+                    center: [60.1282, 18.6435],
+                    fact: "Sweden has the most islands of any country in the world - over 267,000!"
+                },
+                {
+                    name: "Kenya",
+                    code: "KE",
+                    center: [0.0236, 37.9062],
+                    fact: "Kenya is home to the world's fastest runners and the 'Big Five' safari animals!"
+                },
+                {
+                    name: "Ireland",
+                    code: "IE",
+                    center: [53.1424, -7.6921],
+                    fact: "Ireland is known as the Emerald Isle because of its lush green landscape!"
+                },
+                {
+                    name: "Portugal",
+                    code: "PT",
+                    center: [39.3999, -8.2245],
+                    fact: "Portugal is one of the oldest countries in Europe and has the oldest bookstore in the world!"
+                },
+                {
+                    name: "Colombia",
+                    code: "CO",
+                    center: [4.5709, -74.2973],
+                    fact: "Colombia is the only country in South America that has coastlines on both the Pacific Ocean and the Caribbean Sea!"
+                },
+                {
+                    name: "Chile",
+                    code: "CL",
+                    center: [-35.6751, -71.5430],
+                    fact: "Chile is the longest country in the world from north to south - it's over 4,300 kilometers long!"
+                }
+            ],
+            hard: [
+                {
+                    name: "Norway",
+                    code: "NO",
+                    center: [60.4720, 8.4689],
+                    fact: "Norway has the deepest lake in Europe and beautiful fjords formed by glaciers!"
+                },
+                {
+                    name: "Poland",
+                    code: "PL",
+                    center: [51.9194, 19.1451],
+                    fact: "Poland is home to a crooked forest with trees that bend at 90-degree angles!"
+                },
+                {
+                    name: "South Korea",
+                    code: "KR",
+                    center: [35.9078, 127.7669],
+                    fact: "South Korea is one of the most technologically advanced countries and invented the world's first MP3 player!"
+                },
+                {
+                    name: "Malaysia",
+                    code: "MY",
+                    center: [4.2105, 101.9758],
+                    fact: "Malaysia is home to the Rafflesia, the largest flower in the world - it can grow up to 3 feet wide!"
+                },
+                {
+                    name: "Switzerland",
+                    code: "CH",
+                    center: [46.8182, 8.2275],
+                    fact: "Switzerland has 7,000 lakes and is famous for its delicious chocolate and cheese!"
+                },
+                {
+                    name: "Israel",
+                    code: "IL",
+                    center: [31.0461, 34.8516],
+                    fact: "Israel has the lowest place on Earth - the Dead Sea, which is so salty you can float easily!"
+                },
+                {
+                    name: "Austria",
+                    code: "AT",
+                    center: [47.5162, 14.5501],
+                    fact: "Austria is the birthplace of Mozart and the famous 'Do-Re-Mi' song from The Sound of Music!"
+                },
+                {
+                    name: "Finland",
+                    code: "FI",
+                    center: [61.9241, 25.7482],
+                    fact: "Finland is called the Land of a Thousand Lakes, but actually has over 188,000 lakes!"
+                },
+                {
+                    name: "Ecuador",
+                    code: "EC",
+                    center: [-1.8312, -78.1834],
+                    fact: "Ecuador means 'equator' in Spanish - the equator runs right through the country!"
+                },
+                {
+                    name: "Philippines",
+                    code: "PH",
+                    center: [12.8797, 121.7740],
+                    fact: "The Philippines is made up of over 7,641 islands!"
+                },
+                {
+                    name: "Saudi Arabia",
+                    code: "SA",
+                    center: [23.8859, 45.0792],
+                    fact: "Saudi Arabia is mostly desert and has no permanent rivers or lakes!"
+                },
+                {
+                    name: "Belgium",
+                    code: "BE",
+                    center: [50.5039, 4.4699],
+                    fact: "Belgium invented French fries (not France!) and makes over 2,000 kinds of chocolate!"
+                },
+                {
+                    name: "Denmark",
+                    code: "DK",
+                    center: [56.2639, 9.5018],
+                    fact: "Denmark is the home of LEGO and has the oldest monarchy in Europe!"
+                },
+                {
+                    name: "Hungary",
+                    code: "HU",
+                    center: [47.1625, 19.5033],
+                    fact: "Hungary invented the Rubik's Cube puzzle and the ballpoint pen!"
+                },
+                {
+                    name: "Tanzania",
+                    code: "TZ",
+                    center: [-6.3690, 34.8888],
+                    fact: "Tanzania is home to Mount Kilimanjaro, the highest mountain in Africa!"
+                }
+            ]
+        };
+        
+        // Sound effects
+        const sounds = {
+            correct: new Howl({
+                src: ['https://cdn.freesound.org/previews/456/456966_9482916-lq.mp3'],
+                volume: 0.7
+            }),
+            incorrect: new Howl({
+                src: ['https://cdn.freesound.org/previews/362/362205_6629901-lq.mp3'],
+                volume: 0.7
+            }),
+            complete: new Howl({
+                src: ['https://cdn.freesound.org/previews/270/270402_5123851-lq.mp3'],
+                volume: 0.7
+            }),
+            click: new Howl({
+                src: ['https://cdn.freesound.org/previews/522/522640_10166351-lq.mp3'],
+                volume: 0.5
+            })
+        };
+        
+        // Initialize the game
+        function initGame() {
+            // Initialize the map
+            gameState.map = L.map('map', {
+                zoomControl: false,
+                dragging: false,
+                touchZoom: false,
+                scrollWheelZoom: false,
+                doubleClickZoom: false,
+                boxZoom: false,
+                tap: false,
+                keyboard: false,
+                attributionControl: false
+            }).setView([0, 0], 2);
+            
+            // Add tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(gameState.map);
+            
+            // Set up level select
+            document.getElementById('level-select').addEventListener('change', function() {
+                gameState.level = this.value;
+                resetGame();
+                sounds.click.play();
+            });
+            
+            // Set up event listeners
+            document.getElementById('next-btn').addEventListener('click', nextQuestion);
+            document.getElementById('continue-btn').addEventListener('click', function() {
+                document.getElementById('correct-modal').style.display = 'none';
+                sounds.click.play();
+                nextQuestion();
+            });
+            document.getElementById('play-again-btn').addEventListener('click', function() {
+                document.getElementById('end-game-modal').style.display = 'none';
+                sounds.click.play();
+                resetGame();
+            });
+            
+            // Start the game
+            resetGame();
+        }
+        
+        // Reset the game state
+        function resetGame() {
+            gameState.score = 0;
+            gameState.currentQuestion = 1;
+            gameState.answered = false;
+            
+            updateScore();
+            updateProgress();
+            
+            // Shuffle and select countries based on level
+            gameState.countries = shuffleArray([...countryData[gameState.level]]).slice(0, gameState.totalQuestions);
+            
+            // Start with the first question
+            loadQuestion();
+        }
+        
+        // Load question
+        function loadQuestion() {
+            if (gameState.currentQuestion > gameState.totalQuestions) {
+                endGame();
+                return;
+            }
+            
+            gameState.answered = false;
+            document.getElementById('next-btn').classList.add('hidden');
+            
+            // Get current country
+            gameState.currentCountry = gameState.countries[gameState.currentQuestion - 1];
+            
+            // Create options
+            createOptions();
+            
+            // Show country on map
+            showCountryOnMap(gameState.currentCountry);
+            
+            updateProgress();
+        }
+        
+        // Create answer options
+        function createOptions() {
+            // Get 3 other random countries from the level
+            let allCountries = countryData[gameState.level].filter(
+                country => country.name !== gameState.currentCountry.name
+            );
+            allCountries = shuffleArray(allCountries);
+            
+            // Number of options based on level
+            let numOptions = gameState.level === 'easy' ? 2 : (gameState.level === 'medium' ? 3 : 4);
+            
+            // Create the options array with the correct answer and random others
+            gameState.options = [gameState.currentCountry];
+            for (let i = 0; i < numOptions - 1; i++) {
+                gameState.options.push(allCountries[i]);
+            }
+            
+            // Shuffle the options
+            gameState.options = shuffleArray(gameState.options);
+            
+            // Create the option buttons
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            gameState.options.forEach(option => {
+                const btn = document.createElement('div');
+                btn.className = 'option-btn';
+                
+                // Create a flag icon
+                const img = document.createElement('img');
+                img.src = `https://flagcdn.com/w80/${option.code.toLowerCase()}.png`;
+                img.alt = `${option.name} flag`;
+                
+                const name = document.createElement('span');
+                name.textContent = option.name;
+                
+                btn.appendChild(img);
+                btn.appendChild(name);
+                
+                btn.addEventListener('click', function() {
+                    if (!gameState.answered) {
+                        gameState.answered = true;
+                        checkAnswer(option);
+                    }
+                });
+                
+                container.appendChild(btn);
+            });
+        }
+        
+        // Show country on map
+        function showCountryOnMap(country) {
+            // Clear existing layers
+            if (gameState.countryLayer) {
+                gameState.map.removeLayer(gameState.countryLayer);
+            }
+            
+            // Center map on country
+            gameState.map.setView(country.center, 4);
+            
+            // Add a circle marker for the country
+            gameState.countryLayer = L.circle(country.center, {
+                color: '#4299e1',
+                fillColor: '#63b3ed',
+                fillOpacity: 0.5,
+                radius: 500000
+            }).addTo(gameState.map);
+        }
+        
+        // Check answer
+        function checkAnswer(selectedOption) {
+            const options = document.querySelectorAll('.option-btn');
+            let correctButton;
+            
+            options.forEach((btn, index) => {
+                if (gameState.options[index].name === gameState.currentCountry.name) {
+                    btn.classList.add('correct');
+                    correctButton = btn;
+                } else if (gameState.options[index].name === selectedOption.name && 
+                          selectedOption.name !== gameState.currentCountry.name) {
+                    btn.classList.add('incorrect');
+                }
+            });
+            
+            if (selectedOption.name === gameState.currentCountry.name) {
+                // Correct answer
+                gameState.score++;
+                updateScore();
+                sounds.correct.play();
+                showConfetti(correctButton);
+                
+                // Show correct modal
+                const modal = document.getElementById('correct-modal');
+                document.getElementById('country-name').textContent = gameState.currentCountry.name;
+                document.getElementById('country-flag').src = `https://flagcdn.com/${gameState.currentCountry.code.toLowerCase()}.png`;
+                document.getElementById('country-fact').textContent = gameState.currentCountry.fact;
+                modal.style.display = 'flex';
+                
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 10);
+            } else {
+                // Incorrect answer
+                sounds.incorrect.play();
+                
+                // Show correct answer after a delay
+                setTimeout(() => {
+                    document.getElementById('next-btn').classList.remove('hidden');
+                }, 1200);
+            }
+        }
+        
+        // Next question
+        function nextQuestion() {
+            gameState.currentQuestion++;
+            const options = document.querySelectorAll('.option-btn');
+            options.forEach(btn => {
+                btn.classList.remove('correct', 'incorrect');
+            });
+            
+            loadQuestion();
+        }
+        
+        // End game
+        function endGame() {
+            const modal = document.getElementById('end-game-modal');
+            document.getElementById('final-score').textContent = gameState.score;
+            
+            // Set message based on score
+            let message;
+            const percentage = (gameState.score / gameState.totalQuestions) * 100;
+            
+            if (percentage === 100) {
+                message = "Perfect score! You're a true Geo-Genius! 🌟";
+            } else if (percentage >= 80) {
+                message = "Great job! You're a geography expert! 🌍";
+            } else if (percentage >= 60) {
+                message = "Good work! You know your countries well! 🗺️";
+            } else if (percentage >= 40) {
+                message = "Nice try! Keep exploring the world! 🧭";
+            } else {
+                message = "Keep practicing! You'll be a Geo-Genius soon! 🌱";
+            }
+            
+            document.getElementById('message').textContent = message;
+            
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.classList.add('active');
+            }, 10);
+            
+            sounds.complete.play();
+        }
+        
+        // Update score display
+        function updateScore() {
+            document.getElementById('score').textContent = gameState.score;
+        }
+        
+        // Update progress display
+        function updateProgress() {
+            document.getElementById('progress-text').textContent = `${gameState.currentQuestion}/${gameState.totalQuestions}`;
+            const percentage = (gameState.currentQuestion / gameState.totalQuestions) * 100;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+        }
+        
+        // Show confetti animation
+        function showConfetti(element) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            for (let i = 0; i < 50; i++) {
+                setTimeout(() => {
+                    createConfettiParticle(centerX, centerY);
+                }, i * 50);
+            }
+        }
+        
+        // Create confetti particle
+        function createConfettiParticle(x, y) {
+            const colors = ['#f6e58d', '#ffbe76', '#ff7979', '#badc58', '#7ed6df', '#e056fd'];
+            
+            const particle = document.createElement('div');
+            particle.className = 'confetti';
+            particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            particle.style.left = `${x}px`;
+            particle.style.top = `${y}px`;
+            
+            // Random size
+            const size = 5 + Math.random() * 10;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            // Random direction
+            const angle = Math.random() * 360;
+            const distance = 60 + Math.random() * 100;
+            const translateX = Math.cos(angle * Math.PI / 180) * distance;
+            const translateY = Math.sin(angle * Math.PI / 180) * distance;
+            
+            // Random animation duration
+            const duration = 1 + Math.random() * 2;
+            
+            particle.style.animation = `confetti ${duration}s ease-out forwards`;
+            particle.style.transform = `translate(${translateX}px, ${translateY}px) rotate(${Math.random() * 360}deg)`;
+            
+            document.body.appendChild(particle);
+            
+            // Remove particle after animation
+            setTimeout(() => {
+                document.body.removeChild(particle);
+            }, duration * 1000);
+        }
+        
+        // Helper function to shuffle array
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+        
+        // Initialize the game when the page loads
+        window.onload = initGame;
+    </script>
+</body>
+</html>

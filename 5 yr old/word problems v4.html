@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Word Problem Teacher</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-2xl mx-auto">
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <div class="flex justify-between items-center mb-6">
+                <h1 class="text-2xl font-bold text-purple-800" id="levelTitle">Level 1</h1>
+                <div class="flex items-center space-x-2">
+                    <span class="text-yellow-500">🏆</span>
+                    <span id="score" class="text-lg font-semibold">0</span>
+                </div>
+            </div>
+            
+            <div id="problemContainer" class="mb-6">
+                <p id="problemText" class="text-lg mb-4"></p>
+                
+                <div class="flex space-x-4 mb-4">
+                    <input type="text" id="answerInput" class="flex-1 p-2 border-2 border-purple-200 rounded-lg focus:border-purple-500 focus:outline-none" placeholder="Your answer...">
+                    <button onclick="checkAnswer()" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                        Check ➜
+                    </button>
+                </div>
+                
+                <button onclick="toggleHint()" class="text-purple-600 hover:text-purple-800 mb-2">
+                    🧠 Show Hint
+                </button>
+                <div id="hintContainer" class="hidden bg-purple-50 p-4 rounded-lg mb-4"></div>
+                
+                <button onclick="toggleSolution()" class="text-purple-600 hover:text-purple-800">
+                    ➜ Show Solution Steps
+                </button>
+                <div id="solutionContainer" class="hidden bg-purple-50 p-4 rounded-lg"></div>
+            </div>
+        </div>
+        
+        <div class="text-center text-sm text-gray-600">
+            <span id="levelIndicator">Level 1/6</span>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            level: 1,
+            score: 0,
+            currentProblem: null,
+            names: ['Sarah', 'Tom', 'Emma', 'Alex', 'Maya', 'Luis', 'Sophia', 'James', 'Ava', 'Noah'],
+            items: ['marbles', 'cookies', 'books', 'stickers', 'pencils', 'candies', 'toys', 'cards'],
+            activities: ['bought', 'found', 'received', 'got as a gift', 'collected'],
+            lostActivities: ['lost', 'gave away', 'shared with friends', 'dropped'],
+            units: ['meters', 'kilometers', 'liters', 'milliliters', 'grams', 'kilograms'],
+            speeds: ['kilometers per hour', 'meters per second', 'miles per hour'],
+            shapes: ['rectangle', 'triangle', 'circle', 'pentagon', 'hexagon'],
+            liquids: ['water', 'juice', 'milk', 'soda'],
+            stores: ['grocery store', 'toy store', 'book store', 'electronics store'],
+            foods: ['pizza', 'pie', 'cake', 'sandwich', 'cookie'],
+            sports: ['basketball', 'soccer', 'tennis', 'volleyball']
+        };
+
+        function generateNumber(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateSimpleAddition() {
+            const scenarios = [
+                () => {
+                    // Complex sequence problem
+                    const start = generateNumber(100, 500);
+                    const increment = generateNumber(15, 45);
+                    const terms = generateNumber(4, 6);
+                    const sequence = Array.from({length: terms}, (_, i) => start + (increment * i));
+                    const total = sequence.reduce((a, b) => a + b, 0);
+
+                    return {
+                        text: `A sequence starts at ${start} and increases by ${increment} each time. What is the sum of the first ${terms} numbers in this sequence?`,
+                        solution: total.toString(),
+                        hint: `1. Write out the sequence\n2. Each term increases by ${increment}\n3. Add all terms`,
+                        steps: [
+                            `Sequence: ${sequence.join(', ')}`,
+                            `Sum: ${sequence.join(' + ')} = ${total}`
+                        ]
+                    };
+                },
+                () => {
+                    // Prime factorization and addition
+                    const num1 = generateNumber(50, 150);
+                    const num2 = generateNumber(50, 150);
+                    const primeFactors = (n) => {
+                        let factors = [];
+                        let divisor = 2;
+                        while (n > 1) {
+                            if (n % divisor === 0) {
+                                factors.push(divisor);
+                                n = n / divisor;
+                            } else {
+                                divisor++;
+                            }
+                        }
+                        return factors;
+                    };
+
+                    return {
+                        text: `First, find the prime factorization of ${num1} and ${num2}. Then add the sum of ${num1}'s prime factors to the sum of ${num2}'s prime factors.`,
+                        solution: (primeFactors(num1).reduce((a, b) => a + b, 0) + primeFactors(num2).reduce((a, b) => a + b, 0)).toString(),
+                        hint: `1. Break each number into prime factors\n2. Add all prime factors for each number\n3. Add these sums together`,
+                        steps: [
+                            `${num1} prime factors: ${primeFactors(num1).join(' × ')}`,
+                            `${num2} prime factors: ${primeFactors(num2).join(' × ')}`,
+                            `Sum of ${num1}'s factors: ${primeFactors(num1).join(' + ')} = ${primeFactors(num1).reduce((a, b) => a + b, 0)}`,
+                            `Sum of ${num2}'s factors: ${primeFactors(num2).join(' + ')} = ${primeFactors(num2).reduce((a, b) => a + b, 0)}`,
+                            `Total: ${primeFactors(num1).reduce((a, b) => a + b, 0)} + ${primeFactors(num2).reduce((a, b) => a + b, 0)} = ${primeFactors(num1).reduce((a, b) => a + b, 0) + primeFactors(num2).reduce((a, b) => a + b, 0)}`
+                        ]
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        function generateMultiStep() {
+            const scenarios = [
+                () => {
+                    // Complex pattern with geometric and arithmetic sequences
+                    const start = generateNumber(2, 5);
+                    const multiply = generateNumber(2, 3);
+                    const add = generateNumber(3, 7);
+                    const terms = 5;
+                    const sequence = Array.from({length: terms}, (_, i) => (start * Math.pow(multiply, i)) + (add * i));
+                    const nextTerm = (start * Math.pow(multiply, terms)) + (add * terms);
+
+                    return {
+                        text: `In a special sequence, each term is found by multiplying the previous term by ${multiply} and then adding ${add}. If the sequence starts with ${start}, what is the ${terms + 1}th term?`,
+                        solution: nextTerm.toString(),
+                        hint: `1. Start with ${start}\n2. For each term: multiply by ${multiply} then add ${add}\n3. Continue ${terms} times`,
+                        steps: sequence.map((num, i) => `Term ${i + 1}: ${num}`).concat(`Term ${terms + 1}: ${nextTerm}`)
+                    };
+                },
+                () => {
+                    // Advanced combinatorial problem
+                    const items = generateNumber(6, 10);
+                    const groups = generateNumber(2, 4);
+                    const perGroup = Math.floor(items / groups);
+                    const combinations = factorial(items) / (factorial(perGroup) * factorial(items - perGroup));
+
+                    return {
+                        text: `You have ${items} different books and want to display ${perGroup} of them on each of ${groups} shelves. How many different ways can you choose the books for the first shelf?`,
+                        solution: combinations.toString(),
+                        hint: `1. This is a combination problem\n2. Order doesn't matter\n3. Use C(${items},${perGroup})`,
+                        steps: [
+                            `Formula: C(n,r) = n! / (r! × (n-r)!)`,
+                            `C(${items},${perGroup}) = ${items}! / (${perGroup}! × (${items}-${perGroup})!)`,
+                            `= ${factorial(items)} / (${factorial(perGroup)} × ${factorial(items - perGroup)})`,
+                            `= ${combinations}`
+                        ]
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        function generateFractionProblem() {
+            const scenarios = [
+                () => {
+                    // Complex fraction operation with algebraic thinking
+                    const denominator1 = generateNumber(2, 6);
+                    const denominator2 = generateNumber(2, 6);
+                    const numerator1 = generateNumber(1, denominator1 - 1);
+                    const numerator2 = generateNumber(1, denominator2 - 1);
+                    const multiplier = generateNumber(2, 5);
+                    
+                    const fraction1 = numerator1/denominator1;
+                    const fraction2 = numerator2/denominator2;
+                    const result = (fraction1 * multiplier) + fraction2;
+
+                    return {
+                        text: `If you multiply ${numerator1}/${denominator1} by ${multiplier} and add ${numerator2}/${denominator2}, what decimal do you get? Round to 4 decimal places.`,
+                        solution: result.toFixed(4),
+                        hint: `1. First multiply ${numerator1}/${denominator1} by ${multiplier}\n2. Convert fractions to decimals\n3. Add results`,
+                        steps: [
+                            `${numerator1}/${denominator1} × ${multiplier} = ${(fraction1 * multiplier).toFixed(4)}`,
+                            `${numerator2}/${denominator2} = ${fraction2.toFixed(4)}`,
+                            `${(fraction1 * multiplier).toFixed(4)} + ${fraction2.toFixed(4)} = ${result.toFixed(4)}`
+                        ]
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        function generateAlgebraicThinking() {
+            const scenarios = [
+                () => {
+                    // System of equations thinking
+                    const x = generateNumber(2, 10);
+                    const y = generateNumber(2, 10);
+                    const sum = x + y;
+                    const product = x * y;
+
+                    return {
+                        text: `Two numbers add up to ${sum} and multiply to give ${product}. What are these numbers? Enter the smaller number.`,
+                        solution: Math.min(x, y).toString(),
+                        hint: `1. Let's call the numbers x and y\n2. x + y = ${sum}\n3. x × y = ${product}\n4. Try some pairs of numbers`,
+                        steps: [
+                            `We know: x + y = ${sum}`,
+                            `We know: x × y = ${product}`,
+                            `The numbers are ${x} and ${y}`,
+                            `Check: ${x} + ${y} = ${sum}`,
+                            `Check: ${x} × ${y} = ${product}`
+                        ]
+                    };
+                },
+                () => {
+                    // Pattern recognition with squares and cubes
+                    const base = generateNumber(2, 5);
+                    const terms = 4;
+                    const sequence = Array.from({length: terms}, (_, i) => Math.pow(base, i + 1));
+                    const nextTerm = Math.pow(base, terms + 1);
+
+                    return {
+                        text: `In a sequence, each term is a power of ${base}. If the sequence starts with ${sequence[0]} and the next terms are ${sequence.slice(1).join(', ')}, what's the next term?`,
+                        solution: nextTerm.toString(),
+                        hint: `1. Each term is ${base} raised to a power\n2. Find the pattern in the exponents\n3. Continue the pattern`,
+                        steps: sequence.map((num, i) => `Term ${i + 1}: ${base}^${i + 1} = ${num}`).concat(`Next term: ${base}^${terms + 1} = ${nextTerm}`)
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        // Helper function for factorial
+        function factorial(n) {
+            if (n === 0 || n === 1) return 1;
+            return n * factorial(n - 1);
+        }
+
+        // Update the generateProblem function to use new scenarios
+        function generateProblem() {
+            switch(state.level) {
+                case 1:
+                    return generateSimpleAddition();
+                case 2:
+                    return generateMultiStep();
+                case 3:
+                    return generateFractionProblem();
+                case 4:
+                    return generateAlgebraicThinking();
+                default:
+                    return generateSimpleAddition();
+            }
+        }
+        function generateSimpleSubtraction() {
+            const scenarios = [
+                () => {
+                    const name = _.sample(state.names);
+                    const item = _.sample(state.items);
+                    const lostActivity = _.sample(state.lostActivities);
+                    const initial = generateNumber(6, 10);
+                    const subtract = generateNumber(2, 5);
+                    const total = initial - subtract;
+
+                    return {
+                        text: `${name} has ${initial} ${item}. They ${lostActivity} ${subtract} of them. How many ${item} does ${name} have now?`,
+                        solution: total.toString(),
+                        hint: `Think about:\n1. Start with ${initial} ${item}\n2. Take away ${subtract}\n3. Subtract: ${initial} - ${subtract}`,
+                        steps: [
+                            `Starting amount: ${initial} ${item}`,
+                            `Amount ${lostActivity}: ${subtract} ${item}`,
+                            `Remaining: ${initial} - ${subtract} = ${total} ${item}`
+                        ]
+                    };
+                },
+                () => {
+                    const initial = generateNumber(50, 100);
+                    const spent = generateNumber(20, 40);
+                    const remaining = initial - spent;
+
+                    return {
+                        text: `You have $${initial} in your piggy bank. If you spend $${spent} on toys, how much money will you have left?`,
+                        solution: remaining.toString(),
+                        hint: `Subtract what you spent from what you had:\n$${initial} - $${spent}`,
+                        steps: [
+                            `Starting amount: $${initial}`,
+                            `Amount spent: $${spent}`,
+                            `Money left: $${initial} - $${spent} = $${remaining}`
+                        ]
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        function generateMultiStep() {
+            const scenarios = [
+                () => {
+                    const name = _.sample(state.names);
+                    const item = _.sample(state.items);
+                    const activity1 = _.sample(state.activities);
+                    const activity2 = _.sample(state.lostActivities);
+                    const initial = generateNumber(5, 8);
+                    const add = generateNumber(3, 5);
+                    const subtract = generateNumber(2, 4);
+                    const total = initial + add - subtract;
+
+                    return {
+                        text: `${name} has ${initial} ${item}. They ${activity1} ${add} more, but then ${activity2} ${subtract}. How many ${item} do they have now?`,
+                        solution: total.toString(),
+                        hint: `Let's solve this in steps:\n1. Start with ${initial}\n2. Add ${add}\n3. Subtract ${subtract}`,
+                        steps: [
+                            `Initial amount: ${initial} ${item}`,
+                            `After getting more: ${initial} + ${add} = ${initial + add} ${item}`,
+                            `Final amount: ${initial + add} - ${subtract} = ${total} ${item}`
+                        ]
+                    };
+                },
+                () => {
+                    const sport = _.sample(state.sports);
+                    const team1 = generateNumber(20, 30);
+                    const team2 = generateNumber(15, 25);
+                    const left = generateNumber(5, 10);
+                    const total = team1 + team2 - left;
+
+                    return {
+                        text: `There are ${team1} players on the boys' ${sport} team and ${team2} players on the girls' team. If ${left} players quit, how many players are left in total?`,
+                        solution: total.toString(),
+                        hint: `1. Add both teams together\n2. Subtract players who quit`,
+                        steps: [
+                            `Boys' team: ${team1} players`,
+                            `Girls' team: ${team2} players`,
+                            `Total initially: ${team1} + ${team2} = ${team1 + team2} players`,
+                            `After ${left} quit: ${team1 + team2} - ${left} = ${total} players`
+                        ]
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        function generateFractionProblem() {
+            const scenarios = [
+                () => {
+                    const wholes = generateNumber(2, 5);
+                    const numerator = generateNumber(1, 3);
+                    const denominator = generateNumber(2, 4);
+                    const baseQuantity = generateNumber(8, 12);
+                    const targetQuantity = generateNumber(15, 25);
+                    
+                    const baseAmount = wholes + numerator/denominator;
+                    const perUnit = baseAmount / baseQuantity;
+                    const solution = (perUnit * targetQuantity).toFixed(3);
+
+                    return {
+                        text: `A recipe needs ${wholes} ${numerator}/${denominator} cups of flour to make ${baseQuantity} cookies. How many cups of flour are needed to make ${targetQuantity} cookies?`,
+                        solution: solution,
+                        hint: `Let's break this down:\n1. Convert ${wholes} ${numerator}/${denominator} to a decimal\n2. Find flour per cookie\n3. Multiply for new amount`,
+                        steps: [
+                            `${wholes} ${numerator}/${denominator} = ${baseAmount} cups`,
+                            `Flour per cookie: ${baseAmount} ÷ ${baseQuantity} = ${perUnit.toFixed(4)} cups`,
+                            `For ${targetQuantity} cookies: ${perUnit.toFixed(4)} × ${targetQuantity} = ${solution} cups`
+                        ]
+                    };
+                },
+                () => {
+                    const whole = generateNumber(3, 8);
+                    const num1 = generateNumber(1, 3);
+                    const den1 = generateNumber(2, 4);
+                    const num2 = generateNumber(1, 3);
+                    const den2 = generateNumber(2, 4);
+                    
+                    const decimal1 = num1/den1;
+                    const decimal2 = num2/den2;
+                    const total = whole + decimal1 + decimal2;
+
+                    return {
+                        text: `A chef uses ${whole} ${num1}/${den1} cups of milk and ${num2}/${den2} cups of water for a recipe. How many cups of liquid are used in total?`,
+                        solution: total.toFixed(3),
+                        hint: `1. Convert all fractions to decimals\n2. Add all numbers`,
+                        steps: [
+                            `${num1}/${den1} = ${decimal1.toFixed(3)}`,
+                            `${num2}/${den2} = ${decimal2.toFixed(3)}`,
+                            `Total: ${whole} + ${decimal1.toFixed(3)} + ${decimal2.toFixed(3)} = ${total.toFixed(3)}`
+                        ]
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        function generatePercentProblem() {
+            const scenarios = [
+                () => {
+                    const original = generateNumber(100, 500);
+                    const percent = generateNumber(10, 40);
+                    const increase = original * (percent/100);
+                    return {
+                        text: `A store increases the price of a $${original} item by ${percent}%. What is the new price?`,
+                        solution: (original + increase).toString(),
+                        hint: `1. Calculate ${percent}% of $${original}\n2. Add this to the original price`,
+                        steps: [
+                            `Find ${percent}% of $${original}: $${original} × ${percent/100} = $${increase}`,
+                            `Add to original: $${original} + $${increase} = $${original + increase}`
+                        ]
+                    };
+                },
+                () => {
+                    const whole = generateNumber(200, 600);
+                    const part = generateNumber(50, whole-50);
+                    const percentage = ((part/whole) * 100).toFixed(1);
+                    return {
+                        text: `In a school of ${whole} students, ${part} participate in sports. What percentage of students play sports?`,
+                        solution: percentage,
+                        hint: `1. Use the formula: (part ÷ whole) × 100\n2. Divide ${part} by ${whole}, then multiply by 100`,
+                        steps: [
+                            `Divide: ${part} ÷ ${whole} = ${(part/whole).toFixed(3)}`,
+                            `Convert to percentage: ${(part/whole).toFixed(3)} × 100 = ${percentage}%`
+                        ]
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        function generateRatioAndProportion() {
+            const scenarios = [
+                () => {
+                    const ratio1 = generateNumber(2, 5);
+                    const ratio2 = generateNumber(3, 6);
+                    const quantity = generateNumber(12, 36);
+                    const solution = (quantity * ratio2) / ratio1;
+                    return {
+                        text: `If ${ratio1} cups of flour are needed for ${ratio2} cakes, how many cups are needed for ${quantity} cakes?`,
+                        solution: solution.toString(),
+                        hint: `1. Set up proportion: ${ratio1}/${ratio2} = x/${quantity}\n2. Cross multiply and solve`,
+                        steps: [
+                            `Write proportion: ${ratio1}/${ratio2} = x/${quantity}`,
+                            `Cross multiply: ${ratio1}x = ${ratio2} × ${quantity}`,
+                            `Solve for x: x = (${ratio2} × ${quantity}) ÷ ${ratio1} = ${solution}`
+                        ]
+                    };
+                },
+                () => {
+                    const rate1 = generateNumber(2, 5);
+                    const workers1 = generateNumber(3, 6);
+                    const workers2 = generateNumber(6, 12);
+                    const solution = (rate1 * workers1) / workers2;
+                    return {
+                        text: `If ${workers1} workers can paint a house in ${rate1} days, how many days will it take ${workers2} workers to paint the same house?`,
+                        solution: solution.toFixed(1),
+                        hint: `1. More workers means less time\n2. Use inverse proportion: (workers1 × days1) = (workers2 × days2)`,
+                        steps: [
+                            `Original: ${workers1} workers × ${rate1} days = ${workers1 * rate1} worker-days`,
+                            `New scenario: ${workers2} workers × x days = ${workers1 * rate1} worker-days`,
+                            `Solve: x = (${workers1} × ${rate1}) ÷ ${workers2} = ${solution.toFixed(1)} days`
+                        ]
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        function generateAlgebraicThinking() {
+            const scenarios = [
+                () => {
+                    const rate = generateNumber(30, 60);
+                    const time = generateNumber(2, 5);
+                    const distance = rate * time;
+                    return {
+                        text: `A train travels at ${rate} ${_.sample(state.speeds)}. How far will it travel in ${time} hours?`,
+                        solution: distance.toString(),
+                        hint: `1. Use distance = rate × time\n2. Multiply ${rate} by ${time}`,
+                        steps: [
+                            `Formula: distance = rate × time`,
+                            `Plug in values: distance = ${rate} × ${time}`,
+                            `Calculate: ${rate} × ${time} = ${distance}`
+                        ]
+                    };
+                },
+                () => {
+                    const total = generateNumber(100, 200);
+                    const part = generateNumber(20, 50);
+                    const price = generateNumber(5, 15);
+                    const solution = (total - part) * price;
+                    return {
+                        text: `A store has ${total} items. After selling ${part} items, they increase the price of each remaining item by ${price}. How much extra money will they make if they sell all remaining items at the new price?`,
+                        solution: solution.toString(),
+                        hint: `1. Find remaining items\n2. Multiply by price increase`,
+                        steps: [
+                            `Remaining items: ${total} - ${part} = ${total - part}`,
+                            `Extra money per item: ${price}`,
+                            `Total extra money: ${total - part} × ${price} = ${solution}`
+                        ]
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        function generateAreaAndVolume() {
+            const scenarios = [
+                () => {
+                    const length = generateNumber(5, 15);
+                    const width = generateNumber(4, 12);
+                    const height = generateNumber(3, 8);
+                    const volume = length * width * height;
+                    return {
+                        text: `An aquarium is ${length} meters long, ${width} meters wide, and ${height} meters high. How many cubic meters of ${_.sample(state.liquids)} can it hold?`,
+                        solution: volume.toString(),
+                        hint: `1. Use volume formula: length × width × height\n2. Multiply all dimensions`,
+                        steps: [
+                            `Formula: Volume = length × width × height`,
+                            `Plug in values: ${length} × ${width} × ${height}`,
+                            `Calculate: ${volume} cubic meters`
+                        ]
+                    };
+                },
+                () => {
+                    const radius = generateNumber(3, 8);
+                    const height = generateNumber(5, 12);
+                    const volume = (Math.PI * radius * radius * height).toFixed(2);
+                    return {
+                        text: `A cylindrical water tank has a radius of ${radius} meters and a height of ${height} meters. What is its volume in cubic meters? (Use π = 3.14)`,
+                        solution: volume,
+                        hint: `1. Use cylinder volume formula: V = πr²h\n2. Square radius, multiply by π and height`,
+                        steps: [
+                            `Formula: V = πr²h`,
+                            `Plug in values: 3.14 × ${radius}² × ${height}`,
+                            `Calculate: 3.14 × ${radius * radius} × ${height} = ${volume} cubic meters`
+                        ]
+                    };
+                }
+            ];
+            return _.sample(scenarios)();
+        }
+
+        function generateProblem() {
+            switch(state.level) {
+                case 1:
+                    return generateSimpleAddition();
+                case 2:
+                    return generateSimpleSubtraction();
+                case 3:
+                    return generateMultiStep();
+                case 4:
+                    return generateFractionProblem();
+                case 5:
+                    return generatePercentProblem();
+                case 6:
+                    return _.sample([
+                        generateRatioAndProportion,
+                        generateAlgebraicThinking,
+                        generateAreaAndVolume
+                    ])();
+                default:
+                    return generateSimpleAddition();
+            }
+        }
+
+        function updateProblem() {
+            state.currentProblem = generateProblem();
+            document.getElementById('problemText').textContent = state.currentProblem.text;
+            document.getElementById('hintContainer').textContent = state.currentProblem.hint;
+            document.getElementById('solutionContainer').innerHTML = state.currentProblem.steps
+                .map((step, index) => `${index + 1}. ${step}`).join('<br>');
+            document.getElementById('answerInput').value = '';
+            document.getElementById('hintContainer').classList.add('hidden');
+            document.getElementById('solutionContainer').classList.add('hidden');
+        }
+
+        function toggleHint() {
+            const hintContainer = document.getElementById('hintContainer');
+            hintContainer.classList.toggle('hidden');
+        }
+
+        function toggleSolution() {
+            const solutionContainer = document.getElementById('solutionContainer');
+            solutionContainer.classList.toggle('hidden');
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('answerInput').value.trim();
+            if (userAnswer === state.currentProblem.solution) {
+                state.score++;
+                document.getElementById('score').textContent = state.score;
+                
+                if (state.score % 3 === 0 && state.level < 6) {
+                    state.level++;
+                    document.getElementById('levelTitle').textContent = `Level ${state.level}`;
+                    document.getElementById('levelIndicator').textContent = `Level ${state.level}/6`;
+                }
+                
+                updateProblem();
+            } else {
+                alert('Try again! Use the hint if you need help.');
+            }
+        }
+
+        // Initialize
+        updateProblem();
+
+        // Add enter key support
+        document.getElementById('answerInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+    </script>
+</body>
+</html>

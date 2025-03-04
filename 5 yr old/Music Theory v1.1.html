@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Musical Discovery Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --secondary: #8b5cf6;
+            --success: #22c55e;
+            --background: #f8fafc;
+            --error: #ef4444;
+        }
+
+        body {
+            margin: 0;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--background);
+        }
+
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .game-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        .score {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-weight: 600;
+        }
+
+        .game-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 1rem;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+
+        .piano-section {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .visualization-container {
+            position: relative;
+            height: 200px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        #visualization {
+            width: 100%;
+            height: 100%;
+        }
+
+        .piano-roll {
+            display: flex;
+            height: 200px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .challenge-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .key {
+            flex: 1;
+            border: 1px solid #e2e8f0;
+            border-radius: 0 0 8px 8px;
+            background: white;
+            transition: all 0.1s;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .key.black {
+            background: #1e293b;
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            z-index: 1;
+            transform-origin: top center;
+        }
+
+        .key.active {
+            background: var(--primary);
+            transform: translateY(4px);
+        }
+
+        .key.black.active {
+            background: var(--secondary);
+        }
+
+        .button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: transform 0.1s;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+        }
+
+        .button:active {
+            transform: translateY(1px);
+        }
+
+        .theory-concept {
+            background: #f8fafc;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 16px 0;
+            font-size: 14px;
+        }
+
+        .progress {
+            width: 100%;
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 999px;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1);
+            z-index: 1000;
+            max-width: 90%;
+            width: 400px;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        @media (max-width: 768px) {
+            .game-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header class="game-header">
+            <h1>Musical Discovery Adventure</h1>
+            <div class="score">Score: <span id="score">0</span></div>
+        </header>
+        
+        <div class="game-content">
+            <div class="piano-section">
+                <div class="visualization-container">
+                    <canvas id="visualization"></canvas>
+                </div>
+                <div class="piano-roll" id="piano-roll"></div>
+            </div>
+            
+            <div class="challenge-section" id="challenge">
+                <h2>Welcome to Musical Discovery Adventure!</h2>
+                <p>Let's explore the magical world of music together!</p>
+                <div class="theory-concept">
+                    Did you know? Sound is made up of invisible waves that dance through the air! 
+                    When we play music, we're creating patterns of these waves.
+                </div>
+                <button onclick="startGame()" class="button">Start Playing</button>
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let synth;
+        let currentLevel = 0;
+        let score = 0;
+        const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        let analyser;
+        
+        const LEVELS = [
+            {
+                name: "Wave Explorer",
+                description: "Every sound is made of waves! Let's explore simple and complex waves.",
+                challenge: () => {
+                    const fundamentals = ['C4', 'G4', 'E4'];
+                    const fundamental = fundamentals[Math.floor(Math.random() * fundamentals.length)];
+                    return {
+                        type: 'wave',
+                        fundamental,
+                        prompt: "Listen to this special wave sound! Can you find its matching friend?",
+                        theory: "Sound waves can be simple (like a pure tone) or complex (like a violin)."
+                    };
+                }
+            },
+            {
+                name: "Harmonic Detective",
+                description: "Discover the hidden notes inside each sound!",
+                challenge: () => {
+                    const fundamentals = ['C4', 'G4', 'F4'];
+                    const fundamental = fundamentals[Math.floor(Math.random() * fundamentals.length)];
+                    return {
+                        type: 'harmonic',
+                        fundamental,
+                        harmonics: [fundamental, getHarmonic(fundamental)],
+                        prompt: "Listen carefully! There's a special note hiding inside. Can you find it?",
+                        theory: "When we play a note, it creates other notes called harmonics that give it its unique sound."
+                    };
+                }
+            },
+            {
+                name: "Octave Adventure",
+                description: "Find note pairs that sound similar but different!",
+                challenge: () => {
+                    const baseNote = NOTES[Math.floor(Math.random() * NOTES.length)];
+                    const octave = 4;
+                    return {
+                        type: 'octave',
+                        baseNote: `${baseNote}${octave}`,
+                        targetNote: `${baseNote}${octave + 1}`,
+                        prompt: `Find ${baseNote}'s partner that sounds similar but higher!`,
+                        theory: "Notes that are eight steps apart are called octaves. They sound like the same note, but one is higher!"
+                    };
+                }
+            }
+        ];
+
+
+        // Global state management
+        const gameState = {
+            synth: null,
+            analyser: null,
+            currentLevel: 0,
+            score: 0,
+            isInitialized: false
+        };
+
+
+
+
+
+        const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+
+        // Initialize audio context and synth
+        async function initAudio() {
+            if (gameState.isInitialized) return true;
+            
+            try {
+                await Tone.start();
+                gameState.synth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: {
+                        type: 'sine'
+                    },
+                    envelope: {
+                        attack: 0.05,
+                        decay: 0.2,
+                        sustain: 0.4,
+                        release: 0.5
+                    }
+                }).toDestination();
+                
+                gameState.synth.volume.value = -10;
+                gameState.analyser = Tone.getContext().createAnalyser();
+                gameState.analyser.fftSize = 2048;
+                gameState.synth.connect(gameState.analyser);
+                
+                initVisualizer();
+                gameState.isInitialized = true;
+                return true;
+            } catch (error) {
+                console.error('Audio initialization failed:', error);
+                showError("Oops! We couldn't start the music. Please make sure your device allows audio and try again.");
+                return false;
+            }
+        }
+        function initVisualizer() {
+            const canvas = document.getElementById('visualization');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size to match container
+            const container = canvas.parentElement;
+            canvas.width = container.offsetWidth;
+            canvas.height = container.offsetHeight;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+
+            function draw() {
+                requestAnimationFrame(draw);
+                analyser.getByteTimeDomainData(dataArray);
+
+                ctx.fillStyle = 'rgb(248, 250, 252)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgb(99, 102, 241)';
+                ctx.beginPath();
+
+                const sliceWidth = canvas.width / bufferLength;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * canvas.height / 2;
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+
+                    x += sliceWidth;
+                }
+
+                ctx.lineTo(canvas.width, canvas.height / 2);
+                ctx.stroke();
+            }
+
+            draw();
+        }
+
+        function getHarmonic(note) {
+            const noteIndex = NOTES.indexOf(note[0]);
+            const octave = parseInt(note[note.length - 1]);
+            return `${NOTES[(noteIndex + 7) % 12]}${octave + (noteIndex + 7 >= 12 ? 1 : 0)}`;
+        }
+
+        function createPianoRoll() {
+            const pianoRoll = document.getElementById('piano-roll');
+            pianoRoll.innerHTML = '';
+            
+            for (let octave = 3; octave <= 5; octave++) {
+                NOTES.forEach((note, i) => {
+                    const key = document.createElement('div');
+                    key.className = `key ${note.includes('#') ? 'black' : 'white'}`;
+                    key.dataset.note = `${note}${octave}`;
+                    
+                    if (note.includes('#')) {
+                        key.style.left = `${i * 8.33}%`;
+                    }
+                    
+                    key.addEventListener('mousedown', () => playNote(key.dataset.note));
+                    key.addEventListener('mouseup', () => stopNote(key.dataset.note));
+                    key.addEventListener('mouseleave', () => stopNote(key.dataset.note));
+                    key.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        playNote(key.dataset.note);
+                    });
+                    key.addEventListener('touchend', (e) => {
+                        e.preventDefault();
+                        stopNote(key.dataset.note);
+                    });
+                    
+                    pianoRoll.appendChild(key);
+                });
+            }
+        }
+
+        function playNote(note) {
+            const key = document.querySelector(`[data-note="${note}"]`);
+            if (!key) return;
+            
+            key.classList.add('active');
+            synth.triggerAttack(note);
+            checkAnswer(note);
+        }
+
+        function stopNote(note) {
+            const key = document.querySelector(`[data-note="${note}"]`);
+            if (!key) return;
+            
+            key.classList.remove('active');
+            synth.triggerRelease(note);
+        }
+
+        async function startGame() {
+            if (!await initAudio()) return;
+            
+            currentLevel = 0;
+            score = 0;
+            updateScore();
+            nextChallenge();
+        }
+
+        function nextChallenge() {
+            const level = LEVELS[currentLevel % LEVELS.length];
+            const challenge = level.challenge();
+            
+            document.getElementById('challenge').innerHTML = `
+                <h2>${level.name}</h2>
+                <p>${challenge.prompt}</p>
+                <div class="theory-concept">${challenge.theory}</div>
+                <button onclick="playExample()" class="button">Listen Again</button>
+                <div class="progress">
+                    <div class="progress-bar" id="progress-bar"></div>
+                </div>
+            `;
+            
+            setTimeout(playExample, 500);
+            
+            document.getElementById('progress-bar').style.width = 
+                `${((currentLevel % LEVELS.length) / LEVELS.length) * 100}%`;
+        }
+
+        function playExample() {
+            const level = LEVELS[currentLevel % LEVELS.length];
+            const challenge = level.challenge();
+            
+            if (challenge.type === 'wave' || challenge.type === 'harmonic') {
+ 
+                synth.triggerAttackRelease(challenge.fundamental, '1n');
+            } else if (challenge.type === 'octave') {
+                synth.triggerAttackRelease(challenge.baseNote, '1n');
+            }
+        }
+
+        function checkAnswer(note) {
+            const level = LEVELS[currentLevel % LEVELS.length];
+            const challenge = level.challenge();
+            
+            let correct = false;
+            
+            if (challenge.type === 'wave') {
+                correct = note === challenge.fundamental;
+            } else if (challenge.type === 'harmonic') {
+                correct = challenge.harmonics.includes(note);
+            } else if (challenge.type === 'octave') {
+                correct = note === challenge.targetNote;
+            }
+            
+            if (correct) {
+                score += 100;
+                updateScore();
+                showSuccess();
+                currentLevel++;
+                setTimeout(nextChallenge, 1000);
+            }
+        }
+
+        function updateScore() {
+            document.getElementById('score').textContent = score;
+        }
+
+        function showSuccess() {
+            const successMsg = document.createElement('div');
+            successMsg.className = 'modal';
+            successMsg.innerHTML = `
+                <h3>Amazing! 🌟</h3>
+                <p>You found the right note! Keep exploring the magical world of music!</p>
+                <button onclick="this.parentElement.remove();document.querySelector('.modal-overlay').remove();" class="button">
+                    Continue
+                </button>
+            `;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(successMsg);
+
+            // Play success sound
+            const successSynth = new Tone.Synth({
+                oscillator: { type: 'sine' },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0, release: 0.5 }
+            }).toDestination();
+            successSynth.volume.value = -15;
+            successSynth.triggerAttackRelease('C6', '8n');
+            setTimeout(() => successSynth.triggerAttackRelease('E6', '8n'), 100);
+            setTimeout(() => successSynth.triggerAttackRelease('G6', '8n'), 200);
+        }
+
+        function showError(message) {
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'modal';
+            errorMsg.innerHTML = `
+                <h3>Oops! 😅</h3>
+                <p>${message}</p>
+                <button onclick="this.parentElement.remove();document.querySelector('.modal-overlay').remove();" class="button">
+                    Try Again
+                </button>
+            `;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(errorMsg);
+        }
+
+        // Initialize
+        window.addEventListener('load', async () => {
+            createPianoRoll();
+            
+            // Enable MIDI if available
+            if (navigator.requestMIDIAccess) {
+                try {
+                    const midiAccess = await navigator.requestMIDIAccess();
+                    midiAccess.inputs.forEach(input => {
+                        input.onmidimessage = handleMIDIMessage;
+                    });
+                } catch (err) {
+                    console.log('MIDI not available:', err);
+                }
+            }
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                const canvas = document.getElementById('visualization');
+                const container = canvas.parentElement;
+                canvas.width = container.offsetWidth;
+                canvas.height = container.offsetHeight;
+            });
+        });
+
+        function handleMIDIMessage(message) {
+            const [command, note, velocity] = message.data;
+            
+            if (command === 144 && velocity > 0) { // Note On
+                const midiNote = Tone.Frequency(note, "midi").toNote();
+                playNote(midiNote);
+            } else if (command === 128 || (command === 144 && velocity === 0)) { // Note Off
+                const midiNote = Tone.Frequency(note, "midi").toNote();
+                stopNote(midiNote);
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Fraction Adventure!</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --accent-color: #ff6b6b;
+            --background-gradient: linear-gradient(135deg, #ffcf40, #ff6b6b);
+        }
+
+        * {
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive;
+            background: var(--background-gradient);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+
+        .game-container {
+            background: white;
+            padding: clamp(1rem, 5vw, 2rem);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            margin: 0.5em 0;
+        }
+
+        .problem {
+            font-size: clamp(1.8rem, 6vw, 2.5rem);
+            margin: 1rem auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 0.2em;
+        }
+
+        .numerator, .denominator {
+            padding: 0.2rem;
+            min-width: 1.5em;
+            text-align: center;
+        }
+
+        .fraction-bar {
+            width: 100%;
+            min-width: 1.5em;
+            border-bottom: 0.15rem solid black;
+            margin: 0.2rem 0;
+        }
+
+        .times, .equals {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            margin: 0 0.3em;
+        }
+
+        #answer {
+            font-size: clamp(1.5rem, 5vw, 2rem);
+            width: clamp(80px, 20vw, 100px);
+            padding: 0.3em;
+            text-align: center;
+            border: 3px solid var(--primary-color);
+            border-radius: 10px;
+            -webkit-appearance: none;
+            margin: 0 0.2em;
+        }
+
+        #answer:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.3);
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: clamp(0.8rem, 4vw, 1rem) clamp(1.5rem, 6vw, 2rem);
+            font-size: clamp(1rem, 4vw, 1.2rem);
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 1rem;
+            transition: transform 0.1s, background-color 0.2s;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        button:active {
+            transform: scale(0.95);
+            background-color: #3d8b40;
+        }
+
+        .score {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            font-size: clamp(1rem, 4vw, 1.2rem);
+            color: var(--primary-color);
+        }
+
+        .feedback {
+            font-size: clamp(1.2rem, 4vw, 1.5rem);
+            min-height: 2rem;
+            margin: 1rem;
+            word-wrap: break-word;
+        }
+
+        .correct {
+            color: var(--primary-color);
+            animation: bounce 0.5s;
+        }
+
+        .incorrect {
+            color: var(--accent-color);
+            animation: shake 0.5s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .stars {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .star {
+            position: absolute;
+            animation: float 3s infinite;
+            opacity: 0;
+            font-size: clamp(1.5rem, 5vw, 2rem);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+        }
+
+        @media (max-width: 350px) {
+            .problem {
+                font-size: 1.5rem;
+            }
+            
+            #answer {
+                width: 70px;
+                font-size: 1.3rem;
+            }
+            
+            button {
+                padding: 0.7rem 1.2rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars"></div>
+    <div class="game-container">
+        <div class="score">Score: <span id="score">0</span></div>
+        <h1>Fraction Adventure! 🚀</h1>
+        <div class="problem">
+            <div class="fraction">
+                <span class="numerator" id="numerator">1</span>
+                <span class="fraction-bar"></span>
+                <span class="denominator" id="denominator">4</span>
+            </div>
+            <span class="times">×</span>
+            <div class="fraction">
+                <span class="numerator">100</span>
+                <span class="fraction-bar"></span>
+                <span class="denominator" style="font-size: 0.5em;">1</span>
+            </div>
+            <span class="equals">=</span>
+            <input type="number" inputmode="numeric" pattern="[0-9]*" id="answer" maxlength="3">
+            <span>%</span>
+        </div>
+        <div class="feedback" id="feedback"></div>
+        <button id="checkButton">Check Answer</button>
+    </div>
+
+    <script>
+        let score = 0;
+        let currentNumerator, currentDenominator;
+        let isProcessing = false;
+
+        const generateProblem = () => {
+            const denominators = [2, 4, 5, 10];
+            currentDenominator = denominators[Math.floor(Math.random() * denominators.length)];
+            currentNumerator = Math.floor(Math.random() * currentDenominator) + 1;
+            
+            document.getElementById('numerator').textContent = currentNumerator;
+            document.getElementById('denominator').textContent = currentDenominator;
+            document.getElementById('answer').value = '';
+            document.getElementById('feedback').textContent = '';
+            document.getElementById('answer').focus();
+            isProcessing = false;
+        };
+
+        const createStars = (x, y) => {
+            const starsContainer = document.querySelector('.stars');
+            const numStars = window.innerWidth < 600 ? 3 : 5;
+            
+            for (let i = 0; i < numStars; i++) {
+                const star = document.createElement('div');
+                star.innerHTML = '⭐';
+                star.className = 'star';
+                
+                const randomOffset = (Math.random() - 0.5) * 50;
+                star.style.left = (x + randomOffset) + 'px';
+                star.style.top = y + 'px';
+                
+                const duration = Math.random() * 1 + 1;
+                star.style.animation = `float ${duration}s linear`;
+                
+                starsContainer.appendChild(star);
+                setTimeout(() => star.remove(), duration * 1000);
+            }
+        };
+
+        const checkAnswer = () => {
+            if (isProcessing) return;
+            isProcessing = true;
+
+            const answer = parseInt(document.getElementById('answer').value);
+            const correctAnswer = (currentNumerator / currentDenominator) * 100;
+            const feedback = document.getElementById('feedback');
+            
+            if (!isNaN(answer) && answer === correctAnswer) {
+                score++;
+                document.getElementById('score').textContent = score;
+                feedback.textContent = 'Correct! You are a math genius!';
+                feedback.className = 'feedback correct';
+                
+                const rect = feedback.getBoundingClientRect();
+                createStars(rect.left + rect.width/2, rect.top);
+                
+                setTimeout(generateProblem, 1500);
+            } else {
+                feedback.textContent = 'Try again! You can do it!';
+                feedback.className = 'feedback incorrect';
+                isProcessing = false;
+            }
+        };
+
+        document.getElementById('answer').addEventListener('keyup', (event) => {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        document.getElementById('checkButton').addEventListener('click', checkAnswer);
+        document.getElementById('answer').addEventListener('focus', function() {
+            setTimeout(() => this.scrollIntoView({ behavior: 'smooth', block: 'center' }), 300);
+        });
+
+        window.addEventListener('resize', () => {
+            document.activeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+
+        generateProblem();
+    </script>
+</body>
+</html>

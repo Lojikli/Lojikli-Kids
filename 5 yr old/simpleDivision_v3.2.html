@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Long Division Adventures</title>
+    <style>
+        /* Keeping the original CSS styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f9ff;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .game-title {
+            text-align: center;
+            color: #1e40af;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .score {
+            text-align: right;
+            color: #1e40af;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .division-problem {
+            font-family: monospace;
+            font-size: 32px;
+            width: fit-content;
+            margin: 40px auto;
+            position: relative;
+            padding-left: 50px;
+        }
+        .vertical-line {
+            position: absolute;
+            left: 40px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #2563eb;
+        }
+        .horizontal-line {
+            position: absolute;
+            left: 42px;
+            right: 0;
+            height: 2px;
+            background: #2563eb;
+        }
+        .divisor {
+            position: absolute;
+            left: 0;
+            top: 10px;
+        }
+        .dividend {
+            margin-top: 10px;
+            padding-top: 10px;
+        }
+        .step-input {
+            position: absolute;
+            top: -30px;
+            left: 42px;
+            font-family: monospace;
+            font-size: 32px;
+            border: none;
+            border-bottom: 2px dashed #2563eb;
+            background: transparent;
+            outline: none;
+            width: calc(100% - 42px);
+            padding: 0;
+            padding-left: 8px;
+        }
+        .steps-display {
+            font-family: monospace;
+            font-size: 32px;
+            margin-top: 10px;
+            white-space: pre;
+            color: #2563eb;
+        }
+        .feedback {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+            height: 24px;
+        }
+        .correct { color: #059669; }
+        .incorrect { color: #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-title">Long Division Adventures</div>
+        <div class="score">Score: <span id="score">0</span></div>
+        
+        <div class="division-problem">
+            <div class="vertical-line"></div>
+            <div class="horizontal-line"></div>
+            
+            <div class="divisor" id="divisor">2</div>
+            <input type="text" class="step-input" id="step-input" maxlength="7">
+            <div class="dividend" id="dividend">1254110</div>
+            
+            <div class="steps-display" id="steps-display"></div>
+        </div>
+        
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <script>
+        class LongDivisionGame {
+            constructor() {
+                this.score = 0;
+                this.divisor = 2;
+                this.dividend = 1254110;
+                this.currentStep = 0;
+                this.steps = [];
+                this.solution = [];
+                
+                this.elements = {
+                    divisor: document.getElementById('divisor'),
+                    dividend: document.getElementById('dividend'),
+                    input: document.getElementById('step-input'),
+                    stepsDisplay: document.getElementById('steps-display'),
+                    feedback: document.getElementById('feedback'),
+                    score: document.getElementById('score')
+                };
+                
+                this.setupEventListeners();
+                this.generateProblem();
+            }
+            
+            setupEventListeners() {
+                this.elements.input.addEventListener('input', (e) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    if (value.length > 0) {
+                        this.checkStep(value);
+                    }
+                });
+            }
+            
+            generateProblem() {
+                // Generate a random divisor between 2 and 9
+                this.divisor = Math.floor(Math.random() * 8) + 2;
+                
+                // Generate a dividend that's guaranteed to be evenly divisible
+                const quotient = Math.floor(Math.random() * 90000) + 10000;
+                this.dividend = this.divisor * quotient;
+                
+                this.elements.dividend.textContent = this.dividend;
+                this.elements.divisor.textContent = this.divisor;
+                
+                this.calculateSolution();
+                
+                this.currentStep = 0;
+                this.steps = [];
+                this.elements.stepsDisplay.textContent = '';
+                this.elements.input.value = '';
+                this.elements.feedback.textContent = '';
+            }
+            
+            calculateSolution() {
+                this.solution = [];
+                let workingNumber = '';
+                let dividend = this.dividend.toString();
+                let quotient = '';
+                
+                for (let i = 0; i < dividend.length; i++) {
+                    workingNumber += dividend[i];
+                    let num = parseInt(workingNumber);
+                    
+                    if (num >= this.divisor || i === dividend.length - 1) {
+                        let quotientDigit = Math.floor(num / this.divisor);
+                        let product = quotientDigit * this.divisor;
+                        let remainder = num % this.divisor;
+                        
+                        quotient += quotientDigit;
+                        
+                        this.solution.push({
+                            workingNumber: num,
+                            product: product,
+                            quotientDigit: quotientDigit,
+                            remainder: remainder
+                        });
+                        
+                        workingNumber = remainder.toString();
+                    }
+                }
+            }
+            
+            checkStep(input) {
+                const currentSolution = this.solution[this.currentStep];
+                const inputNum = parseInt(input);
+                
+                if (inputNum === currentSolution.product) {
+                    this.steps.push(input);
+                    this.showStep();
+                    this.currentStep++;
+                    
+                    if (this.currentStep >= this.solution.length) {
+                        this.score++;
+                        this.elements.score.textContent = this.score;
+                        this.elements.feedback.textContent = 'Great job! 🌟';
+                        this.elements.feedback.className = 'feedback correct';
+                        setTimeout(() => this.generateProblem(), 1500);
+                    } else {
+                        this.elements.feedback.textContent = 'Correct!';
+                        this.elements.feedback.className = 'feedback correct';
+                    }
+                } else {
+                    this.elements.feedback.textContent = 'Try again!';
+                    this.elements.feedback.className = 'feedback incorrect';
+                }
+                
+                this.elements.input.value = '';
+            }
+            
+            showStep() {
+                const stepValue = this.steps[this.currentStep];
+                const padding = ' '.repeat(this.dividend.toString().length - stepValue.toString().length);
+                this.elements.stepsDisplay.textContent += padding + stepValue + '\n';
+            }
+        }
+
+        window.addEventListener('load', () => new LongDivisionGame());
+    </script>
+</body>
+</html>

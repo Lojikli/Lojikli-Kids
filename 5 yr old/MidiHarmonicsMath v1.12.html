@@ -1,0 +1,1910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musical Mathematics: Core Engine</title>
+    <style>
+        :root {
+            --primary: #2dd4bf;
+            --secondary: #4c1d95;
+            --accent: #7c3aed;
+            --background: #0f172a;
+            --text: #f8fafc;
+            --error: #ef4444;
+            --success: #22c55e;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .title {
+            font-size: 2.5rem;
+            background: linear-gradient(45deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .midi-status {
+            display: flex;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--error);
+        }
+
+        .status-indicator.active {
+            background: var(--success);
+        }
+
+        .piano-roll {
+            position: relative;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+
+        .visualization-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        canvas {
+            width: 100%;
+            height: 300px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 0.5rem;
+        }
+
+        .math-display {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .math-title {
+            color: var(--primary);
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .math-content {
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+
+        .control-title {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 0.5rem;
+        }
+
+        button {
+            background: linear-gradient(45deg, var(--secondary), var(--accent));
+            border: none;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .feedback-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .feedback {
+            padding: 1rem;
+            margin-bottom: 0.5rem;
+            border-radius: 0.5rem;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            transition: opacity 0.5s;
+        }
+
+        .feedback.fade-out {
+            opacity: 0;
+        }
+
+        .feedback.positive {
+            border-left: 4px solid var(--success);
+        }
+
+        .feedback.neutral {
+            border-left: 4px solid var(--primary);
+        }
+
+        .feedback.suggestion {
+            border-left: 4px solid var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="title">Musical Mathematics</h1>
+            <p>Exploring the Mathematical Universe of Music</p>
+        </div>
+
+        <div class="midi-status">
+            <div class="status-item">
+                <div class="status-indicator" id="midiStatus"></div>
+                <span>MIDI Connection</span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator" id="audioStatus"></div>
+                <span>Audio System</span>
+            </div>
+            <div class="status-item">
+                <div class="status-indicator" id="analysisStatus"></div>
+                <span>Analysis Engine</span>
+            </div>
+        </div>
+
+        <div class="piano-roll" id="pianoRoll"></div>
+
+        <div class="visualization-container">
+            <canvas id="waveformCanvas"></canvas>
+            <canvas id="spectrumCanvas"></canvas>
+        </div>
+
+        <div class="math-display">
+            <div class="math-title">Real-time Mathematical Analysis</div>
+            <div class="math-content" id="mathContent">Waiting for input...</div>
+        </div>
+
+        <div class="control-panel">
+            <div class="control-group">
+                <div class="control-title">Audio System</div>
+                <div class="button-grid">
+                    <button id="startAudioButton">Start Audio System</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="control-title">Harmonic Analysis</div>
+                <div class="button-grid">
+                    <button onclick="toggleHarmonicAnalysis()">Toggle Analysis</button>
+                    <button onclick="resetAnalysis()">Reset</button>
+                </div>
+            </div>
+            <div class="control-group">
+                <div class="control-title">Visualization Mode</div>
+                <div class="button-grid">
+                    <button onclick="setVisualizationMode('waveform')">Waveform</button>
+                    <button onclick="setVisualizationMode('spectrum')">Spectrum</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="feedback-container"></div>
+
+    <script>
+        // Core system state
+        const state = {
+            midiEnabled: false,
+            audioEnabled: false,
+            analysisEnabled: false,
+            activeNotes: new Map(),
+            visualizationMode: 'waveform',
+            harmonicAnalysisEnabled: false
+        };
+
+        // Core Audio System
+        let audioCtx = null;
+        let analyser = null;
+        const oscillators = new Map();
+
+        // Initialize Audio System
+        async function initAudioSystem() {
+            try {
+                // Create audio context only if it doesn't exist
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // Resume audio context if suspended
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+                
+                // Create analyzer node if it doesn't exist
+                if (!analyser) {
+                    analyser = audioCtx.createAnalyser();
+                    analyser.connect(audioCtx.destination);
+                }
+                
+                state.audioEnabled = true;
+                updateStatusIndicators();
+                return true;
+            } catch (error) {
+                console.error('Failed to initialize audio system:', error);
+                state.audioEnabled = false;
+                updateStatusIndicators();
+                return false;
+            }
+        }
+
+        // Note Management System
+        function createOscillator(frequency, volume) {
+            if (!audioCtx || !analyser) {
+                throw new Error('Audio system not initialized');
+            }
+            
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(volume, audioCtx.currentTime + 0.1);
+            
+            try {
+                oscillator.connect(gainNode);
+                gainNode.connect(analyser);
+            } catch (error) {
+                console.error('Error connecting audio nodes:', error);
+                oscillator.disconnect();
+                gainNode.disconnect();
+                throw error;
+            }
+            
+            oscillator.start();
+            return { oscillator, gainNode };
+        }
+        
+        async function noteOn(note, velocity) {
+            try {
+                // Initialize audio system if needed
+                if (!audioCtx) {
+                    const success = await initAudioSystem();
+                    if (!success) {
+                        throw new Error('Failed to initialize audio system');
+                    }
+                }
+                
+                const frequency = midiNoteToFrequency(note);
+                const oscillator = createOscillator(frequency, velocity / 127);
+                
+                oscillators.set(note, oscillator);
+                
+                state.activeNotes.set(note, {
+                    frequency,
+                    velocity,
+                    timestamp: audioCtx.currentTime
+                });
+                
+                updateVisualization();
+                updateMathematicalAnalysis();
+            } catch (error) {
+                console.error('Error in noteOn:', error);
+            }
+        }
+
+        function noteOff(note) {
+            try {
+                const oscillator = oscillators.get(note);
+                if (oscillator) {
+                    const { gainNode } = oscillator;
+                    
+                    // Graceful note release
+                    gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
+                    
+                    // Clean up after release
+                    setTimeout(() => {
+                        try {
+                            oscillator.oscillator.stop();
+                            oscillator.oscillator.disconnect();
+                            gainNode.disconnect();
+                            oscillators.delete(note);
+                        } catch (cleanupError) {
+                            console.error('Error cleaning up note:', cleanupError);
+                        }
+                    }, 100);
+                }
+                
+                state.activeNotes.delete(note);
+                updateVisualization();
+                updateMathematicalAnalysis();
+            } catch (error) {
+                console.error('Error in noteOff:', error);
+            }
+        }
+
+        // Utility Functions
+        function midiNoteToFrequency(note) {
+            return 440 * Math.pow(2, (note - 69) / 12);
+        }
+
+        function updateStatusIndicators() {
+            const midiStatus = document.getElementById('midiStatus');
+            const audioStatus = document.getElementById('audioStatus');
+            const analysisStatus = document.getElementById('analysisStatus');
+            
+            if (midiStatus) midiStatus.classList.toggle('active', state.midiEnabled);
+            if (audioStatus) audioStatus.classList.toggle('active', state.audioEnabled);
+            if (analysisStatus) audioStatus.classList.toggle('active', state.analysisEnabled);
+        }
+
+        // Basic UI Controls
+        function toggleHarmonicAnalysis() {
+            state.harmonicAnalysisEnabled = !state.harmonicAnalysisEnabled;
+            state.analysisEnabled = state.harmonicAnalysisEnabled;
+            updateStatusIndicators();
+        }
+
+        function resetAnalysis() {
+            state.activeNotes.clear();
+            oscillators.forEach(({ oscillator, gainNode }) => {
+                oscillator.stop();
+                gainNode.disconnect();
+            });
+            oscillators.clear();
+            updateMathematicalAnalysis();
+            if (typeof updatePianoRoll === 'function') {
+                updatePianoRoll();
+            }
+        }
+
+        function setVisualizationMode(mode) {
+            state.visualizationMode = mode;
+        }
+
+        // Audio System Cleanup
+        function cleanupAudioSystem() {
+            try {
+                // Stop and cleanup all active oscillators
+                oscillators.forEach(({ oscillator, gainNode }) => {
+                    oscillator.stop();
+                    oscillator.disconnect();
+                    gainNode.disconnect();
+                });
+                oscillators.clear();
+                
+                // Disconnect analyzer
+                if (analyser) {
+                    analyser.disconnect();
+                    analyser = null;
+                }
+                
+                // Close audio context
+                if (audioCtx) {
+                    audioCtx.close();
+                    audioCtx = null;
+                }
+                
+                state.audioEnabled = false;
+                updateStatusIndicators();
+            } catch (error) {
+                console.error('Error cleaning up audio system:', error);
+            }
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            const startAudioButton = document.getElementById('startAudioButton');
+            if (startAudioButton) {
+                startAudioButton.addEventListener('click', async () => {
+                    await initAudioSystem();
+                });
+            }
+            
+            // Add cleanup on page unload
+            window.addEventListener('beforeunload', cleanupAudioSystem);
+        });
+
+        // Placeholder functions that will be implemented in subsequent modules
+        function updateVisualization() {
+            // Will be implemented in visualization module
+        }
+
+        function updateMathematicalAnalysis() {
+            // Will be implemented in analysis module
+            const mathContent = document.getElementById('mathContent');
+            if (mathContent) {
+                mathContent.textContent = 'Analysis module loading...';
+            }
+        }
+    
+        // MIDI Controller Implementation
+        class MIDIController {
+            constructor() {
+                this.inputs = new Map();
+                this.outputDevices = new Map();
+                this.sustainPedal = false;
+                this.velocityScale = new Map([
+                    ['soft', 0.5],
+                    ['medium', 0.75],
+                    ['hard', 1.0]
+                ]);
+            }
+
+            async initialize() {
+                if (!navigator.requestMIDIAccess) {
+                    console.warn('WebMIDI not supported in this browser');
+                    return false;
+                }
+
+                try {
+                    const midiAccess = await navigator.requestMIDIAccess({ sysex: false });
+                    this.setupMIDIDevices(midiAccess);
+                    state.midiEnabled = true;
+                    updateStatusIndicators();
+                    return true;
+                } catch (error) {
+                    console.error('MIDI initialization failed:', error);
+                    state.midiEnabled = false;
+                    updateStatusIndicators();
+                    return false;
+                }
+            }
+
+            setupMIDIDevices(midiAccess) {
+                // Clear existing devices
+                this.inputs.clear();
+                this.outputDevices.clear();
+
+                // Setup inputs
+                midiAccess.inputs.forEach(input => {
+                    this.inputs.set(input.id, input);
+                    input.onmidimessage = this.handleMIDIMessage.bind(this);
+                });
+
+                // Setup outputs
+                midiAccess.outputs.forEach(output => {
+                    this.outputDevices.set(output.id, output);
+                });
+
+                // Listen for device changes
+                midiAccess.onstatechange = (event) => {
+                    console.log(`MIDI port ${event.port.name} ${event.port.state}`);
+                    this.handleDeviceChange(event.port);
+                };
+            }
+
+            handleDeviceChange(port) {
+                if (port.type === 'input') {
+                    if (port.state === 'connected') {
+                        this.inputs.set(port.id, port);
+                        port.onmidimessage = this.handleMIDIMessage.bind(this);
+                    } else {
+                        this.inputs.delete(port.id);
+                    }
+                } else if (port.type === 'output') {
+                    if (port.state === 'connected') {
+                        this.outputDevices.set(port.id, port);
+                    } else {
+                        this.outputDevices.delete(port.id);
+                    }
+                }
+
+                state.midiEnabled = this.inputs.size > 0;
+                updateStatusIndicators();
+            }
+
+            handleMIDIMessage(message) {
+                const [status, data1, data2] = message.data;
+                const channel = status & 0xF;
+                const type = status & 0xF0;
+
+                switch (type) {
+                    case 0x90: // Note On
+                        if (data2 > 0) {
+                            noteOn(data1, data2);
+                        } else {
+                            noteOff(data1);
+                        }
+                        break;
+
+                    case 0x80: // Note Off
+                        noteOff(data1);
+                        break;
+
+                    case 0xB0: // Control Change
+                        this.handleControlChange(data1, data2);
+                        break;
+                }
+            }
+
+            handleControlChange(controller, value) {
+                switch (controller) {
+                    case 64: // Sustain pedal
+                        this.sustainPedal = value >= 64;
+                        if (!this.sustainPedal) {
+                            this.releaseSustainedNotes();
+                        }
+                        break;
+                }
+            }
+
+            releaseSustainedNotes() {
+                state.activeNotes.forEach((data, note) => {
+                    if (data.sustained) {
+                        noteOff(note);
+                    }
+                });
+            }
+        }
+
+        // Piano Roll Implementation
+        function initPianoRoll() {
+            const container = document.getElementById('pianoRoll');
+            if (!container) return;
+
+            // Clear existing content
+            container.innerHTML = '';
+            
+            const width = container.clientWidth;
+            
+            // Create 88 keys (standard piano range)
+            for (let i = 21; i <= 108; i++) {
+                const key = document.createElement('div');
+                key.className = 'piano-key';
+                key.dataset.note = i;
+                
+                // Position and size the key
+                const keyWidth = width / 88;
+                key.style.width = keyWidth + 'px';
+                key.style.left = (i - 21) * keyWidth + 'px';
+                
+                // Determine if it's a black key
+                const note = i % 12;
+                if ([1, 3, 6, 8, 10].includes(note)) {
+                    key.style.background = 'rgba(0, 0, 0, 0.6)';
+                    key.style.height = '60%';
+                }
+                
+                container.appendChild(key);
+            }
+
+            // Add click handlers for testing without MIDI
+            container.addEventListener('mousedown', handlePianoClick);
+            container.addEventListener('mouseup', handlePianoRelease);
+            container.addEventListener('mouseleave', handlePianoRelease);
+        }
+
+        function handlePianoClick(event) {
+            const key = event.target;
+            if (key.classList.contains('piano-key')) {
+                const note = parseInt(key.dataset.note);
+                if (!isNaN(note)) {
+                    noteOn(note, 100); // Default velocity of 100
+                }
+            }
+        }
+
+        function handlePianoRelease(event) {
+            const key = event.target;
+            if (key.classList.contains('piano-key')) {
+                const note = parseInt(key.dataset.note);
+                if (!isNaN(note)) {
+                    noteOff(note);
+                }
+            }
+        }
+
+        function updatePianoRoll() {
+            const keys = document.querySelectorAll('.piano-key');
+            keys.forEach(key => {
+                const note = parseInt(key.dataset.note);
+                if (!isNaN(note)) {
+                    key.classList.toggle('active', state.activeNotes.has(note));
+                }
+            });
+        }
+
+        // Initialize MIDI and Piano Roll
+        const midiController = new MIDIController();
+
+        async function initializeAll() {
+            try {
+                await midiController.initialize();
+                initPianoRoll();
+                window.addEventListener('resize', () => {
+                    initPianoRoll(); // Recreate piano roll on resize
+                });
+                setInterval(updatePianoRoll, 50); // Update piano roll display periodically
+            } catch (error) {
+                console.error('Initialization error:', error);
+            }
+        }
+
+        // Start initialization when page loads
+        document.addEventListener('DOMContentLoaded', initializeAll);
+
+        // Visualization System
+        class VisualizationSystem {
+            constructor() {
+                this.waveformCanvas = document.getElementById('waveformCanvas');
+                this.spectrumCanvas = document.getElementById('spectrumCanvas');
+                this.waveformCtx = this.waveformCanvas?.getContext('2d');
+                this.spectrumCtx = this.spectrumCanvas?.getContext('2d');
+                
+                this.animationFrame = null;
+                this.lastDrawTime = 0;
+                this.frameRate = 60;
+                this.frameInterval = 1000 / this.frameRate;
+
+                this.setupCanvases();
+                window.addEventListener('resize', () => this.setupCanvases());
+            }
+
+            setupCanvases() {
+                [this.waveformCanvas, this.spectrumCanvas].forEach(canvas => {
+                    if (canvas) {
+                        // Set actual size in memory (scaled to account for pixel ratio)
+                        const dpr = window.devicePixelRatio || 1;
+                        const rect = canvas.getBoundingClientRect();
+                        
+                        canvas.width = rect.width * dpr;
+                        canvas.height = rect.height * dpr;
+                        
+                        // Scale context to ensure correct drawing operations
+                        const ctx = canvas.getContext('2d');
+                        ctx.scale(dpr, dpr);
+                        
+                        // Set CSS size
+                        canvas.style.width = `${rect.width}px`;
+                        canvas.style.height = `${rect.height}px`;
+                    }
+                });
+            }
+
+            startVisualization() {
+                const drawLoop = (timestamp) => {
+                    if (timestamp - this.lastDrawTime >= this.frameInterval) {
+                        this.draw();
+                        this.lastDrawTime = timestamp;
+                    }
+                    this.animationFrame = requestAnimationFrame(drawLoop);
+                };
+                
+                this.animationFrame = requestAnimationFrame(drawLoop);
+            }
+
+            stopVisualization() {
+                if (this.animationFrame) {
+                    cancelAnimationFrame(this.animationFrame);
+                    this.animationFrame = null;
+                }
+            }
+
+            draw() {
+                if (!analyser) return;
+
+                if (state.visualizationMode === 'waveform') {
+                    this.drawWaveform();
+                } else {
+                    this.drawSpectrum();
+                }
+            }
+
+            drawWaveform() {
+                if (!this.waveformCtx || !analyser) return;
+
+                const ctx = this.waveformCtx;
+                const canvas = this.waveformCanvas;
+                const width = canvas.clientWidth;
+                const height = canvas.clientHeight;
+
+                // Clear with fade effect
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.3)';
+                ctx.fillRect(0, 0, width, height);
+
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                analyser.getByteTimeDomainData(dataArray);
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#2dd4bf';
+                ctx.beginPath();
+
+                const sliceWidth = width / bufferLength;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const v = dataArray[i] / 128.0;
+                    const y = v * height / 2;
+
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+
+                    x += sliceWidth;
+                }
+
+                ctx.lineTo(width, height / 2);
+                ctx.stroke();
+            }
+
+            drawSpectrum() {
+                if (!this.spectrumCtx || !analyser) return;
+
+                const ctx = this.spectrumCtx;
+                const canvas = this.spectrumCanvas;
+                const width = canvas.clientWidth;
+                const height = canvas.clientHeight;
+
+                // Clear with fade effect
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.3)';
+                ctx.fillRect(0, 0, width, height);
+
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                analyser.getByteFrequencyData(dataArray);
+
+                const barWidth = (width / bufferLength) * 2.5;
+                let x = 0;
+
+                for (let i = 0; i < bufferLength; i++) {
+                    const barHeight = (dataArray[i] / 255) * height;
+                    const hue = (i / bufferLength) * 360;
+
+                    ctx.fillStyle = `hsl(${hue}, 100%, 50%)`;
+                    ctx.fillRect(x, height - barHeight, barWidth, barHeight);
+
+                    x += barWidth + 1;
+                }
+            }
+
+            // Update visualization parameters
+            updateAnalyserSettings(fftSize = 2048, smoothingTimeConstant = 0.8, minDecibels = -90, maxDecibels = -10) {
+                if (!analyser) return;
+                
+                try {
+                    analyser.fftSize = fftSize;
+                    analyser.smoothingTimeConstant = smoothingTimeConstant;
+                    analyser.minDecibels = minDecibels;
+                    analyser.maxDecibels = maxDecibels;
+                } catch (error) {
+                    console.error('Error updating analyser settings:', error);
+                }
+            }
+        }
+
+        // Create and initialize visualization system
+        const visualizer = new VisualizationSystem();
+
+        // Update the previous updateVisualization placeholder
+        function updateVisualization() {
+            if (!visualizer.animationFrame) {
+                visualizer.startVisualization();
+            }
+        }
+
+        // Add visualization mode handling
+        function setVisualizationMode(mode) {
+            if (mode === 'waveform' || mode === 'spectrum') {
+                state.visualizationMode = mode;
+            }
+        }
+
+        // Start visualization when audio system is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            if (state.audioEnabled) {
+                visualizer.startVisualization();
+            }
+        });
+
+        // Cleanup visualization on page unload
+        window.addEventListener('beforeunload', () => {
+            visualizer.stopVisualization();
+        });
+
+        // Analysis Engine Implementation
+        class AnalysisEngine {
+            constructor() {
+                this.intervalRatios = new Map([
+                    ['P1', 1],      // Perfect unison
+                    ['m2', 16/15],  // Minor second
+                    ['M2', 9/8],    // Major second
+                    ['m3', 6/5],    // Minor third
+                    ['M3', 5/4],    // Major third
+                    ['P4', 4/3],    // Perfect fourth
+                    ['TT', 45/32],  // Tritone
+                    ['P5', 3/2],    // Perfect fifth
+                    ['m6', 8/5],    // Minor sixth
+                    ['M6', 5/3],    // Major sixth
+                    ['m7', 9/5],    // Minor seventh
+                    ['M7', 15/8],   // Major seventh
+                    ['P8', 2/1]     // Perfect octave
+                ]);
+
+                this.analysisCacheSize = 1000;
+                this.analysisCache = new Map();
+                this.lastAnalysis = null;
+            }
+
+            analyzeNotes() {
+                if (!state.harmonicAnalysisEnabled || state.activeNotes.size === 0) {
+                    return null;
+                }
+
+                const notes = Array.from(state.activeNotes.entries());
+                const cacheKey = this.generateCacheKey(notes);
+
+                // Check cache first
+                if (this.analysisCache.has(cacheKey)) {
+                    return this.analysisCache.get(cacheKey);
+                }
+
+                const analysis = {
+                    intervals: this.analyzeIntervals(notes),
+                    harmony: this.analyzeHarmony(notes),
+                    patterns: this.detectPatterns(notes),
+                    statistics: this.calculateStatistics(notes)
+                };
+
+                // Cache the results
+                this.analysisCache.set(cacheKey, analysis);
+                if (this.analysisCache.size > this.analysisCacheSize) {
+                    const firstKey = this.analysisCache.keys().next().value;
+                    this.analysisCache.delete(firstKey);
+                }
+
+                this.lastAnalysis = analysis;
+                return analysis;
+            }
+
+            generateCacheKey(notes) {
+                return notes.map(([note, data]) => `${note}:${data.frequency.toFixed(2)}`).join('|');
+            }
+
+            analyzeIntervals(notes) {
+                const intervals = [];
+                for (let i = 0; i < notes.length; i++) {
+                    for (let j = i + 1; j < notes.length; j++) {
+                        const [note1, data1] = notes[i];
+                        const [note2, data2] = notes[j];
+                        const ratio = data2.frequency / data1.frequency;
+                        const interval = this.identifyInterval(ratio);
+                        
+                        intervals.push({
+                            notes: [note1, note2],
+                            interval: interval.name,
+                            ratio: ratio.toFixed(3),
+                            cents: this.ratioToCents(ratio),
+                            deviation: interval.deviation
+                        });
+                    }
+                }
+                return intervals;
+            }
+
+            identifyInterval(ratio) {
+                let closestInterval = { name: 'P1', deviation: Infinity };
+                
+                for (const [name, perfectRatio] of this.intervalRatios) {
+                    const deviation = Math.abs(1200 * Math.log2(ratio / perfectRatio));
+                    if (deviation < closestInterval.deviation) {
+                        closestInterval = { name, deviation };
+                    }
+                }
+                
+                return closestInterval;
+            }
+
+            ratioToCents(ratio) {
+                return 1200 * Math.log2(ratio);
+            }
+
+            analyzeHarmony(notes) {
+                if (notes.length < 2) return { type: 'single note' };
+
+                const frequencies = notes.map(([_, data]) => data.frequency);
+                const ratios = this.getAllRatios(frequencies);
+                
+                return {
+                    complexity: this.calculateComplexity(ratios),
+                    consonance: this.calculateConsonance(ratios),
+                    fundamentalEstimate: this.estimateFundamental(frequencies),
+                    harmonicSeries: this.findHarmonicRelationships(frequencies)
+                };
+            }
+
+            getAllRatios(frequencies) {
+                const ratios = [];
+                for (let i = 0; i < frequencies.length; i++) {
+                    for (let j = i + 1; j < frequencies.length; j++) {
+                        ratios.push(frequencies[j] / frequencies[i]);
+                    }
+                }
+                return ratios;
+            }
+
+            calculateComplexity(ratios) {
+                return ratios.reduce((complexity, ratio) => {
+                    const simplified = this.simplifyRatio(ratio);
+                    return complexity + Math.log2(simplified.numerator + simplified.denominator);
+                }, 0) / ratios.length;
+            }
+
+            calculateConsonance(ratios) {
+                return ratios.reduce((consonance, ratio) => {
+                    const simplified = this.simplifyRatio(ratio);
+                    return consonance + (1 / (simplified.numerator + simplified.denominator));
+                }, 0) / ratios.length;
+            }
+
+            simplifyRatio(ratio) {
+                const precision = 1e-6;
+                let numerator = Math.round(ratio * 1000);
+                let denominator = 1000;
+                
+                const gcd = (a, b) => b < precision ? a : gcd(b, a % b);
+                const divisor = gcd(numerator, denominator);
+                
+                return {
+                    numerator: numerator / divisor,
+                    denominator: denominator / divisor
+                };
+            }
+
+            estimateFundamental(frequencies) {
+                // Implementation of harmonic series analysis
+                const candidates = frequencies.map(f => ({
+                    frequency: f,
+                    score: this.evaluateAsFundamental(f, frequencies)
+                }));
+
+                return candidates.reduce((best, current) => 
+                    current.score > best.score ? current : best
+                ).frequency;
+            }
+
+            evaluateAsFundamental(fundamental, frequencies) {
+                return frequencies.reduce((score, f) => {
+                    const ratio = f / fundamental;
+                    const nearestHarmonic = Math.round(ratio);
+                    const deviation = Math.abs(ratio - nearestHarmonic);
+                    return score + (1 / (1 + deviation));
+                }, 0);
+            }
+
+            findHarmonicRelationships(frequencies) {
+                const fundamental = this.estimateFundamental(frequencies);
+                return frequencies.map(f => ({
+                    frequency: f,
+                    harmonicNumber: Math.round(f / fundamental),
+                    deviation: Math.abs(f / fundamental - Math.round(f / fundamental))
+                }));
+            }
+
+            detectPatterns(notes) {
+                return {
+                    melodic: this.analyzeMelodicPattern(notes),
+                    rhythmic: this.analyzeRhythmicPattern(notes)
+                };
+            }
+
+            analyzeMelodicPattern(notes) {
+                if (notes.length < 2) return { type: 'insufficient notes' };
+
+                const intervals = notes.slice(1).map((note, i) => 
+                    note[0] - notes[i][0]
+                );
+
+                return {
+                    direction: this.getMelodicDirection(intervals),
+                    pattern: this.identifyMelodicPattern(intervals)
+                };
+            }
+
+            getMelodicDirection(intervals) {
+                const ascending = intervals.filter(i => i > 0).length;
+                const descending = intervals.filter(i => i < 0).length;
+                
+                if (ascending > descending) return 'ascending';
+                if (descending > ascending) return 'descending';
+                return 'static';
+            }
+
+            identifyMelodicPattern(intervals) {
+                // Pattern detection logic here
+                const patternSize = this.findPatternSize(intervals);
+                return patternSize > 1 ? `${patternSize}-note pattern` : 'no pattern';
+            }
+
+            findPatternSize(intervals) {
+                // Basic pattern detection
+                for (let size = 2; size <= intervals.length / 2; size++) {
+                    let isPattern = true;
+                    for (let i = 0; i < intervals.length - size; i++) {
+                        if (intervals[i] !== intervals[i % size]) {
+                            isPattern = false;
+                            break;
+                        }
+                    }
+                    if (isPattern) return size;
+                }
+                return 1;
+            }
+
+            analyzeRhythmicPattern(notes) {
+                if (notes.length < 2) return { type: 'insufficient notes' };
+
+                const timings = notes.map(([_, data]) => data.timestamp);
+                const intervals = timings.slice(1).map((time, i) => 
+                    time - timings[i]
+                );
+
+                return {
+                    tempo: this.estimateTempo(intervals),
+                    pattern: this.identifyRhythmicPattern(intervals)
+                };
+            }
+
+            estimateTempo(intervals) {
+                if (intervals.length === 0) return null;
+                const averageInterval = intervals.reduce((a, b) => a + b) / intervals.length;
+                return Math.round(60 / averageInterval);
+            }
+
+            identifyRhythmicPattern(intervals) {
+                // Rhythm pattern detection
+                const normalized = this.normalizeIntervals(intervals);
+                return this.findRhythmicGroup(normalized);
+            }
+
+            normalizeIntervals(intervals) {
+                if (intervals.length === 0) return [];
+                const minInterval = Math.min(...intervals);
+                return intervals.map(i => Math.round(i / minInterval));
+            }
+
+            findRhythmicGroup(normalized) {
+                // Basic rhythm pattern detection
+                const common = [
+                    { pattern: [2, 2, 2], name: 'triple' },
+                    { pattern: [3, 3], name: 'compound duple' },
+                    { pattern: [2, 1, 2, 1], name: 'syncopated' }
+                ];
+
+                for (const { pattern, name } of common) {
+                    if (this.matchesPattern(normalized, pattern)) {
+                        return name;
+                    }
+                }
+
+                return 'complex';
+            }
+
+            matchesPattern(intervals, pattern) {
+                if (intervals.length < pattern.length) return false;
+                
+                for (let i = 0; i <= intervals.length - pattern.length; i++) {
+                    let matches = true;
+                    for (let j = 0; j < pattern.length; j++) {
+                        if (intervals[i + j] !== pattern[j]) {
+                            matches = false;
+                            break;
+                        }
+                    }
+                    if (matches) return true;
+                }
+                return false;
+            }
+
+            calculateStatistics(notes) {
+                const frequencies = notes.map(([_, data]) => data.frequency);
+                return {
+                    averageFrequency: this.mean(frequencies),
+                    frequencyRange: this.range(frequencies),
+                    noteSpread: this.standardDeviation(frequencies)
+                };
+            }
+
+            mean(values) {
+                return values.reduce((a, b) => a + b) / values.length;
+            }
+
+            range(values) {
+                return {
+                    min: Math.min(...values),
+                    max: Math.max(...values)
+                };
+            }
+
+            standardDeviation(values) {
+                const avg = this.mean(values);
+                const squareDiffs = values.map(value => Math.pow(value - avg, 2));
+                return Math.sqrt(this.mean(squareDiffs));
+            }
+        }
+
+        // Initialize Analysis Engine
+        const analysisEngine = new AnalysisEngine();
+
+        // Update the previous placeholder function
+        function updateMathematicalAnalysis() {
+            const analysis = analysisEngine.analyzeNotes();
+            const mathContent = document.getElementById('mathContent');
+            
+            if (mathContent && analysis) {
+                mathContent.textContent = JSON.stringify(analysis, null, 2);
+            }
+        }
+
+        // Enable automatic analysis updates
+        setInterval(updateMathematicalAnalysis, 100);
+
+        // Educational and Game Systems
+        class EducationalSystem {
+            constructor() {
+                this.progressTracker = new ProgressTracker();
+                this.challengeSystem = new ChallengeSystem();
+                this.feedbackSystem = new FeedbackSystem();
+                this.currentTopic = null;
+                
+                this.topics = new Map([
+                    ['harmonic-basics', {
+                        title: 'Harmonic Foundations',
+                        description: 'Learn about fundamental frequency relationships',
+                        levels: [
+                            {
+                                id: 'octaves',
+                                name: 'Perfect Octaves',
+                                challenges: [
+                                    {
+                                        id: 'find-octave',
+                                        description: 'Play two notes one octave apart',
+                                        validate: (notes) => this.validateOctave(notes)
+                                    }
+                                ]
+                            },
+                            {
+                                id: 'perfect-fifth',
+                                name: 'Perfect Fifths',
+                                challenges: [
+                                    {
+                                        id: 'find-fifth',
+                                        description: 'Play a perfect fifth interval',
+                                        validate: (notes) => this.validateFifth(notes)
+                                    }
+                                ]
+                            }
+                        ]
+                    }],
+                    ['patterns', {
+                        title: 'Mathematical Patterns',
+                        description: 'Discover mathematical relationships in music',
+                        levels: [
+                            {
+                                id: 'geometric-progression',
+                                name: 'Geometric Progressions',
+                                challenges: [
+                                    {
+                                        id: 'ascending-pattern',
+                                        description: 'Play an ascending geometric pattern',
+                                        validate: (notes) => this.validateGeometricPattern(notes)
+                                    }
+                                ]
+                            }
+                        ]
+                    }]
+                ]);
+            }
+
+            initializeUI() {
+                const container = document.createElement('div');
+                container.className = 'educational-panel';
+                container.innerHTML = `
+                    <div class="topic-selection">
+                        <h3>Learning Topics</h3>
+                        <div class="topic-list"></div>
+                    </div>
+                    <div class="challenge-area">
+                        <h3>Current Challenge</h3>
+                        <div id="challenge-description"></div>
+                        <div id="challenge-feedback"></div>
+                    </div>
+                    <div class="progress-display">
+                        <h3>Your Progress</h3>
+                        <div id="progress-stats"></div>
+                    </div>
+                `;
+
+                document.querySelector('.container').appendChild(container);
+                this.populateTopics();
+            }
+
+            populateTopics() {
+                const topicList = document.querySelector('.topic-list');
+                if (!topicList) return;
+
+                this.topics.forEach((topic, id) => {
+                    const topicElement = document.createElement('div');
+                    topicElement.className = 'topic-item';
+                    topicElement.innerHTML = `
+                        <h4>${topic.title}</h4>
+                        <p>${topic.description}</p>
+                        <button onclick="educationalSystem.selectTopic('${id}')">Start</button>
+                    `;
+                    topicList.appendChild(topicElement);
+                });
+            }
+
+            selectTopic(topicId) {
+                this.currentTopic = this.topics.get(topicId);
+                this.progressTracker.setCurrentTopic(topicId);
+                this.challengeSystem.loadChallenges(this.currentTopic.levels);
+                this.updateUI();
+            }
+
+            updateUI() {
+                const descriptionElement = document.getElementById('challenge-description');
+                const currentChallenge = this.challengeSystem.getCurrentChallenge();
+                
+                if (descriptionElement && currentChallenge) {
+                    descriptionElement.textContent = currentChallenge.description;
+                }
+
+                this.updateProgress();
+            }
+
+            updateProgress() {
+                const progressElement = document.getElementById('progress-stats');
+                if (!progressElement) return;
+
+                const progress = this.progressTracker.getProgress();
+                progressElement.innerHTML = `
+                    <div>Level: ${progress.level}</div>
+                    <div>Score: ${progress.score}</div>
+                    <div>Challenges Completed: ${progress.completed}</div>
+                `;
+            }
+
+            // Validation methods
+            validateOctave(notes) {
+                if (notes.length !== 2) return false;
+                const ratio = notes[1].frequency / notes[0].frequency;
+                return Math.abs(ratio - 2) < 0.1;
+            }
+
+            validateFifth(notes) {
+                if (notes.length !== 2) return false;
+                const ratio = notes[1].frequency / notes[0].frequency;
+                return Math.abs(ratio - 1.5) < 0.1;
+            }
+
+            validateGeometricPattern(notes) {
+                if (notes.length < 3) return false;
+                const ratios = [];
+                for (let i = 1; i < notes.length; i++) {
+                    ratios.push(notes[i].frequency / notes[i-1].frequency);
+                }
+                
+                const firstRatio = ratios[0];
+                return ratios.every(ratio => Math.abs(ratio - firstRatio) < 0.1);
+            }
+        }
+
+        class ProgressTracker {
+            constructor() {
+                this.progress = new Map();
+                this.currentTopic = null;
+                this.currentLevel = 0;
+                this.score = 0;
+                this.completedChallenges = new Set();
+            }
+
+            setCurrentTopic(topicId) {
+                this.currentTopic = topicId;
+                if (!this.progress.has(topicId)) {
+                    this.progress.set(topicId, {
+                        level: 0,
+                        score: 0,
+                        completed: new Set()
+                    });
+                }
+            }
+
+            updateProgress(challengeId, score) {
+                if (!this.currentTopic) return;
+
+                const topicProgress = this.progress.get(this.currentTopic);
+                if (!topicProgress) return;
+
+                topicProgress.score += score;
+                topicProgress.completed.add(challengeId);
+                this.completedChallenges.add(challengeId);
+
+                // Check for level advancement
+                if (topicProgress.completed.size >= 3) {
+                    topicProgress.level++;
+                }
+
+                this.score += score;
+                return this.getProgress();
+            }
+
+            getProgress() {
+                if (!this.currentTopic) return null;
+                const topicProgress = this.progress.get(this.currentTopic);
+                return {
+                    level: topicProgress.level,
+                    score: topicProgress.score,
+                    completed: topicProgress.completed.size
+                };
+            }
+        }
+
+        class ChallengeSystem {
+            constructor() {
+                this.challenges = [];
+                this.currentChallengeIndex = 0;
+                this.activeChallenge = null;
+            }
+
+            loadChallenges(levels) {
+                this.challenges = levels.flatMap(level => 
+                    level.challenges.map(challenge => ({
+                        ...challenge,
+                        levelId: level.id,
+                        levelName: level.name
+                    }))
+                );
+                this.currentChallengeIndex = 0;
+                this.startNextChallenge();
+            }
+
+            startNextChallenge() {
+                if (this.currentChallengeIndex < this.challenges.length) {
+                    this.activeChallenge = this.challenges[this.currentChallengeIndex];
+                    return this.activeChallenge;
+                }
+                return null;
+            }
+
+            getCurrentChallenge() {
+                return this.activeChallenge;
+            }
+
+            validateChallenge(notes) {
+                if (!this.activeChallenge) return null;
+
+                const result = this.activeChallenge.validate(notes);
+                if (result) {
+                    this.currentChallengeIndex++;
+                    const score = this.calculateScore();
+                    this.startNextChallenge();
+                    return { success: true, score };
+                }
+
+                return { success: false, score: 0 };
+            }
+
+            calculateScore() {
+                // Basic scoring system
+                return 100;
+            }
+        }
+
+        class FeedbackSystem {
+            constructor() {
+                this.container = document.getElementById('challenge-feedback');
+                this.messages = [];
+                this.maxMessages = 3;
+            }
+
+            addFeedback(message, type = 'info') {
+                const feedbackElement = document.createElement('div');
+                feedbackElement.className = `feedback-message ${type}`;
+                feedbackElement.textContent = message;
+
+                if (this.container) {
+                    this.container.insertBefore(feedbackElement, this.container.firstChild);
+                    
+                    // Remove old messages
+                    while (this.container.children.length > this.maxMessages) {
+                        this.container.removeChild(this.container.lastChild);
+                    }
+
+                    // Fade out after delay
+                    setTimeout(() => {
+                        feedbackElement.style.opacity = '0';
+                        setTimeout(() => {
+                            if (feedbackElement.parentNode === this.container) {
+                                this.container.removeChild(feedbackElement);
+                            }
+                        }, 500);
+                    }, 3000);
+                }
+            }
+
+            generateHarmonicFeedback(analysis) {
+                if (!analysis || !analysis.harmony) return;
+
+                if (analysis.harmony.consonance > 0.8) {
+                    this.addFeedback('Beautiful harmony! The frequencies align perfectly.', 'success');
+                } else if (analysis.harmony.consonance > 0.5) {
+                    this.addFeedback('Interesting harmony. Try adjusting slightly for better consonance.', 'info');
+                } else {
+                    this.addFeedback('This creates dissonance. Try finding simpler frequency ratios.', 'warning');
+                }
+            }
+        }
+
+        // Initialize Educational System
+        const educationalSystem = new EducationalSystem();
+
+        // Add to DOMContentLoaded event listener
+        document.addEventListener('DOMContentLoaded', () => {
+            educationalSystem.initializeUI();
+        });
+
+        // Update analysis to include educational feedback
+        const originalUpdateMathematicalAnalysis = updateMathematicalAnalysis;
+        updateMathematicalAnalysis = function() {
+            const analysis = analysisEngine.analyzeNotes();
+            if (analysis) {
+                originalUpdateMathematicalAnalysis();
+                educationalSystem.feedbackSystem.generateHarmonicFeedback(analysis);
+                
+                if (educationalSystem.challengeSystem.getCurrentChallenge()) {
+                    const result = educationalSystem.challengeSystem.validateChallenge(
+                        Array.from(state.activeNotes.values())
+                    );
+                    
+                    if (result) {
+                        if (result.success) {
+                            educationalSystem.feedbackSystem.addFeedback(
+                                `Challenge completed! Score: ${result.score}`, 
+                                'success'
+                            );
+                            educationalSystem.progressTracker.updateProgress(
+                                educationalSystem.challengeSystem.getCurrentChallenge().id,
+                                result.score
+                            );
+                            educationalSystem.updateUI();
+                        }
+                    }
+                }
+            }
+        };
+
+        // Final Systems: Achievements, Advanced Challenges, and UI Refinements
+        class AchievementSystem {
+            constructor() {
+                this.achievements = new Map([
+                    ['perfect_harmony', {
+                        id: 'perfect_harmony',
+                        title: 'Perfect Harmony',
+                        description: 'Find a perfectly consonant interval',
+                        icon: '🎵',
+                        condition: (analysis) => analysis.harmony.consonance > 0.95
+                    }],
+                    ['pattern_master', {
+                        id: 'pattern_master',
+                        title: 'Pattern Master',
+                        description: 'Complete a geometric progression',
+                        icon: '📈',
+                        condition: (analysis) => analysis.patterns.melodic.type === 'geometric'
+                    }],
+                    ['rhythm_sage', {
+                        id: 'rhythm_sage',
+                        title: 'Rhythm Sage',
+                        description: 'Maintain perfect tempo for 10 seconds',
+                        icon: '⏱️',
+                        condition: (analysis) => analysis.patterns.rhythmic.steadiness > 0.9
+                    }],
+                    ['mathematician', {
+                        id: 'mathematician',
+                        title: 'Mathematical Musician',
+                        description: 'Find three different mathematical relationships',
+                        icon: '🔢',
+                        condition: (analysis) => this.checkMathematicalInsight(analysis)
+                    }]
+                ]);
+
+                this.unlockedAchievements = new Set();
+                this.initializeUI();
+            }
+
+            initializeUI() {
+                const container = document.createElement('div');
+                container.className = 'achievements-panel';
+                container.innerHTML = `
+                    <div class="achievements-header">
+                        <h3>Achievements</h3>
+                        <span class="achievement-count">0/${this.achievements.size}</span>
+                    </div>
+                    <div class="achievements-grid"></div>
+                    <div class="achievement-notification" style="display: none;"></div>
+                `;
+                document.querySelector('.container').appendChild(container);
+                this.populateAchievements();
+            }
+
+            populateAchievements() {
+                const grid = document.querySelector('.achievements-grid');
+                if (!grid) return;
+
+                this.achievements.forEach(achievement => {
+                    const achievementElement = document.createElement('div');
+                    achievementElement.className = 'achievement-item';
+                    achievementElement.dataset.id = achievement.id;
+                    achievementElement.innerHTML = `
+                        <div class="achievement-icon">${achievement.icon}</div>
+                        <div class="achievement-info">
+                            <h4>${achievement.title}</h4>
+                            <p>${achievement.description}</p>
+                        </div>
+                    `;
+                    grid.appendChild(achievementElement);
+                });
+            }
+
+            checkAchievements(analysis) {
+                this.achievements.forEach((achievement, id) => {
+                    if (!this.unlockedAchievements.has(id) && achievement.condition(analysis)) {
+                        this.unlockAchievement(id);
+                    }
+                });
+            }
+
+            unlockAchievement(id) {
+                const achievement = this.achievements.get(id);
+                if (!achievement || this.unlockedAchievements.has(id)) return;
+
+                this.unlockedAchievements.add(id);
+                this.showNotification(achievement);
+                this.updateUI();
+            }
+
+            showNotification(achievement) {
+                const notification = document.querySelector('.achievement-notification');
+                if (!notification) return;
+
+                notification.innerHTML = `
+                    <div class="achievement-popup">
+                        <div class="achievement-icon">${achievement.icon}</div>
+                        <div class="achievement-text">
+                            <h4>Achievement Unlocked!</h4>
+                            <p>${achievement.title}</p>
+                        </div>
+                    </div>
+                `;
+
+                notification.style.display = 'block';
+                notification.style.opacity = '1';
+
+                setTimeout(() => {
+                    notification.style.opacity = '0';
+                    setTimeout(() => {
+                        notification.style.display = 'none';
+                    }, 500);
+                }, 3000);
+            }
+
+            updateUI() {
+                const count = document.querySelector('.achievement-count');
+                if (count) {
+                    count.textContent = `${this.unlockedAchievements.size}/${this.achievements.size}`;
+                }
+
+                this.unlockedAchievements.forEach(id => {
+                    const element = document.querySelector(`[data-id="${id}"]`);
+                    if (element) {
+                        element.classList.add('unlocked');
+                    }
+                });
+            }
+
+            checkMathematicalInsight(analysis) {
+                // Check for multiple mathematical patterns
+                const patterns = new Set();
+                if (analysis.harmony.ratios) {
+                    analysis.harmony.ratios.forEach(ratio => {
+                        const simplified = this.simplifyRatio(ratio);
+                        if (simplified.numerator + simplified.denominator <= 10) {
+                            patterns.add(`${simplified.numerator}:${simplified.denominator}`);
+                        }
+                    });
+                }
+                return patterns.size >= 3;
+            }
+
+            simplifyRatio(ratio) {
+                const precision = 1e-6;
+                let numerator = Math.round(ratio * 1000);
+                let denominator = 1000;
+                
+                const gcd = (a, b) => b < precision ? a : gcd(b, a % b);
+                const divisor = gcd(numerator, denominator);
+                
+                return {
+                    numerator: numerator / divisor,
+                    denominator: denominator / divisor
+                };
+            }
+        }
+
+        // Enhanced scoring system
+        class ScoringSystem {
+            constructor() {
+                this.baseScores = {
+                    perfectInterval: 100,
+                    consonantHarmony: 50,
+                    rhythmicPrecision: 75,
+                    patternRecognition: 150
+                };
+                
+                this.multipliers = {
+                    combo: 1.0,
+                    difficulty: 1.0,
+                    precision: 1.0
+                };
+
+                this.comboCount = 0;
+                this.totalScore = 0;
+            }
+
+            calculateScore(action, metrics) {
+                let baseScore = this.baseScores[action] || 0;
+                
+                // Apply multipliers
+                const comboMultiplier = 1 + (this.comboCount * 0.1);
+                const difficultyMultiplier = metrics.difficulty || 1;
+                const precisionMultiplier = this.calculatePrecisionMultiplier(metrics.precision);
+                
+                const finalScore = Math.round(
+                    baseScore * comboMultiplier * difficultyMultiplier * precisionMultiplier
+                );
+
+                // Update combo
+                if (metrics.success) {
+                    this.comboCount++;
+                } else {
+                    this.comboCount = 0;
+                }
+
+                this.totalScore += finalScore;
+                return {
+                    score: finalScore,
+                    combo: this.comboCount,
+                    multipliers: {
+                        combo: comboMultiplier,
+                        difficulty: difficultyMultiplier,
+                        precision: precisionMultiplier
+                    }
+                };
+            }
+
+            calculatePrecisionMultiplier(precision) {
+                if (typeof precision !== 'number') return 1;
+                return Math.max(0.1, Math.min(1.5, 1 + (precision - 0.5)));
+            }
+
+            getStats() {
+                return {
+                    totalScore: this.totalScore,
+                    currentCombo: this.comboCount,
+                    multipliers: { ...this.multipliers }
+                };
+            }
+        }
+
+        // Initialize new systems
+        const achievementSystem = new AchievementSystem();
+        const scoringSystem = new ScoringSystem();
+
+        // Add styles for new UI elements
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = `
+            .achievements-panel {
+                background: rgba(255, 255, 255, 0.05);
+                border-radius: 0.5rem;
+                padding: 1rem;
+                margin-top: 2rem;
+            }
+
+            .achievements-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 1rem;
+            }
+
+            .achievements-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 1rem;
+            }
+
+            .achievement-item {
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 0.5rem;
+                padding: 1rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                opacity: 0.5;
+                transition: all 0.3s ease;
+            }
+
+            .achievement-item.unlocked {
+                opacity: 1;
+                background: rgba(45, 212, 191, 0.1);
+                border: 1px solid rgba(45, 212, 191, 0.3);
+            }
+
+            .achievement-icon {
+                font-size: 2rem;
+                width: 48px;
+                height: 48px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: rgba(0, 0, 0, 0.3);
+                border-radius: 0.5rem;
+            }
+
+            .achievement-info h4 {
+                margin: 0 0 0.5rem 0;
+                color: var(--primary);
+            }
+
+            .achievement-info p {
+                margin: 0;
+                font-size: 0.9rem;
+                opacity: 0.8;
+            }
+
+            .achievement-notification {
+                position: fixed;
+                bottom: 2rem;
+                right: 2rem;
+                z-index: 1000;
+                transition: opacity 0.5s ease;
+            }
+
+            .achievement-popup {
+                background: rgba(45, 212, 191, 0.9);
+                padding: 1rem;
+                border-radius: 0.5rem;
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            .score-display {
+                position: fixed;
+                top: 2rem;
+                right: 2rem;
+                background: rgba(0, 0, 0, 0.8);
+                padding: 1rem;
+                border-radius: 0.5rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                color: var(--text);
+                font-family: monospace;
+            }
+
+            .combo-meter {
+                height: 4px;
+                background: var(--primary);
+                transition: width 0.3s ease;
+            }
+        `;
+        document.head.appendChild(styleSheet);
+
+        // Update the analysis to include achievements and scoring
+        const previousUpdateAnalysis = updateMathematicalAnalysis;
+        updateMathematicalAnalysis = function() {
+            const analysis = analysisEngine.analyzeNotes();
+            if (analysis) {
+                previousUpdateAnalysis();
+                achievementSystem.checkAchievements(analysis);
+                
+                // Update score based on analysis
+                const scoreResult = scoringSystem.calculateScore('harmonicAnalysis', {
+                    success: true,
+                    precision: analysis.harmony.consonance,
+                    difficulty: analysis.complexity || 1
+                });
+
+                // Update score display
+                const scoreDisplay = document.querySelector('.score-display') || 
+                    document.createElement('div');
+                scoreDisplay.className = 'score-display';
+                scoreDisplay.innerHTML = `
+                    <div>Score: ${scoreResult.score}</div>
+                    <div>Combo: x${scoreResult.combo}</div>
+                    <div class="combo-meter" style="width: ${scoreResult.combo * 10}%"></div>
+                `;
+                
+                if (!scoreDisplay.parentNode) {
+                    document.body.appendChild(scoreDisplay);
+                }
+            }
+        };
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize all systems
+            try {
+                initAudioSystem();
+                initPianoRoll();
+                visualizer.startVisualization();
+            } catch (error) {
+                console.error('Error starting application:', error);
+            }
+        });
+    </script>
+</body>
+</html>

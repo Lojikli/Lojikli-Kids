@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Advanced Musical Physics Laboratory</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: #000913;
+            font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
+            color: #fff;
+        }
+        #canvas {
+            background: #000;
+            cursor: crosshair;
+        }
+        .laboratory-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 320px;
+            background: rgba(0, 9, 19, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #234;
+            font-size: 14px;
+        }
+        .visualization-panel {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 320px;
+            background: rgba(0, 9, 19, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #234;
+        }
+        .controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 9, 19, 0.95);
+            padding: 20px;
+            border-radius: 15px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            border: 1px solid #234;
+        }
+        .graph-container {
+            background: #0a1520;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 10px 0;
+            height: 150px;
+            position: relative;
+        }
+        .waveform-display {
+            height: 100px;
+            background: #000;
+            margin: 10px 0;
+            position: relative;
+            border-radius: 5px;
+        }
+        .spectrum-analyzer {
+            height: 100px;
+            background: #000;
+            margin: 10px 0;
+            position: relative;
+            border-radius: 5px;
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .data-table td {
+            padding: 4px;
+            border: 1px solid #234;
+        }
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .mode-button {
+            background: #123;
+            border: 1px solid #345;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .mode-button.active {
+            background: #234;
+            border-color: #456;
+        }
+        .quantum-display {
+            background: #0a1520;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .interactive-formula {
+            font-family: monospace;
+            background: #0a1520;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        .interactive-formula:hover {
+            background: #0f1f30;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 10px 0;
+            accent-color: #4a90e2;
+        }
+        button {
+            background: #4a90e2;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        button:hover {
+            background: #357abd;
+        }
+        .info-tooltip {
+            position: absolute;
+            background: rgba(0, 9, 19, 0.95);
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #234;
+            pointer-events: none;
+            display: none;
+            z-index: 1000;
+        }
+        .standing-wave {
+            height: 60px;
+            background: #000;
+            margin: 10px 0;
+            position: relative;
+            border-radius: 5px;
+        }
+        #tutorial {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 9, 19, 0.98);
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            font-size: 15px;
+            line-height: 1.6;
+            border: 1px solid #234;
+            z-index: 1000;
+        }
+        .concept-map {
+            width: 100%;
+            height: 200px;
+            background: #0a1520;
+            margin: 10px 0;
+            border-radius: 8px;
+            position: relative;
+        }
+        .achievement {
+            background: #1a2530;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .achievement-icon {
+            width: 30px;
+            height: 30px;
+            background: #234;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    
+    <div class="laboratory-panel">
+        <h3>Physics Laboratory</h3>
+        <div class="mode-selector">
+            <button class="mode-button active" data-mode="wave">Wave</button>
+            <button class="mode-button" data-mode="quantum">Quantum</button>
+            <button class="mode-button" data-mode="color">Color</button>
+        </div>
+
+        <div class="data-section" id="wave-mode">
+            <div class="waveform-display"></div>
+            <div class="interactive-formula" id="wave-equation">
+                ψ(x,t) = A sin(kx - ωt)
+            </div>
+            <table class="data-table">
+                <tr>
+                    <td>Frequency (f)</td>
+                    <td id="frequency-value">440 Hz</td>
+                </tr>
+                <tr>
+                    <td>Angular Frequency (ω)</td>
+                    <td id="angular-freq">2764.60 rad/s</td>
+                </tr>
+                <tr>
+                    <td>Wavelength (λ)</td>
+                    <td id="wavelength">0.78 m</td>
+                </tr>
+                <tr>
+                    <td>Wave Number (k)</td>
+                    <td id="wave-number">8.04 rad/m</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="data-section" id="quantum-mode" style="display: none;">
+            <div class="quantum-display">
+                <h4>Quantum Properties</h4>
+                <div class="interactive-formula" id="energy-equation">
+                    E = hf = ℏω
+                </div>
+                <table class="data-table">
+                    <tr>
+                        <td>Energy (E)</td>
+                        <td id="energy-value">1.82e-21 J</td>
+                    </tr>
+                    <tr>
+                        <td>Momentum (p)</td>
+                        <td id="momentum-value">6.07e-30 kg⋅m/s</td>
+                    </tr>
+                    <tr>
+                        <td>de Broglie λ</td>
+                        <td id="de-broglie">1.09e-4 m</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="data-section" id="color-mode" style="display: none;">
+            <div class="spectrum-analyzer"></div>
+            <div class="interactive-formula" id="color-equation">
+                c = fλ
+            </div>
+            <table class="data-table">
+                <tr>
+                    <td>Visible Wavelength</td>
+                    <td id="visible-wavelength">550 nm</td>
+                </tr>
+                <tr>
+                    <td>Color Temperature</td>
+                    <td id="color-temp">5500 K</td>
+                </tr>
+                <tr>
+                    <td>Energy Level</td>
+                    <td id="energy-level">2.25 eV</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <div class="visualization-panel">
+        <h3>Musical Analysis</h3>
+        <div class="standing-wave" id="standing-wave"></div>
+        <div class="concept-map" id="concept-map"></div>
+        
+        <div id="achievements">
+            <h4>Scientific Discoveries</h4>
+            <div class="achievement">
+                <div class="achievement-icon">🌊</div>
+                <span>Wave-Particle Duality Observer</span>
+            </div>
+            <div class="achievement">
+                <div class="achievement-icon">🎵</div>
+                <span>Harmonic Series Explorer</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="controls">
+        <div>
+            <label>Frequency (Hz)</label>
+            <input type="range" id="frequency" min="20" max="20000" value="440" step="0.1">
+        </div>
+        <div>
+            <label>Amplitude</label>
+            <input type="range" id="amplitude" min="0" max="100" value="50">
+        </div>
+        <div>
+            <label>Harmonics</label>
+            <input type="range" id="harmonics" min="0" max="12" value="0">
+        </div>
+        <div>
+            <label>Phase Shift</label>
+            <input type="range" id="phase" min="0" max="360" value="0">
+        </div>
+        <button id="clear">Clear Canvas</button>
+        <button id="help">Physics Guide</button>
+    </div>
+
+    <div id="tutorial">
+        <h2>🔬 Advanced Physics & Music Laboratory</h2>
+        
+        <h3>Wave Mechanics Mode</h3>
+        <p>Explore the fundamental properties of waves through sound:</p>
+        <ul>
+            <li><strong>Standing Waves:</strong> Observe nodes and antinodes in real-time</li>
+            <li><strong>Wave Superposition:</strong> Add harmonics to see wave interference</li>
+            <li><strong>Doppler Effect:</strong> Move the mouse quickly to observe frequency shifts</li>
+        </ul>
+
+        <h3>Quantum Properties Mode</h3>
+        <p>Discover quantum mechanical aspects of sound and light:</p>
+        <ul>
+            <li><strong>Wave-Particle Duality:</strong> See how frequency relates to photon energy</li>
+            <li><strong>Energy Levels:</strong> Observe quantized energy transitions</li>
+            <li><strong>Uncertainty Principle:</strong> Explore time-frequency relationships</li>
+        </ul>
+
+        <h3>Color Theory Mode</h3>
+        <p>Connect sound frequencies to the electromagnetic spectrum:</p>
+        <ul>
+            <li><strong>Spectral Analysis:</strong> Map sound frequencies to visible light</li>
+            <li><strong>Color Temperature:</strong> Understand black body radiation</li>
+            <li><strong>Resonance:</strong> Find matching frequencies across octaves</li>
+        </ul>
+
+        <div class="achievements-preview">
+            <h3>Scientific Achievements to Unlock:</h3>
+            <ul>
+                <li>🎯 Harmonic Series Master</li>
+                <li>🌈 Spectrum Analysis Expert</li>
+                <li>⚛️ Quantum Observer</li>
+                <li>🎼 Musical Physicist</li>
+                <li>🔄 Standing Wave Sage</li>
+            </ul>
+        </div>
+
+        <button onclick="this.parentElement.style.display='none'">Begin Exploration</button>
+    </div>
+
+    <script>
+        // Constants
+        const SPEED_OF_LIGHT = 299792458; // m/s
+        const PLANCK_CONSTANT = 6.62607015e-34; // J⋅s
+        const REDUCED_PLANCK = PLANCK_CONSTANT / (2 * Math.PI);
+        const ELECTRON_VOLT = 1.602176634e-19; // J
+        const BOLTZMANN_CONSTANT = 1.380649e-23; // J/K
+
+        // Canvas setup
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let audioContext;
+        let mainOscillator = null;
+        let gainNode = null;
+        let analyserNode = null;
+        let isPlaying = false;
+        let lastX = 0;
+        let lastY = 0;
+        let currentMode = 'wave';
+        let achievements = new Set();
+        
+        // Initialize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Audio initialization
+        function initAudio() {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            gainNode = audioContext.createGain();
+            analyserNode = audioContext.createAnalyser();
+            analyserNode.fftSize = 2048;
+            gainNode.connect(analyserNode);
+            analyserNode.connect(audioContext.destination);
+        }
+
+        // Wave visualization
+        class WaveVisualizer {
+            constructor(container, width, height) {
+                this.container = container;
+                this.width = width;
+                this.height = height;
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = width;
+                this.canvas.height = height;
+                this.ctx = this.canvas.getContext('2d');
+                container.appendChild(this.canvas);
+            }
+
+            drawWaveform(frequency, amplitude, harmonics, phase) {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                this.ctx.strokeStyle = '#4a90e2';
+                this.ctx.lineWidth = 2;
+
+                // Draw fundamental frequency
+                this.ctx.beginPath();
+                for (let x = 0; x < this.width; x++) {
+                    const t = x / this.width;
+                    const y = amplitude * Math.sin(2 * Math.PI * frequency * t + phase);
+                    const scaledY = this.height/2 + (y * this.height/2);
+                    if (x === 0) this.ctx.moveTo(x, scaledY);
+                    else this.ctx.lineTo(x, scaledY);
+                }
+                this.ctx.stroke();
+
+                // Draw harmonics
+                for (let h = 1; h <= harmonics; h++) {
+                    const harmonicFreq = frequency * (h + 1);
+                    const harmonicAmp = amplitude / (h + 1);
+                    
+                    this.ctx.beginPath();
+                    this.ctx.strokeStyle = `rgba(74, 144, 226, ${0.3 / h})`;
+                    
+                    for (let x = 0; x < this.width; x++) {
+                        const t = x / this.width;
+                        const y = harmonicAmp * Math.sin(2 * Math.PI * harmonicFreq * t + phase);
+                        const scaledY = this.height/2 + (y * this.height/2);
+                        if (x === 0) this.ctx.moveTo(x, scaledY);
+                        else this.ctx.lineTo(x, scaledY);
+                    }
+                    this.ctx.stroke();
+                }
+            }
+
+            drawFFT(dataArray) {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                this.ctx.fillStyle = '#4a90e2';
+                
+                const barWidth = this.width / dataArray.length;
+                
+                for (let i = 0; i < dataArray.length; i++) {
+                    const value = dataArray[i] / 255;
+                    const height = value * this.height;
+                    const x = i * barWidth;
+                    const y = this.height - height;
+                    
+                    this.ctx.fillRect(x, y, barWidth, height);
+                }
+            }
+        }
+
+        // Standing Wave Visualization
+        class StandingWaveVisualizer {
+            constructor(container) {
+                this.container = container;
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+                this.ctx = this.canvas.getContext('2d');
+                container.appendChild(this.canvas);
+                this.time = 0;
+            }
+
+            update(frequency, amplitude) {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.strokeStyle = '#4a90e2';
+                this.ctx.lineWidth = 2;
+                
+                this.ctx.beginPath();
+                for (let x = 0; x < this.canvas.width; x++) {
+                    const normalizedX = x / this.canvas.width;
+                    const y = amplitude * Math.sin(2 * Math.PI * 2 * normalizedX) * 
+                             Math.cos(2 * Math.PI * frequency * this.time);
+                    const scaledY = this.canvas.height/2 + (y * this.canvas.height/2);
+                    
+                    if (x === 0) this.ctx.moveTo(x, scaledY);
+                    else this.ctx.lineTo(x, scaledY);
+                }
+                this.ctx.stroke();
+                
+                this.time += 0.016; // Approximately 60fps
+            }
+        }
+
+        // Concept Map Visualization
+        class ConceptMap {
+            constructor(container) {
+                this.container = container;
+                this.canvas = document.createElement('canvas');
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+                this.ctx = this.canvas.getContext('2d');
+                container.appendChild(this.canvas);
+                this.concepts = [
+                    { id: 'frequency', x: 50, y: 50, connections: ['wavelength', 'energy'] },
+                    { id: 'wavelength', x: 150, y: 50, connections: ['color'] },
+                    { id: 'energy', x: 100, y: 100, connections: ['quantum'] },
+                    { id: 'color', x: 200, y: 100, connections: ['spectrum'] },
+                    { id: 'quantum', x: 150, y: 150, connections: ['spectrum'] },
+                    { id: 'spectrum', x: 250, y: 150, connections: [] }
+                ];
+            }
+
+            draw() {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw connections
+                this.ctx.strokeStyle = '#234';
+                this.ctx.lineWidth = 2;
+                for (const concept of this.concepts) {
+                    for (const connectionId of concept.connections) {
+                        const target = this.concepts.find(c => c.id === connectionId);
+                        if (target) {
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(concept.x, concept.y);
+                            this.ctx.lineTo(target.x, target.y);
+                            this.ctx.stroke();
+                        }
+                    }
+                }
+                
+                // Draw nodes
+                for (const concept of this.concepts) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(concept.x, concept.y, 5, 0, 2 * Math.PI);
+                    this.ctx.fillStyle = '#4a90e2';
+                    this.ctx.fill();
+                    
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.fillText(concept.id, concept.x, concept.y + 20);
+                }
+            }
+
+            highlightConcept(conceptId) {
+                const concept = this.concepts.find(c => c.id === conceptId);
+                if (concept) {
+                    this.ctx.beginPath();
+                    this.ctx.arc(concept.x, concept.y, 8, 0, 2 * Math.PI);
+                    this.ctx.fillStyle = '#ff0';
+                    this.ctx.fill();
+                }
+            }
+        }
+
+        // Scientific calculations
+        function updateScientificData(frequency, amplitude) {
+            // Wave properties
+            const wavelength = SPEED_OF_LIGHT / frequency;
+            const angularFrequency = 2 * Math.PI * frequency;
+            const waveNumber = 2 * Math.PI / wavelength;
+            
+            // Quantum properties
+            const energy = PLANCK_CONSTANT * frequency;
+            const momentum = PLANCK_CONSTANT / wavelength;
+            const deBroglieWavelength = PLANCK_CONSTANT / momentum;
+            
+            // Color properties
+            const normalizedFreq = (Math.log2(frequency) - Math.log2(20)) / (Math.log2(20000) - Math.log2(20));
+            const visibleWavelength = 380 + (750 - 380) * (1 - normalizedFreq);
+            const colorTemp = 5500; // Approximate solar temperature
+            const energyLevel = (PLANCK_CONSTANT * SPEED_OF_LIGHT) / (visibleWavelength * 1e-9 * ELECTRON_VOLT);
+
+            // Update display
+            document.getElementById('frequency-value').textContent = `${frequency.toFixed(1)} Hz`;
+            document.getElementById('angular-freq').textContent = `${angularFrequency.toFixed(2)} rad/s`;
+            document.getElementById('wavelength').textContent = `${wavelength.toFixed(2)} m`;
+            document.getElementById('wave-number').textContent = `${waveNumber.toFixed(2)} rad/m`;
+            
+            document.getElementById('energy-value').textContent = `${energy.toExponential(2)} J`;
+            document.getElementById('momentum-value').textContent = `${momentum.toExponential(2)} kg⋅m/s`;
+            document.getElementById('de-broglie').textContent = `${deBroglieWavelength.toExponential(2)} m`;
+            
+            document.getElementById('visible-wavelength').textContent = `${visibleWavelength.toFixed(0)} nm`;
+            document.getElementById('color-temp').textContent = `${colorTemp} K`;
+            document.getElementById('energy-level').textContent = `${energyLevel.toFixed(2)} eV`;
+
+            checkAchievements(frequency, amplitude);
+        }
+
+        // Achievement system
+        function checkAchievements(frequency, amplitude) {
+            // Harmonic Series Master
+            if (document.getElementById('harmonics').value >= 7) {
+                unlockAchievement('harmonic-master', '🎯 Harmonic Series Master');
+            }
+            
+            // Quantum Observer
+            if (frequency > 1000 && amplitude > 0.8) {
+                unlockAchievement('quantum-observer', '⚛️ Quantum Observer');
+            }
+            
+            // Standing Wave Sage
+            if (frequency === 440 && amplitude > 0.9) {
+                unlockAchievement('standing-wave-sage', '🔄 Standing Wave Sage');
+            }
+        }
+
+        function unlockAchievement(id, title) {
+            if (!achievements.has(id)) {
+                achievements.add(id);
+                const achievement = document.createElement('div');
+                achievement.className = 'achievement';
+                achievement.innerHTML = `
+                    <div class="achievement-icon">🌟</div>
+                    <span>${title}</span>
+                `;
+                document.getElementById('achievements').appendChild(achievement);
+            }
+        }
+
+        // Audio synthesis
+        function createOscillator(frequency) {
+            if (!audioContext) initAudio();
+            
+            if (mainOscillator) {
+                mainOscillator.stop();
+                mainOscillator.disconnect();
+            }
+
+            mainOscillator = audioContext.createOscillator();
+            mainOscillator.type = 'sine';
+            mainOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+
+            // Add harmonics
+            const harmonicsCount = parseInt(document.getElementById('harmonics').value);
+            const harmonicOscillators = [];
+            
+            for (let i = 1; i <= harmonicsCount; i++) {
+                const harmonicOsc = audioContext.createOscillator();
+                const harmonicGain = audioContext.createGain();
+                
+                harmonicOsc.frequency.setValueAtTime(frequency * (i + 1), audioContext.currentTime);
+                harmonicGain.gain.setValueAtTime(0.15 / (i + 1), audioContext.currentTime);
+                
+                harmonicOsc.connect(harmonicGain);
+                harmonicGain.connect(gainNode);
+                harmonicOsc.start();
+                harmonicOscillators.push({ osc: harmonicOsc, gain: harmonicGain });
+            }
+
+            mainOscillator.connect(gainNode);
+            mainOscillator.start();
+            isPlaying = true;
+
+            return harmonicOscillators;
+        }
+
+        // Drawing functions
+        function getColorFromFrequency(frequency) {
+            const minFreq = 20;  // Hz
+            const maxFreq = 20000; // Hz
+            const normalizedFreq = (Math.log2(frequency) - Math.log2(minFreq)) / 
+                                 (Math.log2(maxFreq) - Math.log2(minFreq));
+            return `hsl(${normalizedFreq * 300}, 100%, 50%)`;
+        }
+
+        function drawWave(x, y) {
+            const frequency = parseFloat(document.getElementById('frequency').value);
+            const amplitude = parseFloat(document.getElementById('amplitude').value) / 100;
+            const harmonics = parseInt(document.getElementById('harmonics').value);
+            const phase = parseFloat(document.getElementById('phase').value) * Math.PI / 180;
+            
+            // Update scientific data
+            updateScientificData(frequency, amplitude);
+            
+            // Draw main wave
+            ctx.beginPath();
+            ctx.moveTo(lastX, lastY);
+            ctx.lineTo(x, y);
+            ctx.strokeStyle = getColorFromFrequency(frequency);
+            ctx.lineWidth = 20 * amplitude;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            // Draw wave visualization
+            const waveLength = 100;
+            const baseAmplitude = 30 * amplitude;
+            
+            // Draw fundamental frequency
+            ctx.beginPath();
+            for (let i = 0; i < waveLength; i++) {
+                const wx = x + i;
+                const wy = y + Math.sin(i * 0.1 + frequency * 0.01 + phase) * baseAmplitude;
+                if (i === 0) ctx.moveTo(wx, wy);
+                else ctx.lineTo(wx, wy);
+            }
+            ctx.strokeStyle = `${getColorFromFrequency(frequency)}aa`;
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Draw harmonics
+            for (let h = 1; h <= harmonics; h++) {
+                const harmonicFreq = frequency * (h + 1);
+                const harmonicAmp = baseAmplitude / (h + 1);
+                
+                ctx.beginPath();
+                for (let i = 0; i < waveLength; i++) {
+                    const wx = x + i;
+                    const wy = y + Math.sin(i * 0.1 + harmonicFreq * 0.01 + phase) * harmonicAmp;
+                    if (i === 0) ctx.moveTo(wx, wy);
+                    else ctx.lineTo(wx, wy);
+                }
+                ctx.strokeStyle = `${getColorFromFrequency(harmonicFreq)}77`;
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+
+            lastX = x;
+            lastY = y;
+        }
+
+        // Event handlers
+        canvas.addEventListener('mousedown', (e) => {
+            if (!audioContext) initAudio();
+            const frequency = parseFloat(document.getElementById('frequency').value);
+            createOscillator(frequency);
+            lastX = e.clientX;
+            lastY = e.clientY;
+            drawWave(e.clientX, e.clientY);
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (isPlaying) {
+                const frequency = parseFloat(document.getElementById('frequency').value);
+                mainOscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(
+                    parseFloat(document.getElementById('amplitude').value) / 100,
+                    audioContext.currentTime
+                );
+                drawWave(e.clientX, e.clientY);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            if (mainOscillator) {
+                mainOscillator.stop();
+                isPlaying = false;
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            if (mainOscillator) {
+                mainOscillator.stop();
+                isPlaying = false;
+            }
+        });
+
+        // Initialize visualizations
+        const waveformVis = new WaveVisualizer(
+            document.querySelector('.waveform-display'),
+            300,
+            100
+        );
+        const standingWaveVis = new StandingWaveVisualizer(
+            document.querySelector('.standing-wave')
+        );
+        const conceptMap = new ConceptMap(
+            document.querySelector('.concept-map')
+        );
+
+        // Animation loop
+        function animate() {
+            // Update visualizations
+            const frequency = parseFloat(document.getElementById('frequency').value);
+            const amplitude = parseFloat(document.getElementById('amplitude').value) / 100;
+            const harmonics = parseInt(document.getElementById('harmonics').value);
+            const phase = parseFloat(document.getElementById('phase').value) * Math.PI / 180;
+
+            waveformVis.drawWaveform(frequency, amplitude, harmonics, phase);
+            standingWaveVis.update(frequency, amplitude);
+            
+            // Update FFT if playing
+            if (isPlaying && analyserNode) {
+                const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+                analyserNode.getByteFrequencyData(dataArray);
+                const spectrumVis = document.querySelector('.spectrum-analyzer');
+                if (spectrumVis) {
+                    const ctx = spectrumVis.getContext('2d');
+                    ctx.clearRect(0, 0, spectrumVis.width, spectrumVis.height);
+                    const barWidth = spectrumVis.width / dataArray.length;
+                    for (let i = 0; i < dataArray.length; i++) {
+                        const barHeight = (dataArray[i] / 255) * spectrumVis.height;
+                        ctx.fillStyle = `hsl(${(i / dataArray.length) * 300}, 100%, 50%)`;
+                        ctx.fillRect(i * barWidth, spectrumVis.height - barHeight, barWidth, barHeight);
+                    }
+                }
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Mode switching
+        document.querySelectorAll('.mode-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const mode = button.dataset.mode;
+                document.querySelectorAll('.mode-button').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+                document.querySelectorAll('.data-section').forEach(section => {
+                    section.style.display = section.id === `${mode}-mode` ? 'block' : 'none';
+                });
+                currentMode = mode;
+            });
+        });
+
+        // Interactive formulas
+        document.querySelectorAll('.interactive-formula').forEach(formula => {
+            formula.addEventListener('click', () => {
+                const tooltip = document.createElement('div');
+                tooltip.className = 'info-tooltip';
+                
+                switch (formula.id) {
+                    case 'wave-equation':
+                        tooltip.innerHTML = `
+                            <h4>Wave Equation</h4>
+                            <p>ψ(x,t) represents the wave function where:</p>
+                            <ul>
+                                <li>A = amplitude</li>
+                                <li>k = wave number (2π/λ)</li>
+                                <li>ω = angular frequency (2πf)</li>
+                                <li>x = position</li>
+                                <li>t = time</li>
+                            </ul>
+                        `;
+                        break;
+                    case 'energy-equation':
+                        tooltip.innerHTML = `
+                            <h4>Energy-Frequency Relation</h4>
+                            <p>E = hf shows that:</p>
+                            <ul>
+                                <li>Energy is quantized</li>
+                                <li>h = Planck's constant</li>
+                                <li>f = frequency</li>
+                                <li>ℏ = h/2π (reduced Planck's constant)</li>
+                            </ul>
+                        `;
+                        break;
+                    case 'color-equation':
+                        tooltip.innerHTML = `
+                            <h4>Wave Speed Equation</h4>
+                            <p>c = fλ demonstrates that:</p>
+                            <ul>
+                                <li>c = speed of light</li>
+                                <li>f = frequency</li>
+                                <li>λ = wavelength</li>
+                                <li>This applies to all EM waves</li>
+                            </ul>
+                        `;
+                        break;
+                }
+
+                tooltip.style.left = formula.offsetLeft + 'px';
+                tooltip.style.top = (formula.offsetTop + formula.offsetHeight) + 'px';
+                document.body.appendChild(tooltip);
+
+                setTimeout(() => tooltip.style.display = 'block', 0);
+                setTimeout(() => tooltip.remove(), 5000);
+            });
+        });
+
+        // Initialize
+        function init() {
+            // Start animation loop
+            animate();
+            
+            // Draw concept map
+            conceptMap.draw();
+            
+            // Set up event listeners
+            document.getElementById('clear').addEventListener('click', () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+            });
+
+            document.getElementById('help').addEventListener('click', () => {
+                document.getElementById('tutorial').style.display = 
+                    document.getElementById('tutorial').style.display === 'none' ? 'block' : 'none';
+            });
+
+            // Initialize MIDI support
+            if (navigator.requestMIDIAccess) {
+                navigator.requestMIDIAccess()
+                    .then(access => {
+                        for (const input of access.inputs.values()) {
+                            input.onmidimessage = (message) => {
+                                const [command, note, velocity] = message.data;
+                                if (command === 144 && velocity > 0) {
+                                    const frequency = 440 * Math.pow(2, (note - 69) / 12);
+                                    document.getElementById('frequency').value = frequency;
+                                    createOscillator(frequency);
+                                    const x = Math.random() * canvas.width;
+                                    const y = Math.random() * canvas.height;
+                                    lastX = x;
+                                    lastY = y;
+                                    drawWave(x, y);
+                                }
+                            };
+                        }
+                    })
+                    .catch(err => console.log('MIDI access denied:', err));
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

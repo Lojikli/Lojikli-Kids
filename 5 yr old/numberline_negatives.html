@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Line Adventures</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f9ff;
+            touch-action: manipulation;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .game-title {
+            text-align: center;
+            color: #1e40af;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .term-button {
+            font-size: 24px;
+            padding: 10px 20px;
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            background: white;
+            color: #1e40af;
+            cursor: pointer;
+            min-width: 80px;
+            text-align: center;
+        }
+        .operation {
+            font-size: 32px;
+            color: #2563eb;
+            padding: 0 10px;
+            cursor: pointer;
+        }
+        .number-line {
+            position: relative;
+            height: 80px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        .line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #2563eb;
+        }
+        .marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 2;
+        }
+        .number {
+            position: absolute;
+            bottom: 10px;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #1e40af;
+        }
+        .score {
+            text-align: right;
+            color: #1e40af;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .feedback {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+            height: 24px;
+        }
+        .correct {
+            color: #059669;
+        }
+        .incorrect {
+            color: #dc2626;
+        }
+        .check-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 18px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .check-button:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
+        .settings {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .setting-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        @media (max-width: 480px) {
+            .game-title {
+                font-size: 20px;
+            }
+            .term-button {
+                font-size: 20px;
+                min-width: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-title">Number Line Adventures</div>
+        <div class="score">Score: <span id="score">0</span></div>
+        
+        <div class="settings">
+            <div class="setting-option">
+                <input type="checkbox" id="allowNegative">
+                <label for="allowNegative">Include Negative Numbers</label>
+            </div>
+            <div class="setting-option">
+                <input type="checkbox" id="allowSubtraction">
+                <label for="allowSubtraction">Include Subtraction</label>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div id="term1" class="term-button">5</div>
+            <div id="operation" class="operation">+</div>
+            <div id="term2" class="term-button">3</div>
+            <div class="operation">=</div>
+            <div id="result" class="term-button">?</div>
+        </div>
+
+        <div class="number-line" id="numberLine">
+            <div class="line"></div>
+        </div>
+        <div class="feedback" id="feedback"></div>
+        <button class="check-button" id="checkButton">Check Answer</button>
+    </div>
+
+    <script>
+        class NumberLineGame {
+            constructor() {
+                this.score = 0;
+                this.term1Value = 0;
+                this.term2Value = 0;
+                this.operation = '+';
+                this.markerPosition = 0;
+                this.isDragging = false;
+                this.difficulty = 1;
+                
+                this.numberLine = document.getElementById('numberLine');
+                this.term1 = document.getElementById('term1');
+                this.term2 = document.getElementById('term2');
+                this.operationEl = document.getElementById('operation');
+                this.result = document.getElementById('result');
+                this.feedback = document.getElementById('feedback');
+                this.scoreElement = document.getElementById('score');
+                this.checkButton = document.getElementById('checkButton');
+                this.allowNegative = document.getElementById('allowNegative');
+                this.allowSubtraction = document.getElementById('allowSubtraction');
+                
+                this.setupNumberLine();
+                this.setupEventListeners();
+                this.generateQuestion();
+            }
+
+            setupNumberLine() {
+                // Create number markers
+                for (let i = -10; i <= 10; i++) {
+                    const number = document.createElement('div');
+                    number.className = 'number';
+                    number.textContent = i;
+                    number.style.left = `${this.numberToPosition(i)}%`;
+                    this.numberLine.appendChild(number);
+                }
+
+                // Create draggable marker
+                this.marker = document.createElement('div');
+                this.marker.className = 'marker';
+                this.marker.style.left = '50%';
+                this.numberLine.appendChild(this.marker);
+            }
+
+            setupEventListeners() {
+                // Mouse events
+                this.marker.addEventListener('mousedown', this.startDragging.bind(this));
+                document.addEventListener('mousemove', this.drag.bind(this));
+                document.addEventListener('mouseup', this.stopDragging.bind(this));
+
+                // Touch events
+                this.marker.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.startDragging(e.touches[0]);
+                });
+                document.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    this.drag(e.touches[0]);
+                });
+                document.addEventListener('touchend', this.stopDragging.bind(this));
+
+                // Check button
+                this.checkButton.addEventListener('click', () => this.checkAnswer());
+
+                // Operation toggle
+                this.operationEl.addEventListener('click', () => {
+                    if (this.allowSubtraction.checked) {
+                        this.operation = this.operation === '+' ? '-' : '+';
+                        this.operationEl.textContent = this.operation;
+                        this.updateResult();
+                    }
+                });
+
+                // Settings changes
+                this.allowNegative.addEventListener('change', () => this.generateQuestion());
+                this.allowSubtraction.addEventListener('change', () => {
+                    if (!this.allowSubtraction.checked) {
+                        this.operation = '+';
+                        this.operationEl.textContent = '+';
+                    }
+                    this.generateQuestion();
+                });
+            }
+
+            startDragging(e) {
+                this.isDragging = true;
+                this.marker.style.transition = 'none';
+            }
+
+            drag(e) {
+                if (!this.isDragging) return;
+
+                const rect = this.numberLine.getBoundingClientRect();
+                const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                const position = (x / rect.width) * 100;
+                
+                this.marker.style.left = `${position}%`;
+                this.markerPosition = this.positionToNumber(position);
+                this.result.textContent = this.markerPosition;
+            }
+
+            stopDragging() {
+                this.isDragging = false;
+                this.marker.style.transition = 'left 0.2s';
+            }
+
+            numberToPosition(number) {
+                return ((number + 10) / 20) * 100;
+            }
+
+            positionToNumber(position) {
+                return Math.round(((position / 100) * 20) - 10);
+            }
+
+            generateQuestion() {
+                const range = this.allowNegative.checked ? [-10, 10] : [0, 10];
+                
+                this.term1Value = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
+                this.term2Value = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0];
+                
+                if (this.allowSubtraction.checked) {
+                    this.operation = Math.random() < 0.5 ? '+' : '-';
+                } else {
+                    this.operation = '+';
+                }
+
+                this.term1.textContent = this.term1Value;
+                this.term2.textContent = this.term2Value;
+                this.operationEl.textContent = this.operation;
+                this.result.textContent = '?';
+
+                // Reset marker position to first term
+                this.marker.style.left = `${this.numberToPosition(this.term1Value)}%`;
+                this.feedback.textContent = '';
+                this.feedback.className = 'feedback';
+                this.checkButton.disabled = false;
+            }
+
+            updateResult() {
+                const result = this.operation === '+' 
+                    ? this.term1Value + this.term2Value 
+                    : this.term1Value - this.term2Value;
+                return result;
+            }
+
+            checkAnswer() {
+                const correctAnswer = this.updateResult();
+                const isCorrect = this.markerPosition === correctAnswer;
+                
+                if (isCorrect) {
+                    this.score++;
+                    this.feedback.textContent = 'Correct! Great job! 🌟';
+                    this.feedback.className = 'feedback correct';
+                    if (this.score % 5 === 0) this.difficulty++;
+                } else {
+                    this.feedback.textContent = `Try again! The answer was ${correctAnswer}`;
+                    this.feedback.className = 'feedback incorrect';
+                }
+                
+                this.scoreElement.textContent = this.score;
+                this.checkButton.disabled = true;
+                
+                setTimeout(() => {
+                    this.generateQuestion();
+                }, 2000);
+            }
+        }
+
+        // Start the game when the page loads
+        window.addEventListener('load', () => {
+            new NumberLineGame();
+        });
+    </script>
+</body>
+</html>

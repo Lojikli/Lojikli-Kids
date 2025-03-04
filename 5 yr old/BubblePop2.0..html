@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bubble Pop Math!</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background: linear-gradient(to bottom, #87CEEB, #1E90FF);
+            font-family: 'Comic Sans MS', cursive;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: clamp(16px, 4vmin, 24px);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            animation: float 3s infinite alternate ease-in-out;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
+            box-shadow: 
+                0 0 10px rgba(255,255,255,0.5),
+                inset -5px -5px 15px rgba(0,0,0,0.1),
+                inset 5px 5px 15px rgba(255,255,255,0.8);
+            user-select: none;
+            border: 2px solid rgba(255,255,255,0.6);
+            backdrop-filter: blur(2px);
+        }
+        
+        .bubble::before {
+            content: '';
+            position: absolute;
+            top: 15%;
+            left: 15%;
+            width: 20%;
+            height: 20%;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+            filter: blur(2px);
+        }
+        
+        .bubble::after {
+            content: '';
+            position: absolute;
+            top: 25%;
+            left: 25%;
+            width: 10%;
+            height: 10%;
+            background: rgba(255,255,255,0.6);
+            border-radius: 50%;
+            filter: blur(1px);
+        }
+
+        .bubble.selected {
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,0,0.8), rgba(255,255,0,0.4));
+            transform: scale(1.1);
+            transition: transform 0.3s ease;
+            box-shadow: 
+                0 0 20px rgba(255,255,0,0.5),
+                inset -5px -5px 15px rgba(0,0,0,0.1),
+                inset 5px 5px 15px rgba(255,255,0,0.8);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-20px); }
+        }
+
+        .bubble.pop {
+            animation: pop 0.3s ease-out forwards;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        #score {
+            position: fixed;
+            top: max(20px, 4vh);
+            right: max(20px, 4vw);
+            font-size: clamp(18px, 4vmin, 24px);
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: clamp(32px, 8vmin, 48px);
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            opacity: 0;
+            transition: opacity 0.3s;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .star {
+            position: absolute;
+            pointer-events: none;
+            animation: star 1s ease-out forwards;
+        }
+
+        @keyframes star {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            100% { transform: scale(0) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="score">Score: 0</div>
+    <div id="message"></div>
+
+
+    <script>
+        class BubbleGame {
+            constructor() {
+                this.bubbles = [];
+                this.score = 0;
+                this.selectedBubble = null;
+                this.multiplicationTables = [2, 3, 4, 5];
+                this.touchStartX = null;
+                this.touchStartY = null;
+                this.init();
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                window.addEventListener('resize', () => {
+                    this.repositionBubbles();
+                });
+
+                // Prevent scrolling while touching bubbles
+                document.addEventListener('touchmove', (e) => {
+                    if (e.target.classList.contains('bubble')) {
+                        e.preventDefault();
+                    }
+                }, { passive: false });
+            }
+
+            repositionBubbles() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                this.bubbles.forEach(bubble => {
+                    const rect = bubble.getBoundingClientRect();
+                    if (rect.right > width) {
+                        bubble.style.left = `${width - rect.width}px`;
+                    }
+                    if (rect.bottom > height) {
+                        bubble.style.top = `${height - rect.height}px`;
+                    }
+                });
+            }
+
+            init() {
+                this.createBubbles(15);
+                this.updateScore();
+            }
+
+            createBubbles(count) {
+                for (let i = 0; i < count; i++) {
+                    const table = this.multiplicationTables[Math.floor(Math.random() * this.multiplicationTables.length)];
+                    const number = Math.floor(Math.random() * 10) + 1;
+                    const result = table * number;
+                    
+                    // Create pairs of bubbles (one with the multiplication, one with the result)
+                    this.createBubble(`${table} × ${number}`);
+                    this.createBubble(`${result}`);
+                }
+            }
+
+            findValidPosition(size) {
+                const maxAttempts = 50;
+                let attempts = 0;
+                
+                while (attempts < maxAttempts) {
+                    const x = Math.random() * (window.innerWidth - size);
+                    const y = Math.random() * (window.innerHeight - size);
+                    
+                    // Check if this position overlaps with any existing bubbles
+                    const hasOverlap = this.bubbles.some(existingBubble => {
+                        const rect1 = existingBubble.getBoundingClientRect();
+                        const minDistance = (size + Math.max(rect1.width, rect1.height)) * 0.7; // 30% overlap allowed
+                        
+                        const dx = x - rect1.left;
+                        const dy = y - rect1.top;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        return distance < minDistance;
+                    });
+                    
+                    if (!hasOverlap) {
+                        return { x, y };
+                    }
+                    
+                    attempts++;
+                }
+                
+                // If we couldn't find a non-overlapping position, find the least crowded area
+                let bestPosition = { x: 0, y: 0 };
+                let maxMinDistance = 0;
+                
+                for (let i = 0; i < 10; i++) {
+                    const x = Math.random() * (window.innerWidth - size);
+                    const y = Math.random() * (window.innerHeight - size);
+                    
+                    let minDistance = Number.MAX_VALUE;
+                    
+                    this.bubbles.forEach(existingBubble => {
+                        const rect1 = existingBubble.getBoundingClientRect();
+                        const dx = x - rect1.left;
+                        const dy = y - rect1.top;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        minDistance = Math.min(minDistance, distance);
+                    });
+                    
+                    if (minDistance > maxMinDistance) {
+                        maxMinDistance = minDistance;
+                        bestPosition = { x, y };
+                    }
+                }
+                
+                return bestPosition;
+            }
+
+            createBubble(text) {
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                bubble.textContent = text;
+                
+                const baseSize = Math.min(window.innerWidth, window.innerHeight) * 0.15;
+                const size = Math.random() * (baseSize * 0.3) + baseSize; // Reduced size variation
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                
+                // Find a non-overlapping position
+                const position = this.findValidPosition(size);
+                bubble.style.left = `${position.x}px`;
+                bubble.style.top = `${position.y}px`;
+                
+                // Random animation delay
+                bubble.style.animationDelay = `${Math.random() * 2}s`;
+
+                // Add both click and touch events
+                bubble.addEventListener('click', () => this.handleBubbleClick(bubble));
+                bubble.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.handleBubbleClick(bubble);
+                });
+
+                document.body.appendChild(bubble);
+                this.bubbles.push(bubble);
+            }
+
+            handleBubbleClick(bubble) {
+                if (bubble.classList.contains('pop')) return;
+
+                if (!this.selectedBubble) {
+                    // First bubble selection
+                    this.selectedBubble = bubble;
+                    bubble.classList.add('selected');
+                } else if (this.selectedBubble === bubble) {
+                    // Deselect if clicking the same bubble
+                    this.selectedBubble.classList.remove('selected');
+                    this.selectedBubble = null;
+                } else {
+                    // Check if the pair matches
+                    const firstValue = this.evaluateExpression(this.selectedBubble.textContent);
+                    const secondValue = this.evaluateExpression(bubble.textContent);
+
+                    if (firstValue === secondValue) {
+                        // Match found!
+                        this.popBubbles(this.selectedBubble, bubble);
+                        this.score += 10;
+                        this.updateScore();
+                        this.showMessage('Great job! 🌟');
+                        this.createStars(bubble);
+                    } else {
+                        // No match
+                        this.selectedBubble.classList.remove('selected');
+                        this.showMessage('Try again! 🤔');
+                    }
+                    this.selectedBubble = null;
+                }
+// Check if game is won
+if (this.bubbles.every(b => b.classList.contains('pop'))) {
+                    setTimeout(() => {
+                        this.showMessage('You Won! 🎉');
+                        setTimeout(() => {
+                            this.bubbles = [];
+                            document.querySelectorAll('.bubble').forEach(b => b.remove());
+                            this.init();
+                        }, 2000);
+                    }, 1000);
+                }
+            }
+
+            evaluateExpression(text) {
+                if (text.includes('×')) {
+                    const [a, b] = text.split('×').map(n => parseInt(n.trim()));
+                    return a * b;
+                }
+                return parseInt(text);
+            }
+
+            popBubbles(bubble1, bubble2) {
+                bubble1.classList.add('pop');
+                bubble2.classList.add('pop');
+                setTimeout(() => {
+                    bubble1.style.display = 'none';
+                    bubble2.style.display = 'none';
+                }, 300);
+            }
+
+            updateScore() {
+                document.getElementById('score').textContent = `Score: ${this.score}`;
+            }
+
+            showMessage(text) {
+                const message = document.getElementById('message');
+                message.textContent = text;
+                message.style.opacity = '1';
+                setTimeout(() => {
+                    message.style.opacity = '0';
+                }, 1000);
+            }
+
+            createStars(bubble) {
+                const starCount = 5;
+                const colors = ['#FFD700', '#FFA500', '#FF69B4', '#00FF00', '#1E90FF'];
+                const rect = bubble.getBoundingClientRect();
+                
+                for (let i = 0; i < starCount; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.style.left = `${rect.left + rect.width / 2}px`;
+                    star.style.top = `${rect.top + rect.height / 2}px`;
+                    star.style.fontSize = `${Math.min(rect.width, rect.height) * 0.3}px`;
+                    star.textContent = '⭐';
+                    star.style.color = colors[i];
+                    document.body.appendChild(star);
+                    
+                    setTimeout(() => star.remove(), 1000);
+                }
+            }
+        }
+
+        // Start the game when the page loads
+        window.onload = () => {
+            new BubbleGame();
+        };
+    </script>
+</body>
+</html>

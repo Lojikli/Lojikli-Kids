@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decimal Alignment Adventures</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f9ff;
+            touch-action: manipulation;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .game-title {
+            text-align: center;
+            color: #1e40af;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .score {
+            text-align: right;
+            color: #1e40af;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .horizontal-problem {
+            text-align: center;
+            font-size: 24px;
+            margin: 20px 0;
+            color: #1e40af;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .decimal-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 50px);
+            gap: 5px;
+            margin: 20px auto;
+            max-width: 330px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #2563eb;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            background: white;
+        }
+        .cell input {
+            width: 100%;
+            height: 100%;
+            border: none;
+            text-align: center;
+            font-size: 24px;
+            outline: none;
+            border-radius: 3px;
+        }
+        .cell input:focus {
+            background: #f0f9ff;
+        }
+        .operation {
+            position: absolute;
+            left: -30px;
+            font-size: 24px;
+            color: #2563eb;
+        }
+        .row {
+            display: contents;
+            position: relative;
+        }
+        .row.answer {
+            border-top: 2px solid #2563eb;
+        }
+        .check-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 18px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .check-button:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
+        .feedback {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+            height: 24px;
+        }
+        .correct { color: #059669; }
+        .incorrect { color: #dc2626; }
+        .divider {
+            grid-column: 1 / -1;
+            height: 2px;
+            background: #2563eb;
+            margin: 5px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-title">Decimal Alignment Adventures</div>
+        <div class="score">Score: <span id="score">0</span></div>
+        
+        <div class="horizontal-problem" id="problem"></div>
+        
+        <div class="decimal-grid" id="grid"></div>
+        
+        <button class="check-button" id="checkButton">Check Answer</button>
+        <div class="feedback" id="feedback"></div>
+    </div>
+
+    <script>
+        class DecimalAlignmentGame {
+            constructor() {
+                this.score = 0;
+                this.num1 = 0;
+                this.num2 = 0;
+                this.operation = '+';
+                this.correctAnswer = 0;
+                
+                this.grid = document.getElementById('grid');
+                this.problem = document.getElementById('problem');
+                this.feedback = document.getElementById('feedback');
+                this.scoreElement = document.getElementById('score');
+                this.checkButton = document.getElementById('checkButton');
+                
+                this.setupGrid();
+                this.setupEventListeners();
+                this.generateProblem();
+            }
+
+            setupGrid() {
+                this.grid.innerHTML = '';
+                
+                // First number row
+                const row1 = document.createElement('div');
+                row1.className = 'row';
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    input.dataset.row = 0;
+                    input.dataset.col = i;
+                    cell.appendChild(input);
+                    row1.appendChild(cell);
+                }
+                this.grid.appendChild(row1);
+                
+                // Second number row with operation
+                const row2 = document.createElement('div');
+                row2.className = 'row';
+                const opSpan = document.createElement('span');
+                opSpan.className = 'operation';
+                opSpan.id = 'operation';
+                row2.appendChild(opSpan);
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    input.dataset.row = 1;
+                    input.dataset.col = i;
+                    cell.appendChild(input);
+                    row2.appendChild(cell);
+                }
+                this.grid.appendChild(row2);
+                
+                // Divider
+                const divider = document.createElement('div');
+                divider.className = 'divider';
+                this.grid.appendChild(divider);
+                
+                // Answer row
+                const row3 = document.createElement('div');
+                row3.className = 'row answer';
+                for (let i = 0; i < 9; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.maxLength = 1;
+                    input.dataset.row = 2;
+                    input.dataset.col = i;
+                    cell.appendChild(input);
+                    row3.appendChild(cell);
+                }
+                this.grid.appendChild(row3);
+            }
+
+            setupEventListeners() {
+                this.checkButton.addEventListener('click', () => this.checkAnswer());
+                
+                // Add input navigation
+                this.grid.addEventListener('keyup', (e) => {
+                    if (e.target.tagName === 'INPUT') {
+                        const currentInput = e.target;
+                        const row = parseInt(currentInput.dataset.row);
+                        const col = parseInt(currentInput.dataset.col);
+                        
+                        if (e.key === 'ArrowRight' && col < 5) {
+                            this.grid.querySelector(`input[data-row="${row}"][data-col="${col + 1}"]`).focus();
+                        } else if (e.key === 'ArrowLeft' && col > 0) {
+                            this.grid.querySelector(`input[data-row="${row}"][data-col="${col - 1}"]`).focus();
+                        } else if (e.key === 'ArrowDown' && row < 2) {
+                            this.grid.querySelector(`input[data-row="${row + 1}"][data-col="${col}"]`).focus();
+                        } else if (e.key === 'ArrowUp' && row > 0) {
+                            this.grid.querySelector(`input[data-row="${row - 1}"][data-col="${col}"]`).focus();
+                        } else if (e.key.match(/[0-9.]/)) {
+                            if (col < 5) {
+                                this.grid.querySelector(`input[data-row="${row}"][data-col="${col + 1}"]`).focus();
+                            }
+                        }
+                    }
+                });
+            }
+
+            generateProblem() {
+                // Generate two decimal numbers
+                const decimalPlaces = Math.floor(Math.random() * 2) + 1;
+                const multiplier = Math.pow(10, decimalPlaces);
+                this.num1 = (Math.floor(Math.random() * 1000) / multiplier).toFixed(decimalPlaces);
+                this.num2 = (Math.floor(Math.random() * 1000) / multiplier).toFixed(decimalPlaces);
+                
+                // Randomly choose operation
+                this.operation = Math.random() < 0.5 ? '+' : '-';
+                
+                // Calculate correct answer
+                this.correctAnswer = this.operation === '+' 
+                    ? (parseFloat(this.num1) + parseFloat(this.num2)).toFixed(decimalPlaces)
+                    : (parseFloat(this.num1) - parseFloat(this.num2)).toFixed(decimalPlaces);
+                
+                // Update display
+                this.problem.textContent = `${this.num1} ${this.operation} ${this.num2}`;
+                document.getElementById('operation').textContent = this.operation;
+                
+                // Clear grid
+                const inputs = this.grid.querySelectorAll('input');
+                inputs.forEach(input => input.value = '');
+                
+                // Reset feedback
+                this.feedback.textContent = '';
+                this.feedback.className = 'feedback';
+            }
+
+            celebrateSuccess() {
+                confetti({
+                    particleCount: 100,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+
+            checkAnswer() {
+                // Get user's answer
+                let userAnswer = '';
+                const answerInputs = Array.from(this.grid.querySelectorAll('input[data-row="2"]'));
+                answerInputs.forEach(input => userAnswer += input.value);
+                
+                // Parse and compare
+                const userDecimal = parseFloat(userAnswer.replace(/[^0-9.]/g, ''));
+                const correctDecimal = parseFloat(this.correctAnswer);
+                
+                if (userDecimal === correctDecimal) {
+                    this.score++;
+                    this.scoreElement.textContent = this.score;
+                    this.feedback.textContent = 'Correct! Amazing job! 🌟';
+                    this.feedback.className = 'feedback correct';
+                    this.celebrateSuccess();
+                    
+                    setTimeout(() => this.generateProblem(), 2000);
+                } else {
+                    this.feedback.textContent = 'Try again! Remember to align the decimal points.';
+                    this.feedback.className = 'feedback incorrect';
+                }
+            }
+        }
+
+        // Start game when page loads
+        window.addEventListener('load', () => {
+            new DecimalAlignmentGame();
+        });
+    </script>
+</body>
+</html>

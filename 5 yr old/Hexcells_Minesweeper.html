@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>HexSweep - Hexagonal Minesweeper</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
+        }
+        .game-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            display: inline-block;
+        }
+        canvas {
+            border: 2px solid #333;
+            border-radius: 5px;
+            margin: 10px;
+        }
+        .controls {
+            margin: 20px 0;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 0 5px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .game-info {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 10px 0;
+            font-size: 18px;
+        }
+        .stat {
+            background-color: #333;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+        }
+        .difficulty {
+            margin: 10px 0;
+        }
+        .difficulty button {
+            background-color: #2196F3;
+        }
+        .difficulty button:hover {
+            background-color: #1976D2;
+        }
+        .difficulty button.selected {
+            background-color: #1565C0;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>HexSweep</h1>
+        <p>Left-click to reveal hexes, right-click to flag mines.</p>
+        
+        <div class="difficulty">
+            <button id="easyBtn">Easy</button>
+            <button id="mediumBtn">Medium</button>
+            <button id="hardBtn">Hard</button>
+        </div>
+
+        <div class="game-info">
+            <div class="stat">Mines: <span id="mineCount">0</span></div>
+            <div class="stat">Time: <span id="timer">0</span></div>
+            <div class="stat">Best: <span id="bestTime">-</span></div>
+        </div>
+
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="controls">
+            <button id="newGameBtn">New Game</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+        const mineCountDisplay = document.getElementById("mineCount");
+        const timerDisplay = document.getElementById("timer");
+        const bestTimeDisplay = document.getElementById("bestTime");
+
+        let hexRadius = 25;
+        let gridWidth = 10;
+        let gridHeight = 8;
+        let minePercentage = 0.15;
+        let grid = [];
+        let gameStarted = false;
+        let gameOver = false;
+        let timer = 0;
+        let timerInterval;
+        let firstClick = true;
+
+        // Difficulty settings
+        const difficulties = {
+            easy: { width: 8, height: 6, mines: 0.12, radius: 30 },
+            medium: { width: 12, height: 8, mines: 0.15, radius: 25 },
+            hard: { width: 16, height: 12, mines: 0.18, radius: 20 }
+        };
+
+        function setDifficulty(level) {
+            const diff = difficulties[level];
+            gridWidth = diff.width;
+            gridHeight = diff.height;
+            minePercentage = diff.mines;
+            hexRadius = diff.radius;
+            
+            canvas.width = gridWidth * hexRadius * 1.75;
+            canvas.height = gridHeight * hexRadius * 2;
+            
+            // Update difficulty buttons
+            document.querySelectorAll('.difficulty button').forEach(btn => {
+                btn.classList.remove('selected');
+            });
+            document.getElementById(level + 'Btn').classList.add('selected');
+            
+            newGame();
+        }
+
+        function getNeighbors(cell) {
+            const neighbors = [];
+            const directions = [
+                [-1, -1], [0, -1], [1, -1],
+                [-1, 0], [1, 0],
+                [-1, 1], [0, 1]
+            ];
+            
+            for (let [dq, dr] of directions) {
+                const newQ = cell.q + dq;
+                const newR = cell.r + dr;
+                const neighbor = grid.find(c => c.q === newQ && c.r === newR);
+                if (neighbor) neighbors.push(neighbor);
+            }
+            
+            return neighbors;
+        }
+
+        function countAdjacentMines(cell) {
+            return getNeighbors(cell).filter(n => n.mine).length;
+        }
+
+        function generateGrid() {
+            grid = [];
+            for (let q = 0; q < gridWidth; q++) {
+                for (let r = 0; r < gridHeight; r++) {
+                    grid.push({
+                        q, r,
+                        mine: false,
+                        revealed: false,
+                        flagged: false,
+                        adjacentMines: 0
+                    });
+                }
+            }
+        }
+
+        function placeMines(firstCell) {
+            const mineCount = Math.floor(grid.length * minePercentage);
+            let minesToPlace = mineCount;
+            const safeZone = getNeighbors(firstCell).concat([firstCell]);
+            
+            while (minesToPlace > 0) {
+                const cell = grid[Math.floor(Math.random() * grid.length)];
+                if (!cell.mine && !safeZone.includes(cell)) {
+                    cell.mine = true;
+                    minesToPlace--;
+                }
+            }
+
+            // Calculate adjacent mines for each cell
+            grid.forEach(cell => {
+                cell.adjacentMines = countAdjacentMines(cell);
+            });
+
+            mineCountDisplay.textContent = mineCount;
+        }
+
+        function hexToPixel(q, r) {
+            const x = q * hexRadius * 1.75;
+            const y = r * hexRadius * 2 + (q % 2 ? hexRadius : 0);
+            return { x, y };
+        }
+
+        function pixelToHex(x, y) {
+            const q = Math.round(x / (hexRadius * 1.75));
+            const r = Math.round((y - (q % 2 ? hexRadius : 0)) / (hexRadius * 2));
+            return grid.find(cell => cell.q === q && cell.r === r);
+        }
+
+        function drawHex(cell) {
+            const { x, y } = hexToPixel(cell.q, cell.r);
+            
+            ctx.beginPath();
+            for (let i = 0; i < 6; i++) {
+                const angle = Math.PI / 3 * i - Math.PI / 6;
+                const px = x + hexRadius * Math.cos(angle);
+                const py = y + hexRadius * Math.sin(angle);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.closePath();
+
+            // Fill
+            if (cell.revealed) {
+                if (cell.mine) {
+                    ctx.fillStyle = "#ff4444";
+                } else {
+                    ctx.fillStyle = "#e0e0e0";
+                }
+            } else {
+                ctx.fillStyle = cell.flagged ? "#ffd700" : "#a0a0a0";
+            }
+            ctx.fill();
+
+            // Border
+            ctx.strokeStyle = "#666";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Number
+            if (cell.revealed && !cell.mine && cell.adjacentMines > 0) {
+                const colors = ["#1976D2", "#388E3C", "#D32F2F", "#7B1FA2", "#FF8F00", "#0097A7", "#424242", "#C2185B"];
+                ctx.fillStyle = colors[cell.adjacentMines - 1];
+                ctx.font = "bold " + (hexRadius * 0.8) + "px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(cell.adjacentMines, x, y);
+            }
+
+            // Mine
+            if (cell.revealed && cell.mine) {
+                ctx.beginPath();
+                ctx.arc(x, y, hexRadius / 3, 0, Math.PI * 2);
+                ctx.fillStyle = "#000";
+                ctx.fill();
+            }
+
+            // Flag
+            if (cell.flagged && !cell.revealed) {
+                ctx.beginPath();
+                ctx.moveTo(x - hexRadius/4, y + hexRadius/4);
+                ctx.lineTo(x - hexRadius/4, y - hexRadius/4);
+                ctx.lineTo(x + hexRadius/4, y);
+                ctx.closePath();
+                ctx.fillStyle = "#ff4444";
+                ctx.fill();
+            }
+        }
+
+        function revealCell(cell) {
+            if (cell.flagged || cell.revealed || gameOver) return;
+            
+            if (firstClick) {
+                firstClick = false;
+                placeMines(cell);
+                startTimer();
+            }
+
+            cell.revealed = true;
+            
+            if (cell.mine) {
+                gameOver = true;
+                endGame(false);
+                return;
+            }
+
+            if (cell.adjacentMines === 0) {
+                const neighbors = getNeighbors(cell);
+                neighbors.forEach(neighbor => {
+                    if (!neighbor.revealed) revealCell(neighbor);
+                });
+            }
+
+            checkWin();
+        }
+
+        function checkWin() {
+            const unrevealed = grid.filter(cell => !cell.revealed);
+            if (unrevealed.length === grid.filter(cell => cell.mine).length &&
+                unrevealed.every(cell => cell.mine)) {
+                gameOver = true;
+                endGame(true);
+            }
+        }
+
+        function startTimer() {
+            gameStarted = true;
+            timerInterval = setInterval(() => {
+                timer++;
+                timerDisplay.textContent = timer;
+            }, 1000);
+        }
+
+        function endGame(won) {
+            clearInterval(timerInterval);
+            
+            // Reveal all cells
+            grid.forEach(cell => {
+                if (cell.mine) cell.revealed = true;
+            });
+            drawGrid();
+
+            // Update best time
+            if (won) {
+                const currentBest = localStorage.getItem('bestTime');
+                if (!currentBest || timer < parseInt(currentBest)) {
+                    localStorage.setItem('bestTime', timer);
+                    bestTimeDisplay.textContent = timer;
+                }
+                
+                setTimeout(() => {
+                    alert("Congratulations! You won in " + timer + " seconds!");
+                }, 100);
+            } else {
+                setTimeout(() => {
+                    alert("Game Over! Better luck next time!");
+                }, 100);
+            }
+        }
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            grid.forEach(drawHex);
+        }
+
+        function newGame() {
+            clearInterval(timerInterval);
+            timer = 0;
+            timerDisplay.textContent = "0";
+            gameStarted = false;
+            gameOver = false;
+            firstClick = true;
+            generateGrid();
+            drawGrid();
+        }
+
+        // Event Listeners
+        canvas.addEventListener("click", function(event) {
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const cell = pixelToHex(x, y);
+            if (cell) revealCell(cell);
+            drawGrid();
+        });
+
+        canvas.addEventListener("contextmenu", function(event) {
+            event.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+            const cell = pixelToHex(x, y);
+            if (cell && !cell.revealed) {
+                cell.flagged = !cell.flagged;
+                drawGrid();
+            }
+        });
+
+        document.getElementById("newGameBtn").addEventListener("click", newGame);
+        document.getElementById("easyBtn").addEventListener("click", () => setDifficulty("easy"));
+        document.getElementById("mediumBtn").addEventListener("click", () => setDifficulty("medium"));
+        document.getElementById("hardBtn").addEventListener("click", () => setDifficulty("hard"));
+
+        // Load best time
+        const savedBestTime = localStorage.getItem('bestTime');
+        if (savedBestTime) bestTimeDisplay.textContent = savedBestTime;
+
+        // Start with medium difficulty
+        setDifficulty("medium");
+    </script>
+</body>
+</html>

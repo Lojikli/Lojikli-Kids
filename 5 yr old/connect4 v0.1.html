@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Super Connect 4 Adventure!</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .menu {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .menu button {
+            margin: 10px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #3498db;
+            color: white;
+            transition: transform 0.2s;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        .menu button:hover {
+            transform: scale(1.1);
+        }
+
+        .game-board {
+            background-color: #3498db;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+
+        .row {
+            display: flex;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border-radius: 50%;
+            margin: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .cell:hover {
+            background-color: #ecf0f1;
+        }
+
+        .red {
+            background-color: #e74c3c;
+            animation: dropPiece 0.5s ease-in;
+        }
+
+        .yellow {
+            background-color: #f1c40f;
+            animation: dropPiece 0.5s ease-in;
+        }
+
+        @keyframes dropPiece {
+            0% { transform: translateY(-300px); }
+            100% { transform: translateY(0); }
+        }
+
+        .score-board {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            font-size: 1.2em;
+        }
+
+        .player-score {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-button {
+            background-color: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            transition: transform 0.2s;
+        }
+
+        .control-button:hover {
+            transform: scale(1.1);
+        }
+
+        .difficulty-selector {
+            margin: 10px 0;
+            padding: 10px;
+            font-size: 1.1em;
+            border-radius: 5px;
+            border: none;
+            background-color: white;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        .game-mode {
+            display: none;
+        }
+
+        .game-mode.active {
+            display: block;
+        }
+
+        .winner-message {
+            font-size: 1.5em;
+            color: #2c3e50;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: rgba(255,255,255,0.9);
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .turn-indicator {
+            font-size: 1.3em;
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding: 10px;
+            background-color: rgba(255,255,255,0.9);
+            border-radius: 5px;
+        }
+
+        .current-color {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-left: 5px;
+            vertical-align: middle;
+        }
+
+        .achievement {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(46, 204, 113, 0.9);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            animation: slideDown 0.5s ease-out, fadeOut 0.5s ease-in 2.5s forwards;
+            z-index: 1000;
+        }
+
+        @keyframes slideDown {
+            from { transform: translate(-50%, -100%); }
+            to { transform: translate(-50%, 0); }
+        }
+
+        @keyframes fadeOut {
+            to { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Super Connect 4 Adventure! 🎮</h1>
+        
+        <div id="mainMenu" class="menu">
+            <h2>Choose Your Adventure!</h2>
+            <button onclick="startGame('onePlayer')">Play vs Computer 🤖</button>
+            <button onclick="startGame('twoPlayer')">Play vs Friend 👥</button>
+            <select id="difficulty" class="difficulty-selector">
+                <option value="easy">Easy Peasy 😊</option>
+                <option value="medium">Getting Tricky 🤔</option>
+                <option value="hard">Super Challenge 🌟</option>
+            </select>
+        </div>
+
+        <div id="gameMode" class="game-mode">
+            <div class="score-board">
+                <div class="player-score">
+                    Player 1: <span id="score1">0</span> wins 🏆
+                </div>
+                <div class="player-score">
+                    <span id="player2Label">Player 2</span>: <span id="score2">0</span> wins 🏆
+                </div>
+            </div>
+
+            <div class="turn-indicator">
+                Current Player: <span class="current-color"></span>
+            </div>
+            
+            <div class="game-board" id="board"></div>
+            
+            <div class="winner-message" id="winnerMessage" style="display: none;"></div>
+            
+            <button class="menu button" onclick="resetGame()">Play Again! 🔄</button>
+            <button class="menu button" onclick="showMainMenu()">Main Menu 🏠</button>
+        </div>
+
+        <div class="controls">
+            <button class="control-button" onclick="toggleSound()" id="soundButton">🔊</button>
+        </div>
+    </div>
+
+    <script>
+        const ROWS = 6;
+        const COLS = 7;
+        let currentPlayer = 1;
+        let gameBoard = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+        let gameActive = true;
+        let scores = [0, 0];
+        let soundEnabled = true;
+        let gameMode = '';
+        let difficulty = 'easy';
+        
+        // Create audio elements
+        const dropSound = new Audio('data:audio/wav;base64,UklGRngGAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQwGAACBhYqFbF1fdH2Dg4R/gIKFi4SAfXx8gYiMjY+Lh4iBgYKDhIeFhYSEhIeIioqLiomHhYSCgoKDg4SEg4OCgoKChISFhoaGhYSDgoGBgYGCgoKCgoGBgYGBgoKDg4ODgoKBgYCAgICAgYGBgYCAgICAgIGBgYGBgYGAgICAgICAgICAgICAgICAgICAgICAgICAgICAgH9/f39/f39/f39/f39/f39/f4CAgICAgH9/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f4CAgICAgIGBgYGBgoKCgoKDg4ODhISEhYWFhoaGh4eHiIiIiYmJioqKi4uLjIyMjY2Njo6Oj4+PkJCQkZGRkpKSk5OTlJSUlZWVlpaWl5eXmJiYmZmZmpqam5ubnJycnZ2dnp6en5+foKCgoaGhoqKio6OjpKSkpaWlpqamp6enqKioqampqqqqq6urrKysra2trq6ur6+vsLCwsbGxsrKys7OztLS0tbW1tra2t7e3uLi4ubm5urq6u7u7vLy8vb29vr6+v7+/wMDAwcHBwsLCw8PDxMTExcXFxsbGx8fHyMjIycnJysrKy8vLzMzMzc3Nzs7Oz8/P0NDQ0dHR0tLS09PT1NTU1dXV1tbW19fX2NjY2dnZ2tra29vb3Nzc3d3d3t7e39/f4ODg4eHh4uLi4+Pj5OTk5eXl5ubm5+fn6Ojo6enp6urq6+vr7Ozs7e3t7u7u7+/v8PDw8fHx8vLy8/Pz9PT09fX19vb29/f3+Pj4+fn5+vr6+/v7/Pz8/f39/v7+////AABMSVNUWAAAAElORk9JQ09QHwAAAENvcHlyaWdodCcopSAxOTk3IENyZWF0aXZlIExhYnMASVNGVCgAAABTb3VuZCBGb3JnZSA0LjAgU291bmQgRm9yZ2UgNC4wAABJRU5HKAAAAENyZWF0ZWQgYnkgU291bmQgRm9yZ2UgNC4wAA==');
+        const winSound = new Audio('data:audio/wav;base64,UklGRpQDAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YXADAACAgICAgICAgICAgICAgICAgICAgICAgICBgYGCgoKDg4OEhISFhYWGhoaHh4eIiIiJiYmKioqLi4uMjIyNjY2Ojo6Pj4+QkJCRkZGSkpKTk5OUlJSVlZWWlpaXl5eYmJiZmZmampqbm5ucnJydnZ2enp6fn5+goKChoaGioqKjo6OkpKSlpaWmpqanp6eoqKipqamqqqqrq6usrKytra2urq6vr6+wsLCxsbGysrKzs7O0tLS1tbW2tra3t7e4uLi5ubm6urq7u7u8vLy9vb2+vr6/v7/AwMDBwcHCwsLDw8PExMTFxcXGxsbHx8fIyMjJycnKysrLy8vMzMzNzc3Ozs7Pz8/Q0NDR0dHS0tLT09PU1NTV1dXW1tbX19fY2NjZ2dna2trb29vc3Nzd3d3e3t7f39/g4ODh4eHi4uLj4+Pk5OTl5eXm5ubn5+fo6Ojp6enq6urr6+vs7Ozt7e3u7u7v7+/w8PDx8fHy8vLz8/P09PT19fX29vb39/f4+Pj5+fn6+vr7+/v8/Pz9/f3+/v7///8AAExJU1RYAAAASUZOTx8AAABDb3B5cmlnaHQgqSAxOTk3IENyZWF0aXZlIExhYnMAU0ZUSA4AAABTb3VuZCBGb3JnZQBJRU5HKAAAAENyZWF0ZWQgYnkgU291bmQgRm9yZ2UgNC4wAA==');
+        const achievementSound = new Audio('data:audio/wav;base64,UklGRqQDAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YYADAACBhYqFbF1fdH2Dg4R/gIKFi4SAfXx8gYiMjY+Lh4iBgYKDhIeFhYSEhIeIioqLiomHhYSCgoKDg4SEg4OCgoKChISFhoaGhYSDgoGBgYGCgoKCgoGBgYGBgoKDg4ODgoKBgYCAgICAgYGBgYCAgICAgIGBgYGBgYGAgICAgICAgICAgICAgICAgICAgICAgICAgICAgH9/f39/f39/f39/f39/f39/f4CAgICAgH9/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/');
+
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            const soundButton = document.getElementById('soundButton');
+            soundButton.textContent = soundEnabled ? '🔊' : '🔇';
+        }
+
+        function playSound(sound) {
+            if (soundEnabled) {
+                sound.currentTime = 0;
+                sound.play();
+            }
+        }
+
+        function createBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            
+            for (let i = 0; i < ROWS; i++) {
+                const row = document.createElement('div');
+                row.className = 'row';
+                
+                for (let j = 0; j < COLS; j++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'cell';
+                    cell.dataset.col = j;
+                    cell.onclick = () => makeMove(j);
+                    row.appendChild(cell);
+                }
+                
+                board.appendChild(row);
+            }
+            updateTurnIndicator();
+        }
+
+        function startGame(mode) {
+            gameMode = mode;
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('gameMode').classList.add('active');
+            document.getElementById('player2Label').textContent = mode === 'onePlayer' ? 'Computer' : 'Player 2';
+            resetGame();
+        }
+
+        function showMainMenu() {
+            document.getElementById('mainMenu').style.display = 'block';
+            document.getElementById('gameMode').classList.remove('active');
+        }
+
+        function makeMove(col) {
+            if (!gameActive) return;
+            if (currentPlayer === 2 && gameMode === 'onePlayer') return;
+            
+            const row = findAvailableRow(col);
+            if (row === -1) return;
+
+            gameBoard[row][col] = currentPlayer;
+            playSound(dropSound);
+            updateBoard();
+
+            if (checkWin(row, col)) {
+                handleWin();
+                return;
+            }
+
+            if (checkDraw()) {
+                handleDraw();
+                return;
+            }
+
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            updateTurnIndicator();
+
+            if (gameMode === 'onePlayer' && currentPlayer === 2) {
+                setTimeout(makeComputerMove, 500);
+            }
+        }
+
+        function makeComputerMove() {
+            difficulty = document.getElementById('difficulty').value;
+            let col;
+            
+            switch(difficulty) {
+                case 'hard':
+                    col = findBestMove();
+                    break;
+                case 'medium':
+                    col = Math.random() < 0.7 ? findBestMove() : getRandomValidColumn();
+                    break;
+                default: // easy
+                    col = Math.random() < 0.3 ? findBestMove() : getRandomValidColumn();
+            }
+            
+            makeMove(col);
+        }
+
+        function findBestMove() {
+            // Simple AI that looks for winning moves and blocking opponent wins
+            // Check for winning move
+            for (let col = 0; col < COLS; col++) {
+                const row = findAvailableRow(col);
+                if (row === -1) continue;
+                
+                gameBoard[row][col] = 2;
+                if (checkWin(row, col)) {
+                    gameBoard[row][col] = 0;
+                    return col;
+                }
+                gameBoard[row][col] = 0;
+            }
+            
+            // Check for blocking opponent's winning move
+            for (let col = 0; col < COLS; col++) {
+                const row = findAvailableRow(col);
+                if (row === -1) continue;
+                
+                gameBoard[row][col] = 1;
+                if (checkWin(row, col)) {
+                    gameBoard[row][col] = 0;
+                    return col;
+                }
+                gameBoard[row][col] = 0;
+            }
+            
+            // Otherwise, choose a random valid column
+            return getRandomValidColumn();
+        }
+
+        function getRandomValidColumn() {
+            const validColumns = [];
+            for (let col = 0; col < COLS; col++) {
+                if (findAvailableRow(col) !== -1) {
+                    validColumns.push(col);
+                }
+            }
+            return validColumns[Math.floor(Math.random() * validColumns.length)];
+        }
+
+        function handleWin() {
+            gameActive = false;
+            playSound(winSound);
+            scores[currentPlayer - 1]++;
+            updateScores();
+            showWinMessage();
+            
+            if (scores[currentPlayer - 1] === 5) {
+                showAchievement('🏆 Super Champion! You won 5 games! 🏆');
+            }
+        }
+
+        function handleDraw() {
+            gameActive = false;
+            showDrawMessage();
+        }
+
+        function showAchievement(message) {
+            const achievement = document.createElement('div');
+            achievement.className = 'achievement';
+            achievement.textContent = message;
+            document.body.appendChild(achievement);
+            playSound(achievementSound);
+            
+            setTimeout(() => {
+                achievement.remove();
+            }, 3000);
+        }
+
+        function updateScores() {
+            document.getElementById('score1').textContent = scores[0];
+            document.getElementById('score2').textContent = scores[1];
+        }
+
+        function resetGame() {
+            gameBoard = Array(ROWS).fill().map(() => Array(COLS).fill(0));
+            currentPlayer = 1;
+            gameActive = true;
+            document.getElementById('winnerMessage').style.display = 'none';
+            createBoard();
+        }
+
+        // Initialize the game
+        createBoard();
+    </script>
+</body>
+</html>

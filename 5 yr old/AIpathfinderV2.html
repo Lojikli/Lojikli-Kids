@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pathfinder AI Challenge</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f9ff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-container {
+            display: flex;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .maze-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            width: 300px;
+        }
+
+        #maze {
+            border: 2px solid #333;
+        }
+
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #45a049;
+        }
+
+        .command-block {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+            cursor: pointer;
+            transition: background 0.3s;
+            position: relative;
+        }
+        
+        .command-block.nested {
+            margin-left: 20px;
+        }
+        
+        .block-container {
+            border-left: 2px dashed #4CAF50;
+            margin-left: 20px;
+            padding-left: 10px;
+            min-height: 40px;
+        }
+        
+        .execution-highlight {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(76, 175, 80, 0.2);
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        .command-block:hover {
+            background: #e9ecef;
+        }
+
+        .program-area {
+            min-height: 100px;
+            border: 2px dashed #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 10px 0;
+        }
+
+        .level-indicator {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #2c3e50;
+        }
+
+        .star {
+            color: gold;
+            font-size: 30px;
+        }
+
+        .tutorial {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        .celebration {
+            position: fixed;
+            pointer-events: none;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            display: none;
+        }
+
+        .repeat-count {
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            padding: 2px 5px;
+            font-size: 14px;
+            font-family: inherit;
+            width: 40px;
+        }
+        
+        .repeat-count:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f00;
+            animation: confetti 4s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <h1>🤖 Pathfinder AI Challenge 🎮</h1>
+    
+    <div class="level-indicator">
+        Level <span id="current-level">1</span>
+        <span id="stars"></span>
+    </div>
+
+    <div id="tutorial" class="tutorial">
+        Welcome to Pathfinder AI! Help your robot friend navigate through the maze by creating a program using the command blocks. Drag commands into the program area and click "Run Program" to test your solution!
+    </div>
+
+    <div class="game-container">
+        <div class="maze-container">
+            <canvas id="maze" width="400" height="400"></canvas>
+        </div>
+
+        <div class="controls">
+            <h3>Available Commands:</h3>
+            <div class="command-block" draggable="true" data-command="moveForward">
+                Move Forward ⬆️
+            </div>
+            <div class="command-block" draggable="true" data-command="turnLeft">
+                Turn Left ↺
+            </div>
+            <div class="command-block" draggable="true" data-command="turnRight">
+                Turn Right ↻
+            </div>
+            <div class="command-block" draggable="true" data-command="ifPath">
+                If Path Ahead Then...
+            </div>
+            <div class="command-block" draggable="true" data-command="repeat">
+                Repeat <input type="number" min="1" max="10" value="2" class="repeat-count"> Times...
+            </div>
+
+            <h3>Your Program:</h3>
+            <div id="program-area" class="program-area"></div>
+
+            <button onclick="runProgram()">Run Program ▶️</button>
+            <button onclick="resetLevel()">Reset 🔄</button>
+            <button onclick="clearProgram()">Clear Program 🗑️</button>
+        </div>
+    </div>
+
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <h2>🎉 Level Complete! 🎉</h2>
+            <p>Amazing work! You've helped the robot reach its destination!</p>
+            <button onclick="nextLevel()">Next Level →</button>
+        </div>
+    </div>
+
+    <div id="celebration" class="celebration"></div>
+
+    <script>
+        const CELL_SIZE = 40;
+        const GRID_SIZE = 10;
+        const canvas = document.getElementById('maze');
+        const ctx = canvas.getContext('2d');
+        
+        let currentLevel = 1;
+        let robot = { x: 0, y: 0, direction: 0 }; // 0: right, 1: down, 2: left, 3: up
+        let maze = [];
+        let goal = { x: 0, y: 0 };
+        let program = [];
+        let isAnimating = false;
+
+        const levels = [
+            {
+                maze: [
+                    "##########",
+                    "#S      G#",
+                    "##########"
+                ],
+                tutorial: "Welcome! Move the robot (S) to the goal (G) by using the Move Forward command. Each step teaches us about sequences in programming!",
+                hint: "Try dragging the 'Move Forward' command multiple times!"
+            },
+            {
+                maze: [
+                    "##########",
+                    "#S#    G #",
+                    "#        #",
+                    "##########"
+                ],
+                tutorial: "Now try using turns to navigate around the wall!"
+            },
+            {
+                maze: [
+                    "##########",
+                    "#S       #",
+                    "##### ###",
+                    "#G      #",
+                    "##########"
+                ],
+                tutorial: "This level introduces the 'If Path Ahead' command. Use it to check before moving!"
+            },
+            {
+                maze: [
+                    "##########",
+                    "#S     G#",
+                    "#########",
+                    "#       #",
+                    "##########"
+                ],
+                tutorial: "Try using the Repeat command to make your program more efficient!"
+            }
+        ];
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function initLevel(levelNum) {
+            const level = levels[levelNum - 1];
+            maze = level.maze.map(row => row.split(''));
+            
+            // Find start and goal positions
+            for (let y = 0; y < maze.length; y++) {
+                for (let x = 0; x < maze[y].length; x++) {
+                    if (maze[y][x] === 'S') {
+                        robot = { x, y, direction: 0 };
+                    } else if (maze[y][x] === 'G') {
+                        goal = { x, y };
+                    }
+                }
+            }
+
+            document.getElementById('tutorial').textContent = level.tutorial;
+            drawMaze();
+            updateStars();
+        }
+
+        function drawMaze() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw maze
+            for (let y = 0; y < maze.length; y++) {
+                for (let x = 0; x < maze[y].length; x++) {
+                    const cell = maze[y][x];
+                    ctx.fillStyle = cell === '#' ? '#333' : 'white';
+                    ctx.fillRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+                    ctx.strokeRect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE);
+
+                    if (cell === 'G') {
+                        ctx.fillStyle = '#4CAF50';
+                        ctx.beginPath();
+                        ctx.arc(x * CELL_SIZE + CELL_SIZE/2, y * CELL_SIZE + CELL_SIZE/2, 
+                               CELL_SIZE/3, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            // Draw robot
+            ctx.save();
+            ctx.translate(robot.x * CELL_SIZE + CELL_SIZE/2, robot.y * CELL_SIZE + CELL_SIZE/2);
+            ctx.rotate(robot.direction * Math.PI/2);
+            
+            // Robot body
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(-CELL_SIZE/3, -CELL_SIZE/3, CELL_SIZE*2/3, CELL_SIZE*2/3);
+            
+            // Robot face direction indicator
+            ctx.fillStyle = '#e74c3c';
+            ctx.beginPath();
+            ctx.moveTo(CELL_SIZE/4, 0);
+            ctx.lineTo(0, -CELL_SIZE/4);
+            ctx.lineTo(0, CELL_SIZE/4);
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.restore();
+        }
+
+        function updateStars() {
+            const starsContainer = document.getElementById('stars');
+            starsContainer.innerHTML = '⭐'.repeat(currentLevel - 1);
+        }
+
+        async function executeCommand(command, element = null) {
+            try {
+                if (element) {
+                    const highlight = document.createElement('div');
+                    highlight.className = 'execution-highlight';
+                    element.appendChild(highlight);
+                    await sleep(300);
+                }
+
+                switch (command) {
+                    case 'moveForward':
+                        const nextX = robot.x + (robot.direction === 0 ? 1 : (robot.direction === 2 ? -1 : 0));
+                        const nextY = robot.y + (robot.direction === 1 ? 1 : (robot.direction === 3 ? -1 : 0));
+                        
+                        if (maze[nextY]?.[nextX] && maze[nextY][nextX] !== '#') {
+                            robot.x = nextX;
+                            robot.y = nextY;
+                        }
+                        break;
+                        
+                    case 'turnLeft':
+                        robot.direction = (robot.direction + 3) % 4;
+                        break;
+                        
+                    case 'turnRight':
+                        robot.direction = (robot.direction + 1) % 4;
+                        break;
+
+                    case 'ifPath':
+                        const checkX = robot.x + (robot.direction === 0 ? 1 : (robot.direction === 2 ? -1 : 0));
+                        const checkY = robot.y + (robot.direction === 1 ? 1 : (robot.direction === 3 ? -1 : 0));
+                        
+                        if (maze[checkY]?.[checkX] && maze[checkY][checkX] !== '#') {
+                            const container = element?.querySelector('.block-container');
+                            if (container) {
+                                for (const child of container.children) {
+                                    await executeCommand(child.dataset.command, child);
+                                    await sleep(500);
+                                }
+                            }
+                        }
+                        break;
+
+                    case 'repeat':
+                        const container = element?.querySelector('.block-container');
+                        const repeatCount = parseInt(element?.querySelector('.repeat-count')?.value || '2');
+                        
+                        if (container) {
+                            for (let i = 0; i < repeatCount; i++) {
+                                for (const child of container.children) {
+                                    await executeCommand(child.dataset.command, child);
+                                    await sleep(500);
+                                }
+                            }
+                        }
+                        break;
+                }
+                
+                if (element) {
+                    const highlightElement = element.querySelector('.execution-highlight');
+                    if (highlightElement) {
+                        highlightElement.remove();
+                    }
+                }
+                
+                drawMaze();
+            } catch (error) {
+                console.error('Error in executeCommand:', error);
+                throw error;
+            }
+        }
+
+        async function runProgram() {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            try {
+                const programArea = document.getElementById('program-area');
+                async function executeBlocks(container) {
+                    for (const block of container.children) {
+                        if (block.dataset.command === 'ifPath') {await executeCommand('ifPath', block);
+                        } else if (block.dataset.command === 'repeat') {
+                            await executeCommand('repeat', block);
+                        } else {
+                            await executeCommand(block.dataset.command, block);
+                            await sleep(500);
+                        }
+                        
+                        if (robot.x === goal.x && robot.y === goal.y) {
+                            document.getElementById('success-modal').style.display = 'flex';
+                            showCelebration();
+                            return true;
+                        }
+                    }
+                    return false;
+                }
+                
+                await executeBlocks(programArea);
+            } catch (error) {
+                console.error('Error executing program:', error);
+            } finally {
+                isAnimating = false;
+            }
+        }
+
+        function resetLevel() {
+            try {
+                initLevel(currentLevel);
+                clearProgram();
+            } catch (error) {
+                console.error('Error resetting level:', error);
+            }
+        }
+
+        function clearProgram() {
+            try {
+                const programArea = document.getElementById('program-area');
+                if (programArea) {
+                    programArea.innerHTML = '';
+                }
+            } catch (error) {
+                console.error('Error clearing program:', error);
+            }
+        }
+
+        function nextLevel() {
+            currentLevel++;
+            if (currentLevel <= levels.length) {
+                document.getElementById('success-modal').style.display = 'none';
+                document.getElementById('current-level').textContent = currentLevel;
+                initLevel(currentLevel);
+                clearProgram();
+            } else {
+                alert('Congratulations! You completed all levels! 🎉');
+            }
+        }
+
+        function showCelebration() {
+            const celebration = document.getElementById('celebration');
+            celebration.style.display = 'block';
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                celebration.appendChild(confetti);
+            }
+
+            setTimeout(() => {
+                celebration.style.display = 'none';
+                celebration.innerHTML = '';
+            }, 4000);
+        }
+
+        // Prevent the repeat count input from triggering drag events
+        document.querySelector('.repeat-count').addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+        });
+
+        // Drag and drop functionality
+        document.querySelectorAll('.command-block').forEach(block => {
+            block.addEventListener('dragstart', e => {
+                e.dataTransfer.setData('text/plain', block.dataset.command);
+            });
+        });
+
+        const programArea = document.getElementById('program-area');
+        programArea.addEventListener('dragover', e => {
+            e.preventDefault();
+        });
+
+        programArea.addEventListener('drop', e => {
+            e.preventDefault();
+            const command = e.dataTransfer.getData('text/plain');
+            const newBlock = document.createElement('div');
+            newBlock.className = 'command-block';
+            newBlock.dataset.command = command;
+            
+            if (command === 'repeat') {
+                newBlock.innerHTML = `
+                    Repeat <input type="number" min="1" max="10" value="2" class="repeat-count"> Times...
+                    <div class="block-container"></div>
+                `;
+                // Prevent the input from triggering drag events
+                newBlock.querySelector('.repeat-count').addEventListener('mousedown', (e) => {
+                    e.stopPropagation();
+                });
+            } else if (command === 'ifPath') {
+                newBlock.textContent = 'If Path Ahead Then...';
+                const container = document.createElement('div');
+                container.className = 'block-container';
+                newBlock.appendChild(container);
+            } else {
+                newBlock.textContent = document.querySelector(`[data-command="${command}"]`).textContent;
+            }
+            
+            const dropTarget = e.target.closest('.block-container') || programArea;
+            dropTarget.appendChild(newBlock);
+        });
+
+        // Initialize first level
+        initLevel(1);
+    </script>
+</body>
+</html>

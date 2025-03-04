@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fun Snakes & Ladders!</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --board-size: min(80vh, 80vw);
+        // Enhanced Ladder Drawing Function
+        function drawLadder(start, end) {
+            const startPos = getCellCenter(start);
+            const endPos = getCellCenter(end);
+            
+            const ladder = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            ladder.classList.add('ladder');
+            ladder.setAttribute('viewBox', '0 0 100 100');
+            ladder.style.overflow = 'visible';
+            
+            // Calculate ladder angle and length
+            const dx = endPos.x - startPos.x;
+            const dy = endPos.y - startPos.y;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            // Create ladder rails
+            const railWidth = 2;
+            const railGap = 8;
+            const rails = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            rails.setAttribute('transform', `translate(${startPos.x} ${startPos.y}) rotate(${angle})`);
+            
+            // Draw rails
+            const leftRail = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            leftRail.setAttribute('x1', '0');
+            leftRail.setAttribute('y1', `-${railGap/2}`);
+            leftRail.setAttribute('x2', length);
+            leftRail.setAttribute('y2', `-${railGap/2}`);
+            leftRail.setAttribute('stroke', '#8D6E63');
+            leftRail.setAttribute('stroke-width', railWidth);
+            
+            const rightRail = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            rightRail.setAttribute('x1', '0');
+            rightRail.setAttribute('y1', `${railGap/2}`);
+            rightRail.setAttribute('x2', length);
+            rightRail.setAttribute('y2', `${railGap/2}`);
+            rightRail.setAttribute('stroke', '#8D6E63');
+            rightRail.setAttribute('stroke-width', railWidth);
+            
+            rails.appendChild(leftRail);
+            rails.appendChild(rightRail);
+            
+            // Add rungs
+            const rungCount = Math.floor(length / 10);
+            const rungGap = length / (rungCount + 1);
+            
+            for (let i = 1; i <= rungCount; i++) {
+                const rung = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                rung.classList.add('ladder-rung');
+                rung.setAttribute('x1', i * rungGap);
+                rung.setAttribute('y1', `-${railGap/2}`);
+                rung.setAttribute('x2', i * rungGap);
+                rung.setAttribute('y2', `${railGap/2}`);
+                rails.appendChild(rung);
+            }
+            
+            ladder.appendChild(rails);
+            document.querySelector(`#board .cell:nth-child(${BOARD_SIZE - start + 1})`).appendChild(ladder);
+        }
+
+        // Board Creation and Game Setup Functions
+        function createBoard() {
+            const board = document.getElementById('board');
+            board.innerHTML = '';
+            
+            for (let i = BOARD_SIZE; i > 0; i--) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                cell.textContent = i;
+                
+                if ((Math.floor((i-1)/10) % 2 === 0 && i % 2 === 0) || 
+                    (Math.floor((i-1)/10) % 2 === 1 && i % 2 === 1)) {
+                    cell.style.backgroundColor = '#E8F5E9';
+                }
+                
+                board.appendChild(cell);
+            }
+            
+            drawSnakesAndLadders();
+        }
+        
+        // Player Movement and Animation Functions
+        function placePlayersOnBoard() {
+            document.querySelectorAll('.player').forEach(p => p.remove());
+            
+            players.forEach((player, index) => {
+                const playerElement = document.createElement('div');
+                playerElement.className = 'player';
+                playerElement.dataset.player = index;
+                playerElement.style.backgroundColor = player.color;
+                
+                const cell = document.querySelector(`#board .cell:nth-child(${BOARD_SIZE - player.position + 1})`);
+                const cellRect = cell.getBoundingClientRect();
+                const boardRect = board.getBoundingClientRect();
+                
+                const x = ((cellRect.left + cellRect.width / 2) - boardRect.left) / boardRect.width * 100;
+                const y = ((cellRect.top + cellRect.height / 2) - boardRect.top) / boardRect.height * 100;
+                
+                const offset = index * 4;
+                playerElement.style.left = `${x + offset - 8}%`;
+                playerElement.style.top = `${y + offset - 8}%`;
+                
+                board.appendChild(playerElement);
+            });
+        }
+
+        async function movePlayer(roll) {
+            const player = players[currentPlayer];
+            const newPosition = Math.min(player.position + roll, 100);
+            let finalPosition = newPosition;
+            let message = `${player.name} rolled a ${roll}`;
+            
+            // Create array of positions for animation
+            const positions = [];
+            for (let i = player.position + 1; i <= newPosition; i++) {
+                positions.push(i);
+            }
+            
+            // Function to animate movement along path
+            function animateAlongPath(element, path, duration) {
+                const length = path.getTotalLength();
+                let start = null;
+                
+                element.style.offsetPath = `path("${path.getAttribute('d')}")`;
+                element.style.offsetRotate = "0deg";
+                
+                return new Promise((resolve) => {
+                    function animate(timestamp) {
+                        if (!start) start = timestamp;
+                        const progress = (timestamp - start) / duration;
+                        
+                        if (progress < 1) {
+                            element.style.offsetDistance = `${progress * 100}%`;
+                            requestAnimationFrame(animate);
+                        } else {
+                            element.style.offsetDistance = "100%";
+                            resolve();
+                        }
+                    }
+                    requestAnimationFrame(animate);
+                });
+            }
+            
+            // Function to animate regular movement
+            async function animateRegularMove() {
+                const playerElement = document.querySelector(`.player[data-player="${currentPlayer}"]`);
+                
+                for (const pos of positions) {
+                    const cell = document.querySelector(`#board .cell:nth-child(${BOARD_SIZE - pos + 1})`);
+                    const cellRect = cell.getBoundingClientRect();
+                    const boardRect = board.getBoundingClientRect();
+                    
+                    const x = ((cellRect.left + cellRect.width / 2) - boardRect.left) / boardRect.width * 100;
+                    const y = ((cellRect.top + cellRect.height / 2) - boardRect.top) / boardRect.height * 100;
+                    
+                    await new Promise(resolve => {
+                        playerElement.style.transition = 'all 0.2s ease-in-out';
+                        playerElement.style.left = `${x}%`;
+                        playerElement.style.top = `${y}%`;
+                        setTimeout(resolve, 200);
+                    });
+                }
+            }
+            
+            // Function to animate snake slide
+            async function animateSnakeSlide(start, end) {
+                const playerElement = document.querySelector(`.player[data-player="${currentPlayer}"]`);
+                const snakePath = document.querySelector(`#board .cell:nth-child(${BOARD_SIZE - start + 1}) .snake-body`);
+                
+                playerElement.style.transition = 'none';
+                await animateAlongPath(playerElement, snakePath, 1000);
+            }
+            
+            // Function to animate ladder climb
+            async function animateLadderClimb(start, end) {
+                const playerElement = document.querySelector(`.player[data-player="${currentPlayer}"]`);
+                const startPos = getCellCenter(start);
+                const endPos = getCellCenter(end);
+                
+                playerElement.style.transition = 'all 1s ease-in-out';
+                playerElement.style.left = `${endPos.x}%`;
+                playerElement.style.top = `${endPos.y}%`;
+                
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            // Execute the movement sequence
+            async function executeMove() {
+                await animateRegularMove();
+                message += ` and moved to ${newPosition}`;
+                setMessage(message);
+                
+                // Check for snakes
+                if (SNAKES[newPosition]) {
+                    finalPosition = SNAKES[newPosition];
+                    message += ` Oops! Snake!`;
+                    setMessage(message);
+                    await animateSnakeSlide(newPosition, finalPosition);
+                    message += ` Slides down to ${finalPosition}`;
+                    playSound('snake');
+                }
+                
+                // Check for ladders
+                if (LADDERS[newPosition]) {
+                    finalPosition = LADDERS[newPosition];
+                    message += ` Yay! Ladder!`;
+                    setMessage(message);
+                    await animateLadderClimb(newPosition, finalPosition);
+                    message += ` Climbs up to ${finalPosition}`;
+                    playSound('ladder');
+                }
+                
+                player.position = finalPosition;
+                setMessage(message);
+                updatePlayerList();
+                
+                // Check for win
+                if (finalPosition === 100) {
+                    setTimeout(celebrateWin, 500);
+                    return;
+                }
+                
+                // Next player's turn
+                setTimeout(() => {
+                    currentPlayer = (currentPlayer + 1) % players.length;
+                    updatePlayerList();
+                    
+                    if (isComputerGame && currentPlayer === 1) {
+                        setTimeout(computerTurn, 1000);
+                    } else {
+                        setMessage(`${players[currentPlayer].name}'s turn to roll!`);
+                    }
+                }, 500);
+            }
+            
+            executeMove();
+        }
+        body {
+            font-family: 'Comic Sans MS', cursive;
+            margin: 0;
+            padding: 20px;
+            background: #f0f9ff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .game-container {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: start;
+        }
+        .board {
+            width: var(--board-size);
+            height: var(--board-size);
+            background: white;
+            border: 8px solid #6d4c41;
+            border-radius: 15px;
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 1px;
+            background-color: #8d6e63;
+            padding: 5px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            position: relative;
+        }
+        .cell {
+            background: white;
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: calc(var(--board-size) / 30);
+            font-weight: bold;
+            position: relative;
+            transition: transform 0.3s;
+        }
+        .cell:hover {
+            transform: scale(1.05);
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-width: 200px;
+        }
+        .dice {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border: 4px solid #6d4c41;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            transition: transform 0.3s;
+            margin: 0 auto;
+        }
+        .dice:hover {
+            transform: scale(1.1);
+        }
+        .dice.rolling {
+            animation: shake 0.5s infinite;
+        }
+        .button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 1em;
+            transition: transform 0.2s;
+        }
+        .button:hover {
+            transform: scale(1.05);
+        }
+        .message {
+            font-size: 1.2em;
+            text-align: center;
+            min-height: 2.4em;
+            color: #2196F3;
+        }
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        .player-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+        }
+        .player-setup {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        /* Enhanced Animations and Game Elements */
+        .snake {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            transform-origin: center;
+            animation: slither 3s infinite ease-in-out;
+        }
+
+        .ladder {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .ladder-rung {
+            stroke: #795548;
+            stroke-width: 2;
+        }
+
+        .snake-body {
+            fill: none;
+            stroke-linecap: round;
+        }
+
+        .snake-head {
+            fill: currentColor;
+        }
+
+        .snake-eye {
+            fill: white;
+        }
+
+        .snake-tongue {
+            fill: #FF0066;
+            animation: flicker 0.5s infinite;
+        }
+
+        .player {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 2;
+            offset-path: none;
+            offset-distance: 0;
+            transform-origin: center;
+            will-change: transform, left, top;
+            animation: playerBounce 1s infinite ease-in-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+
+        /* Particle Effects */
+        .dice-particle {
+            position: absolute;
+            font-size: 24px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .star-particle {
+            position: absolute;
+            font-size: 32px;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .confetti-particle {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Victory Screen */
+        .victory-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .victory-text {
+            font-size: 48px;
+            color: #4CAF50;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            animation: bounce 1s infinite;
+        }
+
+        /* Animations */
+        @keyframes slither {
+            0%, 100% { transform: translateX(-2px) rotate(-1deg); }
+            50% { transform: translateX(2px) rotate(1deg); }
+        }
+
+        @keyframes flicker {
+            0%, 100% { transform: scaleX(1); }
+            50% { transform: scaleX(1.5); }
+        }
+
+        @keyframes playerBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        @keyframes shake {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(-10deg); }
+            50% { transform: rotate(0deg); }
+            75% { transform: rotate(10deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes diceParticle {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) rotate(360deg); opacity: 0; }
+        }
+
+        @keyframes starParticle {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; }
+            100% { transform: scale(0) rotate(360deg); opacity: 0; }
+        }
+
+        @keyframes confettiParticle {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) rotate(var(--spin)); opacity: 0; }
+        }
+
+        .current-player {
+            animation: bounce 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <h1 style="color: #6d4c41; text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">🎲 Fun Snakes & Ladders! 🎲</h1>
+    
+    <div class="game-container">
+        <div class="board" id="board"></div>
+        
+        <div class="controls">
+            <div class="player-setup" id="player-setup">
+                <button class="button" onclick="setPlayers(1)">1 Player vs Computer</button>
+                <button class="button" onclick="setPlayers(2)">2 Players</button>
+                <button class="button" onclick="setPlayers(3)">3 Players</button>
+                <button class="button" onclick="setPlayers(4)">4 Players</button>
+            </div>
+            
+            <div id="game-controls" style="display: none;">
+                <div class="dice" id="dice" onclick="rollDice()">🎲</div>
+                <div class="message" id="message">Choose number of players!</div>
+                <div id="player-list"></div>
+                <button class="button" onclick="resetGame()" style="margin-top: 15px;">New Game</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

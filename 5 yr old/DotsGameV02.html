@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dots and Boxes Adventure!</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            margin: 0;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .game-title {
+            color: #2c3e50;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .setup-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .player-setup {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .player-count {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            cursor: pointer;
+            border: none;
+            border-radius: 10px;
+            background: #3498db;
+            color: white;
+            transition: transform 0.2s;
+        }
+
+        .player-count:hover {
+            transform: scale(1.05);
+        }
+
+        .player-count.selected {
+            background: #2ecc71;
+            box-shadow: 0 0 10px rgba(46, 204, 113, 0.5);
+        }
+
+        .game-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .game-board {
+            display: grid;
+            gap: 2px;
+            margin: 20px 0;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            background: #34495e;
+            border-radius: 50%;
+        }
+
+        .line {
+            background: #bdc3c7;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .line:hover {
+            background: #95a5a6;
+            transform: scale(1.1);
+        }
+
+        .line.completed {
+            transform: scale(1);
+            box-shadow: 0 0 8px rgba(0,0,0,0.3);
+        }
+
+        .horizontal-line {
+            height: 8px;
+            width: 40px;
+        }
+
+        .vertical-line {
+            width: 8px;
+            height: 40px;
+        }
+
+        .box {
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .player-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .player-card {
+            padding: 10px 20px;
+            border-radius: 10px;
+            color: white;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .current-player {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            animation: pulse 1.5s infinite;
+        }
+
+        .box.completed {
+            animation: popIn 0.3s ease-out;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1.05); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1.05); }
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        .celebration.active {
+            display: block;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f1c40f;
+            animation: fall 3s linear infinite;
+        }
+
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="game-title">Dots and Boxes Adventure! 🎮</h1>
+    
+    <div class="setup-container">
+        <div class="player-setup">
+            <button class="player-count" data-players="1">1 Player</button>
+            <button class="player-count" data-players="2">2 Players</button>
+            <button class="player-count" data-players="3">3 Players</button>
+            <button class="player-count" data-players="4">4 Players</button>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="player-info"></div>
+        <div class="game-board"></div>
+    </div>
+
+    <div class="celebration"></div>
+
+    <script>
+        class DotsAndBoxes {
+            constructor() {
+                this.playerCount = 0;
+                this.currentPlayer = 0;
+                this.scores = [];
+                this.boardSize = 5;
+                this.horizontalLines = Array(this.boardSize).fill().map(() => Array(this.boardSize - 1).fill(false));
+                this.verticalLines = Array(this.boardSize - 1).fill().map(() => Array(this.boardSize).fill(false));
+                this.boxes = Array(this.boardSize - 1).fill().map(() => Array(this.boardSize - 1).fill(null));
+                this.isComputerTurn = false;
+                this.gameStarted = false;
+                this.moveInProgress = false;
+                this.playerColors = ['#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6'];
+                this.playerEmojis = ['🦁', '🐯', '🐨', '🐰'];
+                
+                this.setupEventListeners();
+                this.createBoard();
+            }
+
+            setupEventListeners() {
+                document.querySelectorAll('.player-count').forEach(button => {
+                    button.addEventListener('click', () => {
+                        if (!this.moveInProgress) {
+                            const players = parseInt(button.dataset.players);
+                            this.startGame(players);
+                            document.querySelectorAll('.player-count').forEach(btn => btn.classList.remove('selected'));
+                            button.classList.add('selected');
+                        }
+                    });
+                });
+            }
+
+            startGame(players) {
+                this.playerCount = players;
+                this.currentPlayer = 0;
+                this.scores = Array(players).fill(0);
+                this.gameStarted = true;
+                this.moveInProgress = false;
+                this.resetBoard();
+                this.updatePlayerInfo();
+                
+                if (players === 1) {
+                    this.isComputerTurn = false;
+                }
+            }
+
+            resetBoard() {
+                this.horizontalLines = Array(this.boardSize).fill().map(() => Array(this.boardSize - 1).fill(false));
+                this.verticalLines = Array(this.boardSize - 1).fill().map(() => Array(this.boardSize).fill(false));
+                this.boxes = Array(this.boardSize - 1).fill().map(() => Array(this.boardSize - 1).fill(null));
+                this.createBoard();
+            }
+
+            createBoard() {
+                const board = document.querySelector('.game-board');
+                board.innerHTML = '';
+                board.style.gridTemplate = `repeat(${2 * this.boardSize - 1}, auto) / repeat(${2 * this.boardSize - 1}, auto)`;
+
+                for (let i = 0; i < 2 * this.boardSize - 1; i++) {
+                    for (let j = 0; j < 2 * this.boardSize - 1; j++) {
+                        if (i % 2 === 0 && j % 2 === 0) {
+                            const dot = document.createElement('div');
+                            dot.className = 'dot';
+                            board.appendChild(dot);
+                        } else if (i % 2 === 0 && j % 2 === 1) {
+                            const line = document.createElement('div');
+                            line.className = 'line horizontal-line';
+                            const row = i / 2;
+                            const col = (j - 1) / 2;
+                            line.dataset.row = row;
+                            line.dataset.col = col;
+                            line.dataset.type = 'horizontal';
+                            line.addEventListener('click', () => this.handleLineClick(line));
+                            board.appendChild(line);
+                        } else if (i % 2 === 1 && j % 2 === 0) {
+                            const line = document.createElement('div');
+                            line.className = 'line vertical-line';
+                            const row = (i - 1) / 2;
+                            const col = j / 2;
+                            line.dataset.row = row;
+                            line.dataset.col = col;
+                            line.dataset.type = 'vertical';
+                            line.addEventListener('click', () => this.handleLineClick(line));
+                            board.appendChild(line);
+                        } else {
+                            const box = document.createElement('div');
+                            box.className = 'box';
+                            box.dataset.row = (i - 1) / 2;
+                            box.dataset.col = (j - 1) / 2;
+                            board.appendChild(box);
+                        }
+                    }
+                }
+            }
+
+            updatePlayerInfo() {
+                const playerInfo = document.querySelector('.player-info');
+                playerInfo.innerHTML = '';
+                
+                for (let i = 0; i < this.playerCount; i++) {
+                    const playerCard = document.createElement('div');
+                    playerCard.className = 'player-card';
+                    playerCard.style.background = this.playerColors[i];
+                    if (i === this.currentPlayer) {
+                        playerCard.classList.add('current-player');
+                    }
+                    playerCard.textContent = `${this.playerEmojis[i]} Score: ${this.scores[i]}`;
+                    playerInfo.appendChild(playerCard);
+                }
+            }
+
+            handleLineClick(line) {
+                if (!this.gameStarted || line.classList.contains('completed') || 
+                    this.isComputerTurn || this.moveInProgress) {
+                    return;
+                }
+
+                this.moveInProgress = true;
+                const row = parseInt(line.dataset.row);
+                const col = parseInt(line.dataset.col);
+                const type = line.dataset.type;
+
+                if (type === 'horizontal') {
+                    this.horizontalLines[row][col] = true;
+                } else {
+                    this.verticalLines[row][col] = true;
+                }
+
+                line.classList.add('completed');
+                line.style.background = this.playerColors[this.currentPlayer];
+                line.dataset.player = this.currentPlayer;
+
+                const boxesCompleted = this.checkBoxes();
+
+                if (!boxesCompleted) {
+                    this.currentPlayer = (this.currentPlayer + 1) % this.playerCount;
+                    if (this.playerCount === 1 && !this.isGameOver()) {
+                        this.isComputerTurn = true;
+                        setTimeout(() => this.computerMove(), 1000);
+                    }
+                }
+
+                this.updatePlayerInfo();
+
+                if (this.isGameOver()) {
+                    setTimeout(() => this.celebrateWinner(), 500);
+                }
+
+                this.moveInProgress = false;
+            }
+
+            checkBoxes() {
+                let boxCompleted = false;
+
+                for (let i = 0; i < this.boardSize - 1; i++) {
+                    for (let j = 0; j < this.boardSize - 1; j++) {
+                        if (this.boxes[i][j] === null) {
+                            if (
+                                this.horizontalLines[i][j] &&
+                                this.horizontalLines[i + 1][j] &&
+                                this.verticalLines[i][j] &&
+                                this.verticalLines[i][j + 1]
+                            ) {
+                                this.boxes[i][j] = this.currentPlayer;
+                                this.scores[this.currentPlayer]++;
+                                boxCompleted = true;
+
+                                const boxElements = document.querySelectorAll('.box');
+                                const box = Array.from(boxElements).find(
+                                    box => parseInt(box.dataset.row) === i && 
+                                          parseInt(box.dataset.col) === j
+                                );
+                                
+                                if (box) {
+                                    box.classList.add('completed');
+                                    box.style.background = this.playerColors[this.currentPlayer];
+                                    box.textContent = this.playerEmojis[this.currentPlayer];
+                                    
+                                    box.style.animation = 'none';
+                                    box.offsetHeight;
+                                    box.style.animation = null;
+
+                                    const lines = document.querySelectorAll('.line');
+                                    lines.forEach(line => {
+                                        const lineRow = parseInt(line.dataset.row);
+                                        const lineCol = parseInt(line.dataset.col);
+                                        const lineType = line.dataset.type;
+
+                                        if (
+                                            (lineType === 'horizontal' && 
+                                                ((lineRow === i && lineCol === j) || 
+                                                 (lineRow === i + 1 && lineCol === j))) ||
+                                            (lineType === 'vertical' && 
+                                                ((lineRow === i && lineCol === j) || 
+                                                 (lineRow === i && lineCol === j + 1)))
+                                        ) {
+                                            line.style.background = this.playerColors[this.currentPlayer];
+                                        }
+                                    });
+
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return boxCompleted;
+            }
+
+            computerMove() {
+                if (!this.isComputerTurn || this.moveInProgress) return;
+
+                this.moveInProgress = true;
+                let moveMade = false;
+
+                // First priority: Complete boxes
+                for (let i = 0; i < this.boardSize - 1 && !moveMade; i++) {
+                    for (let j = 0; j < this.boardSize - 1 && !moveMade; j++) {
+                        if (this.boxes[i][j] === null) {
+                            let lines = 0;
+                            let missingMove = null;
+
+                            if (this.horizontalLines[i][j]) lines++;
+                            else missingMove = {type: 'horizontal', row: i, col: j};
+                            
+                            if (this.horizontalLines[i + 1][j]) lines++;
+                            else missingMove = {type: 'horizontal', row: i + 1, col: j};
+                            
+                            if (this.verticalLines[i][j]) lines++;
+                            else missingMove = {type: 'vertical', row: i, col: j};
+                            
+                            if (this.verticalLines[i][j + 1]) lines++;
+                            else missingMove = {type: 'vertical', row: i, col: j + 1};
+
+                            if (lines === 3 && missingMove) {
+                                this.makeComputerMove(missingMove.type, missingMove.row, missingMove.col);
+                                moveMade = true;
+                            }
+                        }
+                    }
+                }
+
+                // Second priority: Avoid setting up opponent's boxes
+                if (!moveMade) {
+                    const safeMoves = this.findSafeMoves();
+                    if (safeMoves.length > 0) {
+                        const move = safeMoves[Math.floor(Math.random() * safeMoves.length)];
+                        this.makeComputerMove(move.type, move.row, move.col);
+                        moveMade = true;
+                    }
+                }
+
+                // Last resort: Make any available move
+                if (!moveMade) {
+                    const availableMoves = this.getAllAvailableMoves();
+                    if (availableMoves.length > 0) {
+                        const move = availableMoves[Math.floor(Math.random() * availableMoves.length)];
+                        this.makeComputerMove(move.type, move.row, move.col);
+                    }
+                }
+            }
+
+            findSafeMoves() {
+                const safeMoves = [];
+                const allMoves = this.getAllAvailableMoves();
+                
+                for (const move of allMoves) {
+                    if (move.type === 'horizontal') {
+                        this.horizontalLines[move.row][move.col] = true;
+                    } else {
+                        this.verticalLines[move.row][move.col] = true;
+                    }
+                    
+                    let createsDangerousPosition = false;
+                    
+                    for (let i = 0; i < this.boardSize - 1; i++) {
+                        for (let j = 0; j < this.boardSize - 1; j++) {
+                            if (this.boxes[i][j] === null) {
+                                let sides = 0;
+                                if (this.horizontalLines[i][j]) sides++;
+                                if (this.horizontalLines[i + 1][j]) sides++;
+                                if (this.verticalLines[i][j]) sides++;
+                                if (this.verticalLines[i][j + 1]) sides++;
+                                
+                                if (sides === 3) {
+                                    createsDangerousPosition = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (createsDangerousPosition) break;
+                    }
+                    
+                    if (move.type === 'horizontal') {
+                        this.horizontalLines[move.row][move.col] = false;
+                    } else {
+                        this.verticalLines[move.row][move.col] = false;
+                    }
+                    
+                    if (!createsDangerousPosition) {
+                        safeMoves.push(move);
+                    }
+                }
+                
+                return safeMoves;
+            }
+
+            getAllAvailableMoves() {
+                const moves = [];
+                
+                // Check horizontal lines
+                for (let i = 0; i < this.boardSize; i++) {
+                    for (let j = 0; j < this.boardSize - 1; j++) {
+                        if (!this.horizontalLines[i][j]) {
+                            moves.push({type: 'horizontal', row: i, col: j});
+                        }
+                    }
+                }
+                
+                // Check vertical lines
+                for (let i = 0; i < this.boardSize - 1; i++) {
+                    for (let j = 0; j < this.boardSize; j++) {
+                        if (!this.verticalLines[i][j]) {
+                            moves.push({type: 'vertical', row: i, col: j});
+                        }
+                    }
+                }
+                
+                return moves;
+            }
+
+            makeComputerMove(type, row, col) {
+                const lines = document.querySelectorAll('.line');
+                for (const line of lines) {
+                    if (
+                        line.dataset.type === type &&
+                        parseInt(line.dataset.row) === row &&
+                        parseInt(line.dataset.col) === col
+                    ) {
+                        setTimeout(() => {
+                            this.isComputerTurn = false;
+                            this.moveInProgress = false;
+                            this.handleLineClick(line);
+                        }, 500);
+                        break;
+                    }
+                }
+            }
+
+            isGameOver() {
+                for (let i = 0; i < this.boardSize - 1; i++) {
+                    for (let j = 0; j < this.boardSize - 1; j++) {
+                        if (this.boxes[i][j] === null) {
+                            return false;
+                        }
+                    }
+                }
+                return true;
+            }
+
+            celebrateWinner() {
+                const maxScore = Math.max(...this.scores);
+                const winners = this.scores
+                    .map((score, index) => ({ score, index }))
+                    .filter(player => player.score === maxScore)
+                    .map(player => player.index);
+
+                let message = '';
+                if (winners.length === 1) {
+                    const winner = winners[0];
+                    message = `${this.playerEmojis[winner]} Player ${winner + 1} wins with ${maxScore} boxes! ${this.playerEmojis[winner]}`;
+                } else {
+                    message = '🎉 It\'s a tie! 🎉\n' + 
+                             winners.map(w => `Player ${w + 1} ${this.playerEmojis[w]}`).join(' and ') +
+                             `\nScore: ${maxScore} boxes`;
+                }
+
+                const celebration = document.querySelector('.celebration');
+                celebration.classList.add('active');
+                celebration.innerHTML = '';
+
+                const shapes = ['⭐', '🎈', '🎉', '✨', '💫', '🌟'];
+                for (let i = 0; i < 150; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    
+                    const shape = Math.random() < 0.7;
+                    if (shape) {
+                        confetti.style.width = `${5 + Math.random() * 10}px`;
+                        confetti.style.height = confetti.style.width;
+                        confetti.style.background = this.playerColors[Math.floor(Math.random() * this.playerCount)];
+                        confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                    } else {
+                        confetti.style.background = 'transparent';
+                        confetti.textContent = shapes[Math.floor(Math.random() * shapes.length)];
+                        confetti.style.fontSize = `${15 + Math.random() * 15}px`;
+                    }
+                    
+                    confetti.style.left = `${Math.random() * 100}vw`;
+                    confetti.style.animationDuration = `${2 + Math.random() * 3}s`;
+                    confetti.style.animationDelay = `${Math.random() * 1.5}s`;
+                    
+                    celebration.appendChild(confetti);
+                }
+
+                setTimeout(() => {
+                    alert(message);
+                    
+                    if (confirm('Would you like to start a new game?')) {
+                        celebration.classList.remove('active');
+                        celebration.innerHTML = '';
+                        this.startGame(this.playerCount);
+                    } else {
+                        celebration.classList.remove('active');
+                        celebration.innerHTML = '';
+                        this.gameStarted = false;
+                        document.querySelectorAll('.player-count').forEach(btn => btn.classList.remove('selected'));
+                    }
+                }, 1000);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const game = new DotsAndBoxes();
+
+            document.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                    const focused = document.activeElement;
+                    if (focused && focused.classList.contains('line') && !focused.classList.contains('completed')) {
+                        game.handleLineClick(focused);
+                    }
+                }
+            });
+
+            let touchStartTime;
+            document.addEventListener('touchstart', () => {
+                touchStartTime = new Date().getTime();
+            });
+
+            document.addEventListener('touchend', (event) => {
+                const touchEndTime = new Date().getTime();
+                const touchDuration = touchEndTime - touchStartTime;
+                
+                if (touchDuration < 500) {
+                    const touch = event.changedTouches[0];
+                    const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                    
+                    if (element && element.classList.contains('line') && !element.classList.contains('completed')) {
+                        game.handleLineClick(element);
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>

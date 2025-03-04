@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Educational Memory Game</title>
+    <style>
+        .memory-game {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            max-width: 800px;
+            margin: 20px auto;
+        }
+        .card {
+            height: 100px;
+            background-color: #4CAF50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            cursor: pointer;
+            color: white;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        .card.flipped {
+            background-color: #2196F3;
+        }
+        .card.matched {
+            background-color: #9C27B0;
+        }
+        #score {
+            text-align: center;
+            font-size: 24px;
+            margin: 20px;
+        }
+        #topic-select {
+            display: block;
+            margin: 20px auto;
+            padding: 10px;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <select id="topic-select">
+        <option value="math">Math: Multiplication Tables</option>
+        <option value="capitals">Geography: Countries & Capitals</option>
+        <option value="science">Science: Elements & Symbols</option>
+    </select>
+    <div id="score">Moves: 0</div>
+    <div class="memory-game" id="game-board"></div>
+
+    <script>
+        const topics = {
+            math: [
+                {q: '2 × 4', a: '8'},
+                {q: '3 × 5', a: '15'},
+                {q: '4 × 6', a: '24'},
+                {q: '5 × 7', a: '35'},
+                {q: '6 × 8', a: '48'},
+                {q: '7 × 9', a: '63'}
+            ],
+            capitals: [
+                {q: 'France', a: 'Paris'},
+                {q: 'Japan', a: 'Tokyo'},
+                {q: 'Brazil', a: 'Brasília'},
+                {q: 'Egypt', a: 'Cairo'},
+                {q: 'India', a: 'New Delhi'},
+                {q: 'Australia', a: 'Canberra'}
+            ],
+            science: [
+                {q: 'Oxygen', a: 'O'},
+                {q: 'Carbon', a: 'C'},
+                {q: 'Hydrogen', a: 'H'},
+                {q: 'Nitrogen', a: 'N'},
+                {q: 'Gold', a: 'Au'},
+                {q: 'Silver', a: 'Ag'}
+            ]
+        };
+
+        let moves = 0;
+        let flippedCards = [];
+        let matchedPairs = 0;
+
+        function createCard(content, pair) {
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.dataset.pair = pair;
+            card.dataset.content = content;
+            card.addEventListener('click', flipCard);
+            return card;
+        }
+
+        function flipCard() {
+            if (flippedCards.length === 2) return;
+            if (this.classList.contains('flipped')) return;
+            if (this.classList.contains('matched')) return;
+
+            this.classList.add('flipped');
+            this.textContent = this.dataset.content;
+            flippedCards.push(this);
+
+            if (flippedCards.length === 2) {
+                moves++;
+                document.getElementById('score').textContent = `Moves: ${moves}`;
+                checkForMatch();
+            }
+        }
+
+        function checkForMatch() {
+            const [card1, card2] = flippedCards;
+            if (card1.dataset.pair === card2.dataset.pair) {
+                card1.classList.add('matched');
+                card2.classList.add('matched');
+                matchedPairs++;
+                if (matchedPairs === 6) {
+                    setTimeout(() => {
+                        alert(`Congratulations! You won in ${moves} moves!`);
+                        resetGame();
+                    }, 500);
+                }
+            } else {
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    card1.textContent = '';
+                    card2.textContent = '';
+                }, 1000);
+            }
+            flippedCards = [];
+        }
+
+        function resetGame() {
+            moves = 0;
+            matchedPairs = 0;
+            flippedCards = [];
+            document.getElementById('score').textContent = 'Moves: 0';
+            initializeGame(document.getElementById('topic-select').value);
+        }
+
+        function initializeGame(topic) {
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.innerHTML = '';
+            
+            const cards = [];
+            topics[topic].forEach((pair, index) => {
+                cards.push(createCard(pair.q, index));
+                cards.push(createCard(pair.a, index));
+            });
+
+            // Shuffle cards
+            for (let i = cards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cards[i], cards[j]] = [cards[j], cards[i]];
+            }
+
+            cards.forEach(card => gameBoard.appendChild(card));
+        }
+
+        document.getElementById('topic-select').addEventListener('change', (e) => {
+            resetGame();
+        });
+
+        // Initialize the game with the default topic
+        initializeGame('math');
+    </script>
+</body>
+</html>

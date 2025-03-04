@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trouble Game</title>
+    <style>
+        :root {
+            --red-color: #FF4136;
+            --blue-color: #0074D9;
+            --yellow-color: #FFDC00;
+            --green-color: #2ECC40;
+            --board-color: #F8F8F8;
+            --border-color: #444;
+            --background-color: #2C3E50;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            touch-action: manipulation;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: var(--background-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            color: white;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Menu Styles */
+        .menu-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            margin-top: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .game-title {
+            font-size: 4rem;
+            margin-top: 4rem;  /* Added more top margin */
+            margin-bottom: 2rem;
+            color: white;
+            text-shadow: 
+                0 0 10px rgba(255,255,255,0.5),
+                0 0 20px rgba(255,255,255,0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .player-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .player-btn {
+            padding: 1rem 2rem;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 50px;
+            background: linear-gradient(45deg, var(--red-color), var(--blue-color));
+            color: white;
+            cursor: pointer;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .player-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .player-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Game Container Styles */
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            aspect-ratio: 1;
+            position: relative;
+            margin: 2rem auto;
+            padding: 2rem;
+        }
+
+        .board {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--board-color);
+            box-shadow: 
+                0 0 0 20px #34495E,
+                inset 0 0 50px rgba(0,0,0,0.2),
+                0 8px 25px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: visible;
+        }
+
+        /* Spaces Styles */
+        .space {
+            position: absolute;
+            width: 5.5%;
+            height: 5.5%;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid var(--border-color);
+            box-shadow: 
+                inset 0 2px 4px rgba(255,255,255,0.8),
+                inset 0 -2px 4px rgba(0,0,0,0.2);
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .space.main-track {
+            background: linear-gradient(135deg, #fff 0%, #f0f0f0 100%);
+        }
+
+        .space.finish-space {
+            width: 5%;
+            height: 5%;
+            border: 2px solid var(--border-color);
+            background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(240,240,240,0.9) 100%);
+        }
+
+        .space.highlight {
+            background: #FFF9C4;
+            border-color: #FFA000;
+            animation: pulse 1s infinite;
+            z-index: 2;
+            box-shadow: 
+                0 0 10px rgba(255,255,0,0.3),
+                inset 0 2px 4px rgba(255,255,255,0.8),
+                inset 0 -2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Home bases */
+        .home-base {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .home-space {
+            position: absolute;
+            width: 5%;
+            height: 5%;
+            border-radius: 50%;
+            border: 2px solid var(--border-color);
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.95) 100%);
+            box-shadow: 
+                inset 0 2px 4px rgba(255,255,255,0.8),
+                inset 0 -2px 4px rgba(0,0,0,0.2);
+            transform: translate(-50%, -50%);
+        }
+
+        /* Pawns */
+        .pawn {
+            position: absolute;
+            width: 5%;
+            height: 5%;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            z-index: 3;
+            box-shadow: 
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 -2px 2px rgba(0,0,0,0.3),
+                inset 0 2px 2px rgba(255,255,255,0.8);
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(0,0,0,0.1) 100%);
+        }
+
+        .pawn.selectable {
+            animation: bounce 0.8s infinite;
+            cursor: pointer;
+            box-shadow: 
+                0 0 10px rgba(255,255,0,0.3),
+                0 2px 4px rgba(0,0,0,0.3),
+                inset 0 -2px 2px rgba(0,0,0,0.3),
+                inset 0 2px 2px rgba(255,255,255,0.8);
+        }
+
+        .pawn.selected {
+            transform: scale(1.2) translate(-42%, -42%);
+            box-shadow: 
+                0 0 15px rgba(255,255,0,0.5),
+                0 0 25px rgba(255,255,0,0.3),
+                inset 0 -2px 2px rgba(0,0,0,0.3),
+                inset 0 2px 2px rgba(255,255,255,0.8);
+            z-index: 4;
+        }
+
+        /* Pop-O-Matic dome */
+        .pop-dome {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 22%;
+            height: 22%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95) 0%, rgba(240,240,240,0.95) 100%);
+            border-radius: 50%;
+            border: 3px solid var(--border-color);
+            cursor: pointer;
+            overflow: hidden;
+            z-index: 5;
+            box-shadow: 
+                0 8px 25px rgba(0,0,0,0.2),
+                inset 0 -8px 25px rgba(0,0,0,0.1),
+                inset 0 8px 25px rgba(255,255,255,0.8);
+            transition: all 0.2s ease;
+        }
+
+        .pop-dome:active {
+            transform: translate(-50%, -48%);
+            box-shadow: 
+                0 4px 15px rgba(0,0,0,0.2),
+                inset 0 -4px 15px rgba(0,0,0,0.1),
+                inset 0 4px 15px rgba(255,255,255,0.8);
+        }
+
+        .dice {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            color: #333;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+
+        /* Game messages */
+        .message {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            text-align: center;
+            z-index: 1000;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Player info cards */
+        .player-info {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 1rem;
+            background: rgba(0,0,0,0.8);
+            padding: 0.8rem 1.5rem;
+            border-radius: 50px;
+            z-index: 1000;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .player-card {
+            padding: 0.8rem 1.5rem;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .player-card.active {
+            opacity: 1;
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(255,255,255,0.3);
+        }
+
+        .menu-button {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            border-radius: 5px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .menu-button:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Animations */
+        @keyframes bounce {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -60%) scale(1.1); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        @keyframes fall {
+            0% { 
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% { 
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .game-container {
+                max-width: 95vw;
+                padding: 1rem;
+                margin: 1rem auto;
+            }
+
+            .player-info {
+                flex-wrap: wrap;
+                justify-content: center;
+                width: 90%;
+                padding: 0.5rem 1rem;
+            }
+
+            .player-card {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+
+            .message {
+                width: 90%;
+                font-size: 1rem;
+                bottom: 1rem;
+                padding: 0.8rem 1.5rem;
+            }
+
+            .dice {
+                font-size: 2rem;
+            }
+
+            .pop-dome {
+                width: 25%;
+                height: 25%;
+            }
+
+            .space, .pawn {
+                width: 6%;
+                height: 6%;
+            }
+
+            .game-title {
+                font-size: 3rem;
+            }
+            
+            .menu-container {
+                width: 90%;
+                padding: 1.5rem;
+            }
+            
+            .player-btn {
+                padding: 0.8rem 1.6rem;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Home Screen -->
+    <div id="homeScreen" class="screen active">
+        <h1 class="game-title">TROUBLE</h1>
+        <div class="menu-container">
+            <h2>Select Number of Players</h2>
+            <div class="player-buttons">
+                <button class="player-btn" data-players="2">2 Players</button>
+                <button class="player-btn" data-players="3">3 Players</button>
+                <button class="player-btn" data-players="4">4 Players</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="screen">
+        <h1>TROUBLE</h1>
+        <div class="player-info" id="playerInfo"></div>
+        <div class="game-container">
+            <div class="board" id="board">
+                <div class="pop-dome" id="popDome">
+                    <div class="dice" id="dice">🎲</div>
+                </div>
+            </div>
+        </div>
+        <div class="message" id="message">Click the Pop-O-Matic to roll!</div>
+        <button id="backToMenu" class="menu-button">Back to Menu</button>
+    </div>
+    <script>
+        // Constants and Utilities
+        const BOARD_SIZE = 28; // 7 spaces per side * 4 sides
+        const COLORS = [
+            'var(--red-color)',
+            'var(--blue-color)',
+            'var(--yellow-color)',
+            'var(--green-color)'
+        ];
+
+        // Home base positions with coordinates for placing pawns
+        const HOME_POSITIONS = {
+            0: { angle: -Math.PI/2, radius: 52 },  // Red (top)
+            1: { angle: 0, radius: 52 },           // Blue (right)
+            2: { angle: Math.PI/2, radius: 52 },   // Yellow (bottom)
+            3: { angle: Math.PI, radius: 52 }      // Green (left)
+        };
+
+        // Main track positions - adjusted for better spacing
+        const MAIN_TRACK_RADIUS = 45;
+
+        // Finish path configuration
+        const FINISH_PATH_START_RADIUS = 38;
+        const FINISH_PATH_SPACING = 6;
+
+        // Position on main track where each player starts
+        const START_POSITIONS = [0, 7, 14, 21];
+
+        // Position on main track where each player's finish path begins
+        const FINISH_PATHS = {
+            0: 27, // Red enters finish path just before start
+            1: 6,  // Blue enters finish path just before start
+            2: 13, // Yellow enters finish path just before start
+            3: 20  // Green enters finish path just before start
+        };
+
+        // Player positions for different number of players
+        const PLAYER_LAYOUTS = {
+            2: [0, 2], // Top and Bottom
+            3: [0, 1, 2], // Top, Right, Bottom
+            4: [0, 1, 2, 3] // All positions
+        };
+
+        const PLAYER_NAMES = ['Red', 'Blue', 'Yellow', 'Green'];
+
+        // Helper Functions
+        function getActivePlayerPositions(numPlayers) {
+            return PLAYER_LAYOUTS[numPlayers];
+        }
+
+        function shouldEnterFinishPath(player, position, roll) {
+            const finishEntry = FINISH_PATHS[player];
+            const newPosition = (position + roll) % BOARD_SIZE;
+            return position <= finishEntry && newPosition > finishEntry;
+        }
+
+        function getMainTrackPosition(index) {
+            const angle = (index * 2 * Math.PI) / BOARD_SIZE;
+            return {
+                x: MAIN_TRACK_RADIUS * Math.cos(angle - Math.PI/2),
+                y: MAIN_TRACK_RADIUS * Math.sin(angle - Math.PI/2)
+            };
+        }
+
+        function getHomeBasePosition(player, pawnIndex) {
+            const baseConfig = HOME_POSITIONS[player];
+            const arcSpan = Math.PI / 8;
+            const angle = baseConfig.angle - (arcSpan/2) + (pawnIndex * arcSpan/3);
+            return {
+                x: baseConfig.radius * Math.cos(angle),
+                y: baseConfig.radius * Math.sin(angle)
+            };
+        }
+
+        function getFinishPathPosition(player, position) {
+            const baseAngle = (FINISH_PATHS[player] * 2 * Math.PI) / BOARD_SIZE;
+            const radius = FINISH_PATH_START_RADIUS - (position * FINISH_PATH_SPACING);
+            return {
+                x: radius * Math.cos(baseAngle - Math.PI/2),
+                y: radius * Math.sin(baseAngle - Math.PI/2)
+            };
+        }
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        // Audio Context and Sound System
+        class GameSounds {
+            constructor() {
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                this.masterGain = this.audioContext.createGain();
+                this.masterGain.gain.value = 0.3;
+                this.masterGain.connect(this.audioContext.destination);
+            }
+
+            createTone(frequency, duration, type = 'sine', attack = 0.01, decay = 0.1) {
+                const oscillator = this.audioContext.createOscillator();
+                const gainNode = this.audioContext.createGain();
+                
+                oscillator.type = type;
+                oscillator.frequency.value = frequency;
+                
+                gainNode.gain.setValueAtTime(0, this.audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(1, this.audioContext.currentTime + attack);
+                gainNode.gain.linearRampToValueAtTime(0, this.audioContext.currentTime + duration);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(this.masterGain);
+                
+                return oscillator;
+            }
+
+            playPopSound() {
+                const duration = 0.15;
+                const osc = this.createTone(400, duration, 'triangle');
+                osc.frequency.linearRampToValueAtTime(200, this.audioContext.currentTime + duration);
+                osc.start();
+                osc.stop(this.audioContext.currentTime + duration);
+            }
+
+            playMoveSound() {
+                const duration = 0.08;
+                const osc = this.createTone(300, duration, 'sine');
+                osc.frequency.linearRampToValueAtTime(600, this.audioContext.currentTime + duration);
+                osc.start();
+                osc.stop(this.audioContext.currentTime + duration);
+            }
+
+            playWinSound() {
+                const notes = [400, 500, 600];
+                const duration = 0.15;
+                
+                notes.forEach((freq, index) => {
+                    setTimeout(() => {
+                        const osc1 = this.createTone(freq, duration, 'sine');
+                        const osc2 = this.createTone(freq * 1.5, duration, 'triangle', 0.02, 0.1);
+                        
+                        osc1.start();
+                        osc2.start();
+                        osc1.stop(this.audioContext.currentTime + duration);
+                        osc2.stop(this.audioContext.currentTime + duration);
+                    }, index * 150);
+                });
+            }
+
+            playButtonClick() {
+                const duration = 0.05;
+                const osc = this.createTone(200, duration, 'sine', 0.01, 0.05);
+                osc.start();
+                osc.stop(this.audioContext.currentTime + duration);
+            }
+
+            ensureAudioContext() {
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+            }
+        }
+
+        // Pawn Class
+        class Pawn {
+            constructor(player, index, game) {
+                this.player = player;
+                this.index = index;
+                this.game = game;
+                this.position = -1;
+                this.completed = false;
+                this.element = null;
+                this.isMoving = false;
+                this.isInFinishPath = false;
+                this.finishPosition = -1;
+                this.selected = false;
+            }
+
+            createVisual() {
+                const pawn = document.createElement('div');
+                pawn.className = 'pawn';
+                pawn.style.backgroundColor = COLORS[this.player];
+                
+                pawn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.onClick();
+                });
+                
+                pawn.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.onClick();
+                });
+                
+                pawn.style.transform = 'translate(-50%, -50%)';
+                this.element = pawn;
+                
+                pawn.dataset.player = this.player;
+                pawn.dataset.index = this.index;
+                
+                return pawn;
+            }
+
+            onClick() {
+                if (!this.isSelectable() || this.isMoving) {
+                    return;
+                }
+
+                if (this.selected) {
+                    this.deselect();
+                    this.move();
+                } else {
+                    if (this.game.selectedPawn) {
+                        this.game.selectedPawn.deselect();
+                    }
+                    this.select();
+                }
+            }
+
+            select() {
+                this.selected = true;
+                this.game.selectedPawn = this;
+                this.element.classList.add('selected');
+                this.game.board.showValidMoves(this);
+                
+                this.element.style.zIndex = '1000';
+                this.element.classList.add('selectable');
+            }
+
+            deselect() {
+                this.selected = false;
+                this.game.selectedPawn = null;
+                this.element.classList.remove('selected');
+                this.game.board.hideValidMoves();
+                
+                this.element.style.zIndex = '3';
+                this.element.classList.remove('selectable');
+            }
+
+            isSelectable() {
+                return this.player === this.game.currentPlayer && 
+                       !this.isMoving && 
+                       this.game.gameActive && 
+                       this.game.diceRoll > 0 &&
+                       !this.completed &&
+                       (
+                           (this.position === -1 && this.game.diceRoll === 6) ||
+                           (this.position >= 0 && this.canMove())
+                       );
+            }
+
+            canMove() {
+                if (this.isInFinishPath) {
+                    return this.finishPosition + this.game.diceRoll < 4;
+                }
+                
+                const newPosition = (this.position + this.game.diceRoll) % BOARD_SIZE;
+                return this.isValidMove(newPosition);
+            }
+
+            isValidMove(newPosition) {
+                return !this.game.pawns.some(p => 
+                    p !== this && 
+                    p.player === this.player && 
+                    p.position === newPosition
+                );
+            }
+
+            updatePosition() {
+                if (!this.element) return;
+
+                if (this.position === -1) {
+                    const homePos = HOME_POSITIONS[this.player];
+                    const arcSpan = Math.PI / 8;
+                    const angle = homePos.angle - (arcSpan/2) + (this.index * arcSpan/3.5);
+                    const x = homePos.radius * Math.cos(angle);
+                    const y = homePos.radius * Math.sin(angle);
+                    
+                    this.element.style.left = `${50 + x}%`;
+                    this.element.style.top = `${50 + y}%`;
+                } else if (this.isInFinishPath) {
+                    const baseAngle = (FINISH_PATHS[this.player] * 2 * Math.PI) / BOARD_SIZE;
+                    const radius = 35 - (this.finishPosition * 8);
+                    const x = radius * Math.cos(baseAngle - Math.PI/2);
+                    const y = radius * Math.sin(baseAngle - Math.PI/2);
+                    
+                    this.element.style.left = `${50 + x}%`;
+                    this.element.style.top = `${50 + y}%`;
+                } else {
+                    const angle = (this.position * 2 * Math.PI) / BOARD_SIZE;
+                    const radius = 42;
+                    const x = radius * Math.cos(angle - Math.PI/2);
+                    const y = radius * Math.sin(angle - Math.PI/2);
+                    this.element.style.left = `${50 + x}%`;
+                    this.element.style.top = `${50 + y}%`;
+                }
+            }
+
+            move() {
+                if (!this.isSelectable() || this.isMoving) return;
+                
+                this.isMoving = true;
+                this.game.board.hideValidMoves();
+                
+                if (this.position === -1 && this.game.diceRoll === 6) {
+                    this.position = START_POSITIONS[this.player];
+                } else if (this.isInFinishPath) {
+                    this.finishPosition += this.game.diceRoll;
+                    if (this.finishPosition >= 3) {
+                        this.completed = true;
+                    }
+                } else if (this.position >= 0) {
+                    if (shouldEnterFinishPath(this.player, this.position, this.game.diceRoll)) {
+                        this.isInFinishPath = true;
+                        this.finishPosition = 0;
+                    } else {
+                        this.position = (this.position + this.game.diceRoll) % BOARD_SIZE;
+                    }
+                }
+                
+                this.game.sounds.playMoveSound();
+                this.updatePosition();
+                this.checkCollisions();
+                
+                setTimeout(() => {
+                    this.isMoving = false;
+                    if (this.game.diceRoll === 6 && !this.completed) {
+                        this.game.showMessage(`${PLAYER_NAMES[this.game.currentPlayer]} gets another turn!`);
+                        this.game.enableRoll();
+                    } else {
+                        this.game.nextTurn();
+                    }
+                }, 600);
+            }
+
+            checkCollisions() {
+                if (this.isInFinishPath) return;
+                
+                this.game.pawns.forEach(pawn => {
+                    if (pawn !== this && 
+                        pawn.position === this.position && 
+                        pawn.position !== -1 && 
+                        !pawn.isInFinishPath) {
+                        pawn.position = -1;
+                        pawn.updatePosition();
+                        this.game.showMessage(
+                            `${PLAYER_NAMES[this.player]} sent ${PLAYER_NAMES[pawn.player]}'s pawn home!`
+                        );
+                        this.game.sounds.playMoveSound();
+                    }
+                });
+            }
+        }
+
+        // Board Class
+        class Board {
+            constructor(game) {
+                this.game = game;
+                this.boardElement = document.getElementById('board');
+                this.createBoard();
+            }
+
+            createBoard() {
+                // Create main circular track
+                for (let i = 0; i < BOARD_SIZE; i++) {
+                    const {x, y} = getMainTrackPosition(i);
+                    
+                    const space = document.createElement('div');
+                    space.className = 'space main-track';
+                    space.style.left = `${50 + x}%`;
+                    space.style.top = `${50 + y}%`;
+                    space.style.transform = 'translate(-50%, -50%)';
+                    
+                    if (START_POSITIONS.includes(i)) {
+                        space.style.background = COLORS[START_POSITIONS.indexOf(i)];
+                        space.style.opacity = '0.7';
+                    }
+                    
+                    this.boardElement.appendChild(space);
+                }
+
+                // Create home bases
+                Object.entries(HOME_POSITIONS).forEach(([player, baseConfig]) => {
+                    if (player >= this.game.numPlayers) return;
+                    
+                    const base = document.createElement('div');
+                    base.className = 'home-base';
+                    
+                    for (let i = 0; i < 4; i++) {
+                        const homeSpace = document.createElement('div');
+                        homeSpace.className = 'home-space';
+                        
+                        const {x, y} = getHomeBasePosition(parseInt(player), i);
+                        
+                        homeSpace.style.left = `${50 + x}%`;
+                        homeSpace.style.top = `${50 + y}%`;
+                        homeSpace.style.backgroundColor = COLORS[player];
+                        homeSpace.style.opacity = '0.2';
+                        
+                        base.appendChild(homeSpace);
+                    }
+                    
+                    this.boardElement.appendChild(base);
+                });
+
+                // Create finish paths
+                Object.entries(FINISH_PATHS).forEach(([player, pathStart]) => {
+                    if (player >= this.game.numPlayers) return;
+                    
+                    for (let i = 0; i < 4; i++) {
+                        const finishSpace = document.createElement('div');
+                        finishSpace.className = 'space finish-space';
+                        
+                        const {x, y} = getFinishPathPosition(parseInt(player), i);
+                        
+                        finishSpace.style.left = `${50 + x}%`;
+                        finishSpace.style.top = `${50 + y}%`;
+                        finishSpace.style.background = COLORS[player];
+                        finishSpace.style.opacity = '0.3';
+                        
+                        this.boardElement.appendChild(finishSpace);
+                    }
+                });
+            }
+
+            addPawn(pawn) {
+                this.boardElement.appendChild(pawn.createVisual());
+                pawn.updatePosition();
+            }
+
+            showValidMoves(pawn) {
+                const spaces = document.querySelectorAll('.space');
+                
+                if (pawn.position === -1 && this.game.diceRoll === 6) {
+                    const startPos = START_POSITIONS[pawn.player];
+                    spaces[startPos].classList.add('highlight');
+                } else if (pawn.position >= 0) {
+                    if (pawn.isInFinishPath) {
+                        const finishSpaces = document.querySelectorAll('.finish-space');
+                        const nextFinishSpace = pawn.finishPosition + this.game.diceRoll;
+                        if (nextFinishSpace < 4) {
+                            finishSpaces[pawn.player * 4 + nextFinishSpace].classList.add('highlight');
+                        }
+                    } else {
+                        const newPos = (pawn.position + this.game.diceRoll) % BOARD_SIZE;
+                        if (shouldEnterFinishPath(pawn.player, pawn.position, this.game.diceRoll)) {
+                            const finishSpaces = document.querySelectorAll('.finish-space');
+                            finishSpaces[pawn.player * 4].classList.add('highlight');
+                        } else {
+                            spaces[newPos].classList.add('highlight');
+                        }
+                    }
+                }
+            }
+
+            hideValidMoves() {
+                document.querySelectorAll('.space').forEach(space => {
+                    space.classList.remove('highlight');
+                });
+            }
+        }
+
+        // Dice Class
+        class Dice {
+            constructor(game) {
+                this.game = game;
+                this.diceElement = document.getElementById('dice');
+                this.popDomeElement = document.getElementById('popDome');
+                this.faces = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅'];
+
+                this.popDomeElement.addEventListener('click', () => {
+                    this.roll();
+                });
+            }
+
+            roll() {
+                if (!this.game.canRoll || !this.game.gameActive) {
+                    return;
+                }
+                
+                const now = Date.now();
+                if (now - this.game.lastRollTime < 800) {
+                    return;
+                }
+                
+                this.game.lastRollTime = now;
+                this.game.canRoll = false;
+                
+                this.popDomeElement.style.cursor = 'not-allowed';
+                this.diceElement.style.transition = 'transform 0.5s ease';
+                this.diceElement.style.transform = 'rotate(720deg) scale(0.8)';
+                
+                this.game.sounds.playPopSound();
+                
+                this.popDomeElement.style.transform = 'translate(-50%, -48%)';
+                setTimeout(() => {
+                    this.popDomeElement.style.transform = 'translate(-50%, -50%)';
+                }, 100);
+
+                setTimeout(() => {
+                    this.game.diceRoll = Math.floor(Math.random() * 6) + 1;
+                    this.diceElement.textContent = this.faces[this.game.diceRoll - 1];
+                    this.diceElement.style.transform = 'none';
+                    
+                    const canMove = this.game.pawns.some(pawn => 
+                        pawn.player === this.game.currentPlayer && pawn.isSelectable()
+                    );
+
+                    if (!canMove) {
+                        this.game.showMessage(`No valid moves for ${PLAYER_NAMES[this.game.currentPlayer]}!`);
+                        setTimeout(() => this.game.nextTurn(), 1500);
+                    } else {
+                        this.game.showMessage(
+                            `${PLAYER_NAMES[this.game.currentPlayer]}, select a pawn to move ${this.game.diceRoll} spaces!`
+                        );
+                        this.highlightSelectablePawns();
+                    }
+                }, 500);
+            }
+
+            highlightSelectablePawns() {
+                this.game.pawns.forEach(pawn => {
+                    const isSelectable = pawn.isSelectable();
+                    pawn.element.classList.toggle('selectable', isSelectable);
+                });
+            }
+        }
+
+        // Game Class
+        class Game {
+            constructor(numPlayers) {
+                this.numPlayers = numPlayers;
+                this.currentPlayer = 0;
+                this.diceRoll = 0;
+                this.gameActive = true;
+                this.pawns = [];
+                this.selectedPawn = null;
+                this.canRoll = true;
+                this.lastRollTime = 0;
+                
+                this.board = new Board(this);
+                this.sounds = new GameSounds();
+                this.initializePawns();
+                this.dice = new Dice(this);
+                
+                this.setupEventListeners();
+                this.updatePlayerCards();
+                this.showMessage(`${PLAYER_NAMES[this.currentPlayer]}'s turn - Click the Pop-O-Matic!`);
+            }
+
+            initializePawns() {
+                this.pawns = [];
+                for (let player = 0; player < this.numPlayers; player++) {
+                    for (let i = 0; i < 4; i++) {
+                        const pawn = new Pawn(player, i, this);
+                        this.pawns.push(pawn);
+                        this.board.addPawn(pawn);
+                    }
+                }
+            }
+
+            setupEventListeners() {
+                const backButton = document.getElementById('backToMenu');
+                if (backButton) {
+                    backButton.addEventListener('click', () => {
+                        this.sounds.playButtonClick();
+                        showScreen('homeScreen');
+                    });
+                }
+            }
+
+            enableRoll() {
+                this.canRoll = true;
+                if (this.dice.popDomeElement) {
+                    this.dice.popDomeElement.style.cursor = 'pointer';
+                }
+            }
+
+            nextTurn() {
+                this.diceRoll = 0;
+                
+                if (this.selectedPawn) {
+                    this.selectedPawn.deselect();
+                }
+                
+                this.board.hideValidMoves();
+                
+                const winner = this.checkWinner();
+                if (winner !== -1) {
+                    this.gameActive = false;
+                    this.showMessage(`🎉 ${PLAYER_NAMES[winner]} wins! 🎉`);
+                    this.celebrate();
+                    return;
+                }
+                
+                this.currentPlayer = (this.currentPlayer + 1) % this.numPlayers;
+                this.updatePlayerCards();
+                this.enableRoll();
+                this.showMessage(`${PLAYER_NAMES[this.currentPlayer]}'s turn - Click the Pop-O-Matic!`);
+            }
+
+            showMessage(text) {
+                const message = document.getElementById('message');
+                message.textContent = text;
+                message.style.opacity = '0';
+                setTimeout(() => {
+                    message.style.opacity = '1';
+                }, 50);
+            }
+
+            checkWinner() {
+                for (let player = 0; player < this.numPlayers; player++) {
+                    const completedPawns = this.pawns.filter(p => 
+                        p.player === player && p.completed
+                    ).length;
+                    
+                    if (completedPawns === 4) {
+                        return player;
+                    }
+                }
+                return -1;
+            }
+
+            updatePlayerCards() {
+                const playerInfo = document.getElementById('playerInfo');
+                playerInfo.innerHTML = '';
+                
+                for (let i = 0; i < this.numPlayers; i++) {
+                    const card = document.createElement('div');
+                    card.className = 'player-card';
+                    card.style.backgroundColor = COLORS[i];
+                    card.textContent = PLAYER_NAMES[i];
+                    
+                    if (i === this.currentPlayer) {
+                        card.classList.add('active');
+                    }
+                    
+                    playerInfo.appendChild(card);
+                }
+            }
+
+            celebrate() {
+                this.sounds.playWinSound();
+                const colors = ['#FF4136', '#0074D9', '#FFDC00', '#2ECC40'];
+                const board = document.getElementById('board');
+                
+                for (let i = 0; i < 100; i++) {
+                    setTimeout(() => {
+                        const confetti = document.createElement('div');
+                        confetti.style.position = 'absolute';
+                        confetti.style.width = '10px';
+                        confetti.style.height = '10px';
+                        confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                        confetti.style.left = `${Math.random() * 100}%`;
+                        confetti.style.top = '-10px';
+                        confetti.style.borderRadius = '50%';
+                        confetti.style.animation = 'fall 1.5s linear forwards';
+                        board.appendChild(confetti);
+                        
+                        setTimeout(() => confetti.remove(), 1500);
+                    }, i * 50);
+                }
+            }
+        }
+
+        // Game Initialization
+        let currentGame = null;
+
+        function startNewGame(numPlayers) {
+            showScreen('gameScreen');
+            
+            if (currentGame) {
+                const board = document.getElementById('board');
+                board.innerHTML = `
+                    <div class="pop-dome" id="popDome">
+                        <div class="dice" id="dice">🎲</div>
+                    </div>
+                `;
+                
+                document.getElementById('playerInfo').innerHTML = '';
+            }
+            
+            currentGame = new Game(numPlayers);
+        }
+
+        // Set up event listeners when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            let currentGame = null;
+            
+            const initAudio = () => {
+                if (currentGame && currentGame.sounds) {
+                    currentGame.sounds.ensureAudioContext();
+                    document.removeEventListener('click', initAudio);
+                }
+            };
+            document.addEventListener('click', initAudio);
+
+            document.querySelectorAll('.player-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const numPlayers = parseInt(e.target.dataset.players);
+                    startNewGame(numPlayers);
+                    if (currentGame && currentGame.sounds) {
+                        currentGame.sounds.ensureAudioContext();
+                    }
+                });
+            });
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (currentGame) {
+                currentGame.pawns.forEach(pawn => pawn.updatePosition());
+            }
+        });
+
+        // Prevent zooming on mobile devices
+        document.addEventListener('gesturestart', (e) => {
+            e.preventDefault();
+        });
+    </script>
+</body>
+</html>

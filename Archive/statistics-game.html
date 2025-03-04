@@ -1,0 +1,2877 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Statistics Adventure for Young Geniuses</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6baf;
+            --secondary-color: #f7a334;
+            --tertiary-color: #6ac26a;
+            --background-color: #f9f7ff;
+            --text-color: #333333;
+            --panel-color: #ffffff;
+            --panel-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --button-hover: #e0efff;
+            --star-color: #ffd700;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            z-index: 10;
+        }
+
+        .main-container {
+            display: flex;
+            flex: 1;
+        }
+
+        .game-container {
+            flex: 1;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .panel {
+            background-color: var(--panel-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: var(--panel-shadow);
+            max-width: 800px;
+            width: 100%;
+            position: relative;
+        }
+
+        .character {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            z-index: 5;
+        }
+
+        .stats-owl {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .data-dog {
+            top: 20px;
+            left: 20px;
+        }
+
+        .probability-penguin {
+            bottom: 20px;
+            left: 20px;
+        }
+
+        .bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: 20px;
+            padding: 10px 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 200px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .bubble.visible {
+            opacity: 1;
+        }
+
+        .bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid white;
+        }
+
+        button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin: 0.5rem;
+        }
+
+        button:hover {
+            background-color: #ffa500;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.primary {
+            background-color: var(--primary-color);
+        }
+
+        button.secondary {
+            background-color: var(--tertiary-color);
+        }
+
+        button.large {
+            font-size: 1.2rem;
+            padding: 0.7rem 1.4rem;
+        }
+
+        .slider-container {
+            margin: 1rem 0;
+            width: 100%;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .slider {
+            width: 100%;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            -webkit-appearance: none;
+            appearance: none;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background-color: var(--secondary-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background-color: var(--secondary-color);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -350px;
+            width: 350px;
+            height: 100vh;
+            background-color: var(--panel-color);
+            box-shadow: var(--panel-shadow);
+            z-index: 100;
+            padding: 1.5rem;
+            overflow-y: auto;
+            transition: right 0.3s;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 101;
+            background-color: var(--secondary-color);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--tertiary-color);
+            border-radius: 10px;
+            transition: width 0.3s;
+            text-align: center;
+            color: white;
+            font-size: 0.8rem;
+            line-height: 20px;
+        }
+
+        .star-container {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .star {
+            color: #ddd;
+            font-size: 2rem;
+            margin: 0 0.2rem;
+            transition: color 0.3s;
+        }
+
+        .star.earned {
+            color: var(--star-color);
+        }
+
+        .quiz-option {
+            background-color: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            transition: border-color 0.2s, background-color 0.2s;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary-color);
+            background-color: var(--button-hover);
+        }
+
+        .quiz-option.selected {
+            border-color: var(--primary-color);
+            background-color: var(--button-hover);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--tertiary-color);
+            background-color: rgba(106, 194, 106, 0.2);
+        }
+
+        .quiz-option.incorrect {
+            border-color: #ff6b6b;
+            background-color: rgba(255, 107, 107, 0.2);
+        }
+
+        #canvas-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+        }
+
+        .interactive-object {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .interactive-object:hover {
+            transform: scale(1.1);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 250px;
+            margin: 1rem 0;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .bounce {
+            animation: bounce 0.5s;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--tertiary-color);
+            animation: fall 4s ease-out forwards;
+            z-index: 1000;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        /* Characters */
+        .owl-svg {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .dog-svg {
+            width: 100px;
+            height: 100px;
+        }
+        
+        .penguin-svg {
+            width: 100px;
+            height: 100px;
+        }
+        
+        /* For media queries to handle different screen sizes */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .settings-panel {
+                width: 100%;
+                right: -100%;
+            }
+            
+            .character {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Statistics Adventure for Young Geniuses</h1>
+    </header>
+
+    <div class="main-container">
+        <div class="game-container" id="gameContainer">
+            <!-- Content will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Settings toggle button -->
+    <div class="settings-toggle" id="settingsToggle">⚙️</div>
+
+    <!-- Settings panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <h2>Learning Parameters</h2>
+        <p>Adjust these settings to customize the learning experience:</p>
+        
+        <div class="slider-container">
+            <label for="difficultySlider">Difficulty Level: <span id="difficultyValue">1</span></label>
+            <input type="range" min="1" max="5" value="1" class="slider" id="difficultySlider">
+        </div>
+        
+        <div class="slider-container">
+            <label for="complexitySlider">Concept Complexity: <span id="complexityValue">1</span></label>
+            <input type="range" min="1" max="5" value="1" class="slider" id="complexitySlider">
+        </div>
+        
+        <div class="slider-container">
+            <label for="animationSpeedSlider">Animation Speed: <span id="animationSpeedValue">3</span></label>
+            <input type="range" min="1" max="5" value="3" class="slider" id="animationSpeedSlider">
+        </div>
+        
+        <div class="slider-container">
+            <label for="explainDepthSlider">Explanation Depth: <span id="explainDepthValue">1</span></label>
+            <input type="range" min="1" max="5" value="1" class="slider" id="explainDepthSlider">
+        </div>
+        
+        <div class="slider-container">
+            <label for="quizFrequencySlider">Quiz Frequency: <span id="quizFrequencyValue">3</span></label>
+            <input type="range" min="1" max="5" value="3" class="slider" id="quizFrequencySlider">
+        </div>
+        
+        <h3>Advanced Settings</h3>
+        
+        <div class="slider-container">
+            <label for="conceptLevelSlider">Concept Level: <span id="conceptLevelValue">1</span></label>
+            <input type="range" min="1" max="10" value="1" class="slider" id="conceptLevelSlider">
+        </div>
+        
+        <button class="primary" id="applySettings">Apply Settings</button>
+        <button id="resetSettings">Reset Default</button>
+    </div>
+
+    <script>
+        // Game State and Configuration
+        const gameState = {
+            currentModule: 'intro',
+            progress: 0,
+            stars: 0,
+            maxStars: 15,
+            difficulty: 1,
+            complexity: 1,
+            animationSpeed: 3,
+            explainDepth: 1,
+            quizFrequency: 3,
+            conceptLevel: 1,
+            completedModules: {},
+            currentQuizScore: 0,
+            totalQuestions: 0,
+            correctAnswers: 0,
+            dataCollected: [],
+            sortedData: [],
+            currentExplanation: '',
+            characterPosition: { x: 0, y: 0 },
+            activeTool: null,
+            dataSets: {
+                simple: [2, 3, 5, 2, 4, 3, 6, 1, 3, 5],
+                medium: [2, 5, 8, 3, 7, 6, 4, 9, 2, 5, 7, 3, 6, 8, 4],
+                complex: [12, 15, 18, 13, 17, 16, 14, 19, 12, 15, 17, 13, 16, 18, 14]
+            },
+            colorPalette: [
+                '#FFC0CB', '#FFB6C1', '#FF69B4', '#FF1493', '#DB7093',
+                '#C71585', '#E6E6FA', '#D8BFD8', '#DDA0DD', '#EE82EE',
+                '#DA70D6', '#FF00FF', '#BA55D3', '#9370DB', '#8A2BE2'
+            ],
+            characterDialogue: {
+                statsOwl: [
+                    "Hoot! I'm Professor Hoots, your statistics guide!",
+                    "Statistics helps us understand information using numbers!",
+                    "We can count things and make pictures to show our counting!",
+                    "When we look at numbers, we can find patterns and make predictions!",
+                    "Let's learn how to be statistics detectives together!"
+                ],
+                dataDog: [
+                    "Woof! I'm Data Dog! I love collecting information!",
+                    "Collecting data means counting and measuring things around us!",
+                    "We can sort data to see what's big and what's small!",
+                    "Charts help us see our data with pictures!",
+                    "Let's gather some data and see what we discover!"
+                ],
+                probabilityPenguin: [
+                    "Hello! I'm Penny the Probability Penguin!",
+                    "Probability tells us how likely something is to happen!",
+                    "Some things happen a lot, and some things happen only a little!",
+                    "We can use numbers to show if something is likely or unlikely!",
+                    "Let's explore the world of chance together!"
+                ]
+            },
+            moduleContent: {
+                intro: {
+                    title: "Welcome to Statistics Adventure!",
+                    description: "Join our friends as we explore the exciting world of statistics! We'll learn how to collect data, make charts, understand probability, and discover patterns!",
+                    activities: ["Meet the characters", "Learn what statistics is", "Start our adventure!"]
+                },
+                dataCollection: {
+                    title: "Collecting Data with Data Dog",
+                    description: "Data Dog needs help collecting information! We'll count different colored objects and record our findings.",
+                    activities: ["Count objects", "Record data", "Discuss what we found"]
+                },
+                sorting: {
+                    title: "Sorting Data",
+                    description: "Let's learn how to organize our data from smallest to largest!",
+                    activities: ["Sort numbers", "Group similar items", "Find the biggest and smallest"]
+                },
+                visualization: {
+                    title: "Making Charts with Professor Hoots",
+                    description: "Professor Hoots will show us how to make pictures of our data using bar charts and pictographs!",
+                    activities: ["Create a bar chart", "Make a pictograph", "Read information from charts"]
+                },
+                average: {
+                    title: "Finding the Middle with Professor Hoots",
+                    description: "Professor Hoots will teach us about finding the middle number, or average, in our data!",
+                    activities: ["Balance objects", "Find the average", "Understand what average means"]
+                },
+                probability: {
+                    title: "Chances and Probability with Penny",
+                    description: "Penny the Probability Penguin will help us understand how likely things are to happen!",
+                    activities: ["Play probability games", "Make predictions", "Understand likely and unlikely"]
+                },
+                patterns: {
+                    title: "Finding Patterns",
+                    description: "Let's discover patterns in our data and make predictions!",
+                    activities: ["Identify patterns", "Continue sequences", "Make predictions based on patterns"]
+                },
+                finale: {
+                    title: "Statistics Adventure Finale",
+                    description: "Congratulations on becoming a statistics expert! Let's review what we've learned and celebrate our achievements!",
+                    activities: ["Review key concepts", "Complete final challenges", "Get your Statistics Explorer certificate!"]
+                }
+            },
+            explanations: {
+                level1: {
+                    statistics: "Statistics is counting things and making pictures to understand information!",
+                    data: "Data is information we collect by counting or measuring things!",
+                    sorting: "Sorting means putting things in order from smallest to biggest!",
+                    chart: "Charts are pictures that show our counting with shapes and colors!",
+                    average: "The average is the middle number that helps us understand what is normal!",
+                    probability: "Probability tells us how likely something is to happen!"
+                },
+                level3: {
+                    statistics: "Statistics is a way to collect, organize, and understand information using numbers. It helps us make sense of the world!",
+                    data: "Data is information we collect through counting, measuring, or observing. We can use data to answer questions!",
+                    sorting: "Sorting data means arranging numbers from smallest to largest, which helps us see patterns and understand the information better!",
+                    chart: "Charts and graphs are visual tools that show our data in pictures, making it easier to understand and compare information!",
+                    average: "The average (or mean) is found by adding all the numbers and dividing by how many there are. It tells us what's typical in our data!",
+                    probability: "Probability measures how likely something is to happen, from 0 (impossible) to 1 (certain). We use it to make predictions!"
+                },
+                level5: {
+                    statistics: "Statistics is the science of collecting, analyzing, interpreting, and presenting data. It helps us understand information, identify patterns, and make informed decisions!",
+                    data: "Data consists of facts, observations, and measurements that we gather systematically. It can be qualitative (descriptive) or quantitative (numerical) and forms the foundation for statistical analysis!",
+                    sorting: "When we sort data, we arrange values in ascending or descending order, which is essential for understanding data distribution, finding median values, and preparing data for further analysis!",
+                    chart: "Data visualization through charts and graphs transforms complex data into visual representations, making patterns, trends, and relationships more apparent and accessible!",
+                    average: "The arithmetic mean, or average, is a measure of central tendency calculated by summing all values and dividing by the count. It represents the typical value in a dataset and is used as a reference point!",
+                    probability: "Probability quantifies uncertainty, measuring the likelihood of events occurring on a scale from 0 to 1. It forms the foundation for statistical inference, risk assessment, and prediction!"
+                },
+                level7: {
+                    statistics: "Statistics is the mathematical science involving the collection, analysis, interpretation, and presentation of data. It plays a crucial role in research, decision-making processes, and understanding variability in natural and social phenomena!",
+                    data: "Data represents observations from a population or sample, characterized by variables that can be categorical or numerical. The quality of data, including its accuracy, precision, and representativeness, directly impacts the validity of statistical conclusions!",
+                    sorting: "Ordering data points is fundamental to understanding distributional characteristics like range, quartiles, and percentiles. This process reveals the data's structure and is prerequisite for many statistical methods including finding the median and creating histograms!",
+                    chart: "Data visualization communicates complex information clearly and efficiently through graphical means. Effective visualizations reveal data at several levels of detail, from broad overview to fine structure, guiding the viewer to statistical insights that might otherwise remain hidden!",
+                    average: "The arithmetic mean serves as a measure of central tendency that represents the balance point of a dataset. It is sensitive to outliers but provides a useful summary when data follows a symmetric distribution. Understanding its limitations and appropriate applications is essential for accurate data interpretation!",
+                    probability: "Probability theory provides the mathematical framework for quantifying uncertainty. It bridges deterministic patterns and random phenomena, enabling statistical inference through concepts like random variables, distributions, and expected values, forming the basis for prediction models and decision theory!"
+                },
+                level10: {
+                    statistics: "Statistics encompasses the methodology and mathematics for acquiring and analyzing data to extract meaningful patterns, test hypotheses, and draw conclusions in the presence of uncertainty and variability. It serves as the cornerstone for evidence-based research across disciplines, from scientific discovery to economic forecasting and policy formulation!",
+                    data: "Data, as the empirical foundation of statistical inquiry, consists of structured or unstructured information collected through systematic observation or experimentation. The data generation process, sampling methodology, and measurement procedures critically influence the scope of valid inference and generalizability of statistical conclusions!",
+                    sorting: "The ordering transformation of data points facilitates the examination of distributional properties and is instrumental in robust non-parametric methods. This operation enables the computation of order statistics, empirical distribution functions, and rank-based procedures that remain valid under minimal assumptions about the underlying data distribution!",
+                    chart: "Data visualization synthesizes statistical complexity into perceptually efficient representations that leverage human visual cognition for pattern recognition. Effective visual encoding channels (position, length, area, color) are selected based on perceptual hierarchies and the characteristics of the underlying data, enabling both exploratory analysis and confirmatory presentation of statistical findings!",
+                    average: "The arithmetic mean represents the first moment of a probability distribution and minimizes the sum of squared deviations from data points. While sensitive to extreme values, it possesses optimal statistical properties under normality assumptions, including minimum variance among unbiased estimators, making it central to parametric statistical methods and inferential procedures!",
+                    probability: "Probability theory provides the axiomatic framework that quantifies uncertainty through measure theory, enabling the formalization of stochastic processes and random phenomena. It underpins statistical inference through the construction of probability models, likelihood functions, and Bayesian posterior distributions, allowing for the quantification of evidence and uncertainty in parameter estimation and hypothesis testing!"
+                }
+            },
+            quizzes: {
+                dataCollection: [
+                    {
+                        question: "What is data?",
+                        options: [
+                            "Information we collect by counting or measuring",
+                            "Only numbers",
+                            "Only pictures",
+                            "Only words"
+                        ],
+                        correctAnswer: 0,
+                        explanation: "Data is information we collect by counting or measuring things around us!"
+                    },
+                    {
+                        question: "What does Data Dog love to collect?",
+                        options: [
+                            "Bones",
+                            "Information",
+                            "Sticks",
+                            "Toys"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "Data Dog loves collecting information, which we call data!"
+                    }
+                ],
+                sorting: [
+                    {
+                        question: "What does 'sorting' mean?",
+                        options: [
+                            "Mixing things up",
+                            "Putting things in order from smallest to biggest",
+                            "Throwing things away",
+                            "Painting things different colors"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "Sorting means putting things in order, usually from smallest to biggest!"
+                    },
+                    {
+                        question: "Why do we sort data?",
+                        options: [
+                            "To make it harder to understand",
+                            "Because it's fun",
+                            "To help us see patterns and understand it better",
+                            "Because Professor Hoots told us to"
+                        ],
+                        correctAnswer: 2,
+                        explanation: "We sort data to help us see patterns and understand it better!"
+                    }
+                ],
+                visualization: [
+                    {
+                        question: "What is a bar chart?",
+                        options: [
+                            "A kind of candy",
+                            "A picture that uses bars to show data",
+                            "A tool for measuring",
+                            "A type of song"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "A bar chart is a picture that uses bars of different heights to show our data!"
+                    },
+                    {
+                        question: "Why do we use charts in statistics?",
+                        options: [
+                            "To make our work colorful",
+                            "Because they're easy to draw",
+                            "To help us see and understand data more easily",
+                            "To make our work take longer"
+                        ],
+                        correctAnswer: 2,
+                        explanation: "We use charts to help us see and understand our data more easily!"
+                    }
+                ],
+                average: [
+                    {
+                        question: "What is an average?",
+                        options: [
+                            "The biggest number",
+                            "The smallest number",
+                            "The middle number that helps us understand what is normal",
+                            "A type of vegetable"
+                        ],
+                        correctAnswer: 2,
+                        explanation: "The average is the middle number that helps us understand what is normal in our data!"
+                    },
+                    {
+                        question: "How do we find the average of 2, 4, and 6?",
+                        options: [
+                            "2 + 4 + 6 = 12",
+                            "12 ÷ 3 = 4",
+                            "The average is 4",
+                            "All of the above"
+                        ],
+                        correctAnswer: 3,
+                        explanation: "To find the average, we add all numbers (2+4+6=12) and divide by how many numbers we have (3), which gives us 4!"
+                    }
+                ],
+                probability: [
+                    {
+                        question: "What does probability tell us?",
+                        options: [
+                            "How much something costs",
+                            "How likely something is to happen",
+                            "What color something is",
+                            "How to play games"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "Probability tells us how likely something is to happen!"
+                    },
+                    {
+                        question: "If we have 3 red balls and 1 blue ball, what color are we more likely to pick without looking?",
+                        options: [
+                            "Red",
+                            "Blue",
+                            "Green",
+                            "Both colors are equally likely"
+                        ],
+                        correctAnswer: 0,
+                        explanation: "We're more likely to pick red because there are more red balls (3) than blue balls (1)!"
+                    }
+                ],
+                patterns: [
+                    {
+                        question: "What is a pattern?",
+                        options: [
+                            "A type of food",
+                            "Something that repeats in a predictable way",
+                            "A kind of animal",
+                            "A special kind of chart"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "A pattern is something that repeats in a predictable way, like 2, 4, 6, 8..."
+                    },
+                    {
+                        question: "Why do statisticians look for patterns in data?",
+                        options: [
+                            "To make the data prettier",
+                            "Because patterns are fun",
+                            "To help make predictions about what might happen next",
+                            "To make their work harder"
+                        ],
+                        correctAnswer: 2,
+                        explanation: "We look for patterns to help us make predictions about what might happen next!"
+                    }
+                ]
+            }
+        };
+
+        // SVG Characters
+        const characters = {
+            statsOwl: `
+                <svg class="owl-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Body -->
+                    <circle cx="50" cy="50" r="30" fill="#8a5a44"/>
+                    <!-- Eyes -->
+                    <circle cx="40" cy="40" r="10" fill="white"/>
+                    <circle cx="60" cy="40" r="10" fill="white"/>
+                    <circle cx="40" cy="40" r="5" fill="black"/>
+                    <circle cx="60" cy="40" r="5" fill="black"/>
+                    <!-- Glasses -->
+                    <circle cx="40" cy="40" r="12" fill="none" stroke="#333" stroke-width="2"/>
+                    <circle cx="60" cy="40" r="12" fill="none" stroke="#333" stroke-width="2"/>
+                    <line x1="52" y1="40" x2="48" y2="40" stroke="#333" stroke-width="2"/>
+                    <!-- Beak -->
+                    <polygon points="50,50 45,55 55,55" fill="#ffa500"/>
+                    <!-- Eyebrows -->
+                    <path d="M30 32 Q40 28 50 32" fill="none" stroke="#333" stroke-width="2"/>
+                    <path d="M70 32 Q60 28 50 32" fill="none" stroke="#333" stroke-width="2"/>
+                    <!-- Graduation Cap -->
+                    <rect x="35" y="20" width="30" height="5" fill="#333"/>
+                    <polygon points="35,20 65,20 50,5" fill="#333"/>
+                    <line x1="50" y1="5" x2="60" y2="15" stroke="gold" stroke-width="2"/>
+                    <circle cx="60" cy="15" r="3" fill="gold"/>
+                </svg>
+            `,
+            dataDog: `
+                <svg class="dog-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Head -->
+                    <circle cx="50" cy="50" r="30" fill="#b87333"/>
+                    <!-- Ears -->
+                    <ellipse cx="30" cy="30" rx="10" ry="15" fill="#8a5a44"/>
+                    <ellipse cx="70" cy="30" rx="10" ry="15" fill="#8a5a44"/>
+                    <!-- Eyes -->
+                    <circle cx="40" cy="45" r="5" fill="white"/>
+                    <circle cx="60" cy="45" r="5" fill="white"/>
+                    <circle cx="40" cy="45" r="2" fill="black"/>
+                    <circle cx="60" cy="45" r="2" fill="black"/>
+                    <!-- Nose -->
+                    <ellipse cx="50" cy="55" rx="8" ry="5" fill="#333"/>
+                    <!-- Mouth -->
+                    <path d="M50 60 Q50 70 40 65" fill="none" stroke="#333" stroke-width="2"/>
+                    <path d="M50 60 Q50 70 60 65" fill="none" stroke="#333" stroke-width="2"/>
+                    <!-- Collar -->
+                    <path d="M30 70 Q50 80 70 70" fill="none" stroke="red" stroke-width="5"/>
+                    <circle cx="50" cy="75" r="3" fill="gold"/>
+                    <!-- Data Collection Pad -->
+                    <rect x="20" y="80" width="15" height="20" fill="white" stroke="#333"/>
+                    <line x1="23" y1="85" x2="32" y2="85" stroke="#333"/>
+                    <line x1="23" y1="90" x2="32" y2="90" stroke="#333"/>
+                    <line x1="23" y1="95" x2="32" y2="95" stroke="#333"/>
+                </svg>
+            `,
+            probabilityPenguin: `
+                <svg class="penguin-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Body -->
+                    <ellipse cx="50" cy="60" rx="25" ry="35" fill="#222"/>
+                    <!-- Belly -->
+                    <ellipse cx="50" cy="60" rx="15" ry="25" fill="white"/>
+                    <!-- Head -->
+                    <circle cx="50" cy="30" r="20" fill="#222"/>
+                    <!-- Eyes -->
+                    <circle cx="40" cy="25" r="5" fill="white"/>
+                    <circle cx="60" cy="25" r="5" fill="white"/>
+                    <circle cx="40" cy="25" r="2" fill="black"/>
+                    <circle cx="60" cy="25" r="2" fill="black"/>
+                    <!-- Beak -->
+                    <polygon points="50,35 45,45 55,45" fill="#ffa500"/>
+                    <!-- Arms -->
+                    <ellipse cx="25" cy="60" rx="5" ry="15" fill="#222"/>
+                    <ellipse cx="75" cy="60" rx="5" ry="15" fill="#222"/>
+                    <!-- Feet -->
+                    <ellipse cx="40" cy="95" rx="8" ry="4" fill="#ffa500"/>
+                    <ellipse cx="60" cy="95" rx="8" ry="4" fill="#ffa500"/>
+                    <!-- Bow Tie -->
+                    <polygon points="50,50 45,55 55,55" fill="red"/>
+                    <circle cx="50" cy="55" r="3" fill="red"/>
+                    <!-- Dice -->
+                    <rect x="75" y="80" width="10" height="10" fill="white" stroke="#333"/>
+                    <circle cx="77.5" cy="82.5" r="1" fill="#333"/>
+                    <circle cx="82.5" cy="82.5" r="1" fill="#333"/>
+                    <circle cx="77.5" cy="87.5" r="1" fill="#333"/>
+                    <circle cx="82.5" cy="87.5" r="1" fill="#333"/>
+                </svg>
+            `
+        };
+
+        // Main game initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGame();
+            setupEventListeners();
+        });
+
+        // Initialize the game
+        function initializeGame() {
+            renderModule(gameState.currentModule);
+            updateProgressBar();
+            setupSettings();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Settings panel toggle
+            document.getElementById('settingsToggle').addEventListener('click', function() {
+                document.getElementById('settingsPanel').classList.toggle('open');
+            });
+
+            // Apply settings button
+            document.getElementById('applySettings').addEventListener('click', function() {
+                applySettings();
+                document.getElementById('settingsPanel').classList.remove('open');
+                updateModule();
+            });
+
+            // Reset settings button
+            document.getElementById('resetSettings').addEventListener('click', function() {
+                resetSettings();
+            });
+
+            // Update slider value displays as they change
+            const sliders = document.querySelectorAll('.slider');
+            sliders.forEach(slider => {
+                const valueDisplay = document.getElementById(slider.id.replace('Slider', 'Value'));
+                slider.addEventListener('input', function() {
+                    valueDisplay.textContent = this.value;
+                });
+            });
+        }
+
+        // Setup settings panel
+        function setupSettings() {
+            // Set initial values
+            document.getElementById('difficultySlider').value = gameState.difficulty;
+            document.getElementById('difficultyValue').textContent = gameState.difficulty;
+            
+            document.getElementById('complexitySlider').value = gameState.complexity;
+            document.getElementById('complexityValue').textContent = gameState.complexity;
+            
+            document.getElementById('animationSpeedSlider').value = gameState.animationSpeed;
+            document.getElementById('animationSpeedValue').textContent = gameState.animationSpeed;
+            
+            document.getElementById('explainDepthSlider').value = gameState.explainDepth;
+            document.getElementById('explainDepthValue').textContent = gameState.explainDepth;
+            
+            document.getElementById('quizFrequencySlider').value = gameState.quizFrequency;
+            document.getElementById('quizFrequencyValue').textContent = gameState.quizFrequency;
+            
+            document.getElementById('conceptLevelSlider').value = gameState.conceptLevel;
+            document.getElementById('conceptLevelValue').textContent = gameState.conceptLevel;
+        }
+
+        // Apply settings from panel
+        function applySettings() {
+            gameState.difficulty = parseInt(document.getElementById('difficultySlider').value);
+            gameState.complexity = parseInt(document.getElementById('complexitySlider').value);
+            gameState.animationSpeed = parseInt(document.getElementById('animationSpeedSlider').value);
+            gameState.explainDepth = parseInt(document.getElementById('explainDepthSlider').value);
+            gameState.quizFrequency = parseInt(document.getElementById('quizFrequencySlider').value);
+            gameState.conceptLevel = parseInt(document.getElementById('conceptLevelSlider').value);
+            
+            // Update explanations based on the concept level
+            updateExplanations();
+        }
+
+        // Reset settings to defaults
+        function resetSettings() {
+            document.getElementById('difficultySlider').value = 1;
+            document.getElementById('difficultyValue').textContent = 1;
+            
+            document.getElementById('complexitySlider').value = 1;
+            document.getElementById('complexityValue').textContent = 1;
+            
+            document.getElementById('animationSpeedSlider').value = 3;
+            document.getElementById('animationSpeedValue').textContent = 3;
+            
+            document.getElementById('explainDepthSlider').value = 1;
+            document.getElementById('explainDepthValue').textContent = 1;
+            
+            document.getElementById('quizFrequencySlider').value = 3;
+            document.getElementById('quizFrequencyValue').textContent = 3;
+            
+            document.getElementById('conceptLevelSlider').value = 1;
+            document.getElementById('conceptLevelValue').textContent = 1;
+            
+            // Apply reset settings
+            applySettings();
+        }
+
+        // Update explanations based on concept level
+        function updateExplanations() {
+            let level = 'level1'; // Default level
+            
+            if (gameState.conceptLevel >= 8) {
+                level = 'level10';
+            } else if (gameState.conceptLevel >= 6) {
+                level = 'level7';
+            } else if (gameState.conceptLevel >= 4) {
+                level = 'level5';
+            } else if (gameState.conceptLevel >= 2) {
+                level = 'level3';
+            }
+            
+            // Update current explanation if it exists
+            if (gameState.currentExplanation) {
+                const explanationElement = document.getElementById('concept-explanation');
+                if (explanationElement) {
+                    explanationElement.textContent = gameState.explanations[level][gameState.currentExplanation];
+                }
+            }
+        }
+
+        // Main function to render a module
+        function renderModule(moduleName) {
+            const module = gameState.moduleContent[moduleName];
+            const container = document.getElementById('gameContainer');
+            
+            // Clear previous content
+            container.innerHTML = '';
+            
+            // Create module panel
+            const panel = document.createElement('div');
+            panel.className = 'panel fade-in';
+            
+            // Add module header
+            const header = document.createElement('h2');
+            header.textContent = module.title;
+            panel.appendChild(header);
+            
+            // Add module description
+            const description = document.createElement('p');
+            description.textContent = module.description;
+            panel.appendChild(description);
+            
+            // Add progress indicator
+            const progressContainer = document.createElement('div');
+            progressContainer.className = 'progress-container';
+            const progressBar = document.createElement('div');
+            progressBar.className = 'progress-bar';
+            progressBar.style.width = `${gameState.progress}%`;
+            progressBar.textContent = `${Math.round(gameState.progress)}%`;
+            progressContainer.appendChild(progressBar);
+            panel.appendChild(progressContainer);
+            
+            // Add star rating
+            const starContainer = document.createElement('div');
+            starContainer.className = 'star-container';
+            for (let i = 0; i < 5; i++) {
+                const star = document.createElement('span');
+                star.className = i < Math.min(gameState.stars / 3, 5) ? 'star earned' : 'star';
+                star.textContent = '★';
+                starContainer.appendChild(star);
+            }
+            panel.appendChild(starContainer);
+            
+            // Add module content based on the current module
+            switch(moduleName) {
+                case 'intro':
+                    renderIntroModule(panel);
+                    break;
+                case 'dataCollection':
+                    renderDataCollectionModule(panel);
+                    break;
+                case 'sorting':
+                    renderSortingModule(panel);
+                    break;
+                case 'visualization':
+                    renderVisualizationModule(panel);
+                    break;
+                case 'average':
+                    renderAverageModule(panel);
+                    break;
+                case 'probability':
+                    renderProbabilityModule(panel);
+                    break;
+                case 'patterns':
+                    renderPatternsModule(panel);
+                    break;
+                case 'finale':
+                    renderFinaleModule(panel);
+                    break;
+                default:
+                    renderIntroModule(panel);
+            }
+            
+            // Add the panel to the container
+            container.appendChild(panel);
+            
+            // Add characters based on the module
+            addCharacters(moduleName);
+            
+            // Mark module as viewed
+            gameState.completedModules[moduleName] = true;
+            
+            // Update progress
+            updateProgressBar();
+        }
+
+        // Render the intro module
+        function renderIntroModule(panel) {
+            // Add welcome message
+            const welcomeMessage = document.createElement('div');
+            welcomeMessage.innerHTML = `
+                <h3>Hello, Young Statistician!</h3>
+                <p>Welcome to the exciting world of statistics! Here you'll learn how to:</p>
+                <ul>
+                    <li>Collect and organize information</li>
+                    <li>Create cool charts and graphs</li>
+                    <li>Understand numbers and patterns</li>
+                    <li>Make predictions using data</li>
+                </ul>
+                <p>Meet your guides on this adventure:</p>
+            `;
+            panel.appendChild(welcomeMessage);
+            
+            // Create character introductions
+            const charactersIntro = document.createElement('div');
+            charactersIntro.style.display = 'flex';
+            charactersIntro.style.justifyContent = 'space-around';
+            charactersIntro.style.margin = '20px 0';
+            
+            // Add character intros
+            const owlIntro = createCharacterIntro(
+                characters.statsOwl,
+                'Professor Hoots',
+                'The wise statistics owl who loves charts and patterns'
+            );
+            
+            const dogIntro = createCharacterIntro(
+                characters.dataDog,
+                'Data Dog',
+                'The friendly data collector who helps gather information'
+            );
+            
+            const penguinIntro = createCharacterIntro(
+                characters.probabilityPenguin,
+                'Penny the Penguin',
+                'The probability expert who knows all about chances'
+            );
+            
+            charactersIntro.appendChild(owlIntro);
+            charactersIntro.appendChild(dogIntro);
+            charactersIntro.appendChild(penguinIntro);
+            
+            panel.appendChild(charactersIntro);
+            
+            // Add start button
+            const startButton = document.createElement('button');
+            startButton.className = 'primary large';
+            startButton.textContent = 'Start Adventure!';
+            startButton.style.display = 'block';
+            startButton.style.margin = '20px auto';
+            startButton.addEventListener('click', function() {
+                gameState.currentModule = 'dataCollection';
+                gameState.progress += 12.5; // 8 modules total, each worth 12.5%
+                gameState.stars += 1;
+                renderModule('dataCollection');
+                createConfetti();
+            });
+            
+            panel.appendChild(startButton);
+        }
+
+        // Create a character introduction element
+        function createCharacterIntro(svg, name, description) {
+            const container = document.createElement('div');
+            container.style.textAlign = 'center';
+            container.style.padding = '10px';
+            container.style.margin = '10px';
+            container.style.borderRadius = '10px';
+            container.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+            container.style.background = 'white';
+            container.style.maxWidth = '150px';
+            
+            const svgContainer = document.createElement('div');
+            svgContainer.innerHTML = svg;
+            container.appendChild(svgContainer);
+            
+            const nameElement = document.createElement('h3');
+            nameElement.textContent = name;
+            nameElement.style.margin = '10px 0 5px';
+            container.appendChild(nameElement);
+            
+            const descElement = document.createElement('p');
+            descElement.textContent = description;
+            descElement.style.fontSize = '0.8rem';
+            container.appendChild(descElement);
+            
+            return container;
+        }
+
+        // Render the data collection module
+        function renderDataCollectionModule(panel) {
+            // Add explanation
+            const explanation = document.createElement('div');
+            explanation.innerHTML = `
+                <h3>Collecting Data with Data Dog</h3>
+                <p id="concept-explanation">${getExplanation('data')}</p>
+            `;
+            gameState.currentExplanation = 'data';
+            panel.appendChild(explanation);
+            
+            // Create canvas container for data collection activity
+            const canvasContainer = document.createElement('div');
+            canvasContainer.id = 'canvas-container';
+            canvasContainer.style.backgroundColor = '#f0f8ff';
+            canvasContainer.style.borderRadius = '10px';
+            canvasContainer.style.position = 'relative';
+            canvasContainer.style.overflow = 'hidden';
+            panel.appendChild(canvasContainer);
+            
+            // Add data collection objects
+            const objectTypes = ['apples', 'bananas', 'oranges', 'grapes', 'strawberries'];
+            const objectColors = ['#ff0000', '#ffff00', '#ffa500', '#800080', '#ff4500'];
+            
+            // Create objects to count
+            for (let i = 0; i < 5 + gameState.difficulty * 2; i++) {
+                const objectIndex = Math.floor(Math.random() * objectTypes.length);
+                const object = document.createElement('div');
+                object.className = 'interactive-object';
+                object.dataset.type = objectTypes[objectIndex];
+                
+                // Set position randomly
+                const left = 10 + Math.random() * (canvasContainer.offsetWidth - 50);
+                const top = 10 + Math.random() * (canvasContainer.offsetHeight - 50);
+                
+                object.style.width = '40px';
+                object.style.height = '40px';
+                object.style.borderRadius = '50%';
+                object.style.backgroundColor = objectColors[objectIndex];
+                object.style.position = 'absolute';
+                object.style.left = `${left}px`;
+                object.style.top = `${top}px`;
+                object.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+                
+                // Add counting functionality
+                object.addEventListener('click', function() {
+                    const type = this.dataset.type;
+                    gameState.dataCollected.push(type);
+                    this.classList.add('bounce');
+                    
+                    // Update the data display
+                    updateDataDisplay();
+                    
+                    // Remove after animation
+                    setTimeout(() => {
+                        this.style.opacity = '0';
+                        setTimeout(() => {
+                            this.remove();
+                            
+                            // Check if all objects are collected
+                            const remainingObjects = document.querySelectorAll('.interactive-object');
+                            if (remainingObjects.length === 0) {
+                                showDataResults();
+                            }
+                        }, 300);
+                    }, 500);
+                });
+                
+                canvasContainer.appendChild(object);
+            }
+            
+            // Create data collection results display
+            const dataDisplay = document.createElement('div');
+            dataDisplay.id = 'data-display';
+            dataDisplay.className = 'panel';
+            dataDisplay.style.marginTop = '20px';
+            dataDisplay.innerHTML = `
+                <h3>Data Collection Results</h3>
+                <p>Click on the items above to count them!</p>
+                <div id="data-results" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+            `;
+            panel.appendChild(dataDisplay);
+            
+            // Add continue button (initially hidden)
+            const continueButton = document.createElement('button');
+            continueButton.className = 'primary large hidden';
+            continueButton.id = 'continue-button';
+            continueButton.textContent = 'Continue to Sorting';
+            continueButton.addEventListener('click', function() {
+                // Show quiz if frequency setting requires it
+                if (gameState.quizFrequency >= 3) {
+                    showQuiz('dataCollection');
+                } else {
+                    gameState.currentModule = 'sorting';
+                    gameState.progress += 12.5;
+                    gameState.stars += 2;
+                    renderModule('sorting');
+                }
+            });
+            panel.appendChild(continueButton);
+        }
+
+        // Update data display with current counts
+        function updateDataDisplay() {
+            const dataResults = document.getElementById('data-results');
+            if (!dataResults) return;
+            
+            // Count occurrences of each type
+            const counts = {};
+            gameState.dataCollected.forEach(type => {
+                counts[type] = (counts[type] || 0) + 1;
+            });
+            
+            // Update display
+            dataResults.innerHTML = '';
+            
+            Object.keys(counts).forEach(type => {
+                const typeDisplay = document.createElement('div');
+                typeDisplay.style.margin = '10px';
+                typeDisplay.style.textAlign = 'center';
+                
+                const countDisplay = document.createElement('div');
+                countDisplay.style.fontSize = '2rem';
+                countDisplay.textContent = counts[type];
+                
+                const typeLabel = document.createElement('div');
+                typeLabel.textContent = type;
+                
+                typeDisplay.appendChild(countDisplay);
+                typeDisplay.appendChild(typeLabel);
+                dataResults.appendChild(typeDisplay);
+            });
+        }
+
+        // Show final data collection results
+        function showDataResults() {
+            const dataDisplay = document.getElementById('data-display');
+            if (!dataDisplay) return;
+            
+            dataDisplay.innerHTML = `
+                <h3>Great Job Collecting Data!</h3>
+                <p>You've counted all the items! Here's what you found:</p>
+                <div id="data-results" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+                <p>This is called a <strong>data set</strong>. We can use this information to learn more about our fruit collection!</p>
+            `;
+            
+            updateDataDisplay();
+            
+            // Show continue button
+            document.getElementById('continue-button').classList.remove('hidden');
+        }
+
+        // Render the sorting module
+        function renderSortingModule(panel) {
+            // Add explanation
+            const explanation = document.createElement('div');
+            explanation.innerHTML = `
+                <h3>Sorting Data</h3>
+                <p id="concept-explanation">${getExplanation('sorting')}</p>
+            `;
+            gameState.currentExplanation = 'sorting';
+            panel.appendChild(explanation);
+            
+            // Create sorting activity
+            const sortingActivity = document.createElement('div');
+            sortingActivity.className = 'panel';
+            
+            // Generate random numbers to sort
+            let numbers = [];
+            const count = 5 + gameState.difficulty;
+            
+            for (let i = 0; i < count; i++) {
+                numbers.push(Math.floor(Math.random() * 10) + 1);
+            }
+            
+            gameState.sortedData = [...numbers].sort((a, b) => a - b);
+            
+            sortingActivity.innerHTML = `
+                <h3>Sorting Numbers</h3>
+                <p>Can you put these numbers in order from smallest to largest?</p>
+                <p>Drag the numbers to arrange them:</p>
+                <div id="sorting-container" style="display: flex; justify-content: center; margin: 20px 0;"></div>
+                <div id="sorting-result" style="text-align: center; margin-top: 10px;"></div>
+            `;
+            
+            panel.appendChild(sortingActivity);
+            
+            // Add numbers as draggable elements
+            setTimeout(() => {
+                const sortingContainer = document.getElementById('sorting-container');
+                
+                numbers.forEach(number => {
+                    const numberElement = document.createElement('div');
+                    numberElement.className = 'draggable-number';
+                    numberElement.textContent = number;
+                    numberElement.style.width = '40px';
+                    numberElement.style.height = '40px';
+                    numberElement.style.backgroundColor = getRandomColor();
+                    numberElement.style.color = 'white';
+                    numberElement.style.borderRadius = '50%';
+                    numberElement.style.display = 'flex';
+                    numberElement.style.alignItems = 'center';
+                    numberElement.style.justifyContent = 'center';
+                    numberElement.style.margin = '0 5px';
+                    numberElement.style.cursor = 'grab';
+                    numberElement.style.userSelect = 'none';
+                    numberElement.style.fontSize = '1.5rem';
+                    numberElement.style.fontWeight = 'bold';
+                    numberElement.draggable = true;
+                    
+                    numberElement.addEventListener('dragstart', function(e) {
+                        this.style.opacity = '0.4';
+                        e.dataTransfer.setData('text/plain', this.textContent);
+                        e.dataTransfer.effectAllowed = 'move';
+                    });
+                    
+                    numberElement.addEventListener('dragend', function() {
+                        this.style.opacity = '1';
+                        checkSortOrder();
+                    });
+                    
+                    sortingContainer.appendChild(numberElement);
+                });
+                
+                // Make container handle drops
+                sortingContainer.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                });
+                
+                sortingContainer.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    const data = e.dataTransfer.getData('text/plain');
+                    const draggedElement = Array.from(this.children).find(el => el.textContent === data);
+                    
+                    // Calculate position for drop
+                    const rect = this.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    
+                    // Find nearest position
+                    const elementWidth = draggedElement.offsetWidth;
+                    const targetIndex = Math.floor(x / (elementWidth + 10));
+                    
+                    // Move element
+                    if (targetIndex >= 0 && targetIndex < this.children.length) {
+                        if (targetIndex === this.children.length - 1) {
+                            this.appendChild(draggedElement);
+                        } else {
+                            this.insertBefore(draggedElement, this.children[targetIndex]);
+                        }
+                    }
+                    
+                    checkSortOrder();
+                });
+            }, 100);
+            
+            // Add continue button (initially hidden)
+            const continueButton = document.createElement('button');
+            continueButton.className = 'primary large hidden';
+            continueButton.id = 'continue-button';
+            continueButton.textContent = 'Continue to Visualization';
+            continueButton.addEventListener('click', function() {
+                // Show quiz if frequency setting requires it
+                if (gameState.quizFrequency >= 2) {
+                    showQuiz('sorting');
+                } else {
+                    gameState.currentModule = 'visualization';
+                    gameState.progress += 12.5;
+                    gameState.stars += 2;
+                    renderModule('visualization');
+                }
+            });
+            panel.appendChild(continueButton);
+        }
+
+        // Check if numbers are in correct sorted order
+        function checkSortOrder() {
+            const sortingContainer = document.getElementById('sorting-container');
+            const resultDisplay = document.getElementById('sorting-result');
+            
+            if (!sortingContainer || !resultDisplay) return;
+            
+            const currentOrder = Array.from(sortingContainer.children).map(el => parseInt(el.textContent));
+            
+            // Check if sorted
+            let isSorted = true;
+            for (let i = 0; i < currentOrder.length - 1; i++) {
+                if (currentOrder[i] > currentOrder[i + 1]) {
+                    isSorted = false;
+                    break;
+                }
+            }
+            
+            if (isSorted) {
+                resultDisplay.innerHTML = `
+                    <p style="color: green; font-weight: bold;">Great job! You sorted the numbers correctly!</p>
+                    <p>When we put numbers in order, it helps us see patterns and understand our data better.</p>
+                `;
+                
+                document.getElementById('continue-button').classList.remove('hidden');
+                createConfetti();
+            } else {
+                resultDisplay.innerHTML = `
+                    <p>Keep trying! Remember to put the smallest number first and the largest number last.</p>
+                `;
+            }
+        }
+
+        // Render the visualization module
+        function renderVisualizationModule(panel) {
+            // Add explanation
+            const explanation = document.createElement('div');
+            explanation.innerHTML = `
+                <h3>Making Charts with Professor Hoots</h3>
+                <p id="concept-explanation">${getExplanation('chart')}</p>
+            `;
+            gameState.currentExplanation = 'chart';
+            panel.appendChild(explanation);
+            
+            // Create visualization activity
+            const visActivity = document.createElement('div');
+            visActivity.className = 'panel';
+            
+            // Prepare data for visualization
+            const petData = {
+                'Cats': 4,
+                'Dogs': 6,
+                'Birds': 2,
+                'Fish': 8,
+                'Rabbits': 3
+            };
+            
+            if (gameState.complexity >= 3) {
+                petData['Hamsters'] = 5;
+                petData['Turtles'] = 2;
+            }
+            
+            if (gameState.complexity >= 5) {
+                petData['Lizards'] = 1;
+                petData['Guinea Pigs'] = 4;
+            }
+            
+            visActivity.innerHTML = `
+                <h3>Creating a Bar Chart</h3>
+                <p>Professor Hoots asked students about their favorite pets. Here are the results:</p>
+                <div id="chart-container" class="chart-container"></div>
+                <div>
+                    <button id="view-bar-chart" class="primary">Bar Chart</button>
+                    <button id="view-pictograph">Pictograph</button>
+                </div>
+                <div id="chart-explanation" style="margin-top: 10px;"></div>
+            `;
+            
+            panel.appendChild(visActivity);
+            
+            // Initialize p5.js for the chart
+            let chartSketch = new p5(function(p) {
+                let chartType = 'bar';
+                const barWidth = 40;
+                const chartPadding = 50;
+                const chartHeight = 200;
+                
+                p.setup = function() {
+                    p.createCanvas(p.windowWidth * 0.7, 250);
+                    drawChart();
+                };
+                
+                p.windowResized = function() {
+                    p.resizeCanvas(p.windowWidth * 0.7, 250);
+                    drawChart();
+                };
+                
+                function drawChart() {
+                    p.background(255);
+                    
+                    if (chartType === 'bar') {
+                        drawBarChart();
+                    } else {
+                        drawPictograph();
+                    }
+                }
+                
+                function drawBarChart() {
+                    const keys = Object.keys(petData);
+                    const maxValue = Math.max(...Object.values(petData));
+                    
+                    // Draw axes
+                    p.stroke(0);
+                    p.line(chartPadding, p.height - chartPadding, chartPadding, chartPadding);
+                    p.line(chartPadding, p.height - chartPadding, p.width - chartPadding, p.height - chartPadding);
+                    
+                    // Draw y-axis labels
+                    p.noStroke();
+                    p.fill(0);
+                    p.textAlign(p.RIGHT, p.CENTER);
+                    p.textSize(12);
+                    
+                    for (let i = 0; i <= maxValue; i += 2) {
+                        const y = p.map(i, 0, maxValue, p.height - chartPadding, chartPadding);
+                        p.text(i, chartPadding - 5, y);
+                        p.stroke(200);
+                        p.line(chartPadding, y, p.width - chartPadding, y);
+                    }
+                    
+                    // Draw bars
+                    const availableWidth = p.width - (chartPadding * 2);
+                    const barSpacing = availableWidth / keys.length;
+                    
+                    for (let i = 0; i < keys.length; i++) {
+                        const key = keys[i];
+                        const value = petData[key];
+                        const x = chartPadding + (i * barSpacing) + (barSpacing / 2) - (barWidth / 2);
+                        const barHeight = p.map(value, 0, maxValue, 0, chartHeight);
+                        
+                        // Draw bar
+                        p.noStroke();
+                        p.fill(gameState.colorPalette[i % gameState.colorPalette.length]);
+                        p.rect(x, p.height - chartPadding - barHeight, barWidth, barHeight);
+                        
+                        // Draw label
+                        p.fill(0);
+                        p.textAlign(p.CENTER, p.TOP);
+                        p.text(key, x + (barWidth / 2), p.height - chartPadding + 5);
+                    }
+                    
+                    // Draw title
+                    p.textAlign(p.CENTER, p.TOP);
+                    p.textSize(16);
+                    p.text('Favorite Pets', p.width / 2, 10);
+                }
+                
+                function drawPictograph() {
+                    const keys = Object.keys(petData);
+                    const iconSize = 20;
+                    const rowHeight = 30;
+                    
+                    // Draw title
+                    p.textAlign(p.CENTER, p.TOP);
+                    p.textSize(16);
+                    p.fill(0);
+                    p.text('Favorite Pets (Pictograph)', p.width / 2, 10);
+                    
+                    for (let i = 0; i < keys.length; i++) {
+                        const key = keys[i];
+                        const value = petData[key];
+                        const y = 50 + (i * rowHeight);
+                        
+                        // Draw label
+                        p.textAlign(p.LEFT, p.CENTER);
+                        p.textSize(12);
+                        p.text(key, chartPadding, y);
+                        
+                        // Draw icons
+                        const color = gameState.colorPalette[i % gameState.colorPalette.length];
+                        p.fill(color);
+                        
+                        for (let j = 0; j < value; j++) {
+                            const x = chartPadding + 100 + (j * (iconSize + 5));
+                            p.circle(x, y, iconSize);
+                        }
+                        
+                        // Draw count
+                        p.textAlign(p.LEFT, p.CENTER);
+                        p.fill(0);
+                        p.text(`(${value})`, chartPadding + 100 + (value * (iconSize + 5)) + 10, y);
+                    }
+                }
+                
+                p.setChartType = function(type) {
+                    chartType = type;
+                    drawChart();
+                };
+            }, 'chart-container');
+            
+            // Add event listeners for chart type buttons
+            setTimeout(() => {
+                document.getElementById('view-bar-chart').addEventListener('click', function() {
+                    this.classList.add('primary');
+                    document.getElementById('view-pictograph').classList.remove('primary');
+                    chartSketch.setChartType('bar');
+                    document.getElementById('chart-explanation').innerHTML = `
+                        <p>A <strong>bar chart</strong> uses rectangles of different heights to show our data. The taller the bar, the bigger the number!</p>
+                    `;
+                });
+                
+                document.getElementById('view-pictograph').addEventListener('click', function() {
+                    this.classList.add('primary');
+                    document.getElementById('view-bar-chart').classList.remove('primary');
+                    chartSketch.setChartType('pictograph');
+                    document.getElementById('chart-explanation').innerHTML = `
+                        <p>A <strong>pictograph</strong> uses symbols or pictures to represent our data. Each circle represents one vote for that pet!</p>
+                    `;
+                });
+                
+                // Initialize with explanation for bar chart
+                document.getElementById('chart-explanation').innerHTML = `
+                    <p>A <strong>bar chart</strong> uses rectangles of different heights to show our data. The taller the bar, the bigger the number!</p>
+                `;
+            }, 100);
+            
+            // Add continue button
+            const continueButton = document.createElement('button');
+            continueButton.className = 'primary large';
+            continueButton.textContent = 'Continue to Averages';
+            continueButton.style.marginTop = '20px';
+            continueButton.addEventListener('click', function() {
+                // Show quiz if frequency setting requires it
+                if (gameState.quizFrequency >= 1) {
+                    showQuiz('visualization');
+                } else {
+                    gameState.currentModule = 'average';
+                    gameState.progress += 12.5;
+                    gameState.stars += 2;
+                    renderModule('average');
+                }
+            });
+            panel.appendChild(continueButton);
+        }
+
+        // Render the average module
+        function renderAverageModule(panel) {
+            // Add explanation
+            const explanation = document.createElement('div');
+            explanation.innerHTML = `
+                <h3>Finding the Average</h3>
+                <p id="concept-explanation">${getExplanation('average')}</p>
+            `;
+            gameState.currentExplanation = 'average';
+            panel.appendChild(explanation);
+            
+            // Create average activity
+            const avgActivity = document.createElement('div');
+            avgActivity.className = 'panel';
+            
+            // Prepare data for average calculation
+            let numbers = [];
+            const count = 3 + Math.min(gameState.difficulty, 3);
+            
+            for (let i = 0; i < count; i++) {
+                numbers.push(Math.floor(Math.random() * 10) + 1);
+            }
+            
+            const sum = numbers.reduce((a, b) => a + b, 0);
+            const average = sum / numbers.length;
+            
+            avgActivity.innerHTML = `
+                <h3>Finding the Average</h3>
+                <p>Professor Hoots has collected some numbers:</p>
+                <div id="avg-numbers" style="text-align: center; margin: 20px 0; font-size: 2rem;">
+                    ${numbers.join(' + ')}
+                </div>
+                <p>Can you find the average of these numbers?</p>
+                <div style="display: flex; justify-content: center; margin: 20px 0;">
+                    <div style="text-align: right; margin-right: 10px;">
+                        <p>Step 1: Add all numbers</p>
+                        <p>Step 2: Divide by how many numbers</p>
+                        <p>The average is</p>
+                    </div>
+                    <div>
+                        <p><input type="number" id="sum-input" style="width: 60px;"> = ${numbers.join(' + ')}</p>
+                        <p><input type="number" id="avg-input" style="width: 60px;"> = <span id="sum-display">?</span> ÷ ${numbers.length}</p>
+                        <p><span id="result-display">?</span></p>
+                    </div>
+                </div>
+                <div id="avg-result" style="text-align: center;"></div>
+            `;
+            
+            panel.appendChild(avgActivity);
+            
+            // Add event listeners for inputs
+            setTimeout(() => {
+                const sumInput = document.getElementById('sum-input');
+                const avgInput = document.getElementById('avg-input');
+                const sumDisplay = document.getElementById('sum-display');
+                const resultDisplay = document.getElementById('result-display');
+                const avgResult = document.getElementById('avg-result');
+                
+                sumInput.addEventListener('input', function() {
+                    const inputValue = parseInt(this.value);
+                    if (inputValue === sum) {
+                        sumDisplay.textContent = sum;
+                        this.style.backgroundColor = '#e6ffe6';
+                    } else {
+                        sumDisplay.textContent = '?';
+                        this.style.backgroundColor = '';
+                    }
+                    checkAverage();
+                });
+                
+                avgInput.addEventListener('input', function() {
+                    const inputValue = parseFloat(this.value);
+                    if (Math.abs(inputValue - average) < 0.1) {
+                        resultDisplay.textContent = average.toFixed(1);
+                        this.style.backgroundColor = '#e6ffe6';
+                    } else {
+                        resultDisplay.textContent = '?';
+                        this.style.backgroundColor = '';
+                    }
+                    checkAverage();
+                });
+                
+                function checkAverage() {
+                    const sumValue = parseInt(sumInput.value);
+                    const avgValue = parseFloat(avgInput.value);
+                    
+                    if (sumValue === sum && Math.abs(avgValue - average) < 0.1) {
+                        avgResult.innerHTML = `
+                            <p style="color: green; font-weight: bold;">That's correct! Great job!</p>
+                            <p>The average is ${average.toFixed(1)}. This tells us the "typical" value in our group of numbers.</p>
+                            <p>If we had ${numbers.length} stacks of blocks with heights ${numbers.join(', ')}, 
+                            we could rearrange them to all be ${average.toFixed(1)} blocks high!</p>
+                        `;
+                        document.getElementById('continue-button').classList.remove('hidden');
+                        createConfetti();
+                    }
+                }
+            }, 100);
+            
+            // Add continue button (initially hidden)
+            const continueButton = document.createElement('button');
+            continueButton.className = 'primary large hidden';
+            continueButton.id = 'continue-button';
+            continueButton.textContent = 'Continue to Probability';
+            continueButton.addEventListener('click', function() {
+                // Show quiz if frequency setting requires it
+                if (gameState.quizFrequency >= 4) {
+                    showQuiz('average');
+                } else {
+                    gameState.currentModule = 'probability';
+                    gameState.progress += 12.5;
+                    gameState.stars += 2;
+                    renderModule('probability');
+                }
+            });
+            panel.appendChild(continueButton);
+        }
+
+        // Render the probability module
+        function renderProbabilityModule(panel) {
+            // Add explanation
+            const explanation = document.createElement('div');
+            explanation.innerHTML = `
+                <h3>Probability with Penny Penguin</h3>
+                <p id="concept-explanation">${getExplanation('probability')}</p>
+            `;
+            gameState.currentExplanation = 'probability';
+            panel.appendChild(explanation);
+            
+            // Create probability activity
+            const probActivity = document.createElement('div');
+            probActivity.className = 'panel';
+            
+            probActivity.innerHTML = `
+                <h3>Spinning the Probability Wheel</h3>
+                <p>Penny has a colorful wheel. When you spin it, the wheel will stop on one color.</p>
+                <p>Can you predict which colors are more likely to appear?</p>
+                <div id="wheel-container" style="display: flex; align-items: center; justify-content: center; flex-direction: column; margin: 20px 0;">
+                    <canvas id="probability-wheel" width="250" height="250"></canvas>
+                    <button id="spin-button" class="primary" style="margin-top: 15px;">Spin the Wheel</button>
+                </div>
+                <div id="probability-results" style="text-align: center;">
+                    <p>Spin the wheel to see which color it lands on!</p>
+                    <div id="spin-history"></div>
+                </div>
+            `;
+            
+            panel.appendChild(probActivity);
+            
+            // Initialize the probability wheel
+            setTimeout(() => {
+                const canvas = document.getElementById('probability-wheel');
+                const ctx = canvas.getContext('2d');
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                const radius = Math.min(centerX, centerY) - 10;
+                
+                // Define wheel sections (color and probability)
+                const sections = [];
+                const colors = ['#FF5252', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0'];
+                
+                // Adjust sections based on difficulty
+                if (gameState.difficulty <= 2) {
+                    // Simple: equal probabilities
+                    sections.push({ color: colors[0], probability: 0.33, name: 'Red' });
+                    sections.push({ color: colors[1], probability: 0.33, name: 'Yellow' });
+                    sections.push({ color: colors[2], probability: 0.34, name: 'Green' });
+                } else if (gameState.difficulty <= 3) {
+                    // Medium: unequal probabilities
+                    sections.push({ color: colors[0], probability: 0.4, name: 'Red' });
+                    sections.push({ color: colors[1], probability: 0.3, name: 'Yellow' });
+                    sections.push({ color: colors[2], probability: 0.2, name: 'Green' });
+                    sections.push({ color: colors[3], probability: 0.1, name: 'Blue' });
+                } else {
+                    // Hard: more sections with unequal probabilities
+                    sections.push({ color: colors[0], probability: 0.35, name: 'Red' });
+                    sections.push({ color: colors[1], probability: 0.25, name: 'Yellow' });
+                    sections.push({ color: colors[2], probability: 0.20, name: 'Green' });
+                    sections.push({ color: colors[3], probability: 0.15, name: 'Blue' });
+                    sections.push({ color: colors[4], probability: 0.05, name: 'Purple' });
+                }
+                
+                // Initial draw of the wheel
+                drawWheel();
+                
+                // Draw the wheel
+                function drawWheel(rotationAngle = 0) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw wheel sections
+                    let startAngle = rotationAngle;
+                    
+                    sections.forEach(section => {
+                        const arcAngle = section.probability * Math.PI * 2;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY);
+                        ctx.arc(centerX, centerY, radius, startAngle, startAngle + arcAngle);
+                        ctx.closePath();
+                        
+                        ctx.fillStyle = section.color;
+                        ctx.fill();
+                        
+                        ctx.strokeStyle = 'white';
+                        ctx.lineWidth = 2;
+                        ctx.stroke();
+                        
+                        // Add labels
+                        const labelAngle = startAngle + (arcAngle / 2);
+                        const labelRadius = radius * 0.7;
+                        const labelX = centerX + labelRadius * Math.cos(labelAngle);
+                        const labelY = centerY + labelRadius * Math.sin(labelAngle);
+                        
+                        ctx.save();
+                        ctx.translate(labelX, labelY);
+                        ctx.rotate(labelAngle + Math.PI / 2);
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = 'white';
+                        ctx.font = 'bold 14px Arial';
+                        ctx.fillText(section.name, 0, 0);
+                        ctx.restore();
+                        
+                        startAngle += arcAngle;
+                    });
+                    
+                    // Draw center circle
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, 10, 0, Math.PI * 2);
+                    ctx.fillStyle = 'white';
+                    ctx.fill();
+                    ctx.strokeStyle = '#333';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                    
+                    // Draw pointer
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY - radius - 5);
+                    ctx.lineTo(centerX - 10, centerY - radius + 10);
+                    ctx.lineTo(centerX + 10, centerY - radius + 10);
+                    ctx.closePath();
+                    ctx.fillStyle = 'black';
+                    ctx.fill();
+                }
+                
+                // Spin results tracking
+                const results = {};
+                let spinCount = 0;
+                
+                // Handle spin button click
+                document.getElementById('spin-button').addEventListener('click', function() {
+                    this.disabled = true;
+                    
+                    // Animate the spin
+                    let startTime = null;
+                    const spinDuration = 2000 + Math.random() * 1000;
+                    const totalRotation = 360 * 5 + Math.random() * 360; // At least 5 full rotations
+                    
+                    function animateSpin(timestamp) {
+                        if (!startTime) startTime = timestamp;
+                        const elapsed = timestamp - startTime;
+                        const progress = Math.min(elapsed / spinDuration, 1);
+                        
+                        // Ease out
+                        const easeOut = 1 - Math.pow(1 - progress, 3);
+                        
+                        // Calculate current rotation
+                        const currentRotation = easeOut * totalRotation;
+                        const rotationAngle = (currentRotation * Math.PI) / 180;
+                        
+                        drawWheel(rotationAngle);
+                        
+                        if (progress < 1) {
+                            requestAnimationFrame(animateSpin);
+                        } else {
+                            // Determine landing section
+                            const finalAngle = (totalRotation % 360) * Math.PI / 180;
+                            let cumulativeAngle = 0;
+                            let landedSection = null;
+                            
+                            for (const section of sections) {
+                                const sectionAngle = section.probability * Math.PI * 2;
+                                if (finalAngle >= cumulativeAngle && finalAngle < cumulativeAngle + sectionAngle) {
+                                    landedSection = section;
+                                    break;
+                                }
+                                cumulativeAngle += sectionAngle;
+                            }
+                            
+                            // Update results
+                            if (landedSection) {
+                                results[landedSection.name] = (results[landedSection.name] || 0) + 1;
+                                spinCount++;
+                                
+                                updateResults(landedSection);
+                            }
+                            
+                            document.getElementById('spin-button').disabled = false;
+                            
+                            // Show continue button after enough spins
+                            if (spinCount >= 10) {
+                                document.getElementById('continue-button').classList.remove('hidden');
+                            }
+                        }
+                    }
+                    
+                    requestAnimationFrame(animateSpin);
+                });
+                
+                // Update results display
+                function updateResults(landedSection) {
+                    const resultsElement = document.getElementById('probability-results');
+                    const historyElement = document.getElementById('spin-history');
+                    
+                    // Add the result to history
+                    const resultCircle = document.createElement('div');
+                    resultCircle.style.width = '20px';
+                    resultCircle.style.height = '20px';
+                    resultCircle.style.borderRadius = '50%';
+                    resultCircle.style.backgroundColor = landedSection.color;
+                    resultCircle.style.display = 'inline-block';
+                    resultCircle.style.margin = '5px';
+                    resultCircle.style.border = '1px solid #333';
+                    historyElement.appendChild(resultCircle);
+                    
+                    // Update text result
+                    resultsElement.innerHTML = `
+                        <p>You landed on ${landedSection.name}!</p>
+                        <div id="spin-history" style="margin: 10px 0;">${historyElement.innerHTML}</div>
+                    `;
+                    
+                    // After 5+ spins, add stats
+                    if (spinCount >= 5) {
+                        let statsHtml = '<p>Results so far:</p><ul style="list-style: none; padding: 0;">';
+                        
+                        for (const sectionName in results) {
+                            const count = results[sectionName];
+                            const section = sections.find(s => s.name === sectionName);
+                            const percentage = Math.round((count / spinCount) * 100);
+                            
+                            statsHtml += `
+                                <li style="margin: 5px 0;">
+                                    <span style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: ${section.color}; vertical-align: middle; margin-right: 5px;"></span>
+                                    ${sectionName}: ${count} (${percentage}%) - Expected: ${Math.round(section.probability * 100)}%
+                                </li>
+                            `;
+                        }
+                        
+                        statsHtml += '</ul>';
+                        statsHtml += `<p>Total spins: ${spinCount}</p>`;
+                        
+                        if (spinCount >= 10) {
+                            statsHtml += `
+                                <p>The more we spin, the closer our results get to the expected probabilities!</p>
+                                <p>This is called the <strong>Law of Large Numbers</strong> - over many tries, our results match what we expect.</p>
+                            `;
+                        }
+                        
+                        resultsElement.innerHTML += statsHtml;
+                    }
+                }
+            }, 100);
+            
+            // Add continue button (initially hidden)
+            const continueButton = document.createElement('button');
+            continueButton.className = 'primary large hidden';
+            continueButton.id = 'continue-button';
+            continueButton.textContent = 'Continue to Patterns';
+            continueButton.addEventListener('click', function() {
+                // Show quiz if frequency setting requires it
+                if (gameState.quizFrequency >= 2) {
+                    showQuiz('probability');
+                } else {
+                    gameState.currentModule = 'patterns';
+                    gameState.progress += 12.5;
+                    gameState.stars += 2;
+                    renderModule('patterns');
+                }
+            });
+            panel.appendChild(continueButton);
+        }
+
+        // Render the patterns module
+        function renderPatternsModule(panel) {
+            // Add explanation
+            const explanation = document.createElement('div');
+            explanation.innerHTML = `
+                <h3>Finding Patterns</h3>
+                <p>Statistics helps us find patterns in data and make predictions about what might happen next!</p>
+            `;
+            panel.appendChild(explanation);
+            
+            // Create patterns activity
+            const patternsActivity = document.createElement('div');
+            patternsActivity.className = 'panel';
+            
+            // Create pattern sequences based on difficulty
+            const patterns = [
+                { sequence: [2, 4, 6, 8, 10], rule: "Add 2", next: 12 },
+                { sequence: [1, 3, 5, 7, 9], rule: "Add 2", next: 11 },
+                { sequence: [5, 10, 15, 20, 25], rule: "Add 5", next: 30 },
+                { sequence: [2, 4, 8, 16, 32], rule: "Multiply by 2", next: 64 },
+                { sequence: [3, 6, 12, 24, 48], rule: "Multiply by 2", next: 96 },
+                { sequence: [1, 4, 9, 16, 25], rule: "Square numbers", next: 36 }
+            ];
+            
+            // Select patterns based on difficulty
+            let selectedPatterns = [];
+            if (gameState.difficulty <= 2) {
+                selectedPatterns = patterns.slice(0, 3);
+            } else if (gameState.difficulty <= 4) {
+                selectedPatterns = patterns.slice(2, 5);
+            } else {
+                selectedPatterns = patterns.slice(3, 6);
+            }
+            
+            // Create pattern content
+            patternsActivity.innerHTML = `
+                <h3>Pattern Detective</h3>
+                <p>Can you find the pattern in each sequence and predict the next number?</p>
+                <div id="patterns-container"></div>
+            `;
+            
+            panel.appendChild(patternsActivity);
+            
+            // Add patterns
+            setTimeout(() => {
+                const patternsContainer = document.getElementById('patterns-container');
+                
+                selectedPatterns.forEach((pattern, index) => {
+                    const patternElement = document.createElement('div');
+                    patternElement.style.margin = '20px 0';
+                    patternElement.style.padding = '15px';
+                    patternElement.style.backgroundColor = '#f9f9f9';
+                    patternElement.style.borderRadius = '10px';
+                    patternElement.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
+                    
+                    patternElement.innerHTML = `
+                        <p>Pattern ${index + 1}:</p>
+                        <div style="display: flex; align-items: center; margin: 10px 0;">
+                            ${pattern.sequence.map(num => `
+                                <div style="width: 40px; height: 40px; margin: 0 5px; background-color: ${gameState.colorPalette[index]}; color: white; 
+                                display: flex; align-items: center; justify-content: center; border-radius: 5px; font-weight: bold;">${num}</div>
+                            `).join('')}
+                            <div style="width: 40px; height: 40px; margin: 0 5px; border: 2px dashed #666; border-radius: 5px;
+                            display: flex; align-items: center; justify-content: center;">?</div>
+                        </div>
+                        <div style="display: flex; align-items: center;">
+                            <label>What comes next? </label>
+                            <input type="number" class="pattern-guess" data-index="${index}" style="margin: 0 10px; width: 60px; height: 30px;">
+                            <button class="check-pattern-btn" data-index="${index}">Check</button>
+                        </div>
+                        <div class="pattern-result" data-index="${index}" style="margin-top: 10px;"></div>
+                    `;
+                    
+                    patternsContainer.appendChild(patternElement);
+                });
+                
+                // Add event listeners to check buttons
+                document.querySelectorAll('.check-pattern-btn').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const index = this.dataset.index;
+                        const input = document.querySelector(`.pattern-guess[data-index="${index}"]`);
+                        const result = document.querySelector(`.pattern-result[data-index="${index}"]`);
+                        const pattern = selectedPatterns[index];
+                        
+                        if (parseInt(input.value) === pattern.next) {
+                            result.innerHTML = `
+                                <p style="color: green; font-weight: bold;">Correct! The pattern is: ${pattern.rule}</p>
+                                <p>So the next number is ${pattern.next}!</p>
+                            `;
+                            input.disabled = true;
+                            this.disabled = true;
+                            
+                            // Check if all patterns are solved
+                            checkAllPatternsSolved();
+                        } else {
+                            result.innerHTML = `
+                                <p style="color: #ff6b6b;">Not quite. Try again! Look for a pattern in how the numbers change.</p>
+                            `;
+                        }
+                    });
+                });
+                
+                // Function to check if all patterns are solved
+                function checkAllPatternsSolved() {
+                    const allSolved = Array.from(document.querySelectorAll('.check-pattern-btn')).every(btn => btn.disabled);
+                    
+                    if (allSolved) {
+                        document.getElementById('continue-button').classList.remove('hidden');
+                        createConfetti();
+                    }
+                }
+            }, 100);
+            
+            // Add continue button (initially hidden)
+            const continueButton = document.createElement('button');
+            continueButton.className = 'primary large hidden';
+            continueButton.id = 'continue-button';
+            continueButton.textContent = 'Continue to Finale';
+            continueButton.addEventListener('click', function() {
+                // Show quiz if frequency setting requires it
+                if (gameState.quizFrequency >= 3) {
+                    showQuiz('patterns');
+                } else {
+                    gameState.currentModule = 'finale';
+                    gameState.progress += 12.5;
+                    gameState.stars += 2;
+                    renderModule('finale');
+                }
+            });
+            }
+            
+            panel.appendChild(continueButton);
+        }
+
+        // Render the finale module
+        function renderFinaleModule(panel) {
+            // Add finale content
+            const finaleContent = document.createElement('div');
+            finaleContent.innerHTML = `
+                <h3>Congratulations, Statistics Explorer!</h3>
+                <p>You've completed all the statistics adventures and learned so many important concepts!</p>
+                <p>Let's review what we've learned:</p>
+                <ul>
+                    <li><strong>Data Collection:</strong> Gathering information by counting and measuring</li>
+                    <li><strong>Sorting:</strong> Organizing data from smallest to largest</li>
+                    <li><strong>Visualization:</strong> Creating charts and graphs to show data</li>
+                    <li><strong>Averages:</strong> Finding the middle or typical value</li>
+                    <li><strong>Probability:</strong> Understanding how likely things are to happen</li>
+                    <li><strong>Patterns:</strong> Finding and extending sequences in data</li>
+                </ul>
+            `;
+            panel.appendChild(finaleContent);
+            
+            // Create certificate
+            const certificate = document.createElement('div');
+            certificate.className = 'panel';
+            certificate.style.backgroundColor = '#f0f7ff';
+            certificate.style.border = '4px solid #4a6baf';
+            certificate.style.margin = '20px 0';
+            certificate.style.padding = '20px';
+            certificate.style.textAlign = 'center';
+            
+            certificate.innerHTML = `
+                <div style="font-family: 'Times New Roman', serif;">
+                    <h2 style="color: #4a6baf; font-size: 24px;">Certificate of Achievement</h2>
+                    <div style="margin: 20px 0; font-style: italic; font-size: 18px;">This certifies that</div>
+                    <div style="font-size: 24px; font-weight: bold; margin: 10px 0;">YOUNG STATISTICIAN</div>
+                    <div style="margin: 20px 0; font-style: italic; font-size: 18px;">has successfully completed</div>
+                    <div style="font-size: 20px; font-weight: bold; margin: 10px 0;">The Statistics Adventure for Young Geniuses</div>
+                    <div style="margin: 20px 0;">
+                        <div style="display: inline-block; margin: 0 20px;">
+                            <div>${characters.statsOwl}</div>
+                            <div>Professor Hoots</div>
+                        </div>
+                        <div style="display: inline-block; margin: 0 20px;">
+                            <div>${characters.dataDog}</div>
+                            <div>Data Dog</div>
+                        </div>
+                        <div style="display: inline-block; margin: 0 20px;">
+                            <div>${characters.probabilityPenguin}</div>
+                            <div>Penny the Penguin</div>
+                        </div>
+                    </div>
+                    <div style="margin: 20px 0;">
+                        <div>Awarded ${new Date().toLocaleDateString()}</div>
+                        <div style="font-size: 14px; font-style: italic; margin-top: 10px;">
+                            Stars earned: ${gameState.stars}/${gameState.maxStars}
+                        </div>
+                    </div>
+                </div>
+            `;
+            panel.appendChild(certificate);
+            
+            // Add play again button
+            const playAgainButton = document.createElement('button');
+            playAgainButton.className = 'primary large';
+            playAgainButton.textContent = 'Play Again';
+            playAgainButton.style.margin = '20px auto';
+            playAgainButton.style.display = 'block';
+            playAgainButton.addEventListener('click', function() {
+                resetGame();
+            });
+            panel.appendChild(playAgainButton);
+            
+            // Create a massive confetti celebration
+            createConfetti(100);
+        }
+        
+        // Show a quiz for the given module
+        function showQuiz(moduleName) {
+            const quizQuestions = gameState.quizzes[moduleName];
+            
+            // Create quiz panel
+            const quizPanel = document.createElement('div');
+            quizPanel.className = 'panel fade-in';
+            
+            // Add quiz header
+            quizPanel.innerHTML = `
+                <h3>Quick Quiz: ${gameState.moduleContent[moduleName].title}</h3>
+                <p>Let's check what you've learned!</p>
+                <div id="quiz-container"></div>
+                <div id="quiz-results"></div>
+                <button id="quiz-submit" class="primary large" style="margin-top: 20px;">Check Answers</button>
+            `;
+            
+            // Replace current content
+            const gameContainer = document.getElementById('gameContainer');
+            gameContainer.innerHTML = '';
+            gameContainer.appendChild(quizPanel);
+            
+            // Add questions
+            const quizContainer = document.getElementById('quiz-container');
+            
+            quizQuestions.forEach((q, qIndex) => {
+                const questionElement = document.createElement('div');
+                questionElement.className = 'panel';
+                questionElement.style.margin = '15px 0';
+                
+                // Question text
+                const questionText = document.createElement('div');
+                questionText.className = 'question-text';
+                questionText.innerHTML = `<p><strong>Question ${qIndex + 1}:</strong> ${q.question}</p>`;
+                questionElement.appendChild(questionText);
+                
+                // Options
+                const optionsContainer = document.createElement('div');
+                optionsContainer.className = 'options-container';
+                
+                q.options.forEach((option, oIndex) => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'quiz-option';
+                    optionElement.dataset.questionIndex = qIndex;
+                    optionElement.dataset.optionIndex = oIndex;
+                    optionElement.textContent = option;
+                    
+                    optionElement.addEventListener('click', function() {
+                        // Deselect all other options for this question
+                        document.querySelectorAll(`.quiz-option[data-question-index="${qIndex}"]`).forEach(el => {
+                            el.classList.remove('selected');
+                        });
+                        
+                        // Select this option
+                        this.classList.add('selected');
+                    });
+                    
+                    optionsContainer.appendChild(optionElement);
+                });
+                
+                questionElement.appendChild(optionsContainer);
+                quizContainer.appendChild(questionElement);
+            });
+            
+            // Handle submit button
+            document.getElementById('quiz-submit').addEventListener('click', function() {
+                // Check if all questions are answered
+                const answered = Array.from({ length: quizQuestions.length }, (_, i) => {
+                    return document.querySelector(`.quiz-option[data-question-index="${i}"].selected`) !== null;
+                });
+                
+                if (!answered.every(a => a)) {
+                    document.getElementById('quiz-results').innerHTML = `
+                        <p style="color: #ff6b6b;">Please answer all questions before submitting!</p>
+                    `;
+                    return;
+                }
+                
+                // Calculate score
+                let score = 0;
+                
+                answered.forEach((_, i) => {
+                    const selectedOption = document.querySelector(`.quiz-option[data-question-index="${i}"].selected`);
+                    const selectedIndex = parseInt(selectedOption.dataset.optionIndex);
+                    
+                    if (selectedIndex === quizQuestions[i].correctAnswer) {
+                        score++;
+                        selectedOption.classList.add('correct');
+                    } else {
+                        selectedOption.classList.add('incorrect');
+                        // Highlight correct answer
+                        document.querySelector(`.quiz-option[data-question-index="${i}"][data-option-index="${quizQuestions[i].correctAnswer}"]`).classList.add('correct');
+                    }
+                });
+                
+                // Show results
+                let resultsHtml = `
+                    <div style="margin: 20px 0; text-align: center;">
+                        <h3>Quiz Results</h3>
+                        <p>You got ${score} out of ${quizQuestions.length} correct!</p>
+                `;
+                
+                // Add explanations for each question
+                resultsHtml += `<div style="margin-top: 15px;">`;
+                quizQuestions.forEach((q, i) => {
+                    resultsHtml += `
+                        <div style="margin: 10px 0; padding: 10px; background-color: #f9f9f9; border-radius: 8px;">
+                            <p><strong>Question ${i + 1}:</strong> ${q.explanation}</p>
+                        </div>
+                    `;
+                });
+                resultsHtml += `</div>`;
+                
+                // Add continue button
+                resultsHtml += `
+                    <button id="continue-after-quiz" class="primary large" style="margin-top: 20px;">Continue</button>
+                </div>
+                `;
+                
+                document.getElementById('quiz-results').innerHTML = resultsHtml;
+                this.disabled = true;
+                
+                // Handle continue button
+                document.getElementById('continue-after-quiz').addEventListener('click', function() {
+                    // Award stars based on score
+                    gameState.stars += Math.max(1, Math.round(score / quizQuestions.length * 3));
+                    
+                    // Move to next module
+                    const nextModule = getNextModule(moduleName);
+                    gameState.currentModule = nextModule;
+                    gameState.progress += 12.5;
+                    renderModule(nextModule);
+                });
+            });
+        }
+        
+        // Get the next module after the current one
+        function getNextModule(currentModule) {
+            const moduleOrder = ['intro', 'dataCollection', 'sorting', 'visualization', 'average', 'probability', 'patterns', 'finale'];
+            const currentIndex = moduleOrder.indexOf(currentModule);
+            
+            if (currentIndex < moduleOrder.length - 1) {
+                return moduleOrder[currentIndex + 1];
+            }
+            
+            return 'finale';
+        }
+        
+        // Reset the game to start over
+        function resetGame() {
+            gameState.currentModule = 'intro';
+            gameState.progress = 0;
+            gameState.stars = 0;
+            gameState.completedModules = {};
+            gameState.dataCollected = [];
+            gameState.sortedData = [];
+            gameState.currentQuizScore = 0;
+            gameState.totalQuestions = 0;
+            gameState.correctAnswers = 0;
+            
+            renderModule('intro');
+        }
+        
+        // Add characters to the current module
+        function addCharacters(moduleName) {
+            // Clear any existing characters
+            document.querySelectorAll('.character').forEach(el => el.remove());
+            document.querySelectorAll('.bubble').forEach(el => el.remove());
+            
+            // Add characters based on the module
+            const gameContainer = document.getElementById('gameContainer');
+            
+            if (moduleName === 'intro' || moduleName === 'finale') {
+                // All characters on intro and finale screens
+                addCharacter('statsOwl', characters.statsOwl, 'bottom', 'right');
+                addCharacter('dataDog', characters.dataDog, 'top', 'left');
+                addCharacter('probabilityPenguin', characters.probabilityPenguin, 'bottom', 'left');
+            } else if (moduleName === 'dataCollection' || moduleName === 'sorting') {
+                // Data Dog for collection and sorting
+                addCharacter('dataDog', characters.dataDog, 'top', 'left');
+            } else if (moduleName === 'visualization' || moduleName === 'average') {
+                // Professor Hoots for visualization and average
+                addCharacter('statsOwl', characters.statsOwl, 'bottom', 'right');
+            } else if (moduleName === 'probability') {
+                // Penny for probability
+                addCharacter('probabilityPenguin', characters.probabilityPenguin, 'bottom', 'right');
+            } else if (moduleName === 'patterns') {
+                // Professor Hoots and Penny for patterns
+                addCharacter('statsOwl', characters.statsOwl, 'bottom', 'right');
+                addCharacter('probabilityPenguin', characters.probabilityPenguin, 'bottom', 'left');
+            }
+            
+            // Add event listeners to show speech bubbles
+            document.querySelectorAll('.character').forEach(character => {
+                character.addEventListener('click', function() {
+                    const characterType = this.classList[1].replace('-', '');
+                    showCharacterDialogue(characterType, this);
+                });
+            });
+        }
+        
+        // Add a character to the screen
+        function addCharacter(type, svg, verticalPosition, horizontalPosition) {
+            const character = document.createElement('div');
+            character.className = `character ${type}`;
+            character.innerHTML = svg;
+            
+            // Position the character
+            if (verticalPosition === 'top') {
+                character.style.top = '20px';
+            } else {
+                character.style.bottom = '20px';
+            }
+            
+            if (horizontalPosition === 'left') {
+                character.style.left = '20px';
+            } else {
+                character.style.right = '20px';
+            }
+            
+            document.body.appendChild(character);
+            
+            // Add hover effect
+            character.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1)';
+            });
+            
+            character.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+            });
+        }
+        
+        // Show character dialogue
+        function showCharacterDialogue(characterType, characterElement) {
+            // Remove any existing bubbles
+            document.querySelectorAll('.bubble').forEach(el => el.remove());
+            
+            // Get random dialogue
+            const dialogues = gameState.characterDialogue[characterType];
+            const dialogue = dialogues[Math.floor(Math.random() * dialogues.length)];
+            
+            // Create bubble
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = dialogue;
+            
+            // Position bubble relative to character
+            const rect = characterElement.getBoundingClientRect();
+            bubble.style.top = `${rect.top - 80}px`;
+            bubble.style.left = `${rect.left + (rect.width / 2) - 100}px`;
+            
+            document.body.appendChild(bubble);
+            
+            // Show bubble
+            setTimeout(() => {
+                bubble.classList.add('visible');
+            }, 10);
+            
+            // Hide bubble after delay
+            setTimeout(() => {
+                bubble.classList.remove('visible');
+                setTimeout(() => {
+                    bubble.remove();
+                }, 300);
+            }, 4000);
+        }
+        
+        // Get explanation based on concept level
+        function getExplanation(concept) {
+            let level = 'level1'; // Default level
+            
+            if (gameState.conceptLevel >= 8) {
+                level = 'level10';
+            } else if (gameState.conceptLevel >= 6) {
+                level = 'level7';
+            } else if (gameState.conceptLevel >= 4) {
+                level = 'level5';
+            } else if (gameState.conceptLevel >= 2) {
+                level = 'level3';
+            }
+            
+            return gameState.explanations[level][concept];
+        }
+        
+        // Update module content when settings change
+        function updateModule() {
+            renderModule(gameState.currentModule);
+        }
+        
+        // Update progress bar
+        function updateProgressBar() {
+            const progressBars = document.querySelectorAll('.progress-bar');
+            progressBars.forEach(bar => {
+                bar.style.width = `${gameState.progress}%`;
+                bar.textContent = `${Math.round(gameState.progress)}%`;
+            });
+        }
+        
+        // Create confetti animation
+        function createConfetti(count = 30) {
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.backgroundColor = gameState.colorPalette[Math.floor(Math.random() * gameState.colorPalette.length)];
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.width = `${5 + Math.random() * 10}px`;
+                confetti.style.height = `${5 + Math.random() * 10}px`;
+                confetti.style.opacity = Math.random();
+                confetti.style.animationDuration = `${2 + Math.random() * 4}s`;
+                
+                document.body.appendChild(confetti);
+                
+                // Remove after animation completes
+                setTimeout(() => {
+                    confetti.remove();
+                }, 6000);
+            }
+        }
+        
+        // Get a random color from the color palette
+        function getRandomColor() {
+            return gameState.colorPalette[Math.floor(Math.random() * gameState.colorPalette.length)];
+        }
+
+        // Add advanced statistics functionality based on concept level
+        function addAdvancedStatistics() {
+            if (gameState.conceptLevel >= 6) {
+                // Add more advanced statistics concepts for higher concept levels
+                const advancedPanel = document.createElement('div');
+                advancedPanel.className = 'panel';
+                advancedPanel.innerHTML = `
+                    <h3>Advanced Statistics Concepts</h3>
+                    <p>Because you set a higher concept level, here are some more advanced ideas:</p>
+                    <ul>
+                        <li><strong>Distributions:</strong> Ways to understand how data is spread out</li>
+                        <li><strong>Variance and Standard Deviation:</strong> Measuring how spread out the data is</li>
+                        <li><strong>Statistical Significance:</strong> Determining if results happened by chance</li>
+                        <li><strong>Correlation:</strong> Understanding relationships between different measurements</li>
+                    </ul>
+                    <p>These concepts are usually taught in middle school and beyond, but we've adapted them to be understandable by young geniuses!</p>
+                `;
+                
+                // Add this panel after completing certain modules
+                if (gameState.currentModule === 'average' || gameState.currentModule === 'probability' || gameState.currentModule === 'finale') {
+                    document.getElementById('gameContainer').appendChild(advancedPanel);
+                }
+            }
+        }
+        
+        // Enhance explanations with analogies based on conceptLevel
+        function getAnalogyForConcept(concept) {
+            const analogies = {
+                statistics: [
+                    "Statistics is like being a detective with numbers!",
+                    "Statistics is like a special lens that helps us see patterns in information.",
+                    "Statistics is the mathematical equivalent of a microscope that reveals hidden patterns in data."
+                ],
+                data: [
+                    "Data is like the clues that detectives collect to solve a mystery.",
+                    "Data is like the ingredients we gather before cooking a meal.",
+                    "Data is like the building blocks that form the foundation of scientific knowledge."
+                ],
+                average: [
+                    "Finding the average is like finding the balance point on a seesaw.",
+                    "The average is like finding the 'normal' amount of something in a group.",
+                    "The average is like the center of gravity in a physical system."
+                ],
+                probability: [
+                    "Probability is like predicting the weather - we can make good guesses but not be 100% sure.",
+                    "Probability is like knowing how likely it is to pick your favorite color crayon without looking.",
+                    "Probability is the mathematical framework that governs uncertainty and random processes."
+                ]
+            };
+            
+            // Select analogy based on concept level
+            const index = Math.min(Math.floor(gameState.conceptLevel / 4), analogies[concept].length - 1);
+            return analogies[concept][index];
+        }
+        
+        // Add experimental challenges for higher difficulty levels
+        function addExperimentalChallenges() {
+            if (gameState.difficulty >= 4 && (gameState.currentModule === 'finale' || gameState.currentModule === 'patterns')) {
+                const challengePanel = document.createElement('div');
+                challengePanel.className = 'panel';
+                challengePanel.innerHTML = `
+                    <h3>Bonus Challenge: Design Your Own Data Collection</h3>
+                    <p>Now that you understand statistics, can you think of something you'd like to collect data about?</p>
+                    <p>For example, you might:</p>
+                    <ul>
+                        <li>Count different colored cars that pass by your home</li>
+                        <li>Measure how tall different plants grow in different conditions</li>
+                        <li>Track the weather each day and look for patterns</li>
+                    </ul>
+                    <p>Scientists use statistics to answer questions about the world. What questions would you like to answer?</p>
+                `;
+                
+                document.getElementById('gameContainer').appendChild(challengePanel);
+            }
+        }document.getElementById('gameContainer').appendChild(challengePanel);
+            }
+        }
+        
+        // Add educational context based on real-world applications
+        function addRealWorldApplications() {
+            if (gameState.conceptLevel >= 3) {
+                const applicationsPanel = document.createElement('div');
+                applicationsPanel.className = 'panel';
+                
+                let applicationsContent = `
+                    <h3>Statistics in the Real World</h3>
+                    <p>Here are some ways people use statistics in real jobs:</p>
+                    <ul>
+                `;
+                
+                // Scale the complexity of examples based on concept level
+                const applications = [
+                    "Weather forecasters use statistics to predict if it will rain tomorrow",
+                    "Doctors use statistics to understand which medicines work best",
+                    "Game designers use statistics to make games fun and challenging",
+                    "Scientists use statistics to understand animals and plants",
+                    "Sports coaches use statistics to help players improve"
+                ];
+                
+                // Add more advanced applications at higher concept levels
+                if (gameState.conceptLevel >= 5) {
+                    applications.push("Economists use statistics to understand how money works in countries");
+                    applications.push("Engineers use statistics to make sure bridges and buildings are safe");
+                    applications.push("Computer scientists use statistics to teach computers to recognize patterns");
+                }
+                
+                if (gameState.conceptLevel >= 7) {
+                    applications.push("Medical researchers use statistics to develop new treatments and vaccines");
+                    applications.push("Environmental scientists use statistics to track climate patterns and changes");
+                    applications.push("Artificial intelligence systems use statistics to make predictions and decisions");
+                }
+                
+                // Add all applications to the content
+                applications.forEach(app => {
+                    applicationsContent += `<li>${app}</li>`;
+                });
+                
+                applicationsContent += `
+                    </ul>
+                    <p>Statistics helps people make better decisions using numbers!</p>
+                `;
+                
+                applicationsPanel.innerHTML = applicationsContent;
+                
+                // Add this panel to finale module
+                if (gameState.currentModule === 'finale') {
+                    document.getElementById('gameContainer').appendChild(applicationsPanel);
+                }
+            }
+        }
+        
+        // Interactive glossary of statistics terms
+        function createGlossary() {
+            const glossaryPanel = document.createElement('div');
+            glossaryPanel.className = 'panel';
+            glossaryPanel.innerHTML = `
+                <h3>Statistics Words to Know</h3>
+                <p>Tap on any word to learn what it means!</p>
+                <div id="glossary-terms" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+            `;
+            
+            // Create glossary terms
+            const terms = [
+                { term: "Data", definition: "Information we collect by counting or measuring things" },
+                { term: "Chart", definition: "A picture that shows data in a way that's easy to understand" },
+                { term: "Average", definition: "The middle or typical value in a group of numbers" },
+                { term: "Graph", definition: "A picture that shows how numbers are connected or change" },
+                { term: "Probability", definition: "How likely something is to happen" }
+            ];
+            
+            // Add more advanced terms for higher concept levels
+            if (gameState.conceptLevel >= 4) {
+                terms.push({ term: "Median", definition: "The middle value when all numbers are put in order" });
+                terms.push({ term: "Mode", definition: "The number that appears most often in a set of data" });
+                terms.push({ term: "Range", definition: "The difference between the largest and smallest values" });
+            }
+            
+            if (gameState.conceptLevel >= 6) {
+                terms.push({ term: "Distribution", definition: "The pattern of how data is spread out" });
+                terms.push({ term: "Correlation", definition: "How strongly two sets of data are connected to each other" });
+                terms.push({ term: "Sample", definition: "A smaller group chosen to represent a larger group" });
+            }
+            
+            if (gameState.conceptLevel >= 8) {
+                terms.push({ term: "Variance", definition: "A measure of how spread out the data is from the average" });
+                terms.push({ term: "Hypothesis", definition: "An idea that can be tested with data and statistics" });
+                terms.push({ term: "Statistical Significance", definition: "Evidence that results are not just by random chance" });
+            }
+            
+            // Render glossary terms
+            setTimeout(() => {
+                const glossaryContainer = document.getElementById('glossary-terms');
+                if (!glossaryContainer) return;
+                
+                terms.forEach(item => {
+                    const termElement = document.createElement('div');
+                    termElement.className = 'quiz-option';
+                    termElement.style.width = 'calc(33% - 20px)';
+                    termElement.style.margin = '10px';
+                    termElement.style.cursor = 'pointer';
+                    termElement.innerHTML = `<strong>${item.term}</strong>`;
+                    
+                    termElement.addEventListener('click', function() {
+                        // Toggle definition display
+                        if (this.querySelector('p')) {
+                            this.innerHTML = `<strong>${item.term}</strong>`;
+                        } else {
+                            this.innerHTML = `
+                                <strong>${item.term}</strong>
+                                <p style="margin-top: 5px; font-size: 0.9rem;">${item.definition}</p>
+                            `;
+                        }
+                    });
+                    
+                    glossaryContainer.appendChild(termElement);
+                });
+            }, 100);
+            
+            // Add glossary to finale
+            if (gameState.currentModule === 'finale') {
+                document.getElementById('gameContainer').appendChild(glossaryPanel);
+            }
+        }
+        
+        // Create personalized learning path recommendations based on performance
+        function createLearningPathRecommendations() {
+            if (gameState.currentModule === 'finale') {
+                const recommendationsPanel = document.createElement('div');
+                recommendationsPanel.className = 'panel';
+                
+                // Determine strengths and areas for improvement
+                const strengths = [];
+                const improvements = [];
+                
+                // This would normally be based on actual performance data
+                // For demonstration, we'll use stars as a proxy
+                if (gameState.stars >= 10) {
+                    strengths.push("Understanding data visualization");
+                    strengths.push("Recognizing patterns");
+                } else {
+                    improvements.push("Practice creating and reading charts");
+                    improvements.push("Look for patterns in everyday life");
+                }
+                
+                if (gameState.conceptLevel >= 5) {
+                    strengths.push("Understanding advanced statistical concepts");
+                } else {
+                    improvements.push("Gradually explore more complex statistical ideas");
+                }
+                
+                // Create recommendations HTML
+                let recommendationsHTML = `
+                    <h3>Your Statistics Learning Journey</h3>
+                    <p>Based on your adventure, here are some suggestions:</p>
+                `;
+                
+                if (strengths.length > 0) {
+                    recommendationsHTML += `
+                        <div style="margin: 15px 0;">
+                            <h4>Your Strengths:</h4>
+                            <ul>
+                    `;
+                    
+                    strengths.forEach(strength => {
+                        recommendationsHTML += `<li>${strength}</li>`;
+                    });
+                    
+                    recommendationsHTML += `
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                if (improvements.length > 0) {
+                    recommendationsHTML += `
+                        <div style="margin: 15px 0;">
+                            <h4>Next Steps for Learning:</h4>
+                            <ul>
+                    `;
+                    
+                    improvements.forEach(improvement => {
+                        recommendationsHTML += `<li>${improvement}</li>`;
+                    });
+                    
+                    recommendationsHTML += `
+                            </ul>
+                        </div>
+                    `;
+                }
+                
+                // Add fun activities to try
+                recommendationsHTML += `
+                    <div style="margin: 15px 0;">
+                        <h4>Fun Statistics Activities to Try:</h4>
+                        <ul>
+                            <li>Count and sort your toys or books and make a chart</li>
+                            <li>Keep track of the weather for a week and look for patterns</li>
+                            <li>Play games with dice or cards and think about probability</li>
+                            <li>Measure how tall plants grow and calculate the average</li>
+                        </ul>
+                    </div>
+                `;
+                
+                recommendationsPanel.innerHTML = recommendationsHTML;
+                document.getElementById('gameContainer').appendChild(recommendationsPanel);
+            }
+        }
+        
+        // Initialize game when document is loaded
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeGame);
+        } else {
+            initializeGame();
+        }
+    </script>
+</body>
+</html>

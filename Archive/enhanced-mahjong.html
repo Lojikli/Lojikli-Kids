@@ -1,0 +1,1223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mahjong Solitaire</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1e5799 0%, #2989d8 50%, #207cca 51%, #7db9e8 100%);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            color: white;
+        }
+
+        .game-container {
+            position: relative;
+            width: 100%;
+            height: 85vh;
+            margin-top: 10px;
+            perspective: 1000px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .board {
+            position: relative;
+            transform-style: preserve-3d;
+            width: 800px;
+            height: 600px;
+            transform: rotateX(20deg);
+            margin: 0 auto;
+        }
+
+        .tile {
+            position: absolute;
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(to bottom, #ffffff 0%, #f1f1f1 50%, #e1e1e1 51%, #f6f6f6 100%);
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+            transform-style: preserve-3d;
+            transition: transform 0.3s, opacity 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            user-select: none;
+            border: 2px solid rgba(0, 0, 0, 0.2);
+        }
+
+        .tile.free {
+            box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            border: 2px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .tile.selected {
+            box-shadow: 0 0 15px gold, 0 0 5px gold;
+            transform: translateZ(10px);
+            border: 2px solid gold;
+        }
+
+        .tile.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .tile-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            font-weight: bold;
+            border-radius: 5px;
+            border: 2px solid #999;
+            background-color: white;
+            color: #333;
+            box-sizing: border-box;
+        }
+
+        .tile-top {
+            transform: translateZ(5px);
+        }
+
+        .tile-left {
+            transform: rotateY(-90deg) translateZ(5px);
+            width: 10px;
+            left: -5px;
+            height: 80px;
+            background-color: #c0c0c0;
+            border-color: #999;
+        }
+
+        .tile-right {
+            transform: rotateY(90deg) translateZ(55px);
+            width: 10px;
+            height: 80px;
+            background-color: #a0a0a0;
+            border-color: #999;
+        }
+
+        .tile-bottom {
+            transform: rotateX(-90deg) translateZ(75px);
+            height: 10px;
+            background-color: #d0d0d0;
+            border-color: #999;
+        }
+
+        .tile-symbol {
+            font-size: 36px;
+            text-align: center;
+            color: black;
+            font-weight: bold;
+        }
+
+        .dot {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .bamboo-segment {
+            position: absolute;
+            width: 8px;
+            height: 22px;
+            background-color: green;
+            border-radius: 4px;
+            box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .menu {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            color: #333;
+            max-width: 500px;
+        }
+
+        .menu h1 {
+            margin-top: 0;
+            color: #1e5799;
+        }
+
+        .menu button {
+            background-color: #1e5799;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        .menu button:hover {
+            background-color: #2989d8;
+        }
+
+        .difficulty-options button {
+            background-color: #2989d8;
+            padding: 8px 15px;
+            margin: 5px;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 800px;
+            margin: 15px auto 0;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .controls button {
+            background-color: #1e5799;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .controls button:hover {
+            background-color: #2989d8;
+        }
+
+        .stats {
+            display: flex;
+            gap: 20px;
+        }
+
+        .firework {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            animation: explode 1s forwards;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: translate(0, 0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty));
+                opacity: 0;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .hint {
+            animation: pulse 1s infinite alternate;
+            z-index: 1000 !important;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 10px gold;
+                border: 2px solid gold;
+            }
+            100% {
+                box-shadow: 0 0 25px gold, 0 0 15px gold;
+                border: 3px solid gold;
+            }
+        }
+
+        /* Tile symbol styles */
+        .character {
+            color: black;
+            font-family: 'Arial', serif;
+            font-weight: bold;
+        }
+
+        .dots, .bamboo, .wind, .dragon {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .dragons .symbol {
+            font-size: 40px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .red { color: #ff0000; text-shadow: 0 0 2px rgba(255, 0, 0, 0.3); }
+        .green { color: #008000; text-shadow: 0 0 2px rgba(0, 128, 0, 0.3); }
+        .blue { color: #0000ff; text-shadow: 0 0 2px rgba(0, 0, 255, 0.3); }
+
+        /* For debugging */
+        .debug-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 5px;
+            font-size: 12px;
+            z-index: 100;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <div class="stats">
+            <div id="pairs-left">Pairs left: 0</div>
+            <div id="time">Time: 00:00</div>
+        </div>
+        <div>
+            <button id="hint-btn">Hint</button>
+            <button id="shuffle-btn">Shuffle</button>
+            <button id="new-game-btn">New Game</button>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="board" id="board"></div>
+    </div>
+
+    <div class="overlay" id="start-menu">
+        <div class="menu">
+            <h1>Mahjong Solitaire</h1>
+            <p>Match pairs of identical tiles to clear the board. Only free tiles can be selected (tiles that have at least one side exposed).</p>
+            <div>
+                <h3>Choose Difficulty:</h3>
+                <div class="difficulty-options">
+                    <button id="easy-btn">Easy</button>
+                    <button id="medium-btn">Medium</button>
+                    <button id="hard-btn">Hard</button>
+                </div>
+            </div>
+            <button id="start-btn">Start Game</button>
+        </div>
+    </div>
+
+    <div class="overlay hidden" id="win-screen">
+        <div class="menu">
+            <h1>Victory!</h1>
+            <p>Congratulations! You have completed the puzzle.</p>
+            <div id="win-stats"></div>
+            <button id="play-again-btn">Play Again</button>
+        </div>
+    </div>
+
+    <div class="debug-info" id="debug-info"></div>
+
+    <script>
+        // Game state
+        const state = {
+            tiles: [],
+            layout: [],
+            selectedTile: null,
+            pairsLeft: 0,
+            startTime: 0,
+            gameTime: 0,
+            timerInterval: null,
+            gameInProgress: false,
+            difficulty: 'medium',
+            hintUsed: false
+        };
+
+        // DOM Elements
+        const board = document.getElementById('board');
+        const startMenu = document.getElementById('start-menu');
+        const winScreen = document.getElementById('win-screen');
+        const pairsLeftDisplay = document.getElementById('pairs-left');
+        const timeDisplay = document.getElementById('time');
+        const winStats = document.getElementById('win-stats');
+        const debugInfo = document.getElementById('debug-info');
+
+        // Event Listeners
+        document.getElementById('new-game-btn').addEventListener('click', () => {
+            showStartMenu();
+        });
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            startGame();
+        });
+
+        document.getElementById('play-again-btn').addEventListener('click', () => {
+            showStartMenu();
+        });
+
+        document.getElementById('hint-btn').addEventListener('click', () => {
+            showHint();
+        });
+
+        document.getElementById('shuffle-btn').addEventListener('click', () => {
+            shuffleTiles();
+        });
+
+        document.getElementById('easy-btn').addEventListener('click', () => {
+            state.difficulty = 'easy';
+            highlightSelectedDifficulty();
+        });
+
+        document.getElementById('medium-btn').addEventListener('click', () => {
+            state.difficulty = 'medium';
+            highlightSelectedDifficulty();
+        });
+
+        document.getElementById('hard-btn').addEventListener('click', () => {
+            state.difficulty = 'hard';
+            highlightSelectedDifficulty();
+        });
+
+        // Initialize
+        function init() {
+            highlightSelectedDifficulty();
+        }
+
+        function highlightSelectedDifficulty() {
+            document.querySelectorAll('.difficulty-options button').forEach(btn => {
+                if (btn.id === `${state.difficulty}-btn`) {
+                    btn.style.backgroundColor = '#1e5799';
+                    btn.style.fontWeight = 'bold';
+                } else {
+                    btn.style.backgroundColor = '#2989d8';
+                    btn.style.fontWeight = 'normal';
+                }
+            });
+        }
+
+        function showStartMenu() {
+            stopTimer();
+            resetBoard();
+            startMenu.classList.remove('hidden');
+            winScreen.classList.add('hidden');
+        }
+
+        function startGame() {
+            resetBoard();
+            createLayout();
+            createTiles();
+            updatePairsLeft();
+            startTimer();
+            startMenu.classList.add('hidden');
+            state.gameInProgress = true;
+        }
+
+        function resetBoard() {
+            board.innerHTML = '';
+            state.tiles = [];
+            state.layout = [];
+            state.selectedTile = null;
+            state.pairsLeft = 0;
+            state.gameTime = 0;
+            state.hintUsed = false;
+        }
+
+        function createLayout() {
+            const layouts = {
+                easy: [
+                    [0, 0, 1, 1, 1, 1, 0, 0],
+                    [0, 1, 1, 1, 1, 1, 1, 0],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 0, 0, 1, 1, 1],
+                    [1, 1, 1, 0, 0, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [0, 1, 1, 1, 1, 1, 1, 0],
+                    [0, 0, 1, 1, 1, 1, 0, 0]
+                ],
+                medium: [
+                    [0, 0, 1, 1, 1, 1, 0, 0],
+                    [0, 1, 1, 1, 1, 1, 1, 0],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [0, 1, 1, 1, 1, 1, 1, 0],
+                    [0, 0, 1, 1, 1, 1, 0, 0]
+                ],
+                hard: [
+                    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 0, 0, 0, 0, 1, 1, 1],
+                    [1, 1, 1, 0, 0, 0, 0, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+                    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+                ]
+            };
+
+            const baseLayout = layouts[state.difficulty] || layouts.medium;
+            
+            // Create a 3D layout with multiple layers
+            const layout3D = [];
+            const layers = state.difficulty === 'easy' ? 2 : (state.difficulty === 'medium' ? 3 : 4);
+
+            for (let z = 0; z < layers; z++) {
+                const layer = [];
+                for (let y = 0; y < baseLayout.length; y++) {
+                    const row = [];
+                    for (let x = 0; x < baseLayout[y].length; x++) {
+                        // For upper layers, make the layout smaller
+                        if (z > 0) {
+                            const shrink = z * 1;  // Shrink by 1 cell for each layer up
+                            if (y < shrink || y >= baseLayout.length - shrink || 
+                                x < shrink || x >= baseLayout[y].length - shrink) {
+                                row.push(0);
+                            } else {
+                                row.push(baseLayout[y][x]);
+                            }
+                        } else {
+                            row.push(baseLayout[y][x]);
+                        }
+                    }
+                    layer.push(row);
+                }
+                layout3D.push(layer);
+            }
+
+            state.layout = layout3D;
+        }
+
+        function createTileSymbol(type, value) {
+            const symbolElement = document.createElement('div');
+            symbolElement.className = type;
+
+            switch (type) {
+                case 'dots':
+                    createDots(symbolElement, value);
+                    break;
+                case 'bamboo':
+                    createBamboo(symbolElement, value);
+                    break;
+                case 'character':
+                    symbolElement.textContent = value;
+                    break;
+                case 'winds':
+                    createWind(symbolElement, value);
+                    break;
+                case 'dragons':
+                    createDragon(symbolElement, value);
+                    break;
+            }
+
+            return symbolElement;
+        }
+
+        function createDots(element, number) {
+            const dotPositions = {
+                1: [[50, 50]],
+                2: [[30, 30], [70, 70]],
+                3: [[30, 30], [50, 50], [70, 70]],
+                4: [[30, 30], [30, 70], [70, 30], [70, 70]],
+                5: [[30, 30], [30, 70], [50, 50], [70, 30], [70, 70]],
+                6: [[30, 30], [30, 50], [30, 70], [70, 30], [70, 50], [70, 70]],
+                7: [[30, 30], [30, 50], [30, 70], [50, 40], [70, 30], [70, 50], [70, 70]],
+                8: [[30, 30], [30, 50], [30, 70], [50, 30], [50, 70], [70, 30], [70, 50], [70, 70]],
+                9: [[30, 30], [30, 50], [30, 70], [50, 30], [50, 50], [50, 70], [70, 30], [70, 50], [70, 70]]
+            };
+
+            const colors = ['#d40000', '#006400', '#00008b'];
+            const positions = dotPositions[number] || [];
+
+            positions.forEach((pos, i) => {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                dot.style.left = `${pos[0]}%`;
+                dot.style.top = `${pos[1]}%`;
+                dot.style.backgroundColor = colors[i % colors.length];
+                element.appendChild(dot);
+            });
+        }
+
+        function createBamboo(element, number) {
+            const colors = ['#006400', '#d40000', '#00008b'];
+
+            if (number === 1) {
+                // Special case for bamboo 1 (bird)
+                const bird = document.createElement('div');
+                bird.className = 'bamboo-bird';
+                bird.innerHTML = '🎋';
+                bird.style.position = 'absolute';
+                bird.style.left = '50%';
+                bird.style.top = '50%';
+                bird.style.transform = 'translate(-50%, -50%)';
+                bird.style.fontSize = '40px';
+                bird.style.color = '#006400';
+                element.appendChild(bird);
+                return;
+            }
+
+            // For other bamboo tiles, create bamboo segments
+            const positions = [];
+            const offset = 15;
+
+            if (number >= 2) {
+                positions.push([40, 30, 0], [60, 30, 0]);
+            }
+            if (number >= 3) {
+                positions.push([50, 50, 1]);
+            }
+            if (number >= 4) {
+                positions.push([40, 70, 2], [60, 70, 2]);
+            }
+            if (number >= 5) {
+                positions.push([30, 40, 0], [70, 40, 0]);
+            }
+            if (number >= 6) {
+                positions.push([30, 60, 1], [70, 60, 1]);
+            }
+            if (number >= 7) {
+                positions.push([50, 30, 2]);
+            }
+            if (number >= 8) {
+                positions.push([50, 70, 0]);
+            }
+            if (number >= 9) {
+                positions.push([50, 20, 1]);
+            }
+
+            positions.slice(0, number).forEach((pos) => {
+                const segment = document.createElement('div');
+                segment.className = 'bamboo-segment';
+                segment.style.left = `${pos[0]}%`;
+                segment.style.top = `${pos[1]}%`;
+                segment.style.backgroundColor = colors[pos[2]];
+                element.appendChild(segment);
+            });
+        }
+
+        function createWind(element, direction) {
+            const windSymbols = {
+                'east': '東',
+                'south': '南',
+                'west': '西',
+                'north': '北'
+            };
+
+            const symbol = document.createElement('div');
+            symbol.className = 'symbol';
+            symbol.textContent = windSymbols[direction] || direction;
+            symbol.style.position = 'absolute';
+            symbol.style.left = '50%';
+            symbol.style.top = '50%';
+            symbol.style.transform = 'translate(-50%, -50%)';
+            symbol.style.fontSize = '34px';
+            symbol.style.color = '#00008b';
+            element.appendChild(symbol);
+        }
+
+        function createDragon(element, color) {
+            const dragonSymbols = {
+                'red': '中',
+                'green': '發',
+                'white': '白'
+            };
+
+            const colorClasses = {
+                'red': 'red',
+                'green': 'green',
+                'white': 'blue'
+            };
+
+            const symbol = document.createElement('div');
+            symbol.className = 'symbol ' + (colorClasses[color] || '');
+            symbol.textContent = dragonSymbols[color] || color;
+            element.appendChild(symbol);
+        }
+
+        function createTileTypes() {
+            const tileTypes = [];
+
+            // Dots: 1-9, 4 of each
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 0; j < 4; j++) {
+                    tileTypes.push({ type: 'dots', value: i });
+                }
+            }
+
+            // Bamboo: 1-9, 4 of each
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 0; j < 4; j++) {
+                    tileTypes.push({ type: 'bamboo', value: i });
+                }
+            }
+
+            // Characters: 1-9, 4 of each
+            for (let i = 1; i <= 9; i++) {
+                for (let j = 0; j < 4; j++) {
+                    tileTypes.push({ type: 'character', value: i.toString() });
+                }
+            }
+
+            // Winds: east, south, west, north, 4 of each
+            const winds = ['east', 'south', 'west', 'north'];
+            winds.forEach(wind => {
+                for (let j = 0; j < 4; j++) {
+                    tileTypes.push({ type: 'winds', value: wind });
+                }
+            });
+
+            // Dragons: red, green, white, 4 of each
+            const dragons = ['red', 'green', 'white'];
+            dragons.forEach(dragon => {
+                for (let j = 0; j < 4; j++) {
+                    tileTypes.push({ type: 'dragons', value: dragon });
+                }
+            });
+
+            return tileTypes;
+        }
+
+        function createTiles() {
+            // Count total tiles needed
+            let totalTiles = 0;
+            state.layout.forEach(layer => {
+                layer.forEach(row => {
+                    row.forEach(cell => {
+                        if (cell === 1) totalTiles++;
+                    });
+                });
+            });
+
+            // Ensure we have an even number of tiles
+            if (totalTiles % 2 !== 0) totalTiles--;
+
+            // Create tile types pool
+            const tileTypes = createTileTypes();
+            
+            // Shuffle and take what we need
+            const shuffledTypes = shuffleArray(tileTypes).slice(0, totalTiles / 2);
+            
+            // Double them to create matching pairs
+            let tileTypesToUse = [...shuffledTypes, ...shuffledTypes];
+            
+            // Shuffle again to randomize positions
+            tileTypesToUse = shuffleArray(tileTypesToUse);
+
+            // Create tiles according to the layout
+            let tileIndex = 0;
+            
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            const tileWidth = 60;
+            const tileHeight = 80;
+            
+            // Calculate the spacing based on window size
+            const baseSpacingX = 62;
+            const baseSpacingY = 82;
+            const layerHeight = 10; // z-index step for each layer
+            
+            // Calculate board dimensions and center position
+            const maxX = Math.max(...state.layout.map(layer => layer[0].length));
+            const maxY = Math.max(...state.layout.map(layer => layer.length));
+            
+            const boardWidth = maxX * baseSpacingX;
+            const boardHeight = maxY * baseSpacingY;
+            
+            // Center the board within the game container
+            const gameContainer = document.querySelector('.game-container');
+            gameContainer.style.display = 'flex';
+            gameContainer.style.justifyContent = 'center';
+            gameContainer.style.alignItems = 'center';
+            
+            // Reset board position - we'll position tiles relative to center
+            board.style.position = 'relative';
+            board.style.width = `${boardWidth}px`;
+            board.style.height = `${boardHeight}px`;
+            board.style.margin = 'auto';
+            
+            // Create tiles
+            state.layout.forEach((layer, z) => {
+                layer.forEach((row, y) => {
+                    row.forEach((cell, x) => {
+                        if (cell === 1 && tileIndex < tileTypesToUse.length) {
+                            const tileType = tileTypesToUse[tileIndex++];
+                            createTile(x, y, z, tileType);
+                        }
+                    });
+                });
+            });
+            
+            state.pairsLeft = totalTiles / 2;
+            updateTileFreedom();
+        }
+
+        function createTile(x, y, z, tileType) {
+            const tileElement = document.createElement('div');
+            tileElement.className = 'tile';
+            
+            // Calculate position - centered within the board
+            const offsetX = 62; // horizontal spacing
+            const offsetY = 82; // vertical spacing
+            
+            // Position relative to board center
+            const maxX = Math.max(...state.layout.map(layer => layer[0].length));
+            const maxY = Math.max(...state.layout.map(layer => layer.length));
+            
+            // Calculate position to center the layout
+            const startX = (maxX - state.layout[z][0].length) / 2 * offsetX;
+            const startY = (maxY - state.layout[z].length) / 2 * offsetY;
+            
+            const posX = startX + x * offsetX;
+            const posY = startY + y * offsetY;
+            const posZ = z * 10; // z-spacing (layering)
+            
+            tileElement.style.left = `${posX}px`;
+            tileElement.style.top = `${posY}px`;
+            tileElement.style.transform = `translateZ(${posZ}px)`;
+            tileElement.style.zIndex = 100 + posZ;
+            
+            // Create tile faces
+            const top = document.createElement('div');
+            top.className = 'tile-face tile-top';
+            
+            const symbol = createTileSymbol(tileType.type, tileType.value);
+            top.appendChild(symbol);
+            
+            const left = document.createElement('div');
+            left.className = 'tile-face tile-left';
+            
+            const right = document.createElement('div');
+            right.className = 'tile-face tile-right';
+            
+            const bottom = document.createElement('div');
+            bottom.className = 'tile-face tile-bottom';
+            
+            tileElement.appendChild(top);
+            tileElement.appendChild(left);
+            tileElement.appendChild(right);
+            tileElement.appendChild(bottom);
+            
+            // Add event listener
+            tileElement.addEventListener('click', () => {
+                handleTileClick(tileElement);
+            });
+            
+            // Add to DOM and state
+            board.appendChild(tileElement);
+            
+            const tile = {
+                element: tileElement,
+                type: tileType.type,
+                value: tileType.value,
+                x: x,
+                y: y,
+                z: z,
+                matched: false,
+                isFree: false // Will be calculated later
+            };
+            
+            state.tiles.push(tile);
+        }
+
+        function updateTileFreedom() {
+            // Reset all tiles
+            state.tiles.forEach(tile => {
+                tile.isFree = false;
+            });
+            
+            // Calculate which tiles are free
+            state.tiles.filter(tile => !tile.matched).forEach(tile => {
+                const { x, y, z } = tile;
+                
+                // A tile is free if it has either the left or right side exposed
+                let leftFree = true;
+                let rightFree = true;
+                
+                // Check if there are any tiles blocking the left side
+                state.tiles.filter(t => !t.matched).forEach(otherTile => {
+                    if (otherTile !== tile) {
+                        if (otherTile.z === z && otherTile.y === y && otherTile.x === x - 1) {
+                            leftFree = false;
+                        }
+                        if (otherTile.z === z && otherTile.y === y && otherTile.x === x + 1) {
+                            rightFree = false;
+                        }
+                    }
+                });
+                
+                // Check if there's any tile on top of this one
+                const hasTileAbove = state.tiles.some(otherTile => {
+                    return !otherTile.matched && 
+                           otherTile.z > z && 
+                           otherTile.x >= x - 0.5 && otherTile.x <= x + 0.5 && 
+                           otherTile.y >= y - 0.5 && otherTile.y <= y + 0.5;
+                });
+                
+                tile.isFree = (leftFree || rightFree) && !hasTileAbove;
+            });
+            
+            // Update visual state
+            state.tiles.forEach(tile => {
+                if (tile.isFree) {
+                    tile.element.style.opacity = "1";
+                    tile.element.style.pointerEvents = "auto";
+                    tile.element.classList.add('free');
+                    // Slight rise effect for free tiles
+                    tile.element.style.transform = `translateZ(${tile.z * 10 + 3}px)`;
+                } else {
+                    tile.element.style.opacity = "0.8";
+                    tile.element.style.pointerEvents = "none";
+                    tile.element.classList.remove('free');
+                    tile.element.style.transform = `translateZ(${tile.z * 10}px)`;
+                }
+            });
+            
+            // Debug info
+            updateDebugInfo();
+        }
+
+        function updateDebugInfo() {
+            if (debugInfo) {
+                const freeTiles = state.tiles.filter(t => t.isFree && !t.matched).length;
+                const matchablePairs = findMatchablePairs().length;
+                debugInfo.textContent = `Free Tiles: ${freeTiles}, Matchable Pairs: ${matchablePairs}`;
+            }
+        }
+
+        function handleTileClick(tileElement) {
+            if (!state.gameInProgress) return;
+            
+            // Find the clicked tile in our state
+            const clickedTile = state.tiles.find(tile => tile.element === tileElement);
+            
+            // Make sure the tile is free
+            if (!clickedTile || !clickedTile.isFree || clickedTile.matched) return;
+            
+            // Handle selection
+            if (!state.selectedTile) {
+                // First tile selection
+                state.selectedTile = clickedTile;
+                tileElement.classList.add('selected');
+                // Apply special transform for selected tile
+                tileElement.style.transform = `translateZ(${clickedTile.z * 10 + 10}px)`;
+            } else if (state.selectedTile.element === tileElement) {
+                // Clicking the same tile - deselect
+                state.selectedTile = null;
+                tileElement.classList.remove('selected');
+                // Reset transform
+                tileElement.style.transform = `translateZ(${clickedTile.z * 10 + (clickedTile.isFree ? 3 : 0)}px)`;
+            } else {
+                // Second tile selection - check for match
+                if (state.selectedTile.type === clickedTile.type && 
+                    state.selectedTile.value === clickedTile.value) {
+                    // Match found
+                    matchTiles(state.selectedTile, clickedTile);
+                } else {
+                    // No match
+                    state.selectedTile.element.classList.remove('selected');
+                    state.selectedTile = clickedTile;
+                    tileElement.classList.add('selected');
+                }
+            }
+        }
+
+        function matchTiles(tile1, tile2) {
+            // Remove tiles with animation
+            tile1.element.classList.add('hidden');
+            tile2.element.classList.remove('selected');
+            tile2.element.classList.add('hidden');
+            
+            // Remove hint class if either tile had it
+            tile1.element.classList.remove('hint');
+            tile2.element.classList.remove('hint');
+            
+            // Update tile state
+            tile1.matched = true;
+            tile2.matched = true;
+            
+            // Play matching animation/effect
+            createFireworks(tile1.element);
+            createFireworks(tile2.element);
+            
+            // Clear selection
+            state.selectedTile = null;
+            
+            // Update pairs left
+            state.pairsLeft--;
+            updatePairsLeft();
+            
+            // Update which tiles are free
+            updateTileFreedom();
+            
+            // Check for win
+            if (state.pairsLeft === 0) {
+                endGame();
+            } else {
+                // Check if there are still playable moves
+                const matchablePairs = findMatchablePairs();
+                if (matchablePairs.length === 0) {
+                    // No more moves possible, shuffle or offer to shuffle
+                    if (confirm('No more possible moves. Shuffle the remaining tiles?')) {
+                        shuffleTiles();
+                    }
+                }
+            }
+        }
+
+        function createFireworks(element) {
+            const rect = element.getBoundingClientRect();
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top + rect.height / 2;
+            
+            for (let i = 0; i < 20; i++) {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                firework.style.left = `${centerX}px`;
+                firework.style.top = `${centerY}px`;
+                
+                // Random color
+                const colors = ['#FF5252', '#FFEB3B', '#4CAF50', '#2196F3', '#9C27B0'];
+                firework.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                // Random direction
+                const angle = Math.random() * Math.PI * 2;
+                const distance = 50 + Math.random() * 100;
+                const tx = Math.cos(angle) * distance;
+                const ty = Math.sin(angle) * distance;
+                
+                firework.style.setProperty('--tx', `${tx}px`);
+                firework.style.setProperty('--ty', `${ty}px`);
+                
+                document.body.appendChild(firework);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    document.body.removeChild(firework);
+                }, 1000);
+            }
+        }
+
+        function updatePairsLeft() {
+            pairsLeftDisplay.textContent = `Pairs left: ${state.pairsLeft}`;
+        }
+
+        function endGame() {
+            stopTimer();
+            state.gameInProgress = false;
+            
+            // Show win screen
+            winScreen.classList.remove('hidden');
+            
+            // Update win stats
+            const minutes = Math.floor(state.gameTime / 60);
+            const seconds = state.gameTime % 60;
+            const timeString = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+            
+            winStats.innerHTML = `
+                <p>Time: ${timeString}</p>
+                <p>Difficulty: ${state.difficulty.charAt(0).toUpperCase() + state.difficulty.slice(1)}</p>
+                ${state.hintUsed ? '<p>Hint used</p>' : '<p>No hints used - Perfect game!</p>'}
+            `;
+            
+            // Create a lot of fireworks for victory
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    
+                    const element = document.createElement('div');
+                    element.style.position = 'absolute';
+                    element.style.left = `${x}px`;
+                    element.style.top = `${y}px`;
+                    element.style.width = '1px';
+                    element.style.height = '1px';
+                    
+                    document.body.appendChild(element);
+                    createFireworks(element);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(element);
+                    }, 1000);
+                    
+                }, i * 300);
+            }
+        }
+
+        function startTimer() {
+            state.startTime = Date.now();
+            state.gameTime = 0;
+            updateTimer();
+            
+            state.timerInterval = setInterval(() => {
+                state.gameTime = Math.floor((Date.now() - state.startTime) / 1000);
+                updateTimer();
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(state.gameTime / 60);
+            const seconds = state.gameTime % 60;
+            timeDisplay.textContent = `Time: ${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function findMatchablePairs() {
+            const freeTiles = state.tiles.filter(tile => tile.isFree && !tile.matched);
+            const pairs = [];
+            
+            // Check all possible pairs of free tiles
+            for (let i = 0; i < freeTiles.length; i++) {
+                for (let j = i + 1; j < freeTiles.length; j++) {
+                    if (freeTiles[i].type === freeTiles[j].type && 
+                        freeTiles[i].value === freeTiles[j].value) {
+                        pairs.push([freeTiles[i], freeTiles[j]]);
+                    }
+                }
+            }
+            
+            return pairs;
+        }
+
+        function showHint() {
+            // Find all matchable pairs
+            const pairs = findMatchablePairs();
+            
+            // If there are no possible matches, let the user know
+            if (pairs.length === 0) {
+                alert('No possible matches found. Try shuffling!');
+                return;
+            }
+            
+            // Randomly select one pair to highlight
+            const randomPair = pairs[Math.floor(Math.random() * pairs.length)];
+            
+            // Clear any previous hints
+            state.tiles.forEach(tile => {
+                tile.element.classList.remove('hint');
+            });
+            
+            // Add hint class to highlight the pair
+            randomPair[0].element.classList.add('hint');
+            randomPair[1].element.classList.add('hint');
+            
+            state.hintUsed = true;
+            
+            // Remove the hint after a short time
+            setTimeout(() => {
+                if (state.gameInProgress) {
+                    randomPair[0].element.classList.remove('hint');
+                    randomPair[1].element.classList.remove('hint');
+                }
+            }, 3000);
+        }
+
+        function shuffleTiles() {
+            if (state.pairsLeft === 0) return;
+            
+            // Get all active tiles
+            const activeTiles = state.tiles.filter(tile => !tile.matched);
+            
+            // Gather all tile types and values
+            const tileAttributes = activeTiles.map(tile => ({
+                type: tile.type,
+                value: tile.value
+            }));
+            
+            // Shuffle the attributes
+            const shuffledAttributes = shuffleArray(tileAttributes);
+            
+            // Reassign the shuffled attributes to the tiles
+            activeTiles.forEach((tile, index) => {
+                tile.type = shuffledAttributes[index].type;
+                tile.value = shuffledAttributes[index].value;
+                
+                // Update the tile visualization
+                const symbolContainer = tile.element.querySelector('.tile-top');
+                symbolContainer.innerHTML = '';
+                
+                const newSymbol = createTileSymbol(tile.type, tile.value);
+                symbolContainer.appendChild(newSymbol);
+            });
+            
+            // Clear selection if there was one
+            if (state.selectedTile) {
+                state.selectedTile.element.classList.remove('selected');
+                state.selectedTile = null;
+            }
+            
+            // Make sure there are valid moves
+            updateTileFreedom();
+            
+            // If there are still no valid moves, shuffle again
+            if (findMatchablePairs().length === 0 && state.pairsLeft > 0) {
+                setTimeout(shuffleTiles, 100);
+            }
+        }
+        
+        // Handler for window resize
+        window.addEventListener('resize', () => {
+            // Recalculate board positioning
+            if (state.gameInProgress) {
+                const offsetX = 62;
+                const offsetY = 82;
+                
+                // Get the maximum dimensions across all layers
+                const maxX = Math.max(...state.layout.map(layer => layer[0].length));
+                const maxY = Math.max(...state.layout.map(layer => layer.length));
+                
+                state.tiles.forEach(tile => {
+                    // Calculate position to center the layout
+                    const startX = (maxX - state.layout[tile.z][0].length) / 2 * offsetX;
+                    const startY = (maxY - state.layout[tile.z].length) / 2 * offsetY;
+                    
+                    const posX = startX + tile.x * offsetX;
+                    const posY = startY + tile.y * offsetY;
+                    
+                    tile.element.style.left = `${posX}px`;
+                    tile.element.style.top = `${posY}px`;
+                });
+            }
+        });
+
+        // Start the game
+        init();
+    </script>
+</body>
+</html>

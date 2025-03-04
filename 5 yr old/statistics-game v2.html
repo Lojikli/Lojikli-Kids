@@ -1,0 +1,3717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StatisticLand: A Statistical Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;700&family=Comic+Neue:wght@400;700&display=swap');
+        
+        :root {
+            --primary: #4A6FE3;
+            --secondary: #E34A8F;
+            --tertiary: #4AE37C;
+            --background: #F5F7FF;
+            --dark: #2F3855;
+            --success: #4AE37C;
+            --warning: #E3CF4A;
+            --error: #E34A4A;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Comic Neue', cursive;
+            background-color: var(--background);
+            color: var(--dark);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+        
+        button {
+            font-family: 'Baloo 2', cursive;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1);
+        }
+        
+        button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0,0,0,0.1);
+        }
+        
+        button.secondary {
+            background-color: var(--secondary);
+        }
+        
+        button.tertiary {
+            background-color: var(--tertiary);
+        }
+        
+        h1, h2, h3, h4 {
+            font-family: 'Baloo 2', cursive;
+            color: var(--primary);
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+            margin-bottom: 30px;
+        }
+        
+        header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        header p {
+            font-size: 1.2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .canvasContainer {
+            width: 100%;
+            height: 400px;
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .level-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .sections {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .section {
+            flex: 1;
+            min-width: 300px;
+            background-color: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+        }
+        
+        .character {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            z-index: 10;
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            bottom: 150px;
+            right: 100px;
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px;
+            max-width: 300px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+            z-index: 11;
+            transition: opacity 0.3s;
+        }
+        
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            right: 30px;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+            border-top-color: white;
+            border-bottom: 0;
+            margin-bottom: -15px;
+        }
+        
+        .parameter-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .parameter-control {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .slider-container input[type="range"] {
+            flex: 1;
+        }
+        
+        .quiz-container {
+            background-color: white;
+            border-radius: 16px;
+            padding: 20px;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.05);
+            margin-top: 20px;
+        }
+        
+        .quiz-question {
+            margin-bottom: 20px;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .quiz-option {
+            background-color: var(--background);
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .quiz-option:hover {
+            background-color: #E8EDFF;
+        }
+        
+        .quiz-option.selected {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .quiz-feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .quiz-feedback.correct {
+            background-color: var(--success);
+            color: white;
+            display: block;
+        }
+        
+        .quiz-feedback.incorrect {
+            background-color: var(--error);
+            color: white;
+            display: block;
+        }
+        
+        .visualization {
+            width: 100%;
+            height: 300px;
+            background-color: white;
+            border-radius: 16px;
+            margin-top: 20px;
+            position: relative;
+        }
+        
+        .progress-container {
+            margin-top: 20px;
+            background-color: rgba(0,0,0,0.1);
+            border-radius: 8px;
+            height: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .badge-container {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #ccc;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            opacity: 0.3;
+        }
+        
+        .badge.earned {
+            opacity: 1;
+            background-color: var(--primary);
+            box-shadow: 0 4px 0 rgba(0,0,0,0.1);
+        }
+        
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .modal.open {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            background: none;
+            border: none;
+            color: var(--dark);
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            .sections {
+                flex-direction: column;
+            }
+            
+            .section {
+                min-width: auto;
+            }
+        }
+        
+        /* Tab system */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            padding: 10px 20px;
+            border-radius: 8px 8px 0 0;
+            background-color: rgba(0,0,0,0.05);
+            cursor: pointer;
+        }
+        
+        .tab.active {
+            background-color: white;
+            font-weight: bold;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Tooltip */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+            border-bottom: 1px dotted var(--primary);
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark);
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>StatisticLand: A Statistical Adventure</h1>
+            <p>Join Dottie the Data Explorer and her friends as they discover the wonderful world of statistics!</p>
+        </header>
+        
+        <div class="tabs">
+            <div class="tab active" data-tab="intro">Introduction</div>
+            <div class="tab" data-tab="level1">Level 1: Data & Counting</div>
+            <div class="tab" data-tab="level2">Level 2: Mean & Median</div>
+            <div class="tab" data-tab="level3">Level 3: Probability</div>
+            <div class="tab" data-tab="level4">Level 4: Graphs</div>
+            <div class="tab" data-tab="sandbox">Sandbox Mode</div>
+        </div>
+        
+        <div class="tab-content active" id="intro">
+            <div class="sections">
+                <div class="section">
+                    <h2>Welcome to StatisticLand!</h2>
+                    <p>Hi there, young genius! My name is Dottie the Data Explorer, and I'm here to take you on an exciting journey into the world of statistics!</p>
+                    <p>Statistics might sound like a big word, but it's really just about understanding information through numbers. It helps us make sense of the world around us!</p>
+                    <p>In our adventure, we'll meet my friends:</p>
+                    <ul>
+                        <li><strong>Manny Mean</strong> - He loves finding the average of numbers</li>
+                        <li><strong>Maddy Median</strong> - She's great at finding the middle value in a set of numbers</li>
+                        <li><strong>Polly Probability</strong> - She can predict how likely things are to happen</li>
+                        <li><strong>Gary Graph</strong> - He turns numbers into colorful pictures</li>
+                    </ul>
+                    <p>Are you ready to start our adventure? Click on "Level 1" above to begin!</p>
+                    
+                    <div class="progress-container">
+                        <div class="progress-bar" style="width: 0%"></div>
+                    </div>
+                    
+                    <div class="badge-container">
+                        <div class="badge" data-level="1">1</div>
+                        <div class="badge" data-level="2">2</div>
+                        <div class="badge" data-level="3">3</div>
+                        <div class="badge" data-level="4">4</div>
+                        <div class="badge" data-level="master">★</div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="canvasContainer">
+                        <div id="introCanvas"></div>
+                        <div class="character" id="character"></div>
+                        <div class="speech-bubble" id="speechBubble">
+                            Hi there! I'm Dottie the Data Explorer. Click on me to hear me speak! Let's learn about statistics together!
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button id="startAdventure">Start Our Adventure!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="level1">
+            <div class="sections">
+                <div class="section">
+                    <h2>Level 1: Data & Counting</h2>
+                    <p>Welcome to your first lesson! Let's learn about <strong>data</strong>.</p>
+                    <p>Data is just information - like how many toys you have, or the colors of cars you see on the road.</p>
+                    <p>Statisticians (that's people who work with statistics) collect data and then count it to understand patterns.</p>
+                    <p>Let's try a simple example: Let's count different colored fruits!</p>
+                    
+                    <div class="parameter-controls">
+                        <div class="parameter-control">
+                            <label>Number of fruits to show:</label>
+                            <div class="slider-container">
+                                <input type="range" id="numFruits" min="5" max="20" value="10">
+                                <span id="numFruitsValue">10</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="quiz-container hidden" id="level1Quiz">
+                        <h3>Quiz Time!</h3>
+                        <div class="quiz-question">
+                            <p>How many red fruits are in our basket?</p>
+                            <div class="quiz-options" id="level1QuizOptions">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        <div class="quiz-feedback" id="level1QuizFeedback"></div>
+                        <button id="level1QuizSubmit" class="tertiary">Check Answer</button>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="canvasContainer">
+                        <div id="level1Canvas"></div>
+                        <div class="character" id="character1"></div>
+                        <div class="speech-bubble" id="speechBubble1">
+                            Let's count some fruits! Each fruit has a different color. Can you count how many of each color we have?
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button id="generateFruits">Generate New Fruits</button>
+                        <button id="countFruits">Count The Fruits</button>
+                        <button id="level1Quiz_btn" class="secondary">Take a Quiz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="level2">
+            <div class="sections">
+                <div class="section">
+                    <h2>Level 2: Mean & Median</h2>
+                    <p>Great job with counting! Now let's meet <strong>Manny Mean</strong> and <strong>Maddy Median</strong>!</p>
+                    <p>The <span class="tooltip">mean<span class="tooltiptext">The mean is what most people call the "average" - you add up all the numbers and divide by how many numbers there are</span></span> helps us find the "center" of our data by adding all numbers and dividing by how many there are.</p>
+                    <p>The <span class="tooltip">median<span class="tooltiptext">The median is the middle value when all numbers are put in order</span></span> is the middle number when we put all our numbers in order.</p>
+                    <p>Let's look at tree heights in our stat forest!</p>
+                    
+                    <div class="parameter-controls">
+                        <div class="parameter-control">
+                            <label>Number of trees:</label>
+                            <div class="slider-container">
+                                <input type="range" id="numTrees" min="3" max="15" value="7">
+                                <span id="numTreesValue">7</span>
+                            </div>
+                        </div>
+                        <div class="parameter-control">
+                            <label>Tree height range:</label>
+                            <div class="slider-container">
+                                <input type="range" id="treeHeightRange" min="1" max="5" value="3">
+                                <span id="treeHeightRangeValue">Medium</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="level2Stats">
+                        <p><strong>Mean (Average) Height:</strong> <span id="meanHeight">-</span></p>
+                        <p><strong>Median Height:</strong> <span id="medianHeight">-</span></p>
+                        <p><strong>All Heights:</strong> <span id="allHeights">-</span></p>
+                    </div>
+                    
+                    <div class="quiz-container hidden" id="level2Quiz">
+                        <h3>Quiz Time!</h3>
+                        <div class="quiz-question">
+                            <p id="level2QuizQuestion">What happens to the mean if we add a very tall tree?</p>
+                            <div class="quiz-options" id="level2QuizOptions">
+                                <div class="quiz-option" data-value="increase">The mean will increase</div>
+                                <div class="quiz-option" data-value="decrease">The mean will decrease</div>
+                                <div class="quiz-option" data-value="same">The mean will stay the same</div>
+                            </div>
+                        </div>
+                        <div class="quiz-feedback" id="level2QuizFeedback"></div>
+                        <button id="level2QuizSubmit" class="tertiary">Check Answer</button>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="canvasContainer">
+                        <div id="level2Canvas"></div>
+                        <div class="character" id="character2"></div>
+                        <div class="speech-bubble" id="speechBubble2">
+                            Hi! I'm Manny Mean! Let's look at the height of these trees. The mean is like finding the "balance point" of all the heights.
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button id="generateTrees">Generate New Trees</button>
+                        <button id="calculateMeanMedian">Calculate Mean & Median</button>
+                        <button id="level2Quiz_btn" class="secondary">Take a Quiz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="level3">
+            <div class="sections">
+                <div class="section">
+                    <h2>Level 3: Probability</h2>
+                    <p>Now let's meet <strong>Polly Probability</strong>! She knows all about chance and likelihood.</p>
+                    <p><span class="tooltip">Probability<span class="tooltiptext">Probability is a measure of how likely something is to happen, from 0 (impossible) to 1 (certain)</span></span> tells us how likely something is to happen. It's a number between 0 (impossible) and 1 (definitely will happen).</p>
+                    <p>We can also show it as a percentage: 0% to 100%.</p>
+                    <p>Let's spin a wheel and see what color it lands on!</p>
+                    
+                    <div class="parameter-controls">
+                        <div class="parameter-control">
+                            <label>Red section size:</label>
+                            <div class="slider-container">
+                                <input type="range" id="redSize" min="1" max="10" value="3">
+                                <span id="redSizeValue">3</span>
+                            </div>
+                        </div>
+                        <div class="parameter-control">
+                            <label>Blue section size:</label>
+                            <div class="slider-container">
+                                <input type="range" id="blueSize" min="1" max="10" value="3">
+                                <span id="blueSizeValue">3</span>
+                            </div>
+                        </div>
+                        <div class="parameter-control">
+                            <label>Yellow section size:</label>
+                            <div class="slider-container">
+                                <input type="range" id="yellowSize" min="1" max="10" value="3">
+                                <span id="yellowSizeValue">3</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="level3Stats">
+                        <p><strong>Probability of Red:</strong> <span id="redProb">-</span></p>
+                        <p><strong>Probability of Blue:</strong> <span id="blueProb">-</span></p>
+                        <p><strong>Probability of Yellow:</strong> <span id="yellowProb">-</span></p>
+                        <p><strong>Spins so far:</strong> <span id="spinCount">0</span></p>
+                        <p><strong>Results:</strong> <span id="spinResults"></span></p>
+                    </div>
+                    
+                    <div class="quiz-container hidden" id="level3Quiz">
+                        <h3>Quiz Time!</h3>
+                        <div class="quiz-question">
+                            <p id="level3QuizQuestion">If the wheel has equal parts red, blue, and yellow, what is the probability of spinning red?</p>
+                            <div class="quiz-options" id="level3QuizOptions">
+                                <div class="quiz-option" data-value="1/3">1/3 (33.3%)</div>
+                                <div class="quiz-option" data-value="1/2">1/2 (50%)</div>
+                                <div class="quiz-option" data-value="2/3">2/3 (66.7%)</div>
+                                <div class="quiz-option" data-value="0">0 (0%)</div>
+                            </div>
+                        </div>
+                        <div class="quiz-feedback" id="level3QuizFeedback"></div>
+                        <button id="level3QuizSubmit" class="tertiary">Check Answer</button>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="canvasContainer">
+                        <div id="level3Canvas"></div>
+                        <div class="character" id="character3"></div>
+                        <div class="speech-bubble" id="speechBubble3">
+                            Hi! I'm Polly Probability! Let's spin this wheel and see what happens. You can change the size of each colored section to change the probability!
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button id="spinWheel">Spin the Wheel</button>
+                        <button id="resetSpins">Reset Spins</button>
+                        <button id="level3Quiz_btn" class="secondary">Take a Quiz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="level4">
+            <div class="sections">
+                <div class="section">
+                    <h2>Level 4: Graphs</h2>
+                    <p>Let's meet <strong>Gary Graph</strong>! He's an expert at turning numbers into pictures that help us understand data.</p>
+                    <p>Graphs and charts make it easier to see patterns in our data. There are many types:</p>
+                    <ul>
+                        <li><span class="tooltip">Bar charts<span class="tooltiptext">Bar charts use rectangles of different heights to show and compare values</span></span> - Use bars to compare values</li>
+                        <li><span class="tooltip">Pie charts<span class="tooltiptext">Pie charts show parts of a whole as slices of a circle</span></span> - Show parts of a whole</li>
+                        <li><span class="tooltip">Line graphs<span class="tooltiptext">Line graphs show how values change over time by connecting points with lines</span></span> - Show changes over time</li>
+                    </ul>
+                    <p>Let's look at how many of each pet our classmates have!</p>
+                    
+                    <div class="parameter-controls">
+                        <div class="parameter-control">
+                            <label>Number of dogs:</label>
+                            <div class="slider-container">
+                                <input type="range" id="numDogs" min="0" max="10" value="3">
+                                <span id="numDogsValue">3</span>
+                            </div>
+                        </div>
+                        <div class="parameter-control">
+                            <label>Number of cats:</label>
+                            <div class="slider-container">
+                                <input type="range" id="numCats" min="0" max="10" value="5">
+                                <span id="numCatsValue">5</span>
+                            </div>
+                        </div>
+                        <div class="parameter-control">
+                            <label>Number of fish:</label>
+                            <div class="slider-container">
+                                <input type="range" id="numFish" min="0" max="10" value="8">
+                                <span id="numFishValue">8</span>
+                            </div>
+                        </div>
+                        <div class="parameter-control">
+                            <label>Number of birds:</label>
+                            <div class="slider-container">
+                                <input type="range" id="numBirds" min="0" max="10" value="2">
+                                <span id="numBirdsValue">2</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="parameter-control">
+                        <label>Chart Type:</label>
+                        <select id="chartType">
+                            <option value="bar">Bar Chart</option>
+                            <option value="pie">Pie Chart</option>
+                            <option value="pictograph">Pictograph</option>
+                        </select>
+                    </div>
+                    
+                    <div class="quiz-container hidden" id="level4Quiz">
+                        <h3>Quiz Time!</h3>
+                        <div class="quiz-question">
+                            <p id="level4QuizQuestion">Which pet type is the most common in our data?</p>
+                            <div class="quiz-options" id="level4QuizOptions">
+                                <div class="quiz-option" data-value="dogs">Dogs</div>
+                                <div class="quiz-option" data-value="cats">Cats</div>
+                                <div class="quiz-option" data-value="fish">Fish</div>
+                                <div class="quiz-option" data-value="birds">Birds</div>
+                            </div>
+                        </div>
+                        <div class="quiz-feedback" id="level4QuizFeedback"></div>
+                        <button id="level4QuizSubmit" class="tertiary">Check Answer</button>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="canvasContainer">
+                        <div id="level4Canvas"></div>
+                        <div class="character" id="character4"></div>
+                        <div class="speech-bubble" id="speechBubble4">
+                            Hi! I'm Gary Graph! I love turning numbers into colorful pictures that help us understand data. Try changing the numbers and see how the graph changes!
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button id="updateChart">Update Chart</button>
+                        <button id="level4Quiz_btn" class="secondary">Take a Quiz</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab-content" id="sandbox">
+            <div class="sections">
+                <div class="section">
+                    <h2>Statistics Sandbox</h2>
+                    <p>Welcome to the Statistics Sandbox! Here you can explore all the concepts you've learned and create your own statistical experiments.</p>
+                    <p>Choose a project below or create your own!</p>
+                    
+                    <div class="parameter-control">
+                        <label>Project Type:</label>
+                        <select id="projectType">
+                            <option value="data">Data Collection & Analysis</option>
+                            <option value="probability">Probability Experiment</option>
+                            <option value="distribution">Distribution Explorer</option>
+                            <option value="correlation">Correlation Investigation</option>
+                        </select>
+                    </div>
+                    
+                    <div id="sandboxControls" class="parameter-controls">
+                        <!-- Will be populated by JavaScript based on project type -->
+                    </div>
+                    
+                    <div id="sandboxStats">
+                        <!-- Will be populated by JavaScript based on project type -->
+                    </div>
+                    
+                    <div id="advancedConcepts">
+                        <h3>Advanced Statistical Concepts</h3>
+                        <p>Even though you're young, your genius mind can understand these advanced ideas:</p>
+                        
+                        <div class="parameter-control">
+                            <label>Advanced Concept:</label>
+                            <select id="advancedConcept">
+                                <option value="sampleSize">Sample Size & Accuracy</option>
+                                <option value="normalDist">Normal Distribution</option>
+                                <option value="confidence">Confidence Intervals</option>
+                                <option value="hypothesis">Hypothesis Testing (Simplified)</option>
+                            </select>
+                        </div>
+                        
+                        <div id="advancedExplanation">
+                            <!-- Will be populated by JavaScript based on selected concept -->
+                        </div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="canvasContainer">
+                        <div id="sandboxCanvas"></div>
+                        <div class="character" id="characterSandbox"></div>
+                        <div class="speech-bubble" id="speechBubbleSandbox">
+                            Welcome to the Sandbox! Here you can play with all the statistical concepts you've learned. Try different projects and even explore some advanced ideas!
+                        </div>
+                    </div>
+                    <div class="controls">
+                        <button id="runExperiment">Run Experiment</button>
+                        <button id="resetExperiment">Reset Experiment</button>
+                        <button id="saveExperiment" class="secondary">Save Results</button>
+                    </div>
+                    
+                    <div id="experimentResults" class="visualization">
+                        <!-- Will show visualizations of experiment results -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modals -->
+        <div class="modal" id="completionModal">
+            <div class="modal-content">
+                <button class="close-modal" id="closeCompletionModal">×</button>
+                <h2>Great Job!</h2>
+                <p>You've completed this level! You're on your way to becoming a statistics expert!</p>
+                <div id="completionBadge" style="margin: 20px auto; width: 100px; height: 100px; background-color: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 48px; color: white;">1</div>
+                <button id="nextLevelBtn" class="secondary">Go to Next Level</button>
+            </div>
+        </div>
+        
+        <div class="modal" id="helpModal">
+            <div class="modal-content">
+                <button class="close-modal" id="closeHelpModal">×</button>
+                <h2>Statistics Help</h2>
+                <div id="helpContent">
+                    <!-- Will be populated by JavaScript based on current level -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="modal" id="certificateModal">
+            <div class="modal-content">
+                <button class="close-modal" id="closeCertificateModal">×</button>
+                <h2>Certificate of Achievement</h2>
+                <div id="certificateContent" style="border: 10px solid var(--primary); padding: 30px; text-align: center; margin: 20px 0;">
+                    <h1 style="color: var(--primary);">Certificate of Achievement</h1>
+                    <p>This certifies that</p>
+                    <h2 id="playerName" style="border-bottom: 2px solid #000; padding-bottom: 10px; margin: 10px 0;">Young Genius</h2>
+                    <p>has successfully completed all levels of</p>
+                    <h2>StatisticLand: A Statistical Adventure</h2>
+                    <p>and has demonstrated exceptional understanding of statistical concepts</p>
+                    <div style="display: flex; justify-content: space-between; margin-top: 40px;">
+                        <div>
+                            <p style="border-top: 1px solid #000; padding-top: 5px;">Date</p>
+                        </div>
+                        <div>
+                            <p style="border-top: 1px solid #000; padding-top: 5px;">Dottie the Data Explorer</p>
+                        </div>
+                    </div>
+                </div>
+                <button id="printCertificate" class="secondary">Print Certificate</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Game state
+        const gameState = {
+            currentLevel: 0,
+            levelsCompleted: [],
+            badgesEarned: [],
+            playerName: "Young Genius",
+            // Level 1 - Fruits
+            fruits: [],
+            fruitCounts: {},
+            // Level 2 - Trees
+            trees: [],
+            meanHeight: 0,
+            medianHeight: 0,
+            // Level 3 - Probability
+            wheelSections: [3, 3, 3], // [red, blue, yellow]
+            spinResults: [],
+            // Level 4 - Graphs
+            petCounts: {
+                dogs: 3,
+                cats: 5,
+                fish: 8,
+                birds: 2
+            },
+            chartType: 'bar',
+            // Sandbox
+            projectType: 'data',
+            experimentResults: [],
+            advancedConcept: 'sampleSize'
+        };
+        
+        // Sound effects using Tone.js
+        const sfx = {
+            initialize() {
+                this.synth = new Tone.PolySynth().toDestination();
+                this.synth.volume.value = -10;
+                
+                this.click = () => {
+                    this.synth.triggerAttackRelease("C5", "16n");
+                };
+                
+                this.success = () => {
+                    this.synth.triggerAttackRelease(["C4", "E4", "G4"], "8n");
+                };
+                
+                this.failure = () => {
+                    this.synth.triggerAttackRelease(["C4", "D#4"], "8n");
+                };
+                
+                this.levelComplete = () => {
+                    const now = Tone.now();
+                    this.synth.triggerAttackRelease("C4", "8n", now);
+                    this.synth.triggerAttackRelease("E4", "8n", now + 0.1);
+                    this.synth.triggerAttackRelease("G4", "8n", now + 0.2);
+                    this.synth.triggerAttackRelease("C5", "4n", now + 0.3);
+                };
+            }
+        };
+
+        // Characters
+        const characters = {
+            dottie: {
+                name: "Dottie the Data Explorer",
+                color: "#4A6FE3",
+                phrases: [
+                    "Did you know statistics helps us understand the world through numbers?",
+                    "Data is all around us! Every time you count something, you're collecting data!",
+                    "My favorite part of statistics is discovering patterns in data!",
+                    "Statistics helps scientists, doctors, and even game designers make better decisions!"
+                ]
+            },
+            manny: {
+                name: "Manny Mean",
+                color: "#E34A8F",
+                phrases: [
+                    "The mean is what most people call the 'average' - it helps find the balance point of numbers!",
+                    "To find the mean, add all your numbers and divide by how many numbers you have!",
+                    "The mean can be affected by very big or very small numbers - those are called 'outliers'!",
+                    "Means are used everywhere - from your grades in school to weather forecasts!"
+                ]
+            },
+            maddy: {
+                name: "Maddy Median",
+                color: "#4AE37C",
+                phrases: [
+                    "The median is the middle value when you put all your numbers in order!",
+                    "If you have an even number of values, the median is the average of the two middle values!",
+                    "The median isn't affected by extreme values as much as the mean is!",
+                    "Median income and median house prices are important statistics in economics!"
+                ]
+            },
+            polly: {
+                name: "Polly Probability",
+                color: "#E3CF4A",
+                phrases: [
+                    "Probability is a number between 0 and 1 that tells us how likely something is to happen!",
+                    "A probability of 0 means something will never happen, while 1 means it will always happen!",
+                    "When you flip a fair coin, the probability of getting heads is 0.5 or 50%!",
+                    "Weather forecasts use probability to tell you how likely it is to rain tomorrow!"
+                ]
+            },
+            gary: {
+                name: "Gary Graph",
+                color: "#4ACFE3",
+                phrases: [
+                    "Graphs help us see patterns in data that might be hard to spot in just numbers!",
+                    "Bar charts are great for comparing different categories!",
+                    "Pie charts show how parts relate to the whole!",
+                    "Line graphs are perfect for showing how things change over time!"
+                ]
+            }
+        };
+        
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', () => {
+            setupTabs();
+            setupCharacters();
+            setupEventListeners();
+            setupLevel1();
+            setupLevel2();
+            setupLevel3();
+            setupLevel4();
+            setupSandbox();
+            sfx.initialize();
+            updateBadges();
+            
+            // Start with intro displayed
+            document.querySelector('.tab[data-tab="intro"]').click();
+        });
+        
+        // Setup tabs
+        function setupTabs() {
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and content
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+                    
+                    // Show corresponding content
+                    const tabId = tab.getAttribute('data-tab');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // Update current level
+                    switch(tabId) {
+                        case 'level1':
+                            gameState.currentLevel = 1;
+                            break;
+                        case 'level2':
+                            gameState.currentLevel = 2;
+                            break;
+                        case 'level3':
+                            gameState.currentLevel = 3;
+                            break;
+                        case 'level4':
+                            gameState.currentLevel = 4;
+                            break;
+                        case 'sandbox':
+                            gameState.currentLevel = 5;
+                            break;
+                        default:
+                            gameState.currentLevel = 0;
+                    }
+                });
+            });
+        }
+        
+        // Setup characters
+        function setupCharacters() {
+            // Create character SVGs
+            createCharacterSVG('character', characters.dottie);
+            createCharacterSVG('character1', characters.dottie);
+            createCharacterSVG('character2', characters.manny);
+            createCharacterSVG('character3', characters.polly);
+            createCharacterSVG('character4', characters.gary);
+            createCharacterSVG('characterSandbox', characters.dottie);
+            
+            // Setup character click events for speech
+            document.querySelectorAll('.character').forEach(char => {
+                char.addEventListener('click', (e) => {
+                    const charId = char.id;
+                    const speechId = charId.replace('character', 'speechBubble');
+                    const speechBubble = document.getElementById(speechId);
+                    
+                    // Determine which character is clicked
+                    let character;
+                    if (charId === 'character' || charId === 'character1' || charId === 'characterSandbox') {
+                        character = characters.dottie;
+                    } else if (charId === 'character2') {
+                        character = characters.manny;
+                    } else if (charId === 'character3') {
+                        character = characters.polly;
+                    } else if (charId === 'character4') {
+                        character = characters.gary;
+                    }
+                    
+                    // Update speech bubble with random phrase
+                    if (character) {
+                        const randomPhrase = character.phrases[Math.floor(Math.random() * character.phrases.length)];
+                        speechBubble.textContent = randomPhrase;
+                        speechBubble.style.opacity = '1';
+                        
+                        // Play sound
+                        sfx.click();
+                        
+                        // Hide speech bubble after 5 seconds
+                        setTimeout(() => {
+                            speechBubble.style.opacity = '0.8';
+                        }, 5000);
+                    }
+                });
+            });
+        }
+        
+        // Create character SVG
+        function createCharacterSVG(elementId, character) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 100 100");
+            
+            // Body
+            const body = document.createElementNS(svgNS, "circle");
+            body.setAttribute("cx", "50");
+            body.setAttribute("cy", "50");
+            body.setAttribute("r", "30");
+            body.setAttribute("fill", character.color);
+            body.setAttribute("stroke", "#000");
+            body.setAttribute("stroke-width", "2");
+            
+            // Eyes
+            const leftEye = document.createElementNS(svgNS, "circle");
+            leftEye.setAttribute("cx", "40");
+            leftEye.setAttribute("cy", "40");
+            leftEye.setAttribute("r", "5");
+            leftEye.setAttribute("fill", "white");
+            leftEye.setAttribute("stroke", "#000");
+            leftEye.setAttribute("stroke-width", "1");
+            
+            const rightEye = document.createElementNS(svgNS, "circle");
+            rightEye.setAttribute("cx", "60");
+            rightEye.setAttribute("cy", "40");
+            rightEye.setAttribute("r", "5");
+            rightEye.setAttribute("fill", "white");
+            rightEye.setAttribute("stroke", "#000");
+            rightEye.setAttribute("stroke-width", "1");
+            
+            const leftPupil = document.createElementNS(svgNS, "circle");
+            leftPupil.setAttribute("cx", "40");
+            leftPupil.setAttribute("cy", "40");
+            leftPupil.setAttribute("r", "2");
+            leftPupil.setAttribute("fill", "black");
+            
+            const rightPupil = document.createElementNS(svgNS, "circle");
+            rightPupil.setAttribute("cx", "60");
+            rightPupil.setAttribute("cy", "40");
+            rightPupil.setAttribute("r", "2");
+            rightPupil.setAttribute("fill", "black");
+            
+            // Mouth
+            const mouth = document.createElementNS(svgNS, "path");
+            mouth.setAttribute("d", "M35,60 Q50,70 65,60");
+            mouth.setAttribute("fill", "none");
+            mouth.setAttribute("stroke", "#000");
+            mouth.setAttribute("stroke-width", "2");
+            mouth.setAttribute("stroke-linecap", "round");
+            
+            // Accessories based on character
+            if (character.name === "Dottie the Data Explorer") {
+                // Explorer hat
+                const hat = document.createElementNS(svgNS, "path");
+                hat.setAttribute("d", "M30,30 L70,30 L65,20 L35,20 Z");
+                hat.setAttribute("fill", "#8B4513");
+                hat.setAttribute("stroke", "#000");
+                hat.setAttribute("stroke-width", "1");
+                
+                const hatBand = document.createElementNS(svgNS, "rect");
+                hatBand.setAttribute("x", "30");
+                hatBand.setAttribute("y", "25");
+                hatBand.setAttribute("width", "40");
+                hatBand.setAttribute("height", "5");
+                hatBand.setAttribute("fill", "#A52A2A");
+                hatBand.setAttribute("stroke", "#000");
+                hatBand.setAttribute("stroke-width", "0.5");
+                
+                svg.appendChild(hat);
+                svg.appendChild(hatBand);
+            } else if (character.name === "Manny Mean") {
+                // Math symbols
+                const plus = document.createElementNS(svgNS, "text");
+                plus.setAttribute("x", "30");
+                plus.setAttribute("y", "20");
+                plus.setAttribute("font-size", "12");
+                plus.setAttribute("font-weight", "bold");
+                plus.textContent = "+";
+                
+                const minus = document.createElementNS(svgNS, "text");
+                minus.setAttribute("x", "40");
+                minus.setAttribute("y", "20");
+                minus.setAttribute("font-size", "12");
+                minus.setAttribute("font-weight", "bold");
+                minus.textContent = "-";
+                
+                const multiply = document.createElementNS(svgNS, "text");
+                multiply.setAttribute("x", "50");
+                multiply.setAttribute("y", "20");
+                multiply.setAttribute("font-size", "12");
+                multiply.setAttribute("font-weight", "bold");
+                multiply.textContent = "×";
+                
+                const divide = document.createElementNS(svgNS, "text");
+                divide.setAttribute("x", "60");
+                divide.setAttribute("y", "20");
+                divide.setAttribute("font-size", "12");
+                divide.setAttribute("font-weight", "bold");
+                divide.textContent = "÷";
+                
+                svg.appendChild(plus);
+                svg.appendChild(minus);
+                svg.appendChild(multiply);
+                svg.appendChild(divide);
+            } else if (character.name === "Maddy Median") {
+                // Middle arrow
+                const arrow = document.createElementNS(svgNS, "path");
+                arrow.setAttribute("d", "M50,20 L55,25 L52,25 L52,30 L48,30 L48,25 L45,25 Z");
+                arrow.setAttribute("fill", "#000");
+                
+                svg.appendChild(arrow);
+            } else if (character.name === "Polly Probability") {
+                // Dice symbol
+                const dice = document.createElementNS(svgNS, "rect");
+                dice.setAttribute("x", "40");
+                dice.setAttribute("y", "15");
+                dice.setAttribute("width", "20");
+                dice.setAttribute("height", "20");
+                dice.setAttribute("rx", "3");
+                dice.setAttribute("ry", "3");
+                dice.setAttribute("fill", "white");
+                dice.setAttribute("stroke", "#000");
+                
+                const dot1 = document.createElementNS(svgNS, "circle");
+                dot1.setAttribute("cx", "45");
+                dot1.setAttribute("cy", "20");
+                dot1.setAttribute("r", "2");
+                dot1.setAttribute("fill", "#000");
+                
+                const dot2 = document.createElementNS(svgNS, "circle");
+                dot2.setAttribute("cx", "55");
+                dot2.setAttribute("cy", "20");
+                dot2.setAttribute("r", "2");
+                dot2.setAttribute("fill", "#000");
+                
+                const dot3 = document.createElementNS(svgNS, "circle");
+                dot3.setAttribute("cx", "50");
+                dot3.setAttribute("cy", "25");
+                dot3.setAttribute("r", "2");
+                dot3.setAttribute("fill", "#000");
+                
+                const dot4 = document.createElementNS(svgNS, "circle");
+                dot4.setAttribute("cx", "45");
+                dot4.setAttribute("cy", "30");
+                dot4.setAttribute("r", "2");
+                dot4.setAttribute("fill", "#000");
+                
+                const dot5 = document.createElementNS(svgNS, "circle");
+                dot5.setAttribute("cx", "55");
+                dot5.setAttribute("cy", "30");
+                dot5.setAttribute("r", "2");
+                dot5.setAttribute("fill", "#000");
+                
+                svg.appendChild(dice);
+                svg.appendChild(dot1);
+                svg.appendChild(dot2);
+                svg.appendChild(dot3);
+                svg.appendChild(dot4);
+                svg.appendChild(dot5);
+            } else if (character.name === "Gary Graph") {
+                // Graph symbol
+                const graph = document.createElementNS(svgNS, "path");
+                graph.setAttribute("d", "M40,15 L40,35 L60,35");
+                graph.setAttribute("fill", "none");
+                graph.setAttribute("stroke", "#000");
+                graph.setAttribute("stroke-width", "2");
+                
+                const bar1 = document.createElementNS(svgNS, "rect");
+                bar1.setAttribute("x", "42");
+                bar1.setAttribute("y", "30");
+                bar1.setAttribute("width", "4");
+                bar1.setAttribute("height", "5");
+                bar1.setAttribute("fill", "blue");
+                
+                const bar2 = document.createElementNS(svgNS, "rect");
+                bar2.setAttribute("x", "48");
+                bar2.setAttribute("y", "25");
+                bar2.setAttribute("width", "4");
+                bar2.setAttribute("height", "10");
+                bar2.setAttribute("fill", "green");
+                
+                const bar3 = document.createElementNS(svgNS, "rect");
+                bar3.setAttribute("x", "54");
+                bar3.setAttribute("y", "20");
+                bar3.setAttribute("width", "4");
+                bar3.setAttribute("height", "15");
+                bar3.setAttribute("fill", "red");
+                
+                svg.appendChild(graph);
+                svg.appendChild(bar1);
+                svg.appendChild(bar2);
+                svg.appendChild(bar3);
+            }
+            
+            // Add all elements to SVG
+            svg.appendChild(body);
+            svg.appendChild(leftEye);
+            svg.appendChild(rightEye);
+            svg.appendChild(leftPupil);
+            svg.appendChild(rightPupil);
+            svg.appendChild(mouth);
+            
+            // Add SVG to element
+            element.appendChild(svg);
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Start adventure button
+            document.getElementById('startAdventure').addEventListener('click', () => {
+                document.querySelector('.tab[data-tab="level1"]').click();
+                sfx.click();
+            });
+            
+            // Modal close buttons
+            document.getElementById('closeCompletionModal').addEventListener('click', () => {
+                document.getElementById('completionModal').classList.remove('open');
+            });
+            
+            document.getElementById('closeHelpModal').addEventListener('click', () => {
+                document.getElementById('helpModal').classList.remove('open');
+            });
+            
+            document.getElementById('closeCertificateModal').addEventListener('click', () => {
+                document.getElementById('certificateModal').classList.remove('open');
+            });
+            
+            // Next level button
+            document.getElementById('nextLevelBtn').addEventListener('click', () => {
+                const nextLevel = gameState.currentLevel + 1;
+                if (nextLevel <= 4) {
+                    document.querySelector(`.tab[data-tab="level${nextLevel}"]`).click();
+                } else {
+                    document.querySelector('.tab[data-tab="sandbox"]').click();
+                }
+                document.getElementById('completionModal').classList.remove('open');
+                sfx.click();
+            });
+            
+            // Print certificate button
+            document.getElementById('printCertificate').addEventListener('click', () => {
+                window.print();
+                sfx.click();
+            });
+        }
+        
+        // Setup Level 1: Data & Counting
+        function setupLevel1() {
+            const numFruitsSlider = document.getElementById('numFruits');
+            const numFruitsValue = document.getElementById('numFruitsValue');
+            const generateFruitsBtn = document.getElementById('generateFruits');
+            const countFruitsBtn = document.getElementById('countFruits');
+            const level1QuizBtn = document.getElementById('level1Quiz_btn');
+            const level1QuizSubmit = document.getElementById('level1QuizSubmit');
+            
+            // Setup slider
+            numFruitsSlider.addEventListener('input', () => {
+                numFruitsValue.textContent = numFruitsSlider.value;
+            });
+            
+            // Generate fruits button
+            generateFruitsBtn.addEventListener('click', () => {
+                generateFruits();
+                sfx.click();
+            });
+            
+            // Count fruits button
+            countFruitsBtn.addEventListener('click', () => {
+                countFruits();
+                sfx.click();
+            });
+            
+            // Quiz button
+            level1QuizBtn.addEventListener('click', () => {
+                showLevel1Quiz();
+                sfx.click();
+            });
+            
+            // Quiz submit button
+            level1QuizSubmit.addEventListener('click', () => {
+                checkLevel1Quiz();
+                sfx.click();
+            });
+            
+            // Generate initial fruits
+            generateFruits();
+            
+            // Create p5.js sketch for Level 1
+            new p5((p) => {
+                p.setup = function() {
+                    const canvas = p.createCanvas(document.getElementById('level1Canvas').offsetWidth, document.getElementById('level1Canvas').offsetHeight);
+                    canvas.parent('level1Canvas');
+                    p.noLoop();
+                };
+                
+                p.draw = function() {
+                    p.background(255);
+                    
+                    // Draw basket
+                    p.fill(210, 180, 140);
+                    p.stroke(139, 69, 19);
+                    p.strokeWeight(2);
+                    p.arc(p.width/2, p.height + 50, p.width * 0.8, 200, p.PI, 0);
+                    
+                    // Draw fruits
+                    for (let i = 0; i < gameState.fruits.length; i++) {
+                        const fruit = gameState.fruits[i];
+                        drawFruit(p, fruit.type, fruit.x, fruit.y, fruit.size);
+                    }
+                };
+                
+                window.redrawLevel1 = function() {
+                    p.redraw();
+                };
+            });
+            
+            function drawFruit(p, type, x, y, size) {
+                if (type === 'apple') {
+                    p.fill(255, 0, 0);
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.ellipse(x, y, size, size);
+                    
+                    // Stem
+                    p.fill(139, 69, 19);
+                    p.noStroke();
+                    p.rect(x - 2, y - size/2, 4, 10);
+                } else if (type === 'banana') {
+                    p.fill(255, 255, 0);
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.push();
+                    p.translate(x, y);
+                    p.rotate(p.PI / 4);
+                    p.arc(0, 0, size, size/2, 0, p.PI, p.OPEN);
+                    p.pop();
+                } else if (type === 'orange') {
+                    p.fill(255, 165, 0);
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.ellipse(x, y, size, size);
+                } else if (type === 'grape') {
+                    p.fill(148, 0, 211);
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.ellipse(x, y, size * 0.8, size * 0.8);
+                }
+            }
+        }
+        
+        // Generate fruits for Level 1
+        function generateFruits() {
+            const numFruits = parseInt(document.getElementById('numFruits').value);
+            const canvas = document.getElementById('level1Canvas');
+            const width = canvas.offsetWidth;
+            const height = canvas.offsetHeight;
+            
+            gameState.fruits = [];
+            gameState.fruitCounts = {
+                apple: 0,
+                banana: 0,
+                orange: 0,
+                grape: 0
+            };
+            
+            for (let i = 0; i < numFruits; i++) {
+                const x = Math.random() * (width - 100) + 50;
+                const y = Math.random() * (height - 150) + 50;
+                const size = Math.random() * 20 + 30;
+                
+                // Randomly choose fruit type
+                const fruitTypes = ['apple', 'banana', 'orange', 'grape'];
+                const type = fruitTypes[Math.floor(Math.random() * fruitTypes.length)];
+                
+                gameState.fruits.push({
+                    type,
+                    x,
+                    y,
+                    size
+                });
+                
+                gameState.fruitCounts[type]++;
+            }
+            
+            // Update speech bubble
+            document.getElementById('speechBubble1').textContent = 
+                "Let's count these fruits! I see apples, bananas, oranges, and grapes. How many of each are there?";
+            
+            // Redraw canvas
+            if (window.redrawLevel1) {
+                window.redrawLevel1();
+            }
+        }
+        
+        // Count fruits for Level 1
+        function countFruits() {
+            const speechBubble = document.getElementById('speechBubble1');
+            speechBubble.textContent = `I counted: ${gameState.fruitCounts.apple} apples, ${gameState.fruitCounts.banana} bananas, ${gameState.fruitCounts.orange} oranges, and ${gameState.fruitCounts.grape} grapes!`;
+        }
+        
+        // Show Level 1 Quiz
+        function showLevel1Quiz() {
+            const quizContainer = document.getElementById('level1Quiz');
+            quizContainer.classList.remove('hidden');
+            
+            const optionsContainer = document.getElementById('level1QuizOptions');
+            optionsContainer.innerHTML = '';
+            
+            // Create quiz options
+            const correctAnswer = gameState.fruitCounts.apple;
+            const options = [correctAnswer];
+            
+            // Add some wrong options
+            while (options.length < 4) {
+                const wrongOption = correctAnswer + (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? -1 : 1);
+                if (wrongOption > 0 && !options.includes(wrongOption)) {
+                    options.push(wrongOption);
+                }
+            }
+            
+            // Shuffle options
+            options.sort(() => Math.random() - 0.5);
+            
+            // Create option elements
+            options.forEach(option => {
+                const optionEl = document.createElement('div');
+                optionEl.className = 'quiz-option';
+                optionEl.setAttribute('data-value', option);
+                optionEl.textContent = option;
+                
+                optionEl.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Add selected class to clicked option
+                    optionEl.classList.add('selected');
+                });
+                
+                optionsContainer.appendChild(optionEl);
+            });
+            
+            // Reset feedback
+            document.getElementById('level1QuizFeedback').className = 'quiz-feedback';
+            document.getElementById('level1QuizFeedback').textContent = '';
+        }
+        
+        // Check Level 1 Quiz
+        function checkLevel1Quiz() {
+            const selectedOption = document.querySelector('.quiz-option.selected');
+            const feedbackEl = document.getElementById('level1QuizFeedback');
+            
+            if (!selectedOption) {
+                feedbackEl.className = 'quiz-feedback';
+                feedbackEl.textContent = 'Please select an answer!';
+                return;
+            }
+            
+            const answer = parseInt(selectedOption.getAttribute('data-value'));
+            const correctAnswer = gameState.fruitCounts.apple;
+            
+            if (answer === correctAnswer) {
+                feedbackEl.className = 'quiz-feedback correct';
+                feedbackEl.textContent = `Correct! There ${correctAnswer === 1 ? 'is' : 'are'} ${correctAnswer} apple${correctAnswer === 1 ? '' : 's'}!`;
+                sfx.success();
+                
+                // Complete level if not already completed
+                if (!gameState.levelsCompleted.includes(1)) {
+                    completeLevel(1);
+                }
+            } else {
+                feedbackEl.className = 'quiz-feedback incorrect';
+                feedbackEl.textContent = `Not quite. Try counting the red fruits again!`;
+                sfx.failure();
+            }
+        }
+        
+        // Setup Level 2: Mean & Median
+        function setupLevel2() {
+            const numTreesSlider = document.getElementById('numTrees');
+            const numTreesValue = document.getElementById('numTreesValue');
+            const treeHeightRangeSlider = document.getElementById('treeHeightRange');
+            const treeHeightRangeValue = document.getElementById('treeHeightRangeValue');
+            const generateTreesBtn = document.getElementById('generateTrees');
+            const calculateBtn = document.getElementById('calculateMeanMedian');
+            const level2QuizBtn = document.getElementById('level2Quiz_btn');
+            const level2QuizSubmit = document.getElementById('level2QuizSubmit');
+            
+            // Setup sliders
+            numTreesSlider.addEventListener('input', () => {
+                numTreesValue.textContent = numTreesSlider.value;
+            });
+            
+            treeHeightRangeSlider.addEventListener('input', () => {
+                const value = parseInt(treeHeightRangeSlider.value);
+                let label;
+                
+                switch (value) {
+                    case 1:
+                        label = 'Small';
+                        break;
+                    case 2:
+                        label = 'Small-Medium';
+                        break;
+                    case 3:
+                        label = 'Medium';
+                        break;
+                    case 4:
+                        label = 'Medium-Large';
+                        break;
+                    case 5:
+                        label = 'Large';
+                        break;
+                    default:
+                        label = 'Medium';
+                }
+                
+                treeHeightRangeValue.textContent = label;
+            });
+            
+            // Generate trees button
+            generateTreesBtn.addEventListener('click', () => {
+                generateTrees();
+                sfx.click();
+            });
+            
+            // Calculate button
+            calculateBtn.addEventListener('click', () => {
+                calculateMeanMedian();
+                sfx.click();
+            });
+            
+            // Quiz button
+            level2QuizBtn.addEventListener('click', () => {
+                showLevel2Quiz();
+                sfx.click();
+            });
+            
+            // Quiz submit button
+            level2QuizSubmit.addEventListener('click', () => {
+                checkLevel2Quiz();
+                sfx.click();
+            });
+            
+            // Setup quiz option selection
+            document.querySelectorAll('#level2QuizOptions .quiz-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    document.querySelectorAll('#level2QuizOptions .quiz-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    option.classList.add('selected');
+                });
+            });
+            
+            // Generate initial trees
+            generateTrees();
+            
+            // Create p5.js sketch for Level 2
+            new p5((p) => {
+                p.setup = function() {
+                    const canvas = p.createCanvas(document.getElementById('level2Canvas').offsetWidth, document.getElementById('level2Canvas').offsetHeight);
+                    canvas.parent('level2Canvas');
+                    p.noLoop();
+                };
+                
+                p.draw = function() {
+                    p.background(255);
+                    
+                    // Draw ground
+                    p.fill(139, 69, 19);
+                    p.noStroke();
+                    p.rect(0, p.height - 30, p.width, 30);
+                    
+                    // Draw grass
+                    p.fill(34, 139, 34);
+                    p.rect(0, p.height - 40, p.width, 10);
+                    
+                    // Draw trees
+                    const spacing = p.width / (gameState.trees.length + 1);
+                    
+                    for (let i = 0; i < gameState.trees.length; i++) {
+                        const x = spacing * (i + 1);
+                        const treeHeight = gameState.trees[i];
+                        const scaledHeight = treeHeight * 20; // Scale for display
+                        
+                        drawTree(p, x, p.height - 40, scaledHeight);
+                    }
+                    
+                    // Draw mean and median lines if calculated
+                    if (gameState.meanHeight > 0) {
+                        const meanY = p.height - 40 - (gameState.meanHeight * 20);
+                        p.stroke(255, 0, 0);
+                        p.strokeWeight(2);
+                        p.line(0, meanY, p.width, meanY);
+                        p.fill(255, 0, 0);
+                        p.noStroke();
+                        p.textSize(14);
+                        p.text("Mean", 10, meanY - 5);
+                    }
+                    
+                    if (gameState.medianHeight > 0) {
+                        const medianY = p.height - 40 - (gameState.medianHeight * 20);
+                        p.stroke(0, 0, 255);
+                        p.strokeWeight(2);
+                        p.line(0, medianY, p.width, medianY);
+                        p.fill(0, 0, 255);
+                        p.noStroke();
+                        p.textSize(14);
+                        p.text("Median", 10, medianY - 5);
+                    }
+                };
+                
+                function drawTree(p, x, y, height) {
+                    // Draw trunk
+                    p.fill(139, 69, 19);
+                    p.stroke(101, 67, 33);
+                    p.strokeWeight(1);
+                    p.rect(x - 5, y - height * 0.3, 10, height * 0.3);
+                    
+                    // Draw foliage (triangular shape)
+                    p.fill(34, 139, 34);
+                    p.stroke(0, 100, 0);
+                    p.triangle(x, y - height, x - 20, y - height * 0.3, x + 20, y - height * 0.3);
+                    
+                    // Draw tree height
+                    p.fill(0);
+                    p.noStroke();
+                    p.textSize(12);
+                    p.textAlign(p.CENTER);
+                    p.text(height / 20, x, y + 15);
+                }
+                
+                window.redrawLevel2 = function() {
+                    p.redraw();
+                };
+            });
+        }
+        
+        // Generate trees for Level 2
+        function generateTrees() {
+            const numTrees = parseInt(document.getElementById('numTrees').value);
+            const heightRange = parseInt(document.getElementById('treeHeightRange').value);
+            
+            // Determine height range based on slider
+            let minHeight, maxHeight;
+            
+            switch (heightRange) {
+                case 1: // Small
+                    minHeight = 2;
+                    maxHeight = 4;
+                    break;
+                case 2: // Small-Medium
+                    minHeight = 3;
+                    maxHeight = 6;
+                    break;
+                case 3: // Medium
+                    minHeight = 4;
+                    maxHeight = 8;
+                    break;
+                case 4: // Medium-Large
+                    minHeight = 5;
+                    maxHeight = 10;
+                    break;
+                case 5: // Large
+                    minHeight = 6;
+                    maxHeight = 12;
+                    break;
+                default:
+                    minHeight = 4;
+                    maxHeight = 8;
+            }
+            
+            gameState.trees = [];
+            
+            for (let i = 0; i < numTrees; i++) {
+                const height = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
+                gameState.trees.push(height);
+            }
+            
+            // Reset calculations
+            gameState.meanHeight = 0;
+            gameState.medianHeight = 0;
+            
+            // Update stats display
+            document.getElementById('meanHeight').textContent = '-';
+            document.getElementById('medianHeight').textContent = '-';
+            document.getElementById('allHeights').textContent = '-';
+            
+            // Update speech bubble
+            document.getElementById('speechBubble2').textContent = 
+                "Let's look at these trees! They're all different heights. Can you calculate the mean and median height?";
+            
+            // Redraw canvas
+            if (window.redrawLevel2) {
+                window.redrawLevel2();
+            }
+        }
+        
+        // Calculate mean and median for Level 2
+        function calculateMeanMedian() {
+            // Calculate mean
+            const sum = gameState.trees.reduce((acc, val) => acc + val, 0);
+            const mean = sum / gameState.trees.length;
+            gameState.meanHeight = mean;
+            
+            // Calculate median
+            const sortedTrees = [...gameState.trees].sort((a, b) => a - b);
+            let median;
+            
+            if (sortedTrees.length % 2 === 0) {
+                // Even number of items
+                const midIndex = sortedTrees.length / 2;
+                median = (sortedTrees[midIndex - 1] + sortedTrees[midIndex]) / 2;
+            } else {
+                // Odd number of items
+                const midIndex = Math.floor(sortedTrees.length / 2);
+                median = sortedTrees[midIndex];
+            }
+            
+            gameState.medianHeight = median;
+            
+            // Update stats display
+            document.getElementById('meanHeight').textContent = mean.toFixed(1);
+            document.getElementById('medianHeight').textContent = median.toFixed(1);
+            document.getElementById('allHeights').textContent = gameState.trees.join(', ');
+            
+            // Update speech bubble
+            document.getElementById('speechBubble2').textContent = 
+                `Great job! The mean height is ${mean.toFixed(1)} and the median height is ${median.toFixed(1)}. The mean is like the "balance point" of all the heights, while the median is the middle value when we put them in order.`;
+            
+            // Redraw canvas
+            if (window.redrawLevel2) {
+                window.redrawLevel2();
+            }
+        }
+        
+        // Show Level 2 Quiz
+        function showLevel2Quiz() {
+            document.getElementById('level2Quiz').classList.remove('hidden');
+            
+            // Reset feedback
+            document.getElementById('level2QuizFeedback').className = 'quiz-feedback';
+            document.getElementById('level2QuizFeedback').textContent = '';
+            
+            // Reset selection
+            document.querySelectorAll('#level2QuizOptions .quiz-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+        }
+        
+        // Check Level 2 Quiz
+        function checkLevel2Quiz() {
+            const selectedOption = document.querySelector('#level2QuizOptions .quiz-option.selected');
+            const feedbackEl = document.getElementById('level2QuizFeedback');
+            
+            if (!selectedOption) {
+                feedbackEl.className = 'quiz-feedback';
+                feedbackEl.textContent = 'Please select an answer!';
+                return;
+            }
+            
+            const answer = selectedOption.getAttribute('data-value');
+            
+            if (answer === 'increase') {
+                feedbackEl.className = 'quiz-feedback correct';
+                feedbackEl.textContent = 'Correct! Adding a very tall tree will make the mean increase because it pulls the "balance point" up.';
+                sfx.success();
+                
+                // Complete level if not already completed
+                if (!gameState.levelsCompleted.includes(2)) {
+                    completeLevel(2);
+                }
+            } else {
+                feedbackEl.className = 'quiz-feedback incorrect';
+                feedbackEl.textContent = 'Not quite. Think about what happens when you add a very tall value to a group of numbers - it pulls the average up!';
+                sfx.failure();
+            }
+        }
+        
+        // Setup Level 3: Probability
+        function setupLevel3() {
+            const redSizeSlider = document.getElementById('redSize');
+            const redSizeValue = document.getElementById('redSizeValue');
+            const blueSizeSlider = document.getElementById('blueSize');
+            const blueSizeValue = document.getElementById('blueSizeValue');
+            const yellowSizeSlider = document.getElementById('yellowSize');
+            const yellowSizeValue = document.getElementById('yellowSizeValue');
+            const spinWheelBtn = document.getElementById('spinWheel');
+            const resetSpinsBtn = document.getElementById('resetSpins');
+            const level3QuizBtn = document.getElementById('level3Quiz_btn');
+            const level3QuizSubmit = document.getElementById('level3QuizSubmit');
+            
+            // Setup sliders
+            redSizeSlider.addEventListener('input', () => {
+                redSizeValue.textContent = redSizeSlider.value;
+                updateProbabilities();
+            });
+            
+            blueSizeSlider.addEventListener('input', () => {
+                blueSizeValue.textContent = blueSizeSlider.value;
+                updateProbabilities();
+            });
+            
+            yellowSizeSlider.addEventListener('input', () => {
+                yellowSizeValue.textContent = yellowSizeSlider.value;
+                updateProbabilities();
+            });
+            
+            // Spin wheel button
+            spinWheelBtn.addEventListener('click', () => {
+                spinWheel();
+                sfx.click();
+            });
+            
+            // Reset spins button
+            resetSpinsBtn.addEventListener('click', () => {
+                resetSpins();
+                sfx.click();
+            });
+            
+            // Quiz button
+            level3QuizBtn.addEventListener('click', () => {
+                showLevel3Quiz();
+                sfx.click();
+            });
+            
+            // Quiz submit button
+            level3QuizSubmit.addEventListener('click', () => {
+                checkLevel3Quiz();
+                sfx.click();
+            });
+            
+            // Setup quiz option selection
+            document.querySelectorAll('#level3QuizOptions .quiz-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    document.querySelectorAll('#level3QuizOptions .quiz-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    option.classList.add('selected');
+                });
+            });
+            
+            // Update initial probabilities
+            updateProbabilities();
+            
+            // Create p5.js sketch for Level 3
+            new p5((p) => {
+                let angle = 0;
+                let spinning = false;
+                let spinSpeed = 0;
+                let targetAngle = 0;
+                
+                p.setup = function() {
+                    const canvas = p.createCanvas(document.getElementById('level3Canvas').offsetWidth, document.getElementById('level3Canvas').offsetHeight);
+                    canvas.parent('level3Canvas');
+                };
+                
+                p.draw = function() {
+                    p.background(255);
+                    
+                    // Calculate wheel center
+                    const centerX = p.width / 2;
+                    const centerY = p.height / 2;
+                    const radius = Math.min(p.width, p.height) * 0.4;
+                    
+                    // Get section sizes
+                    const redSize = parseInt(document.getElementById('redSize').value);
+                    const blueSize = parseInt(document.getElementById('blueSize').value);
+                    const yellowSize = parseInt(document.getElementById('yellowSize').value);
+                    const total = redSize + blueSize + yellowSize;
+                    
+                    // Draw wheel
+                    p.push();
+                    p.translate(centerX, centerY);
+                    p.rotate(angle);
+                    
+                    // Draw sections
+                    let startAngle = 0;
+                    let endAngle = (redSize / total) * p.TWO_PI;
+                    
+                    // Red section
+                    p.fill(255, 0, 0);
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    p.arc(0, 0, radius * 2, radius * 2, startAngle, endAngle, p.PIE);
+                    
+                    // Blue section
+                    startAngle = endAngle;
+                    endAngle += (blueSize / total) * p.TWO_PI;
+                    p.fill(0, 0, 255);
+                    p.arc(0, 0, radius * 2, radius * 2, startAngle, endAngle, p.PIE);
+                    
+                    // Yellow section
+                    startAngle = endAngle;
+                    endAngle += (yellowSize / total) * p.TWO_PI;
+                    p.fill(255, 255, 0);
+                    p.arc(0, 0, radius * 2, radius * 2, startAngle, endAngle, p.PIE);
+                    
+                    // Draw center circle
+                    p.fill(255);
+                    p.ellipse(0, 0, radius * 0.2, radius * 0.2);
+                    
+                    // Draw spinner
+                    p.stroke(0);
+                    p.strokeWeight(3);
+                    p.line(0, 0, 0, -radius);
+                    
+                    p.pop();
+                    
+                    // Handle spinning animation
+                    if (spinning) {
+                        spinSpeed *= 0.98; // Slow down gradually
+                        
+                        if (spinSpeed < 0.01) {
+                            spinning = false;
+                            
+                            // Determine result
+                            const normalizedAngle = ((angle % p.TWO_PI) + p.TWO_PI) % p.TWO_PI;
+                            
+                            const redEnd = (redSize / total) * p.TWO_PI;
+                            const blueEnd = redEnd + (blueSize / total) * p.TWO_PI;
+                            const yellowEnd = p.TWO_PI;
+                            
+                            let result;
+                            if (normalizedAngle < redEnd) {
+                                result = 'red';
+                            } else if (normalizedAngle < blueEnd) {
+                                result = 'blue';
+                            } else {
+                                result = 'yellow';
+                            }
+                            
+                            // Add result to game state
+                            gameState.spinResults.push(result);
+                            
+                            // Update display
+                            updateSpinResults();
+                            
+                            // Update speech bubble
+                            const speechBubble = document.getElementById('speechBubble3');
+                            speechBubble.textContent = `It landed on ${result}! The probability of spinning ${result} was ${getColorProbability(result)}. Want to spin again?`;
+                        }
+                        
+                        angle += spinSpeed;
+                    }
+                };
+                
+                window.spinTheWheel = function() {
+                    if (!spinning) {
+                        spinning = true;
+                        spinSpeed = p.random(0.2, 0.4);
+                        targetAngle = angle + p.random(p.TWO_PI * 2, p.TWO_PI * 4);
+                    }
+                };
+                
+                function getColorProbability(color) {
+                    const redSize = parseInt(document.getElementById('redSize').value);
+                    const blueSize = parseInt(document.getElementById('blueSize').value);
+                    const yellowSize = parseInt(document.getElementById('yellowSize').value);
+                    const total = redSize + blueSize + yellowSize;
+                    
+                    let probability;
+                    if (color === 'red') {
+                        probability = redSize / total;
+                    } else if (color === 'blue') {
+                        probability = blueSize / total;
+                    } else {
+                        probability = yellowSize / total;
+                    }
+                    
+                    return `${(probability * 100).toFixed(1)}%`;
+                }
+            });
+        }
+        
+        // Update probabilities for Level 3
+        function updateProbabilities() {
+            const redSize = parseInt(document.getElementById('redSize').value);
+            const blueSize = parseInt(document.getElementById('blueSize').value);
+            const yellowSize = parseInt(document.getElementById('yellowSize').value);
+            const total = redSize + blueSize + yellowSize;
+            
+            const redProb = redSize / total;
+            const blueProb = blueSize / total;
+            const yellowProb = yellowSize / total;
+            
+            document.getElementById('redProb').textContent = `${(redProb * 100).toFixed(1)}% (${redSize}/${total})`;
+            document.getElementById('blueProb').textContent = `${(blueProb * 100).toFixed(1)}% (${blueSize}/${total})`;
+            document.getElementById('yellowProb').textContent = `${(yellowProb * 100).toFixed(1)}% (${yellowSize}/${total})`;
+            
+            // Update speech bubble
+            document.getElementById('speechBubble3').textContent = 
+                `The wheel has ${redSize} red, ${blueSize} blue, and ${yellowSize} yellow sections. The probability of spinning red is ${(redProb * 100).toFixed(1)}%, blue is ${(blueProb * 100).toFixed(1)}%, and yellow is ${(yellowProb * 100).toFixed(1)}%. Let's spin it!`;
+        }
+        
+        // Spin the wheel for Level 3
+        function spinWheel() {
+            if (window.spinTheWheel) {
+                window.spinTheWheel();
+            }
+        }
+        
+        // Update spin results display
+        function updateSpinResults() {
+            document.getElementById('spinCount').textContent = gameState.spinResults.length;
+            
+            const resultsEl = document.getElementById('spinResults');
+            
+            if (gameState.spinResults.length === 0) {
+                resultsEl.textContent = '-';
+                return;
+            }
+            
+            // Display the last 10 results
+            const recentResults = gameState.spinResults.slice(-10);
+            resultsEl.textContent = recentResults.join(', ');
+            
+            // Count occurrences
+            const counts = {
+                red: gameState.spinResults.filter(r => r === 'red').length,
+                blue: gameState.spinResults.filter(r => r === 'blue').length,
+                yellow: gameState.spinResults.filter(r => r === 'yellow').length
+            };
+            
+            // Calculate actual probabilities from results
+            const total = gameState.spinResults.length;
+            if (total >= 10) {
+                const actualRedProb = counts.red / total;
+                const actualBlueProb = counts.blue / total;
+                const actualYellowProb = counts.yellow / total;
+                
+                // Update speech bubble with actual vs expected probabilities
+                const speechBubble = document.getElementById('speechBubble3');
+                speechBubble.textContent = 
+                    `After ${total} spins, we got red ${(actualRedProb * 100).toFixed(1)}% of the time, blue ${(actualBlueProb * 100).toFixed(1)}% of the time, and yellow ${(actualYellowProb * 100).toFixed(1)}% of the time. How close are these to our expected probabilities?`;
+            }
+        }
+        
+        // Reset spins for Level 3
+        function resetSpins() {
+            gameState.spinResults = [];
+            updateSpinResults();
+            
+            // Update speech bubble
+            document.getElementById('speechBubble3').textContent = 
+                "Let's start fresh! I've reset the spin results. Now we can collect new data.";
+        }
+        
+        // Show Level 3 Quiz
+        function showLevel3Quiz() {
+            document.getElementById('level3Quiz').classList.remove('hidden');
+            
+            // Reset feedback
+            document.getElementById('level3QuizFeedback').className = 'quiz-feedback';
+            document.getElementById('level3QuizFeedback').textContent = '';
+            
+            // Reset selection
+            document.querySelectorAll('#level3QuizOptions .quiz-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+        }
+        
+        // Check Level 3 Quiz
+        function checkLevel3Quiz() {
+            const selectedOption = document.querySelector('#level3QuizOptions .quiz-option.selected');
+            const feedbackEl = document.getElementById('level3QuizFeedback');
+            
+            if (!selectedOption) {
+                feedbackEl.className = 'quiz-feedback';
+                feedbackEl.textContent = 'Please select an answer!';
+                return;
+            }
+            
+            const answer = selectedOption.getAttribute('data-value');
+            
+            if (answer === '1/3') {
+                feedbackEl.className = 'quiz-feedback correct';
+                feedbackEl.textContent = 'Correct! If the wheel has equal parts, each color has a 1/3 (33.3%) probability of being spun. That means each color takes up 1/3 of the wheel.';
+                sfx.success();
+                
+                // Complete level if not already completed
+                if (!gameState.levelsCompleted.includes(3)) {
+                    completeLevel(3);
+                }
+            } else {
+                feedbackEl.className = 'quiz-feedback incorrect';
+                feedbackEl.textContent = 'Not quite. If the wheel has equal parts red, blue, and yellow, each color takes up the same amount of space on the wheel. Since there are 3 colors total, each one has a 1/3 probability.';
+                sfx.failure();
+            }
+        }
+        
+        // Setup Level 4: Graphs
+        function setupLevel4() {
+            const numDogsSlider = document.getElementById('numDogs');
+            const numDogsValue = document.getElementById('numDogsValue');
+            const numCatsSlider = document.getElementById('numCats');
+            const numCatsValue = document.getElementById('numCatsValue');
+            const numFishSlider = document.getElementById('numFish');
+            const numFishValue = document.getElementById('numFishValue');
+            const numBirdsSlider = document.getElementById('numBirds');
+            const numBirdsValue = document.getElementById('numBirdsValue');
+            const chartTypeSelect = document.getElementById('chartType');
+            const updateChartBtn = document.getElementById('updateChart');
+            const level4QuizBtn = document.getElementById('level4Quiz_btn');
+            const level4QuizSubmit = document.getElementById('level4QuizSubmit');
+            
+            // Setup sliders
+            numDogsSlider.addEventListener('input', () => {
+                numDogsValue.textContent = numDogsSlider.value;
+                gameState.petCounts.dogs = parseInt(numDogsSlider.value);
+            });
+            
+            numCatsSlider.addEventListener('input', () => {
+                numCatsValue.textContent = numCatsSlider.value;
+                gameState.petCounts.cats = parseInt(numCatsSlider.value);
+            });
+            
+            numFishSlider.addEventListener('input', () => {
+                numFishValue.textContent = numFishSlider.value;
+                gameState.petCounts.fish = parseInt(numFishSlider.value);
+            });
+            
+            numBirdsSlider.addEventListener('input', () => {
+                numBirdsValue.textContent = numBirdsSlider.value;
+                gameState.petCounts.birds = parseInt(numBirdsSlider.value);
+            });
+            
+            // Chart type select
+            chartTypeSelect.addEventListener('change', () => {
+                gameState.chartType = chartTypeSelect.value;
+            });
+            
+            // Update chart button
+            updateChartBtn.addEventListener('click', () => {
+                updateChart();
+                sfx.click();
+            });
+            
+            // Quiz button
+            level4QuizBtn.addEventListener('click', () => {
+                showLevel4Quiz();
+                sfx.click();
+            });
+            
+            // Quiz submit button
+            level4QuizSubmit.addEventListener('click', () => {
+                checkLevel4Quiz();
+                sfx.click();
+            });
+            
+            // Setup quiz option selection
+            document.querySelectorAll('#level4QuizOptions .quiz-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    // Remove selected class from all options
+                    document.querySelectorAll('#level4QuizOptions .quiz-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Add selected class to clicked option
+                    option.classList.add('selected');
+                });
+            });
+            
+            // Draw initial chart
+            updateChart();
+            
+            // Create p5.js sketch for Level 4
+            new p5((p) => {
+                p.setup = function() {
+                    const canvas = p.createCanvas(document.getElementById('level4Canvas').offsetWidth, document.getElementById('level4Canvas').offsetHeight);
+                    canvas.parent('level4Canvas');
+                    p.noLoop();
+                };
+                
+                p.draw = function() {
+                    p.background(255);
+                    
+                    // Get current values
+                    const pets = [
+                        { name: 'Dogs', count: gameState.petCounts.dogs, color: p.color(139, 69, 19) },
+                        { name: 'Cats', count: gameState.petCounts.cats, color: p.color(255, 140, 0) },
+                        { name: 'Fish', count: gameState.petCounts.fish, color: p.color(70, 130, 180) },
+                        { name: 'Birds', count: gameState.petCounts.birds, color: p.color(34, 139, 34) }
+                    ];
+                    
+                    // Filter out pets with zero count
+                    const filteredPets = pets.filter(pet => pet.count > 0);
+                    
+                    // Draw chart based on type
+                    if (gameState.chartType === 'bar') {
+                        drawBarChart(p, filteredPets);
+                    } else if (gameState.chartType === 'pie') {
+                        drawPieChart(p, filteredPets);
+                    } else if (gameState.chartType === 'pictograph') {
+                        drawPictograph(p, filteredPets);
+                    }
+                };
+                
+                function drawBarChart(p, pets) {
+                    // Define chart area
+                    const margin = 50;
+                    const chartWidth = p.width - 2 * margin;
+                    const chartHeight = p.height - 2 * margin;
+                    
+                    // Draw axes
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    p.line(margin, p.height - margin, p.width - margin, p.height - margin); // x-axis
+                    p.line(margin, margin, margin, p.height - margin); // y-axis
+                    
+                    // Add labels
+                    p.noStroke();
+                    p.fill(0);
+                    p.textAlign(p.CENTER);
+                    p.textSize(16);
+                    p.text("Types of Pets", p.width / 2, p.height - 10);
+                    
+                    p.push();
+                    p.translate(20, p.height / 2);
+                    p.rotate(-p.HALF_PI);
+                    p.text("Number of Pets", 0, 0);
+                    p.pop();
+                    
+                    // Find maximum value for scaling
+                    const maxCount = Math.max(...pets.map(pet => pet.count), 1);
+                    
+                    // Draw bars
+                    const barWidth = chartWidth / pets.length;
+                    
+                    for (let i = 0; i < pets.length; i++) {
+                        const pet = pets[i];
+                        const barHeight = (pet.count / maxCount) * chartHeight;
+                        const x = margin + i * barWidth + barWidth * 0.1;
+                        const y = p.height - margin - barHeight;
+                        
+                        // Draw bar
+                        p.fill(pet.color);
+                        p.stroke(0);
+                        p.strokeWeight(1);
+                        p.rect(x, y, barWidth * 0.8, barHeight);
+                        
+                        // Add label
+                        p.fill(0);
+                        p.noStroke();
+                        p.textAlign(p.CENTER);
+                        p.textSize(14);
+                        p.text(pet.name, x + barWidth * 0.4, p.height - margin + 20);
+                        
+                        // Add value
+                        p.text(pet.count, x + barWidth * 0.4, y - 10);
+                    }
+                }
+                
+                function drawPieChart(p, pets) {
+                    // Calculate total
+                    const total = pets.reduce((sum, pet) => sum + pet.count, 0);
+                    
+                    // Define center and radius
+                    const centerX = p.width / 2;
+                    const centerY = p.height / 2;
+                    const radius = Math.min(p.width, p.height) * 0.4;
+                    
+                    // Draw pie segments
+                    let startAngle = 0;
+                    
+                    for (let i = 0; i < pets.length; i++) {
+                        const pet = pets[i];
+                        const angle = (pet.count / total) * p.TWO_PI;
+                        
+                        // Draw segment
+                        p.fill(pet.color);
+                        p.stroke(0);
+                        p.strokeWeight(1);
+                        p.arc(centerX, centerY, radius * 2, radius * 2, startAngle, startAngle + angle, p.PIE);
+                        
+                        // Calculate position for label
+                        const labelAngle = startAngle + angle / 2;
+                        const labelX = centerX + Math.cos(labelAngle) * (radius + 30);
+                        const labelY = centerY + Math.sin(labelAngle) * (radius + 30);
+                        
+                        // Add label
+                        p.fill(0);
+                        p.noStroke();
+                        p.textAlign(p.CENTER);
+                        p.textSize(14);
+                        p.text(`${pet.name}: ${pet.count} (${Math.round((pet.count / total) * 100)}%)`, labelX, labelY);
+                        
+                        // Update start angle for next segment
+                        startAngle += angle;
+                    }
+                }
+                
+                function drawPictograph(p, pets) {
+                    // Define grid properties
+                    const iconSize = 30;
+                    const margin = 50;
+                    const horizontalSpacing = 40;
+                    const verticalSpacing = 50;
+                    
+                    // Draw title
+                    p.fill(0);
+                    p.noStroke();
+                    p.textAlign(p.CENTER);
+                    p.textSize(18);
+                    p.text("Pet Pictograph (1 icon = 1 pet)", p.width / 2, margin - 20);
+                    
+                    // Draw icons for each pet type
+                    let y = margin;
+                    
+                    for (let i = 0; i < pets.length; i++) {
+                        const pet = pets[i];
+                        
+                        // Draw pet name
+                        p.fill(0);
+                        p.textAlign(p.LEFT);
+                        p.textSize(16);
+                        p.text(pet.name, margin, y + iconSize / 2);
+                        
+                        // Draw icons
+                        let x = margin + 100;
+                        let row = 0;
+                        const iconsPerRow = Math.floor((p.width - x - margin) / horizontalSpacing);
+                        
+                        for (let j = 0; j < pet.count; j++) {
+                            if (j > 0 && j % iconsPerRow === 0) {
+                                row++;
+                                x = margin + 100;
+                            }
+                            
+                            // Draw icon
+                            drawPetIcon(p, pet.name.toLowerCase(), x, y + row * verticalSpacing, iconSize, pet.color);
+                            
+                            x += horizontalSpacing;
+                        }
+                        
+                        // Move to next pet type
+                        y += verticalSpacing * (row + 1) + 20;
+                    }
+                }
+                
+                function drawPetIcon(p, type, x, y, size, color) {
+                    p.fill(color);
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    
+                    if (type === 'dogs') {
+                        // Draw dog icon (simple circle with ears)
+                        p.ellipse(x, y, size, size);
+                        p.ellipse(x - size/3, y - size/2, size/3, size/3);
+                        p.ellipse(x + size/3, y - size/2, size/3, size/3);
+                    } else if (type === 'cats') {
+                        // Draw cat icon (circle with triangle ears)
+                        p.ellipse(x, y, size, size);
+                        p.triangle(
+                            x - size/3, y - size/2,
+                            x - size/6, y - size/1.2,
+                            x, y - size/2
+                        );
+                        p.triangle(
+                            x + size/3, y - size/2,
+                            x + size/6, y - size/1.2,
+                            x, y - size/2
+                        );
+                    } else if (type === 'fish') {
+                        // Draw fish icon (oval with tail)
+                        p.ellipse(x, y, size, size/2);
+                        p.triangle(
+                            x + size/2, y,
+                            x + size, y - size/4,
+                            x + size, y + size/4
+                        );
+                    } else if (type === 'birds') {
+                        // Draw bird icon (circle with beak and wings)
+                        p.ellipse(x, y, size, size);
+                        p.triangle(
+                            x + size/2, y,
+                            x + size/1.2, y - size/8,
+                            x + size/1.2, y + size/8
+                        );
+                        p.arc(x - size/4, y - size/8, size/1.5, size/1.5, p.PI/2, p.PI+p.PI/2);
+                    }
+                }
+                
+                window.redrawLevel4 = function() {
+                    p.redraw();
+                };
+            });
+        }
+        
+        // Update chart for Level 4
+        function updateChart() {
+            if (window.redrawLevel4) {
+                window.redrawLevel4();
+            }
+            
+            // Determine which pet has the highest count
+            const petCounts = gameState.petCounts;
+            const maxPet = Object.entries(petCounts).reduce(
+                (max, [pet, count]) => count > max.count ? {pet, count} : max,
+                {pet: '', count: -1}
+            );
+            
+            // Update speech bubble
+            document.getElementById('speechBubble4').textContent = 
+                `Great job creating a ${gameState.chartType}! I can see that ${maxPet.pet} are the most common pets with ${maxPet.count}. Charts help us visualize data and make it easier to understand!`;
+        }
+        
+        // Show Level 4 Quiz
+        function showLevel4Quiz() {
+            document.getElementById('level4Quiz').classList.remove('hidden');
+            
+            // Reset feedback
+            document.getElementById('level4QuizFeedback').className = 'quiz-feedback';
+            document.getElementById('level4QuizFeedback').textContent = '';
+            
+            // Reset selection
+            document.querySelectorAll('#level4QuizOptions .quiz-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+        }
+        
+        // Check Level 4 Quiz
+        function checkLevel4Quiz() {
+            const selectedOption = document.querySelector('#level4QuizOptions .quiz-option.selected');
+            const feedbackEl = document.getElementById('level4QuizFeedback');
+            
+            if (!selectedOption) {
+                feedbackEl.className = 'quiz-feedback';
+                feedbackEl.textContent = 'Please select an answer!';
+                return;
+            }
+            
+            // Determine which pet has the highest count
+            const petCounts = gameState.petCounts;
+            const maxPet = Object.entries(petCounts).reduce(
+                (max, [pet, count]) => count > max.count ? {pet, count} : max,
+                {pet: '', count: -1}
+            ).pet;
+            
+            const answer = selectedOption.getAttribute('data-value');
+            
+            if (answer === maxPet) {
+                feedbackEl.className = 'quiz-feedback correct';
+                feedbackEl.textContent = `Correct! ${maxPet.charAt(0).toUpperCase() + maxPet.slice(1)} are the most common pets in our data with ${petCounts[maxPet]}.`;
+                sfx.success();
+                
+                // Complete level if not already completed
+                if (!gameState.levelsCompleted.includes(4)) {
+                    completeLevel(4);
+                }
+            } else {
+                feedbackEl.className = 'quiz-feedback incorrect';
+                feedbackEl.textContent = `Not quite. Look at the chart again. Which pet type has the highest count?`;
+                sfx.failure();
+            }
+        }
+        
+        // Setup Sandbox
+        function setupSandbox() {
+            const projectTypeSelect = document.getElementById('projectType');
+            const advancedConceptSelect = document.getElementById('advancedConcept');
+            const runExperimentBtn = document.getElementById('runExperiment');
+            const resetExperimentBtn = document.getElementById('resetExperiment');
+            const saveExperimentBtn = document.getElementById('saveExperiment');
+            
+            // Project type select
+            projectTypeSelect.addEventListener('change', () => {
+                gameState.projectType = projectTypeSelect.value;
+                setupSandboxControls();
+            });
+            
+            // Advanced concept select
+            advancedConceptSelect.addEventListener('change', () => {
+                gameState.advancedConcept = advancedConceptSelect.value;
+                updateAdvancedExplanation();
+            });
+            
+            // Run experiment button
+            runExperimentBtn.addEventListener('click', () => {
+                runExperiment();
+                sfx.click();
+            });
+            
+            // Reset experiment button
+            resetExperimentBtn.addEventListener('click', () => {
+                resetExperiment();
+                sfx.click();
+            });
+            
+            // Save experiment button
+            saveExperimentBtn.addEventListener('click', () => {
+                saveExperiment();
+                sfx.click();
+            });
+            
+            // Initial setup
+            setupSandboxControls();
+            updateAdvancedExplanation();
+            
+            // Create p5.js sketch for Sandbox
+            new p5((p) => {
+                p.setup = function() {
+                    const canvas = p.createCanvas(document.getElementById('sandboxCanvas').offsetWidth, document.getElementById('sandboxCanvas').offsetHeight);
+                    canvas.parent('sandboxCanvas');
+                    p.noLoop();
+                };
+                
+                p.draw = function() {
+                    p.background(255);
+                    
+                    // Draw different content based on project type
+                    switch (gameState.projectType) {
+                        case 'data':
+                            drawDataProject(p);
+                            break;
+                        case 'probability':
+                            drawProbabilityProject(p);
+                            break;
+                        case 'distribution':
+                            drawDistributionProject(p);
+                            break;
+                        case 'correlation':
+                            drawCorrelationProject(p);
+                            break;
+                    }
+                };
+                
+                function drawDataProject(p) {
+                    // Title
+                    p.fill(0);
+                    p.textAlign(p.CENTER);
+                    p.textSize(18);
+                    p.text("Data Collection & Analysis", p.width/2, 30);
+                    
+                    // Simple data collection scene
+                    p.fill(139, 69, 19);
+                    p.noStroke();
+                    p.rect(0, p.height - 50, p.width, 50); // ground
+                    
+                    // Draw some data points as different objects
+                    const objects = [
+                        { type: 'tree', x: 100, y: p.height - 70, size: 60 },
+                        { type: 'flower', x: 200, y: p.height - 35, size: 30 },
+                        { type: 'rock', x: 300, y: p.height - 35, size: 25 },
+                        { type: 'tree', x: 400, y: p.height - 80, size: 70 }
+                    ];
+                    
+                    for (const obj of objects) {
+                        if (obj.type === 'tree') {
+                            p.fill(139, 69, 19);
+                            p.rect(obj.x - 5, obj.y, 10, 70);
+                            p.fill(34, 139, 34);
+                            p.ellipse(obj.x, obj.y - 20, obj.size, obj.size);
+                        } else if (obj.type === 'flower') {
+                            p.fill(0, 128, 0);
+                            p.rect(obj.x - 2, obj.y - obj.size, 4, obj.size);
+                            p.fill(255, 0, 255);
+                            p.ellipse(obj.x, obj.y - obj.size - 10, obj.size, obj.size);
+                        } else if (obj.type === 'rock') {
+                            p.fill(128, 128, 128);
+                            p.ellipse(obj.x, obj.y, obj.size, obj.size * 0.7);
+                        }
+                    }
+                    
+                    // Draw data collector character
+                    p.fill(255, 0, 0);
+                    p.ellipse(50, p.height - 75, 40, 40); // head
+                    p.rect(40, p.height - 55, 20, 30); // body
+                    p.line(40, p.height - 45, 30, p.height - 25); // left arm
+                    p.line(60, p.height - 45, 70, p.height - 35); // right arm
+                    p.line(40, p.height - 25, 30, p.height - 5); // left leg
+                    p.line(60, p.height - 25, 70, p.height - 5); // right leg
+                    
+                    // Clipboard
+                    p.fill(255);
+                    p.rect(70, p.height - 35, 25, 30);
+                    p.line(75, p.height - 25, 90, p.height - 25);
+                    p.line(75, p.height - 20, 90, p.height - 20);
+                    p.line(75, p.height - 15, 90, p.height - 15);
+                }
+                
+                function drawProbabilityProject(p) {
+                    // Title
+                    p.fill(0);
+                    p.textAlign(p.CENTER);
+                    p.textSize(18);
+                    p.text("Probability Experiment", p.width/2, 30);
+                    
+                    // Draw dice and coins
+                    p.fill(255);
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    
+                    // Dice
+                    p.rect(p.width/2 - 100, p.height/2 - 25, 50, 50, 5);
+                    p.rect(p.width/2 + 50, p.height/2 - 25, 50, 50, 5);
+                    
+                    // Draw dots on dice
+                    p.fill(0);
+                    p.noStroke();
+                    
+                    // First die
+                    const die1Value = Math.floor(Math.random() * 6) + 1;
+                    drawDieDots(p, p.width/2 - 75, p.height/2, die1Value);
+                    
+                    // Second die
+                    const die2Value = Math.floor(Math.random() * 6) + 1;
+                    drawDieDots(p, p.width/2 + 75, p.height/2, die2Value);
+                    
+                    // Show sum
+                    p.fill(0);
+                    p.textSize(24);
+                    p.text(`Sum: ${die1Value + die2Value}`, p.width/2, p.height/2 + 60);
+                    
+                    // Probability information
+                    p.textSize(14);
+                    p.text(`Probability of rolling a ${die1Value + die2Value}: ${getProbabilityOfSum(die1Value + die2Value)}`, p.width/2, p.height/2 + 90);
+                }
+                
+                function drawDieDots(p, x, y, value) {
+                    const dotPositions = {
+                        1: [[0, 0]],
+                        2: [[-10, -10], [10, 10]],
+                        3: [[-10, -10], [0, 0], [10, 10]],
+                        4: [[-10, -10], [10, -10], [-10, 10], [10, 10]],
+                        5: [[-10, -10], [10, -10], [0, 0], [-10, 10], [10, 10]],
+                        6: [[-10, -10], [10, -10], [-10, 0], [10, 0], [-10, 10], [10, 10]]
+                    };
+                    
+                    const positions = dotPositions[value];
+                    
+                    for (const pos of positions) {
+                        p.ellipse(x + pos[0], y + pos[1], 8, 8);
+                    }
+                }
+                
+                function getProbabilityOfSum(sum) {
+                    // Probabilities for sums 2-12 with two dice
+                    const probabilities = {
+                        2: '1/36',
+                        3: '2/36',
+                        4: '3/36',
+                        5: '4/36',
+                        6: '5/36',
+                        7: '6/36',
+                        8: '5/36',
+                        9: '4/36',
+                        10: '3/36',
+                        11: '2/36',
+                        12: '1/36'
+                    };
+                    
+                    return probabilities[sum] || 'unknown';
+                }
+                
+                function drawDistributionProject(p) {
+                    // Title
+                    p.fill(0);
+                    p.textAlign(p.CENTER);
+                    p.textSize(18);
+                    p.text("Distribution Explorer", p.width/2, 30);
+                    
+                    // Draw normal distribution
+                    const mean = p.width / 2;
+                    const stdDev = 50;
+                    
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.noFill();
+                    p.beginShape();
+                    
+                    for (let x = 0; x < p.width; x += 5) {
+                        const y = p.height - 50 - normalDistribution(x, mean, stdDev) * 200;
+                        p.vertex(x, y);
+                    }
+                    
+                    p.endShape();
+                    
+                    // Draw axis
+                    p.stroke(0);
+                    p.line(0, p.height - 50, p.width, p.height - 50);
+                    
+                    // Draw mean line
+                    p.stroke(255, 0, 0);
+                    p.line(mean, p.height - 150, mean, p.height - 50);
+                    p.fill(255, 0, 0);
+                    p.noStroke();
+                    p.text("Mean", mean, p.height - 160);
+                    
+                    // Draw standard deviation markers
+                    p.stroke(0, 0, 255);
+                    p.line(mean - stdDev, p.height - 120, mean - stdDev, p.height - 50);
+                    p.line(mean + stdDev, p.height - 120, mean + stdDev, p.height - 50);
+                    
+                    p.fill(0, 0, 255);
+                    p.noStroke();
+                    p.text("-1 StdDev", mean - stdDev, p.height - 130);
+                    p.text("+1 StdDev", mean + stdDev, p.height - 130);
+                    
+                    // Add explanation
+                    p.fill(0);
+                    p.textAlign(p.LEFT);
+                    p.textSize(14);
+                    p.text("Normal Distribution (Bell Curve)", 20, 60);
+                    p.text("68% of values fall within 1 standard deviation of the mean", 20, 80);
+                    p.text("95% of values fall within 2 standard deviations", 20, 100);
+                    p.text("99.7% of values fall within 3 standard deviations", 20, 120);
+                }
+                
+                function normalDistribution(x, mean, standardDeviation) {
+                    return (1 / (standardDeviation * Math.sqrt(2 * Math.PI))) * 
+                        Math.exp(-0.5 * Math.pow((x - mean) / standardDeviation, 2));
+                }
+                
+                function drawCorrelationProject(p) {
+                    // Title
+                    p.fill(0);
+                    p.textAlign(p.CENTER);
+                    p.textSize(18);
+                    p.text("Correlation Investigation", p.width/2, 30);
+                    
+                    // Draw scatter plot
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    
+                    // Draw axes
+                    const margin = 50;
+                    p.line(margin, p.height - margin, p.width - margin, p.height - margin); // x-axis
+                    p.line(margin, margin, margin, p.height - margin); // y-axis
+                    
+                    // Axis labels
+                    p.fill(0);
+                    p.noStroke();
+                    p.textAlign(p.CENTER);
+                    p.textSize(14);
+                    p.text("Hours Studied", p.width/2, p.height - 10);
+                    
+                    p.push();
+                    p.translate(20, p.height/2);
+                    p.rotate(-p.HALF_PI);
+                    p.text("Test Score", 0, 0);
+                    p.pop();
+                    
+                    // Generate positive correlation data points
+                    const points = [];
+                    
+                    for (let i = 0; i < 15; i++) {
+                        const x = i * ((p.width - 2*margin) / 15) + margin + p.random(-10, 10);
+                        const y = p.height - margin - (i * ((p.height - 2*margin) / 15)) + p.random(-20, 20);
+                        points.push({x, y});
+                    }
+                    
+                    // Draw points
+                    p.fill(255, 0, 0);
+                    p.noStroke();
+                    
+                    for (const point of points) {
+                        p.ellipse(point.x, point.y, 8, 8);
+                    }
+                    
+                    // Draw trend line
+                    p.stroke(0, 0, 255);
+                    p.strokeWeight(2);
+                    p.line(margin, p.height - margin, p.width - margin, margin);
+                    
+                    // Add legend
+                    p.fill(0);
+                    p.noStroke();
+                    p.textAlign(p.LEFT);
+                    p.textSize(14);
+                    p.text("Positive Correlation:", p.width - 200, 60);
+                    p.text("As study time increases,", p.width - 190, 80);
+                    p.text("test scores also increase", p.width - 190, 100);
+                }
+                
+                window.redrawSandbox = function() {
+                    p.redraw();
+                };
+            });
+            
+            // Create p5.js sketch for experiment results
+            new p5((p) => {
+                p.setup = function() {
+                    const canvas = p.createCanvas(document.getElementById('experimentResults').offsetWidth, document.getElementById('experimentResults').offsetHeight);
+                    canvas.parent('experimentResults');
+                    p.noLoop();
+                };
+                
+                p.draw = function() {
+                    p.background(250);
+                    
+                    if (gameState.experimentResults.length === 0) {
+                        p.fill(0);
+                        p.textAlign(p.CENTER, p.CENTER);
+                        p.textSize(18);
+                        p.text("Run an experiment to see results here!", p.width/2, p.height/2);
+                        return;
+                    }
+                    
+                    // Draw experiment results based on project type
+                    switch (gameState.projectType) {
+                        case 'data':
+                            drawDataResults(p);
+                            break;
+                        case 'probability':
+                            drawProbabilityResults(p);
+                            break;
+                        case 'distribution':
+                            drawDistributionResults(p);
+                            break;
+                        case 'correlation':
+                            drawCorrelationResults(p);
+                            break;
+                    }
+                };
+                
+                function drawDataResults(p) {
+                    // Draw bar chart of data
+                    const categories = {};
+                    
+                    // Count occurrences of each category
+                    for (const result of gameState.experimentResults) {
+                        if (!categories[result.category]) {
+                            categories[result.category] = 0;
+                        }
+                        categories[result.category]++;
+                    }
+                    
+                    // Convert to array for easier drawing
+                    const catArray = Object.entries(categories).map(([name, count]) => ({name, count}));
+                    
+                    // Draw chart
+                    const margin = 40;
+                    const chartWidth = p.width - 2 * margin;
+                    const chartHeight = p.height - 2 * margin;
+                    
+                    // Draw axes
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.line(margin, p.height - margin, p.width - margin, p.height - margin); // x-axis
+                    p.line(margin, margin, margin, p.height - margin); // y-axis
+                    
+                    // Find maximum value for scaling
+                    const maxCount = Math.max(...catArray.map(cat => cat.count), 1);
+                    
+                    // Draw bars
+                    const barWidth = chartWidth / catArray.length;
+                    
+                    p.textAlign(p.CENTER);
+                    p.textSize(12);
+                    
+                    for (let i = 0; i < catArray.length; i++) {
+                        const cat = catArray[i];
+                        const barHeight = (cat.count / maxCount) * chartHeight;
+                        const x = margin + i * barWidth + barWidth * 0.1;
+                        const y = p.height - margin - barHeight;
+                        
+                        // Draw bar
+                        p.fill(p.random(100, 255), p.random(100, 255), p.random(100, 255));
+                        p.rect(x, y, barWidth * 0.8, barHeight);
+                        
+                        // Add label
+                        p.fill(0);
+                        p.text(cat.name, x + barWidth * 0.4, p.height - margin + 15);
+                        
+                        // Add value
+                        p.text(cat.count, x + barWidth * 0.4, y - 10);
+                    }
+                    
+                    // Add title
+                    p.fill(0);
+                    p.textAlign(p.CENTER);
+                    p.textSize(16);
+                    p.text("Data Analysis Results", p.width/2, margin/2);
+                }
+                
+                function drawProbabilityResults(p) {
+                    // Draw histogram of results
+                    const results = {};
+                    
+                    // Count occurrences of each result
+                    for (const result of gameState.experimentResults) {
+                        if (!results[result.value]) {
+                            results[result.value] = 0;
+                        }
+                        results[result.value]++;
+                    }
+                    
+                    // Convert to array for easier drawing
+                    const resultsArray = Object.entries(results).map(([value, count]) => ({
+                        value: parseInt(value), 
+                        count, 
+                        probability: count / gameState.experimentResults.length
+                    })).sort((a, b) => a.value - b.value);
+                    
+                    // Draw chart
+                    const margin = 40;
+                    const chartWidth = p.width - 2 * margin;
+                    const chartHeight = p.height - 2 * margin;
+                    
+                    // Draw axes
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.line(margin, p.height - margin, p.width - margin, p.height - margin); // x-axis
+                    p.line(margin, margin, margin, p.height - margin); // y-axis
+                    
+                    // Find maximum value for scaling
+                    const maxCount = Math.max(...resultsArray.map(r => r.count), 1);
+                    
+                    // Draw bars
+                    const barWidth = chartWidth / resultsArray.length;
+                    
+                    p.textAlign(p.CENTER);
+                    p.textSize(12);
+                    
+                    for (let i = 0; i < resultsArray.length; i++) {
+                        const result = resultsArray[i];
+                        const barHeight = (result.count / maxCount) * chartHeight;
+                        const x = margin + i * barWidth + barWidth * 0.1;
+                        const y = p.height - margin - barHeight;
+                        
+                        // Draw bar
+                        p.fill(0, 100, 255);
+                        p.rect(x, y, barWidth * 0.8, barHeight);
+                        
+                        // Add label
+                        p.fill(0);
+                        p.text(result.value, x + barWidth * 0.4, p.height - margin + 15);
+                        
+                        // Add count
+                        p.text(result.count, x + barWidth * 0.4, y - 10);
+                        
+                        // Add probability
+                        p.text((result.probability * 100).toFixed(1) + "%", x + barWidth * 0.4, y - 25);
+                    }
+                    
+                    // Add title
+                    p.fill(0);
+                    p.textAlign(p.CENTER);
+                    p.textSize(16);
+                    p.text("Probability Experiment Results", p.width/2, margin/2);
+                    p.textSize(12);
+                    p.text(`Total trials: ${gameState.experimentResults.length}`, p.width/2, margin/2 + 20);
+                }
+                
+                function drawDistributionResults(p) {
+                    // Draw histogram
+                    const data = gameState.experimentResults.map(r => r.value);
+                    
+                    // Calculate mean and standard deviation
+                    const mean = data.reduce((sum, val) => sum + val, 0) / data.length;
+                    
+                    const squaredDiffs = data.map(val => Math.pow(val - mean, 2));
+                    const variance = squaredDiffs.reduce((sum, val) => sum + val, 0) / data.length;
+                    const stdDev = Math.sqrt(variance);
+                    
+                    // Group data into bins
+                    const numBins = 10;
+                    const min = Math.min(...data);
+                    const max = Math.max(...data);
+                    const binWidth = (max - min) / numBins;
+                    
+                    const bins = Array(numBins).fill(0);
+                    
+                    for (const val of data) {
+                        const binIndex = Math.min(Math.floor((val - min) / binWidth), numBins - 1);
+                        bins[binIndex]++;
+                    }
+                    
+                    // Draw chart
+                    const margin = 40;
+                    const chartWidth = p.width - 2 * margin;
+                    const chartHeight = p.height - 2 * margin;
+                    
+                    // Draw axes
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.line(margin, p.height - margin, p.width - margin, p.height - margin); // x-axis
+                    p.line(margin, margin, margin, p.height - margin); // y-axis
+                    
+                    // Find maximum bin count for scaling
+                    const maxBin = Math.max(...bins, 1);
+                    
+                    // Draw histogram bars
+                    const barWidth = chartWidth / numBins;
+                    
+                    p.textAlign(p.CENTER);
+                    p.textSize(10);
+                    
+                    for (let i = 0; i < numBins; i++) {
+                        const barHeight = (bins[i] / maxBin) * chartHeight;
+                        const x = margin + i * barWidth;
+                        const y = p.height - margin - barHeight;
+                        
+                        // Draw bar
+                        p.fill(100, 100, 255);
+                        p.stroke(0);
+                        p.strokeWeight(1);
+                        p.rect(x, y, barWidth - 2, barHeight);
+                        
+                        // Add bin label
+                        p.fill(0);
+                        p.noStroke();
+                        const binLower = min + i * binWidth;
+                        p.text(binLower.toFixed(1), x + barWidth/2, p.height - margin + 15);
+                    }
+                    
+                    // Draw mean line
+                    const meanX = margin + ((mean - min) / (max - min)) * chartWidth;
+                    p.stroke(255, 0, 0);
+                    p.strokeWeight(2);
+                    p.line(meanX, margin, meanX, p.height - margin);
+                    
+                    // Add title and stats
+                    p.fill(0);
+                    p.noStroke();
+                    p.textAlign(p.CENTER);
+                    p.textSize(16);
+                    p.text("Distribution of Values", p.width/2, margin/2);
+                    
+                    p.textSize(12);
+                    p.text(`Mean: ${mean.toFixed(2)}   StdDev: ${stdDev.toFixed(2)}   Samples: ${data.length}`, p.width/2, margin/2 + 20);
+                }
+                
+                function drawCorrelationResults(p) {
+                    // Draw scatter plot
+                    const margin = 40;
+                    const chartWidth = p.width - 2 * margin;
+                    const chartHeight = p.height - 2 * margin;
+                    
+                    // Draw axes
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.line(margin, p.height - margin, p.width - margin, p.height - margin); // x-axis
+                    p.line(margin, margin, margin, p.height - margin); // y-axis
+                    
+                    // Add axis labels
+                    p.fill(0);
+                    p.noStroke();
+                    p.textAlign(p.CENTER);
+                    p.textSize(12);
+                    p.text("X Values", p.width/2, p.height - 10);
+                    
+                    p.push();
+                    p.translate(15, p.height/2);
+                    p.rotate(-p.HALF_PI);
+                    p.text("Y Values", 0, 0);
+                    p.pop();
+                    
+                    // Find min and max for scaling
+                    const xValues = gameState.experimentResults.map(r => r.x);
+                    const yValues = gameState.experimentResults.map(r => r.y);
+                    
+                    const xMin = Math.min(...xValues);
+                    const xMax = Math.max(...xValues);
+                    const yMin = Math.min(...yValues);
+                    const yMax = Math.max(...yValues);
+                    
+                    // Draw points
+                    p.fill(255, 0, 0);
+                    p.noStroke();
+                    
+                    for (const result of gameState.experimentResults) {
+                        const x = margin + (result.x - xMin) / (xMax - xMin) * chartWidth;
+                        const y = p.height - margin - (result.y - yMin) / (yMax - yMin) * chartHeight;
+                        p.ellipse(x, y, 8, 8);
+                    }
+                    
+                    // Calculate correlation coefficient
+                    const n = gameState.experimentResults.length;
+                    const sumX = xValues.reduce((sum, val) => sum + val, 0);
+                    const sumY = yValues.reduce((sum, val) => sum + val, 0);
+                    const sumXY = gameState.experimentResults.reduce((sum, r) => sum + r.x * r.y, 0);
+                    const sumXSquared = xValues.reduce((sum, val) => sum + val * val, 0);
+                    const sumYSquared = yValues.reduce((sum, val) => sum + val * val, 0);
+                    
+                    const numerator = n * sumXY - sumX * sumY;
+                    const denominator = Math.sqrt((n * sumXSquared - sumX * sumX) * (n * sumYSquared - sumY * sumY));
+                    const correlation = denominator === 0 ? 0 : numerator / denominator;
+                    
+                    // Draw best fit line
+                    if (n > 1) {
+                        const xMean = sumX / n;
+                        const yMean = sumY / n;
+                        
+                        const slope = numerator / (n * sumXSquared - sumX * sumX);
+                        const intercept = yMean - slope * xMean;
+                        
+                        const x1 = xMin;
+                        const y1 = slope * x1 + intercept;
+                        const x2 = xMax;
+                        const y2 = slope * x2 + intercept;
+                        
+                        const x1Scaled = margin;
+                        const y1Scaled = p.height - margin - (y1 - yMin) / (yMax - yMin) * chartHeight;
+                        const x2Scaled = margin + chartWidth;
+                        const y2Scaled = p.height - margin - (y2 - yMin) / (yMax - yMin) * chartHeight;
+                        
+                        p.stroke(0, 0, 255);
+                        p.strokeWeight(2);
+                        p.line(x1Scaled, y1Scaled, x2Scaled, y2Scaled);
+                    }
+                    
+                    // Add title and correlation
+                    p.fill(0);
+                    p.noStroke();
+                    p.textAlign(p.CENTER);
+                    p.textSize(16);
+                    p.text("Correlation Analysis", p.width/2, margin/2);
+                    
+                    p.textSize(12);
+                    p.text(`Correlation Coefficient (r): ${correlation.toFixed(3)}`, p.width/2, margin/2 + 20);
+                    
+                    let correlationDesc = "";
+                    if (correlation > 0.7) correlationDesc = "Strong Positive";
+                    else if (correlation > 0.3) correlationDesc = "Moderate Positive";
+                    else if (correlation > -0.3) correlationDesc = "Weak/No";
+                    else if (correlation > -0.7) correlationDesc = "Moderate Negative";
+                    else correlationDesc = "Strong Negative";
+                    
+                    p.text(`Interpretation: ${correlationDesc} Correlation`, p.width/2, margin/2 + 40);
+                }
+                
+                window.redrawExperimentResults = function() {
+                    p.redraw();
+                };
+            });
+        }
+        
+        // Setup sandbox controls
+        function setupSandboxControls() {
+            const controlsContainer = document.getElementById('sandboxControls');
+            controlsContainer.innerHTML = '';
+            
+            // Different controls based on project type
+            if (gameState.projectType === 'data') {
+                // Data collection controls
+                const dataTypes = ['Trees', 'Cars', 'Animals', 'Colors', 'Weather'];
+                
+                const dataTypeControl = document.createElement('div');
+                dataTypeControl.className = 'parameter-control';
+                dataTypeControl.innerHTML = `
+                    <label>Data Type:</label>
+                    <select id="dataType">
+                        ${dataTypes.map(type => `<option value="${type.toLowerCase()}">${type}</option>`).join('')}
+                    </select>
+                `;
+                
+                const sampleSizeControl = document.createElement('div');
+                sampleSizeControl.className = 'parameter-control';
+                sampleSizeControl.innerHTML = `
+                    <label>Sample Size:</label>
+                    <div class="slider-container">
+                        <input type="range" id="sampleSize" min="10" max="100" value="30">
+                        <span id="sampleSizeValue">30</span>
+                    </div>
+                `;
+                
+                controlsContainer.appendChild(dataTypeControl);
+                controlsContainer.appendChild(sampleSizeControl);
+                
+                // Setup event listener for sample size slider
+                document.getElementById('sampleSize').addEventListener('input', () => {
+                    document.getElementById('sampleSizeValue').textContent = document.getElementById('sampleSize').value;
+                });
+            } else if (gameState.projectType === 'probability') {
+                // Probability experiment controls
+                const experimentTypes = ['Dice', 'Coins', 'Cards', 'Spinner'];
+                
+                const experimentTypeControl = document.createElement('div');
+                experimentTypeControl.className = 'parameter-control';
+                experimentTypeControl.innerHTML = `
+                    <label>Experiment Type:</label>
+                    <select id="experimentType">
+                        ${experimentTypes.map(type => `<option value="${type.toLowerCase()}">${type}</option>`).join('')}
+                    </select>
+                `;
+                
+                const numTrialsControl = document.createElement('div');
+                numTrialsControl.className = 'parameter-control';
+                numTrialsControl.innerHTML = `
+                    <label>Number of Trials:</label>
+                    <div class="slider-container">
+                        <input type="range" id="numTrials" min="10" max="100" value="20">
+                        <span id="numTrialsValue">20</span>
+                    </div>
+                `;
+                
+                controlsContainer.appendChild(experimentTypeControl);
+                controlsContainer.appendChild(numTrialsControl);
+                
+                // Setup event listener for trials slider
+                document.getElementById('numTrials').addEventListener('input', () => {
+                    document.getElementById('numTrialsValue').textContent = document.getElementById('numTrials').value;
+                });
+            } else if (gameState.projectType === 'distribution') {
+                // Distribution controls
+                const distributionTypes = ['Normal', 'Uniform', 'Binomial'];
+                
+                const distributionTypeControl = document.createElement('div');
+                distributionTypeControl.className = 'parameter-control';
+                distributionTypeControl.innerHTML = `
+                    <label>Distribution Type:</label>
+                    <select id="distributionType">
+                        ${distributionTypes.map(type => `<option value="${type.toLowerCase()}">${type}</option>`).join('')}
+                    </select>
+                `;
+                
+                const sampleSizeControl = document.createElement('div');
+                sampleSizeControl.className = 'parameter-control';
+                sampleSizeControl.innerHTML = `
+                    <label>Sample Size:</label>
+                    <div class="slider-container">
+                        <input type="range" id="distributionSampleSize" min="10" max="200" value="50">
+                        <span id="distributionSampleSizeValue">50</span>
+                    </div>
+                `;
+                
+                const meanControl = document.createElement('div');
+                meanControl.className = 'parameter-control';
+                meanControl.innerHTML = `
+                    <label>Mean (Average):</label>
+                    <div class="slider-container">
+                        <input type="range" id="distributionMean" min="1" max="10" value="5">
+                        <span id="distributionMeanValue">5</span>
+                    </div>
+                `;
+                
+                const spreadControl = document.createElement('div');
+                spreadControl.className = 'parameter-control';
+                spreadControl.innerHTML = `
+                    <label>Spread (Standard Deviation):</label>
+                    <div class="slider-container">
+                        <input type="range" id="distributionSpread" min="1" max="5" value="2">
+                        <span id="distributionSpreadValue">2</span>
+                    </div>
+                `;
+                
+                controlsContainer.appendChild(distributionTypeControl);
+                controlsContainer.appendChild(sampleSizeControl);
+                controlsContainer.appendChild(meanControl);
+                controlsContainer.appendChild(spreadControl);
+                
+                // Setup event listeners for sliders
+                document.getElementById('distributionSampleSize').addEventListener('input', () => {
+                    document.getElementById('distributionSampleSizeValue').textContent = document.getElementById('distributionSampleSize').value;
+                });
+                
+                document.getElementById('distributionMean').addEventListener('input', () => {
+                    document.getElementById('distributionMeanValue').textContent = document.getElementById('distributionMean').value;
+                });
+                
+                document.getElementById('distributionSpread').addEventListener('input', () => {
+                    document.getElementById('distributionSpreadValue').textContent = document.getElementById('distributionSpread').value;
+                });
+            } else if (gameState.projectType === 'correlation') {
+                // Correlation controls
+                const correlationTypes = ['Positive', 'Negative', 'None', 'Random'];
+                
+                const correlationTypeControl = document.createElement('div');
+                correlationTypeControl.className = 'parameter-control';
+                correlationTypeControl.innerHTML = `
+                    <label>Expected Correlation:</label>
+                    <select id="correlationType">
+                        ${correlationTypes.map(type => `<option value="${type.toLowerCase()}">${type}</option>`).join('')}
+                    </select>
+                `;
+                
+                const dataPointsControl = document.createElement('div');
+                dataPointsControl.className = 'parameter-control';
+                dataPointsControl.innerHTML = `
+                    <label>Number of Data Points:</label>
+                    <div class="slider-container">
+                        <input type="range" id="correlationDataPoints" min="5" max="50" value="20">
+                        <span id="correlationDataPointsValue">20</span>
+                    </div>
+                `;
+                
+                const noiseControl = document.createElement('div');
+                noiseControl.className = 'parameter-control';
+                noiseControl.innerHTML = `
+                    <label>Noise Level:</label>
+                    <div class="slider-container">
+                        <input type="range" id="correlationNoise" min="0" max="10" value="3">
+                        <span id="correlationNoiseValue">3</span>
+                    </div>
+                `;
+                
+                controlsContainer.appendChild(correlationTypeControl);
+                controlsContainer.appendChild(dataPointsControl);
+                controlsContainer.appendChild(noiseControl);
+                
+                // Setup event listeners for sliders
+                document.getElementById('correlationDataPoints').addEventListener('input', () => {
+                    document.getElementById('correlationDataPointsValue').textContent = document.getElementById('correlationDataPoints').value;
+                });
+                
+                document.getElementById('correlationNoise').addEventListener('input', () => {
+                    document.getElementById('correlationNoiseValue').textContent = document.getElementById('correlationNoise').value;
+                });
+            }
+            
+            // Update sandbox speech bubble
+            document.getElementById('speechBubbleSandbox').textContent = 
+                `You've selected the ${gameState.projectType} project! Adjust the parameters and click "Run Experiment" to see what happens!`;
+            
+            // Redraw canvas
+            if (window.redrawSandbox) {
+                window.redrawSandbox();
+            }
+        }
+        
+        // Update advanced explanation
+        function updateAdvancedExplanation() {
+            const explainContainer = document.getElementById('advancedExplanation');
+            
+            // Different explanations based on concept
+            let explanation = '';
+            
+            if (gameState.advancedConcept === 'sampleSize') {
+                explanation = `
+                    <h4>Sample Size & Accuracy</h4>
+                    <p>When we collect data, we often can't look at <i>everything</i> - that would take too long! Instead, we take a <strong>sample</strong>.</p>
+                    <p>But here's the cool part: the <strong>bigger</strong> our sample, the more <strong>accurate</strong> our results will be!</p>
+                    <p>Think about it like this: If you want to know the favorite color in your school, asking just 3 friends isn't as good as asking 30 classmates.</p>
+                    <p>Statisticians use something called the <span class="tooltip">"margin of error"<span class="tooltiptext">The margin of error tells us how confident we can be in our results. A smaller margin of error means more confidence!</span></span> to measure how accurate their sample is.</p>
+                `;
+            } else if (gameState.advancedConcept === 'normalDist') {
+                explanation = `
+                    <h4>Normal Distribution (Bell Curve)</h4>
+                    <p>Many things in nature follow a special pattern called the <strong>normal distribution</strong> or "bell curve."</p>
+                    <p>In a normal distribution:</p>
+                    <ul>
+                        <li>Most values cluster around the middle (mean)</li>
+                        <li>Values become less common as they get farther from the mean</li>
+                        <li>The curve is symmetric (same shape on both sides)</li>
+                    </ul>
+                    <p>Examples include: heights of people, test scores in a large class, and measurement errors.</p>
+                    <p>The normal distribution has a special rule: about 68% of values fall within one <span class="tooltip">"standard deviation"<span class="tooltiptext">Standard deviation is a measure of how spread out the values are from the mean</span></span> of the mean!</p>
+                `;
+            } else if (gameState.advancedConcept === 'confidence') {
+                explanation = `
+                    <h4>Confidence Intervals</h4>
+                    <p>When statisticians make estimates, they don't just give one number - they give a <strong>range</strong> called a confidence interval.</p>
+                    <p>A confidence interval tells us: "We're pretty sure the real answer is somewhere in this range."</p>
+                    <p>For example, instead of saying "exactly 50% of people prefer chocolate ice cream," we might say "between 45% and 55% of people prefer chocolate ice cream, with 95% confidence."</p>
+                    <p>The "95% confidence" part means that if we did this survey many times, our interval would contain the true value in about 95 out of 100 surveys.</p>
+                    <p>The bigger our sample, the <strong>narrower</strong> our confidence interval can be!</p>
+                `;
+            } else if (gameState.advancedConcept === 'hypothesis') {
+                explanation = `
+                    <h4>Hypothesis Testing (Simplified)</h4>
+                    <p>Scientists use statistics to test ideas called <strong>hypotheses</strong>. Here's how it works:</p>
+                    <ol>
+                        <li>Start with a question (e.g., "Does this medicine work?").</li>
+                        <li>Make a "null hypothesis" - usually that nothing special is happening (e.g., "The medicine does not work").</li>
+                        <li>Collect data through experiments.</li>
+                        <li>Calculate how likely your results would be if the null hypothesis were true.</li>
+                        <li>If the results are very unlikely (usually less than 5% chance), we <span class="tooltip">"reject the null hypothesis"<span class="tooltiptext">This means we decide there IS something special happening!</span></span>.</li>
+                    </ol>
+                    <p>This is how scientists decide if a new medicine works, if a teaching method is better, or if a volcano might erupt!</p>
+                `;
+            }
+            
+            explainContainer.innerHTML = explanation;
+        }
+        
+        // Run experiment
+        function runExperiment() {
+            gameState.experimentResults = [];
+            
+            if (gameState.projectType === 'data') {
+                const dataType = document.getElementById('dataType').value;
+                const sampleSize = parseInt(document.getElementById('sampleSize').value);
+                
+                // Generate sample data
+                const categories = getDataCategories(dataType);
+                
+                for (let i = 0; i < sampleSize; i++) {
+                    const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+                    gameState.experimentResults.push({ category: randomCategory });
+                }
+                
+                // Update speech bubble
+                document.getElementById('speechBubbleSandbox').textContent = 
+                    `Great job collecting data on ${dataType}! We collected ${sampleSize} samples. Let's analyze the results!`;
+            } else if (gameState.projectType === 'probability') {
+                const experimentType = document.getElementById('experimentType').value;
+                const numTrials = parseInt(document.getElementById('numTrials').value);
+                
+                // Run probability experiment
+                for (let i = 0; i < numTrials; i++) {
+                    let result;
+                    
+                    if (experimentType === 'dice') {
+                        result = { value: Math.floor(Math.random() * 6) + 1 };
+                    } else if (experimentType === 'coins') {
+                        result = { value: Math.random() < 0.5 ? 'Heads' : 'Tails' };
+                    } else if (experimentType === 'cards') {
+                        const suits = ['Hearts', 'Diamonds', 'Clubs', 'Spades'];
+                        const values = ['Ace', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Jack', 'Queen', 'King'];
+                        const suit = suits[Math.floor(Math.random() * suits.length)];
+                        const value = values[Math.floor(Math.random() * values.length)];
+                        result = { value: `${value} of ${suit}` };
+                    } else if (experimentType === 'spinner') {
+                        const colors = ['Red', 'Blue', 'Green', 'Yellow'];
+                        result = { value: colors[Math.floor(Math.random() * colors.length)] };
+                    }
+                    
+                    gameState.experimentResults.push(result);
+                }
+                
+                // Update speech bubble
+                document.getElementById('speechBubbleSandbox').textContent = 
+                    `You ran the ${experimentType} experiment ${numTrials} times! Let's look at the probability distribution.`;
+            } else if (gameState.projectType === 'distribution') {
+                const distributionType = document.getElementById('distributionType').value;
+                const sampleSize = parseInt(document.getElementById('distributionSampleSize').value);
+                const mean = parseInt(document.getElementById('distributionMean').value);
+                const spread = parseInt(document.getElementById('distributionSpread').value);
+                
+                // Generate distribution
+                for (let i = 0; i < sampleSize; i++) {
+                    let value;
+                    
+                    if (distributionType === 'normal') {
+                        // Box-Muller transform for normal distribution
+                        const u1 = Math.random();
+                        const u2 = Math.random();
+                        const z = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+                        value = mean + z * spread;
+                    } else if (distributionType === 'uniform') {
+                        // Uniform distribution
+                        value = mean - spread + Math.random() * (2 * spread);
+                    } else if (distributionType === 'binomial') {
+                        // Simplified binomial
+                        const trials = 10;
+                        const probability = mean / 10;
+                        let successes = 0;
+                        
+                        for (let j = 0; j < trials; j++) {
+                            if (Math.random() < probability) {
+                                successes++;
+                            }
+                        }
+                        
+                        value = successes;
+                    }
+                    
+                    gameState.experimentResults.push({ value });
+                }
+                
+                // Update speech bubble
+                document.getElementById('speechBubbleSandbox').textContent = 
+                    `You generated ${sampleSize} values from a ${distributionType} distribution! Look at how they're distributed in the histogram.`;
+            } else if (gameState.projectType === 'correlation') {
+                const correlationType = document.getElementById('correlationType').value;
+                const dataPoints = parseInt(document.getElementById('correlationDataPoints').value);
+                const noise = parseInt(document.getElementById('correlationNoise').value) / 10;
+                
+                // Generate correlated data
+                for (let i = 0; i < dataPoints; i++) {
+                    const x = i / (dataPoints - 1) * 10;
+                    let y;
+                    
+                    if (correlationType === 'positive') {
+                        y = x + (Math.random() * 2 - 1) * noise * 10;
+                    } else if (correlationType === 'negative') {
+                        y = 10 - x + (Math.random() * 2 - 1) * noise * 10;
+                    } else if (correlationType === 'none') {
+                        y = 5 + (Math.random() * 2 - 1) * 5;
+                    } else if (correlationType === 'random') {
+                        y = Math.random() * 10;
+                    }
+                    
+                    // Ensure y is within 0-10 range
+                    y = Math.max(0, Math.min(10, y));
+                    
+                    gameState.experimentResults.push({ x, y });
+                }
+                
+                // Update speech bubble
+                document.getElementById('speechBubbleSandbox').textContent = 
+                    `You generated data with a ${correlationType} correlation! The scatter plot shows how the two variables relate to each other.`;
+            }
+            
+            // Update experiment results visualization
+            if (window.redrawExperimentResults) {
+                window.redrawExperimentResults();
+            }
+            
+            // Update sandbox visualization
+            if (window.redrawSandbox) {
+                window.redrawSandbox();
+            }
+            
+            // Play sound
+            sfx.success();
+        }
+        
+        // Reset experiment
+        function resetExperiment() {
+            gameState.experimentResults = [];
+            
+            // Update experiment results visualization
+            if (window.redrawExperimentResults) {
+                window.redrawExperimentResults();
+            }
+            
+            // Update speech bubble
+            document.getElementById('speechBubbleSandbox').textContent = 
+                `You've reset the experiment! You can adjust the parameters and run a new experiment.`;
+            
+            // Play sound
+            sfx.click();
+        }
+        
+        // Save experiment
+        function saveExperiment() {
+            if (gameState.experimentResults.length === 0) {
+                // No results to save
+                document.getElementById('speechBubbleSandbox').textContent = 
+                    `There are no experiment results to save yet! Run an experiment first.`;
+                return;
+            }
+            
+            // In a real app, we would save to a file or database
+            // For this demo, we'll just indicate it was "saved"
+            document.getElementById('speechBubbleSandbox').textContent = 
+                `Great job! Your experiment results have been saved. You can run more experiments or try different parameters!`;
+            
+            // Play sound
+            sfx.success();
+            
+            // Complete sandbox level if all levels completed
+            if (gameState.levelsCompleted.includes(1) && 
+                gameState.levelsCompleted.includes(2) && 
+                gameState.levelsCompleted.includes(3) && 
+                gameState.levelsCompleted.includes(4) && 
+                !gameState.levelsCompleted.includes(5)) {
+                completeLevel(5);
+            }
+        }
+        
+        // Get data categories for data project
+        function getDataCategories(dataType) {
+            const categories = {
+                trees: ['Oak', 'Pine', 'Maple', 'Birch', 'Willow', 'Palm'],
+                cars: ['Sedan', 'SUV', 'Truck', 'Compact', 'Van', 'Sports Car'],
+                animals: ['Dog', 'Cat', 'Bird', 'Fish', 'Rabbit', 'Hamster'],
+                colors: ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange'],
+                weather: ['Sunny', 'Cloudy', 'Rainy', 'Snowy', 'Windy', 'Foggy']
+            };
+            
+            return categories[dataType] || categories.colors;
+        }
+        
+        // Complete a level
+        function completeLevel(level) {
+            if (!gameState.levelsCompleted.includes(level)) {
+                gameState.levelsCompleted.push(level);
+                
+                // Update badge
+                updateBadges();
+                
+                // Show completion modal
+                const modal = document.getElementById('completionModal');
+                const badge = document.getElementById('completionBadge');
+                
+                badge.textContent = level;
+                
+                modal.classList.add('open');
+                
+                // Play level complete sound
+                sfx.levelComplete();
+                
+                // Check if all levels are complete
+                if (level === 5 || (gameState.levelsCompleted.includes(1) && 
+                    gameState.levelsCompleted.includes(2) && 
+                    gameState.levelsCompleted.includes(3) && 
+                    gameState.levelsCompleted.includes(4))) {
+                    // Award master badge
+                    if (!gameState.badgesEarned.includes('master')) {
+                        gameState.badgesEarned.push('master');
+                        updateBadges();
+                        
+                        // Show certificate
+                        setTimeout(() => {
+                            document.getElementById('certificateModal').classList.add('open');
+                        }, 2000);
+                    }
+                }
+            }
+        }
+        
+        // Update badges
+        function updateBadges() {
+            const badges = document.querySelectorAll('.badge');
+            
+            badges.forEach(badge => {
+                const level = badge.getAttribute('data-level');
+                
+                if (gameState.levelsCompleted.includes(parseInt(level)) || gameState.badgesEarned.includes(level)) {
+                    badge.classList.add('earned');
+                } else {
+                    badge.classList.remove('earned');
+                }
+            });
+            
+            // Update progress bar
+            const progress = (gameState.levelsCompleted.length / 5) * 100;
+            document.querySelector('.progress-bar').style.width = `${progress}%`;
+        }
+    </script>
+</body>
+</html>

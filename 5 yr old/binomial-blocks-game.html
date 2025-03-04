@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binomial Blocks: Adventure in Factorland</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        body {
+            background-color: #f0f8ff;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #header {
+            text-align: center;
+            padding: 20px;
+            background-color: #7b68ee;
+            color: white;
+            border-radius: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px #5a49c7;
+        }
+        #gameArea {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            border-radius: 20px;
+            background-color: #fff;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #e6f7ff;
+            border-radius: 15px;
+            width: 100%;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            min-width: 200px;
+        }
+        .control-group h3 {
+            margin-bottom: 10px;
+            color: #7b68ee;
+        }
+        button {
+            background-color: #7b68ee;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            box-shadow: 0 4px #5a49c7;
+            transition: all 0.2s;
+        }
+        button:hover {
+            background-color: #6a5acd;
+            transform: translateY(2px);
+            box-shadow: 0 2px #5a49c7;
+        }
+        button:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+        input[type="range"] {
+            width: 180px;
+        }
+        .character {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            pointer-events: none;
+        }
+        .speech-bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-width: 300px;
+            font-size: 18px;
+            z-index: 10;
+        }
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 25px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent;
+        }
+        #quiz-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.8);
+            z-index: 100;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #quiz-box {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        #quiz-question {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #7b68ee;
+        }
+        #quiz-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .quiz-option {
+            background-color: #e6f7ff;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        .quiz-option:hover {
+            background-color: #d1eeff;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+        }
+        .correct {
+            background-color: #98FB98 !important;
+        }
+        .incorrect {
+            background-color: #FFA07A !important;
+        }
+        #progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: #e6e6e6;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        #progress-bar {
+            height: 100%;
+            background-color: #7b68ee;
+            border-radius: 10px;
+            transition: width 0.5s ease-in-out;
+        }
+        #advanced-panel {
+            display: none;
+            margin-top: 20px;
+            background-color: #fff3e6;
+            padding: 15px;
+            border-radius: 15px;
+            width: 100%;
+        }
+        .concept-explanation {
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-left: 5px solid #7b68ee;
+            border-radius: 5px;
+        }
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted #7b68ee;
+            cursor: help;
+            color: #7b68ee;
+        }
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 14px;
+        }
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        .level-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #7b68ee;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 16px;
+        }
+        #canvasContainer {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            margin: 20px 0;
+        }
+        .badge {
+            width: 100px;
+            height: 100px;
+            background-color: #ffd700;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 18px;
+            margin: 10px;
+            box-shadow: 0 6px #b8860b;
+            transition: all 0.2s;
+        }
+        .badge:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 9px #b8860b;
+        }
+        #badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        #message-box {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(123, 104, 238, 0.9);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            display: none;
+            text-align: center;
+            font-size: 24px;
+            min-width: 300px;
+        }
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #fd4;
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="header">
+            <h1>Binomial Blocks: Adventure in Factorland</h1>
+            <p>Join Professor Poly and Factoria in a math adventure!</p>
+        </div>
+        
+        <div id="gameArea">
+            <div class="level-indicator">Level: <span id="current-level">1</span></div>
+            
+            <div id="canvasContainer"></div>
+            
+            <div id="controls">
+                <div class="control-group">
+                    <h3>Block Controls</h3>
+                    <div>
+                        <label for="aValue">a value: <span id="aValueDisplay">1</span></label>
+                        <input type="range" id="aValue" min="1" max="5" value="1" step="1">
+                    </div>
+                    <div>
+                        <label for="bValue">b value: <span id="bValueDisplay">1</span></label>
+                        <input type="range" id="bValue" min="1" max="5" value="1" step="1">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>Actions</h3>
+                    <button id="factorBtn">Factor It!</button>
+                    <button id="resetBtn">Reset</button>
+                    <button id="quizBtn">Take Quiz</button>
+                </div>
+                
+                <div class="control-group">
+                    <h3>Learning Mode</h3>
+                    <button id="toggleAdvanced">Show Advanced Concepts</button>
+                    <button id="toggleHelp">Toggle Helper</button>
+                </div>
+            </div>
+            
+            <div id="advanced-panel">
+                <h2>Advanced Concepts on Binomial Factoring</h2>
+                <div class="concept-explanation">
+                    <h3>What is a Binomial?</h3>
+                    <p>A binomial is a mathematical expression with two terms, like <span class="tooltip">x² + 2x<span class="tooltiptext">This binomial has terms x² and 2x</span></span> or <span class="tooltip">3y - 5<span class="tooltiptext">This binomial has terms 3y and -5</span></span>.</p>
+                </div>
+                
+                <div class="concept-explanation">
+                    <h3>Factoring a Binomial</h3>
+                    <p>Factoring means finding expressions that multiply together to give the original expression. For example, x² + 2x can be factored as x(x + 2).</p>
+                </div>
+                
+                <div class="concept-explanation">
+                    <h3>Common Factoring Patterns</h3>
+                    <p>
+                        <strong>Greatest Common Factor (GCF):</strong> Pull out the largest factor shared by all terms.<br>
+                        <strong>Difference of Squares:</strong> a² - b² = (a + b)(a - b)<br>
+                        <strong>Perfect Square Trinomials:</strong> a² + 2ab + b² = (a + b)²
+                    </p>
+                </div>
+                
+                <div class="concept-explanation">
+                    <h3>Why Factoring Matters</h3>
+                    <p>Factoring helps solve equations, simplify fractions, and find roots of polynomials. It's a fundamental skill in algebra!</p>
+                </div>
+            </div>
+            
+            <div id="progress-container">
+                <div id="progress-bar" style="width: 0%"></div>
+            </div>
+            
+            <div id="badges-container">
+                <div class="badge" id="badge1" style="opacity: 0.3;">Novice</div>
+                <div class="badge" id="badge2" style="opacity: 0.3;">Explorer</div>
+                <div class="badge" id="badge3" style="opacity: 0.3;">Master</div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="quiz-container" style="display: none;">
+        <div id="quiz-box">
+            <h2 id="quiz-question">What is the factored form of x² + 3x?</h2>
+            <div id="quiz-options"></div>
+            <button id="next-question" style="display: none;">Next Question</button>
+            <button id="finish-quiz" style="display: none;">Finish Quiz</button>
+        </div>
+    </div>
+    
+    <div id="message-box"></div>
+    <div class="celebration" id="celebration"></div>
+    
+    <script>
+        // Game state
+        const gameState = {
+            level: 1,
+            maxLevel: 3,
+            progress: 0,
+            quizScores: [0, 0, 0],
+            badges: [false, false, false],
+            aValue: 1,
+            bValue: 1,
+            factored: false,
+            helpMode: true,
+            advancedMode: false,
+            characterVisible: true,
+            quizActive: false,
+            currentQuiz: null,
+            currentQuestionIndex: 0
+        };
+        
+        // Characters
+        const characters = {
+            professor: {
+                name: "Professor Poly",
+                position: { x: 50, y: 100 },
+                color: "#8A2BE2",
+                messages: [
+                    "Welcome to Factorland! I'm Professor Poly.",
+                    "Factoring binomials is like finding puzzle pieces that fit together!",
+                    "Try changing the values of a and b to create different binomials.",
+                    "The 'Factor It!' button will show you how to break down your binomial.",
+                    "Master factoring and earn all the badges to become a Binomial Champion!"
+                ],
+                currentMessage: 0
+            },
+            factoria: {
+                name: "Factoria",
+                position: { x: window.innerWidth - 200, y: 150 },
+                color: "#FF69B4",
+                messages: [
+                    "Hi! I'm Factoria, your factoring friend!",
+                    "Did you know? x² + 5x can be factored as x(x + 5)",
+                    "Here's a tip: Look for common factors first!",
+                    "Challenge yourself with the quiz to test your knowledge!",
+                    "You're doing great! Keep exploring different values!"
+                ],
+                currentMessage: 0
+            }
+        };
+        
+        // Quiz data
+        const quizzes = [
+            {
+                level: 1,
+                questions: [
+                    {
+                        question: "What is the factored form of x² + 3x?",
+                        options: ["x(x + 3)", "x(x - 3)", "(x + 3)(x)", "(x - 3)(x)"],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "Which is the greatest common factor (GCF) of 6x² and 9x?",
+                        options: ["3x", "3", "x", "9x"],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "If we have 5y + 10, what can we factor out?",
+                        options: ["5", "10", "y", "Nothing"],
+                        correctAnswer: 0
+                    }
+                ]
+            },
+            {
+                level: 2,
+                questions: [
+                    {
+                        question: "What is the factored form of 3x² + 12x?",
+                        options: ["3x(x + 4)", "3(x² + 4x)", "3x(x - 4)", "3(x² - 4x)"],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "In the expression 4a² - 8a, what is the factored form?",
+                        options: ["4a(a - 2)", "4(a² - 2a)", "2a(2a - 4)", "4a(a + 2)"],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "Which is NOT a proper factored form of 5x² + 15x?",
+                        options: ["5(x² + 3x)", "5x(x + 3)", "5x × (x + 3)", "x(5x + 15)"],
+                        correctAnswer: 3
+                    }
+                ]
+            },
+            {
+                level: 3,
+                questions: [
+                    {
+                        question: "If a² - b² = (a + b)(a - b), what is the factored form of 9x² - 4?",
+                        options: ["(3x + 2)(3x - 2)", "(3x - 2)(3x + 2)", "(9x + 4)(x - 1)", "(9x - 4)(x + 1)"],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "What is the factored form of x² + 6x + 9?",
+                        options: ["(x + 3)²", "(x - 3)²", "(x + 3)(x + 3)", "(x - 3)(x - 3)"],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "In the quadratic formula, the expression b² - 4ac is called:",
+                        options: ["The discriminant", "The quadratic", "The determinant", "The coefficient"],
+                        correctAnswer: 0
+                    }
+                ]
+            }
+        ];
+        
+        // P5.js sketch
+        let sketch = function(p) {
+            let blockSize;
+            let gridSize;
+            let centerX;
+            let centerY;
+            
+            p.setup = function() {
+                const canvas = p.createCanvas(600, 400);
+                canvas.parent('canvasContainer');
+                blockSize = 40;
+                gridSize = 10;
+                centerX = p.width / 2;
+                centerY = p.height / 2;
+                p.textAlign(p.CENTER, p.CENTER);
+                p.rectMode(p.CENTER);
+            };
+            
+            p.draw = function() {
+                p.background(255);
+                drawGrid();
+                
+                // Draw current binomial expression
+                const a = gameState.aValue;
+                const b = gameState.bValue;
+                
+                // Always draw the binomial in expanded form
+                drawExpression(a, b);
+                
+                // If factored, draw the factored blocks
+                if (gameState.factored) {
+                    drawFactoredBlocks(a, b);
+                }
+            };
+            
+            function drawGrid() {
+                p.stroke(230);
+                p.strokeWeight(1);
+                
+                // Draw horizontal grid lines
+                for (let i = 0; i <= gridSize; i++) {
+                    let y = i * blockSize + (p.height - gridSize * blockSize) / 2;
+                    p.line(0, y, p.width, y);
+                }
+                
+                // Draw vertical grid lines
+                for (let i = 0; i <= gridSize; i++) {
+                    let x = i * blockSize + (p.width - gridSize * blockSize) / 2;
+                    p.line(x, 0, x, p.height);
+                }
+            }
+            
+            function drawExpression(a, b) {
+                p.noStroke();
+                const startX = centerX - (a * blockSize) / 2;
+                const startY = centerY - (a * blockSize) / 2;
+                
+                // Draw the a² block (x²)
+                p.fill(255, 100, 100, 200);
+                p.rect(startX, startY, a * blockSize, a * blockSize);
+                p.fill(0);
+                p.textSize(20);
+                if (a === 1) {
+                    p.text("x²", startX + (a * blockSize) / 2, startY + (a * blockSize) / 2);
+                } else {
+                    p.text(a + "x²", startX + (a * blockSize) / 2, startY + (a * blockSize) / 2);
+                }
+                
+                // Draw the ab block (bx)
+                p.fill(100, 200, 100, 200);
+                p.rect(startX + (a * blockSize) / 2 + (b * blockSize) / 2 + 10, startY, b * blockSize, a * blockSize);
+                p.fill(0);
+                if (b === 1 && a === 1) {
+                    p.text("x", startX + (a * blockSize) / 2 + (b * blockSize) / 2 + 10, startY + (a * blockSize) / 2);
+                } else if (b === 1) {
+                    p.text(a + "x", startX + (a * blockSize) / 2 + (b * blockSize) / 2 + 10, startY + (a * blockSize) / 2);
+                } else if (a === 1) {
+                    p.text(b + "x", startX + (a * blockSize) / 2 + (b * blockSize) / 2 + 10, startY + (a * blockSize) / 2);
+                } else {
+                    p.text(a * b + "x", startX + (a * blockSize) / 2 + (b * blockSize) / 2 + 10, startY + (a * blockSize) / 2);
+                }
+                
+                // Draw the expression text
+                p.fill(0);
+                p.textSize(24);
+                let expressionText = "";
+                if (a === 1) {
+                    expressionText = "x² + " + (b === 1 ? "" : b) + "x";
+                } else {
+                    expressionText = a + "x² + " + (a * b) + "x";
+                }
+                p.text("Expression: " + expressionText, p.width / 2, p.height - 30);
+            }
+            
+            function drawFactoredBlocks(a, b) {
+                // Draw brackets
+                p.stroke(0);
+                p.strokeWeight(3);
+                p.noFill();
+                
+                const startX = centerX - (a * blockSize) / 2;
+                const startY = centerY - (a * blockSize) / 2;
+                
+                // Left bracket
+                p.beginShape();
+                p.vertex(startX - 20, startY - 20);
+                p.vertex(startX - 30, startY - 20);
+                p.vertex(startX - 30, startY + a * blockSize + 20);
+                p.vertex(startX - 20, startY + a * blockSize + 20);
+                p.endShape();
+                
+                // Right bracket
+                const rightX = startX + (a * blockSize) / 2 + (b * blockSize) / 2 + 10 + b * blockSize;
+                p.beginShape();
+                p.vertex(rightX + 20, startY - 20);
+                p.vertex(rightX + 30, startY - 20);
+                p.vertex(rightX + 30, startY + a * blockSize + 20);
+                p.vertex(rightX + 20, startY + a * blockSize + 20);
+                p.endShape();
+                
+                // Draw the factored expression text
+                p.fill(0);
+                p.noStroke();
+                p.textSize(24);
+                
+                let factoredText = "";
+                if (a === 1) {
+                    factoredText = "x(x + " + b + ")";
+                } else {
+                    factoredText = a + "x(x + " + b + ")";
+                }
+                p.text("Factored: " + factoredText, p.width / 2, p.height - 60);
+            }
+        };
+        
+        // Initialize the game
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize P5.js
+            new p5(sketch);
+            
+            // Setup event listeners
+            document.getElementById('aValue').addEventListener('input', function() {
+                gameState.aValue = parseInt(this.value);
+                document.getElementById('aValueDisplay').textContent = this.value;
+                gameState.factored = false;
+                updateProgressBar();
+            });
+            
+            document.getElementById('bValue').addEventListener('input', function() {
+                gameState.bValue = parseInt(this.value);
+                document.getElementById('bValueDisplay').textContent = this.value;
+                gameState.factored = false;
+                updateProgressBar();
+            });
+            
+            document.getElementById('factorBtn').addEventListener('click', function() {
+                gameState.factored = true;
+                updateProgressBar();
+                checkProgress();
+                
+                if (gameState.characterVisible && gameState.helpMode) {
+                    speakCharacter('professor');
+                }
+            });
+            
+            document.getElementById('resetBtn').addEventListener('click', function() {
+                gameState.factored = false;
+                document.getElementById('aValue').value = 1;
+                document.getElementById('bValue').value = 1;
+                gameState.aValue = 1;
+                gameState.bValue = 1;
+                document.getElementById('aValueDisplay').textContent = "1";
+                document.getElementById('bValueDisplay').textContent = "1";
+                
+                if (gameState.characterVisible && gameState.helpMode) {
+                    speakCharacter('factoria');
+                }
+            });
+            
+            document.getElementById('quizBtn').addEventListener('click', function() {
+                startQuiz();
+            });
+            
+            document.getElementById('next-question').addEventListener('click', function() {
+                nextQuestion();
+            });
+            
+            document.getElementById('finish-quiz').addEventListener('click', function() {
+                endQuiz();
+            });
+            
+            document.getElementById('toggleAdvanced').addEventListener('click', function() {
+                gameState.advancedMode = !gameState.advancedMode;
+                document.getElementById('advanced-panel').style.display = gameState.advancedMode ? 'block' : 'none';
+                this.textContent = gameState.advancedMode ? 'Hide Advanced Concepts' : 'Show Advanced Concepts';
+            });
+            
+            document.getElementById('toggleHelp').addEventListener('click', function() {
+                gameState.helpMode = !gameState.helpMode;
+                this.textContent = gameState.helpMode ? 'Hide Helper' : 'Show Helper';
+                
+                if (gameState.helpMode) {
+                    createCharacter('professor');
+                    createCharacter('factoria');
+                    speakCharacter('professor');
+                } else {
+                    document.querySelectorAll('.character, .speech-bubble').forEach(el => el.remove());
+                }
+            });
+            
+            // Initialize characters
+            if (gameState.helpMode) {
+                createCharacter('professor');
+                createCharacter('factoria');
+                setTimeout(() => speakCharacter('professor'), 1000);
+            }
+            
+            // Update display
+            updateLevel();
+            updateProgressBar();
+        });
+        
+        // Character functions
+        function createCharacter(characterId) {
+            const character = characters[characterId];
+            
+            // Remove existing character if any
+            const existingCharacter = document.getElementById(characterId + 'Character');
+            if (existingCharacter) existingCharacter.remove();
+            
+            // Create character element
+            const characterElement = document.createElement('div');
+            characterElement.className = 'character';
+            characterElement.id = characterId + 'Character';
+            characterElement.style.left = character.position.x + 'px';
+            characterElement.style.top = character.position.y + 'px';
+            
+            // Create SVG for character
+            const isProf = characterId === 'professor';
+            const svg = `
+                <svg width="150" height="150" viewBox="0 0 150 150">
+                    <!-- Body -->
+                    <circle cx="75" cy="75" r="50" fill="${character.color}" />
+                    
+                    <!-- Face -->
+                    <circle cx="75" cy="65" r="35" fill="white" />
+                    
+                    <!-- Eyes -->
+                    <circle cx="60" cy="60" r="6" fill="black" />
+                    <circle cx="90" cy="60" r="6" fill="black" />
+                    <circle cx="62" cy="58" r="2" fill="white" />
+                    <circle cx="92" cy="58" r="2" fill="white" />
+                    
+                    <!-- Mouth -->
+                    <path d="M60,80 Q75,90 90,80" stroke="black" stroke-width="3" fill="none" />
+                    
+                    <!-- Hair/Hat -->
+                    ${isProf 
+                        ? `<path d="M40,45 Q75,15 110,45 L110,35 Q75,5 40,35 Z" fill="#333" />`
+                        : `<path d="M45,40 Q75,30 105,40 L75,10 Z" fill="#FF9999" />`
+                    }
+                    
+                    <!-- Accessories -->
+                    ${isProf 
+                        ? `<rect x="65" y="50" width="20" height="8" rx="2" fill="#444" />` // glasses
+                        : `<circle cx="75" cy="25" r="5" fill="#FFF" />` // hair decoration
+                    }
+                </svg>
+            `;
+            
+            characterElement.innerHTML = svg;
+            document.body.appendChild(characterElement);
+            
+            return characterElement;
+        }
+        
+        function speakCharacter(characterId) {
+            const character = characters[characterId];
+            
+            // Remove existing speech bubble if any
+            const existingSpeech = document.getElementById(characterId + 'Speech');
+            if (existingSpeech) existingSpeech.remove();
+            
+            // Create speech bubble
+            const speechBubble = document.createElement('div');
+            speechBubble.className = 'speech-bubble';
+            speechBubble.id = characterId + 'Speech';
+            
+            // Position the speech bubble
+            const bubbleX = character.position.x + (characterId === 'professor' ? 150 : -200);
+            speechBubble.style.left = bubbleX + 'px';
+            speechBubble.style.top = (character.position.y - 50) + 'px';
+            
+            // Set the text
+            speechBubble.textContent = character.messages[character.currentMessage];
+            
+            // Cycle to next message
+            character.currentMessage = (character.currentMessage + 1) % character.messages.length;
+            
+            document.body.appendChild(speechBubble);
+            
+            // Remove after a delay
+            setTimeout(() => {
+                if (speechBubble.parentNode) {
+                    speechBubble.parentNode.removeChild(speechBubble);
+                }
+            }, 5000);
+        }
+        
+        // Quiz functions
+        function startQuiz() {
+            gameState.quizActive = true;
+            gameState.currentQuiz = quizzes[gameState.level - 1];
+            gameState.currentQuestionIndex = 0;
+            
+            document.getElementById('quiz-container').style.display = 'flex';
+            loadQuestion();
+        }
+        
+        function loadQuestion() {
+            const quiz = gameState.currentQuiz;
+            const question = quiz.questions[gameState.currentQuestionIndex];
+            
+            document.getElementById('quiz-question').textContent = question.question;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionElement.addEventListener('click', function() {
+                    checkAnswer(parseInt(this.dataset.index));
+                });
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            document.getElementById('next-question').style.display = 'none';
+            document.getElementById('finish-quiz').style.display = 'none';
+        }
+        
+        function checkAnswer(selectedIndex) {
+            const quiz = gameState.currentQuiz;
+            const question = quiz.questions[gameState.currentQuestionIndex];
+            const options = document.querySelectorAll('.quiz-option');
+            
+            options.forEach(option => {
+                option.style.pointerEvents = 'none';
+                
+                if (parseInt(option.dataset.index) === question.correctAnswer) {
+                    option.classList.add('correct');
+                } else if (parseInt(option.dataset.index) === selectedIndex) {
+                    option.classList.add('incorrect');
+                }
+            });
+            
+            // Update score
+            if (selectedIndex === question.correctAnswer) {
+                gameState.quizScores[gameState.level - 1]++;
+                showMessage("Correct! 🎉", 1500);
+            } else {
+                showMessage("Not quite right. The correct answer is highlighted.", 2000);
+            }
+            
+            if (gameState.currentQuestionIndex < quiz.questions.length - 1) {
+                document.getElementById('next-question').style.display = 'block';
+            } else {
+                document.getElementById('finish-quiz').style.display = 'block';
+            }
+        }
+        
+        function nextQuestion() {
+            gameState.currentQuestionIndex++;
+            loadQuestion();
+        }
+        
+        function endQuiz() {
+            document.getElementById('quiz-container').style.display = 'none';
+            gameState.quizActive = false;
+            
+            // Calculate score percentage
+            const score = gameState.quizScores[gameState.level - 1];
+            const totalQuestions = gameState.currentQuiz.questions.length;
+            const percentage = Math.floor((score / totalQuestions) * 100);
+            
+            showMessage(`Quiz complete! Your score: ${percentage}%`, 3000);
+            
+            // If score is good enough, unlock badge
+            if (percentage >= 70 && !gameState.badges[gameState.level - 1]) {
+                gameState.badges[gameState.level - 1] = true;
+                updateBadges();
+                showCelebration();
+                
+                // If all badges are earned, allow level up
+                if (gameState.level < gameState.maxLevel && checkLevelComplete()) {
+                    setTimeout(() => {
+                        showMessage("Level complete! You've unlocked the next level!", 3000);
+                        levelUp();
+                    }, 3500);
+                }
+            }
+            
+            updateProgressBar();
+        }
+        
+        // Progress functions
+        function checkProgress() {
+            const exploredFactors = gameState.aValue > 1 || gameState.bValue > 1;
+            
+            // Calculate progress based on exploring different values and factoring
+            if (gameState.factored && exploredFactors) {
+                gameState.progress = Math.min(gameState.progress + 10, 100);
+                updateProgressBar();
+                
+                // Check for level completion
+                if (gameState.progress >= 100 && checkLevelComplete() && gameState.level < gameState.maxLevel) {
+                    levelUp();
+                }
+            }
+        }
+        
+        function updateProgressBar() {
+            document.getElementById('progress-bar').style.width = gameState.progress + '%';
+        }
+        
+        function checkLevelComplete() {
+            return gameState.badges[gameState.level - 1];
+        }
+        
+        function levelUp() {
+            if (gameState.level < gameState.maxLevel) {
+                gameState.level++;
+                gameState.progress = 0;
+                updateLevel();
+                updateProgressBar();
+                showMessage(`Advanced to Level ${gameState.level}!`, 2000);
+            }
+        }
+        
+        function updateLevel() {
+            document.getElementById('current-level').textContent = gameState.level;
+        }
+        
+        function updateBadges() {
+            for (let i = 0; i < gameState.badges.length; i++) {
+                const badge = document.getElementById('badge' + (i + 1));
+                badge.style.opacity = gameState.badges[i] ? '1' : '0.3';
+            }
+        }
+        
+        // UI utility functions
+        function showMessage(message, duration) {
+            const messageBox = document.getElementById('message-box');
+            messageBox.textContent = message;
+            messageBox.style.display = 'block';
+            
+            setTimeout(() => {
+                messageBox.style.display = 'none';
+            }, duration);
+        }
+        
+        function showCelebration() {
+            const celebration = document.getElementById('celebration');
+            celebration.innerHTML = '';
+            
+            // Create confetti
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * window.innerWidth + 'px';
+                confetti.style.top = -10 + 'px';
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                celebration.appendChild(confetti);
+                
+                // Animate confetti
+                const duration = 1 + Math.random() * 2;
+                const delay = Math.random() * 2;
+                
+                confetti.animate([
+                    { transform: `translate(0, 0) rotate(0)` },
+                    { transform: `translate(${Math.random() * 200 - 100}px, ${window.innerHeight}px) rotate(${Math.random() * 720}deg)` }
+                ], {
+                    duration: duration * 1000,
+                    delay: delay * 1000,
+                    fill: 'forwards'
+                });
+            }
+            
+            // Remove celebration after animation
+            setTimeout(() => {
+                celebration.innerHTML = '';
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

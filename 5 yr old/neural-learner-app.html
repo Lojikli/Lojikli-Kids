@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Learner - Interactive ML Demo</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #70e1f5, #ffd194);
+            color: #333;
+        }
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        .scene-container {
+            flex: 3;
+            position: relative;
+        }
+        .controls {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            overflow-y: auto;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            min-width: 320px;
+        }
+        h1 {
+            text-align: center;
+            color: #ff6b6b;
+            margin-top: 0;
+        }
+        h2 {
+            color: #43a047;
+            margin-top: 20px;
+        }
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="range"] {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            appearance: none;
+            background: #ddd;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            cursor: pointer;
+        }
+        .value-display {
+            display: inline-block;
+            min-width: 40px;
+            text-align: right;
+            font-weight: bold;
+        }
+        .button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 10px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            background-color: #3e8e41;
+            transform: scale(1.05);
+        }
+        .task-container {
+            margin-bottom: 15px;
+        }
+        .status {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 15px;
+        }
+        .progress-container {
+            margin: 15px 0;
+        }
+        progress {
+            width: 100%;
+            height: 20px;
+            border-radius: 10px;
+        }
+        .speech-bubble {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-width: 300px;
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: white transparent;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="scene-container" id="scene-container">
+            <div class="speech-bubble" id="speech-bubble">
+                Hi! I'm Neuro! Let's learn together!
+            </div>
+        </div>
+        <div class="controls">
+            <h1>Neural Learner</h1>
+            <p>Help Neuro learn new skills by adjusting the learning parameters!</p>
+            
+            <div class="task-container">
+                <h2>Learning Task</h2>
+                <select id="task-select" class="button">
+                    <option value="pattern">Pattern Recognition</option>
+                    <option value="maze">Maze Navigation</option>
+                    <option value="classification">Object Classification</option>
+                </select>
+                <button id="start-learning" class="button">Start Learning</button>
+                <button id="reset-learning" class="button">Reset</button>
+            </div>
+            
+            <h2>Neural Network</h2>
+            <div class="slider-container">
+                <label>Hidden Layers: <span class="value-display" id="layers-value">2</span></label>
+                <input type="range" id="layers" min="1" max="5" step="1" value="2">
+            </div>
+            <div class="slider-container">
+                <label>Neurons Per Layer: <span class="value-display" id="neurons-value">8</span></label>
+                <input type="range" id="neurons" min="4" max="16" step="4" value="8">
+            </div>
+            
+            <h2>Learning Parameters</h2>
+            <div class="slider-container">
+                <label>Learning Rate: <span class="value-display" id="learning-rate-value">0.1</span></label>
+                <input type="range" id="learning-rate" min="0.01" max="0.5" step="0.01" value="0.1">
+            </div>
+            <div class="slider-container">
+                <label>Batch Size: <span class="value-display" id="batch-size-value">10</span></label>
+                <input type="range" id="batch-size" min="1" max="32" step="1" value="10">
+            </div>
+            <div class="slider-container">
+                <label>Activation Function:</label>
+                <select id="activation-function" class="button">
+                    <option value="relu">ReLU</option>
+                    <option value="sigmoid">Sigmoid</option>
+                    <option value="tanh">Tanh</option>
+                </select>
+            </div>
+            
+            <h2>Advanced Parameters</h2>
+            <div class="slider-container">
+                <label>Dropout Rate: <span class="value-display" id="dropout-value">0.2</span></label>
+                <input type="range" id="dropout" min="0" max="0.5" step="0.05" value="0.2">
+            </div>
+            <div class="slider-container">
+                <label>Regularization: <span class="value-display" id="regularization-value">0.01</span></label>
+                <input type="range" id="regularization" min="0" max="0.1" step="0.01" value="0.01">
+            </div>
+            <div class="slider-container">
+                <label>Momentum: <span class="value-display" id="momentum-value">0.9</span></label>
+                <input type="range" id="momentum" min="0" max="0.99" step="0.01" value="0.9">
+            </div>
+            
+            <div class="progress-container">
+                <label>Learning Progress: <span id="accuracy-value">0%</span></label>
+                <progress id="accuracy-progress" value="0" max="100"></progress>
+            </div>
+            
+            <div class="status" id="status">
+                <p>Neuro is waiting to learn. Adjust the parameters and click Start Learning!</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // DOM Elements
+        const sceneContainer = document.getElementById('scene-container');
+        const startButton = document.getElementById('start-learning');
+        const resetButton = document.getElementById('reset-learning');
+        const taskSelect = document.getElementById('task-select');
+        const layersSlider = document.getElementById('layers');
+        const neuronsSlider = document.getElementById('neurons');
+        const learningRateSlider = document.getElementById('learning-rate');
+        const batchSizeSlider = document.getElementById('batch-size');
+        const dropoutSlider = document.getElementById('dropout');
+        const regularizationSlider = document.getElementById('regularization');
+        const momentumSlider = document.getElementById('momentum');
+        const activationSelect = document.getElementById('activation-function');
+        const accuracyProgress = document.getElementById('accuracy-progress');
+        const accuracyValue = document.getElementById('accuracy-value');
+        const statusText = document.getElementById('status');
+        const speechBubble = document.getElementById('speech-bubble');
+        
+        // Update value displays for sliders
+        function updateValueDisplay(slider, displayId) {
+            const display = document.getElementById(displayId);
+            display.textContent = slider.value;
+            slider.addEventListener('input', () => {
+                display.textContent = slider.value;
+                updateNetwork();
+            });
+        }
+        
+        updateValueDisplay(layersSlider, 'layers-value');
+        updateValueDisplay(neuronsSlider, 'neurons-value');
+        updateValueDisplay(learningRateSlider, 'learning-rate-value');
+        updateValueDisplay(batchSizeSlider, 'batch-size-value');
+        updateValueDisplay(dropoutSlider, 'dropout-value');
+        updateValueDisplay(regularizationSlider, 'regularization-value');
+        updateValueDisplay(momentumSlider, 'momentum-value');
+        
+        // Speech bubble messages
+        const speechMessages = {
+            intro: "Hi! I'm Neuro! Let's learn together!",
+            startLearning: "I'm so excited to learn! Watch my brain work!",
+            goodProgress: "Wow! I'm learning fast with these parameters!",
+            slowProgress: "Hmm, this is tricky. Maybe try adjusting the parameters?",
+            completed: "Yay! I did it! I've learned the pattern!"
+        };
+        
+        function showSpeechBubble(message, duration = 4000) {
+            speechBubble.textContent = message;
+            speechBubble.style.opacity = 1;
+            
+            setTimeout(() => {
+                speechBubble.style.opacity = 0;
+            }, duration);
+        }
+        
+        // Show intro message
+        setTimeout(() => {
+            showSpeechBubble(speechMessages.intro);
+        }, 1000);
+        
+        // Three.js Setup
+        let scene, camera, renderer;
+        let character, brain;
+        let neurons = [];
+        let connections = [];
+        let learningTask;
+        let isLearning = false;
+        let accuracy = 0;
+        let epoch = 0;
+        
+        function initScene() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xE0F7FA);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(
+                75,
+                sceneContainer.clientWidth / sceneContainer.clientHeight,
+                0.1,
+                1000
+            );
+            camera.position.z = 15;
+            
+            // Create renderer (WebGL - using GPU acceleration)
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(sceneContainer.clientWidth, sceneContainer.clientHeight);
+            sceneContainer.appendChild(renderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 5, 5);
+            scene.add(directionalLight);
+            
+            // Create character
+            createCharacter();
+            
+            // Create neural network visualization
+            createNeuralNetwork();
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start animation loop
+            animate();
+        }
+        
+        function createCharacter() {
+            // Create character group
+            character = new THREE.Group();
+            scene.add(character);
+            character.position.set(-6, 0, 0);
+            
+            // Head (sphere)
+            const headGeometry = new THREE.SphereGeometry(1.2, 32, 32);
+            const headMaterial = new THREE.MeshPhongMaterial({ color: 0x4FC3F7 });
+            const head = new THREE.Mesh(headGeometry, headMaterial);
+            character.add(head);
+            
+            // Eyes
+            const eyeGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+            const eyeMaterial = new THREE.MeshPhongMaterial({ color: 0xFFFFFF });
+            
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(0.5, 0.3, 0.9);
+            character.add(leftEye);
+            
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(-0.5, 0.3, 0.9);
+            character.add(rightEye);
+            
+            // Pupils
+            const pupilGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+            const pupilMaterial = new THREE.MeshPhongMaterial({ color: 0x000000 });
+            
+            const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+            leftPupil.position.set(0.5, 0.3, 1.05);
+            character.add(leftPupil);
+            
+            const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+            rightPupil.position.set(-0.5, 0.3, 1.05);
+            character.add(rightPupil);
+            
+            // Mouth
+            const mouthGeometry = new THREE.TorusGeometry(0.4, 0.1, 16, 32, Math.PI);
+            const mouthMaterial = new THREE.MeshPhongMaterial({ color: 0xFC5C65 });
+            const mouth = new THREE.Mesh(mouthGeometry, mouthMaterial);
+            mouth.position.set(0, -0.3, 0.9);
+            mouth.rotation.x = Math.PI / 2;
+            mouth.rotation.z = Math.PI;
+            character.add(mouth);
+            
+            // Antennas
+            const antennaGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.8, 16);
+            const antennaMaterial = new THREE.MeshPhongMaterial({ color: 0x9E9E9E });
+            
+            const leftAntenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
+            leftAntenna.position.set(0.5, 1.2, 0);
+            leftAntenna.rotation.x = -Math.PI / 6;
+            leftAntenna.rotation.z = Math.PI / 6;
+            character.add(leftAntenna);
+            
+            const rightAntenna = new THREE.Mesh(antennaGeometry, antennaMaterial);
+            rightAntenna.position.set(-0.5, 1.2, 0);
+            rightAntenna.rotation.x = -Math.PI / 6;
+            rightAntenna.rotation.z = -Math.PI / 6;
+            character.add(rightAntenna);
+            
+            // Antenna bulbs
+            const bulbGeometry = new THREE.SphereGeometry(0.12, 16, 16);
+            const bulbMaterial = new THREE.MeshPhongMaterial({ color: 0xFF9800, emissive: 0xFF9800, emissiveIntensity: 0.5 });
+            
+            const leftBulb = new THREE.Mesh(bulbGeometry, bulbMaterial);
+            leftBulb.position.set(0.67, 1.55, -0.23);
+            character.add(leftBulb);
+            
+            const rightBulb = new THREE.Mesh(bulbGeometry, bulbMaterial);
+            rightBulb.position.set(-0.67, 1.55, -0.23);
+            character.add(rightBulb);
+        }
+        
+        function createNeuralNetwork() {
+            // Create brain container
+            brain = new THREE.Group();
+            scene.add(brain);
+            brain.position.set(4, 0, 0);
+            
+            // Create initial network
+            updateNetwork();
+        }
+        
+        function updateNetwork() {
+            // Clear previous network
+            while(brain.children.length > 0) {
+                brain.remove(brain.children[0]);
+            }
+            
+            neurons = [];
+            connections = [];
+            
+            const layers = parseInt(layersSlider.value);
+            const neuronsPerLayer = parseInt(neuronsSlider.value);
+            
+            // Create input layer (special visual)
+            const inputLayer = createLayer(4, -6, 0x4CAF50);
+            neurons.push(inputLayer);
+            
+            // Create hidden layers
+            for (let i = 0; i < layers; i++) {
+                const x = -3 + (i * 6) / layers;
+                const hiddenLayer = createLayer(neuronsPerLayer, x, 0x2196F3);
+                neurons.push(hiddenLayer);
+            }
+            
+            // Create output layer (special visual)
+            const outputLayer = createLayer(4, 3, 0xF44336);
+            neurons.push(outputLayer);
+            
+            // Create connections between layers
+            for (let i = 0; i < neurons.length - 1; i++) {
+                const fromLayer = neurons[i];
+                const toLayer = neurons[i + 1];
+                
+                for (let j = 0; j < fromLayer.length; j++) {
+                    for (let k = 0; k < toLayer.length; k++) {
+                        const connection = createConnection(fromLayer[j], toLayer[k]);
+                        connections.push(connection);
+                    }
+                }
+            }
+        }
+        
+        function createLayer(neuronsCount, xPosition, color) {
+            const layer = [];
+            const spacing = 1.5;
+            const layerHeight = (neuronsCount - 1) * spacing;
+            const startY = layerHeight / 2;
+            
+            for (let i = 0; i < neuronsCount; i++) {
+                const y = startY - (i * spacing);
+                const neuron = createNeuron(xPosition, y, color);
+                layer.push(neuron);
+                brain.add(neuron);
+            }
+            
+            return layer;
+        }
+        
+        function createNeuron(x, y, color) {
+            const neuronGeometry = new THREE.SphereGeometry(0.3, 16, 16);
+            const neuronMaterial = new THREE.MeshPhongMaterial({
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.2,
+                transparent: true,
+                opacity: 0.9
+            });
+            
+            const neuron = new THREE.Mesh(neuronGeometry, neuronMaterial);
+            neuron.position.set(x, y, 0);
+            neuron.userData = {
+                originalColor: color,
+                activated: false
+            };
+            
+            return neuron;
+        }
+        
+        function createConnection(fromNeuron, toNeuron) {
+            const points = [
+                new THREE.Vector3(
+                    fromNeuron.position.x,
+                    fromNeuron.position.y,
+                    fromNeuron.position.z
+                ),
+                new THREE.Vector3(
+                    toNeuron.position.x,
+                    toNeuron.position.y,
+                    toNeuron.position.z
+                )
+            ];
+            
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const material = new THREE.LineBasicMaterial({
+                color: 0xCCCCCC,
+                transparent: true,
+                opacity: 0.4
+            });
+            
+            const connection = new THREE.Line(geometry, material);
+            brain.add(connection);
+            
+            connection.userData = {
+                fromNeuron: fromNeuron,
+                toNeuron: toNeuron,
+                weight: Math.random() * 2 - 1, // Random weight between -1 and 1
+                originalColor: 0xCCCCCC,
+                signalProgress: 0
+            };
+            
+            return connection;
+        }
+        
+        function onWindowResize() {
+            camera.aspect = sceneContainer.clientWidth / sceneContainer.clientHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(sceneContainer.clientWidth, sceneContainer.clientHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Animate character
+            if (character) {
+                character.rotation.y = Math.sin(Date.now() * 0.001) * 0.2;
+            }
+            
+            // Animate network when learning
+            if (isLearning) {
+                simulateLearning();
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        function simulateLearning() {
+            // Activate random input neurons
+            activateRandomNeurons();
+            
+            // Advance epoch and update progress
+            if (Math.random() < 0.05) { // Only advance sometimes to slow down the visualization
+                epoch++;
+                
+                // Simulate learning progress based on parameters
+                updateLearningProgress();
+                
+                // Update progress display
+                accuracyProgress.value = accuracy;
+                accuracyValue.textContent = `${Math.round(accuracy)}%`;
+                
+                // Check for completion
+                if (accuracy >= 99) {
+                    completeLearning();
+                }
+                
+                // Speech feedback based on progress
+                provideProgressFeedback();
+            }
+        }
+        
+        function activateRandomNeurons() {
+            // Randomly activate neurons for visual effect
+            
+            // Reset all neurons
+            for (let layer of neurons) {
+                for (let neuron of layer) {
+                    neuron.material.emissiveIntensity = 0.2;
+                    neuron.material.color.set(neuron.userData.originalColor);
+                }
+            }
+            
+            // Reset all connections
+            for (let connection of connections) {
+                connection.material.color.set(connection.userData.originalColor);
+                connection.material.opacity = 0.4;
+            }
+            
+            // Activate random input neurons
+            const inputLayer = neurons[0];
+            const activationCount = Math.floor(Math.random() * inputLayer.length) + 1;
+            
+            for (let i = 0; i < activationCount; i++) {
+                const randomIndex = Math.floor(Math.random() * inputLayer.length);
+                const neuron = inputLayer[randomIndex];
+                
+                neuron.material.emissiveIntensity = 0.8;
+                neuron.material.color.set(0xFFEB3B); // Yellow for activation
+                
+                // Propagate signal through the network
+                propagateSignal(neuron);
+            }
+        }
+        
+        function propagateSignal(neuron) {
+            // Find all connections from this neuron
+            const outgoingConnections = connections.filter(
+                conn => conn.userData.fromNeuron === neuron
+            );
+            
+            // Randomly activate some of the connected neurons
+            const activationRate = parseFloat(dropoutSlider.value);
+            
+            for (let connection of outgoingConnections) {
+                // Only propagate with probability based on current learning parameters
+                if (Math.random() > activationRate) {
+                    // Highlight the connection
+                    connection.material.color.set(0xFFEB3B);
+                    connection.material.opacity = 0.8;
+                    
+                    // Activate the target neuron
+                    const targetNeuron = connection.userData.toNeuron;
+                    targetNeuron.material.emissiveIntensity = 0.8;
+                    targetNeuron.material.color.set(0xFFEB3B);
+                    
+                    // Continue propagation with delay
+                    setTimeout(() => {
+                        propagateSignal(targetNeuron);
+                    }, 100 + Math.random() * 200);
+                }
+            }
+        }
+        
+        function updateLearningProgress() {
+            // Calculate how fast learning progresses based on parameters
+            const learningRate = parseFloat(learningRateSlider.value);
+            const batchSize = parseInt(batchSizeSlider.value);
+            const layers = parseInt(layersSlider.value);
+            const neuronsPerLayer = parseInt(neuronsSlider.value);
+            const regularization = parseFloat(regularizationSlider.value);
+            const momentum = parseFloat(momentumSlider.value);
+            
+            // Determine optimal settings for current task
+            let optimalSettings = {
+                learningRate: 0.1,
+                batchSize: 16,
+                layers: 2,
+                neuronsPerLayer: 8,
+                regularization: 0.01,
+                momentum: 0.9
+            };
+            
+            switch (taskSelect.value) {
+                case 'pattern':
+                    optimalSettings = {
+                        learningRate: 0.05,
+                        batchSize: 8,
+                        layers: 2,
+                        neuronsPerLayer: 8,
+                        regularization: 0.01,
+                        momentum: 0.9
+                    };
+                    break;
+                case 'maze':
+                    optimalSettings = {
+                        learningRate: 0.1,
+                        batchSize: 16,
+                        layers: 3,
+                        neuronsPerLayer: 12,
+                        regularization: 0.02,
+                        momentum: 0.8
+                    };
+                    break;
+                case 'classification':
+                    optimalSettings = {
+                        learningRate: 0.03,
+                        batchSize: 32,
+                        layers: 4,
+                        neuronsPerLayer: 16,
+                        regularization: 0.05,
+                        momentum: 0.95
+                    };
+                    break;
+            }
+            
+            // Calculate distance from optimal settings (simplified)
+            const learningRateDistance = 1 - Math.abs(learningRate - optimalSettings.learningRate) / 0.5;
+            const batchSizeDistance = 1 - Math.abs(batchSize - optimalSettings.batchSize) / 32;
+            const layersDistance = 1 - Math.abs(layers - optimalSettings.layers) / 5;
+            const neuronsDistance = 1 - Math.abs(neuronsPerLayer - optimalSettings.neuronsPerLayer) / 16;
+            const regularizationDistance = 1 - Math.abs(regularization - optimalSettings.regularization) / 0.1;
+            const momentumDistance = 1 - Math.abs(momentum - optimalSettings.momentum) / 1;
+            
+            // Combined effectiveness score
+            const effectivenessScore = (
+                learningRateDistance * 0.25 +
+                batchSizeDistance * 0.15 +
+                layersDistance * 0.2 +
+                neuronsDistance * 0.15 +
+                regularizationDistance * 0.1 +
+                momentumDistance * 0.15
+            );
+            
+            // Calculate progress increment
+            const baseIncrement = 0.2;
+            const incrementMultiplier = effectivenessScore * 2; // 0 to 2 range
+            const progressIncrement = baseIncrement * incrementMultiplier;
+            
+            // Add some randomness to make it interesting
+            const randomFactor = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
+            
+            // Update accuracy with diminishing returns as we approach 100%
+            const remainingProgress = 100 - accuracy;
+            const diminishingFactor = remainingProgress / 100;
+            
+            accuracy += progressIncrement * randomFactor * diminishingFactor;
+            accuracy = Math.min(accuracy, 99.9); // Cap at 99.9%
+            
+            // Update status text
+            const effectivenessText = effectivenessScore > 0.8 ? "excellent" : 
+                                    effectivenessScore > 0.6 ? "good" :
+                                    effectivenessScore > 0.4 ? "moderate" : "sub-optimal";
+            
+            statusText.innerHTML = `<p><b>Epoch:</b> ${epoch}</p>
+                                   <p><b>Learning Effectiveness:</b> ${effectivenessText}</p>
+                                   <p><b>Accuracy:</b> ${Math.round(accuracy * 10) / 10}%</p>`;
+            
+            // Update status based on effectiveness
+            if (effectivenessScore < 0.4) {
+                statusText.innerHTML += `<p style="color: #F44336;">Neuro is struggling with these parameters. Try adjusting them!</p>`;
+            } else if (effectivenessScore > 0.8) {
+                statusText.innerHTML += `<p style="color: #4CAF50;">These parameters work great for this task!</p>`;
+            }
+        }
+        
+        function provideProgressFeedback() {
+            // Provide speech bubble feedback based on learning progress
+            if (accuracy > 95) {
+                showSpeechBubble(speechMessages.completed);
+            } else if (epoch % 20 === 0) {
+                const learningRate = parseFloat(learningRateSlider.value);
+                const batchSize = parseInt(batchSizeSlider.value);
+                const optimalLR = taskSelect.value === 'pattern' ? 0.05 : 
+                                taskSelect.value === 'maze' ? 0.1 : 0.03;
+                const optimalBatch = taskSelect.value === 'pattern' ? 8 : 
+                                    taskSelect.value === 'maze' ? 16 : 32;
+                
+                const isLearningRateGood = Math.abs(learningRate - optimalLR) < 0.03;
+                const isBatchSizeGood = Math.abs(batchSize - optimalBatch) < 8;
+                
+                if (isLearningRateGood && isBatchSizeGood) {
+                    showSpeechBubble(speechMessages.goodProgress);
+                } else {
+                    showSpeechBubble(speechMessages.slowProgress);
+                }
+            }
+        }
+        
+        function startLearning() {
+            isLearning = true;
+            startButton.disabled = true;
+            resetButton.disabled = false;
+            accuracy = 0;
+            epoch = 0;
+            accuracyProgress.value = 0;
+            accuracyValue.textContent = "0%";
+            
+            // Show start learning message
+            showSpeechBubble(speechMessages.startLearning);
+            
+            // Update status
+            statusText.textContent = "Neuro is learning! Watch the neural network in action.";
+        }
+        
+        function resetLearning() {
+            isLearning = false;
+            startButton.disabled = false;
+            resetButton.disabled = false;
+            accuracy = 0;
+            epoch = 0;
+            accuracyProgress.value = 0;
+            accuracyValue.textContent = "0%";
+            
+            // Update status
+            statusText.textContent = "Learning reset. Adjust parameters and start again!";
+            
+            // Reset network visualization
+            for (let layer of neurons) {
+                for (let neuron of layer) {
+                    neuron.material.emissiveIntensity = 0.2;
+                    neuron.material.color.set(neuron.userData.originalColor);
+                }
+            }
+            
+            for (let connection of connections) {
+                connection.material.color.set(connection.userData.originalColor);
+                connection.material.opacity = 0.4;
+            }
+        }
+        
+        function completeLearning() {
+            isLearning = false;
+            startButton.disabled = false;
+            
+            // Show completion message
+            showSpeechBubble(speechMessages.completed, 6000);
+            
+            // Update status
+            statusText.innerHTML = `<p style="color: #4CAF50; font-weight: bold;">Learning complete! Neuro has mastered this task!</p>
+                                   <p>Final Accuracy: ${Math.round(accuracy * 10) / 10}%</p>
+                                   <p>Epochs: ${epoch}</p>
+                                   <p>You can try a different task or adjust parameters and learn again!</p>`;
+        }
+        
+        // Event listeners
+        startButton.addEventListener('click', startLearning);
+        resetButton.addEventListener('click', resetLearning);
+        taskSelect.addEventListener('change', updateNetwork);
+        activationSelect.addEventListener('change', updateNetwork);
+        
+        // Initialize everything
+        initScene();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trigonometry Adventure for Young Geniuses</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+        
+        body {
+            font-family: 'Comic Neue', cursive;
+            background: linear-gradient(to bottom, #c9f0ff, #f0e9ff);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+        
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        #header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #4a6fa5;
+            font-size: 2.5em;
+            margin: 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        #main-content {
+            display: flex;
+            flex: 1;
+            gap: 20px;
+        }
+        
+        #game-area {
+            flex: 3;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            position: relative;
+        }
+        
+        #controls {
+            flex: 1;
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            overflow-y: auto;
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 20px;
+            -webkit-appearance: none;
+            background: #f0f0f0;
+            border-radius: 10px;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #4a6fa5;
+            cursor: pointer;
+        }
+        
+        .button {
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 15px;
+            font-size: 1em;
+            font-family: 'Comic Neue', cursive;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: center;
+        }
+        
+        .button:hover {
+            background-color: #3a5a80;
+        }
+        
+        .character {
+            position: absolute;
+            width: 100px;
+            height: 120px;
+            bottom: 10px;
+            left: 10px;
+            z-index: 10;
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: 15px;
+            padding: 15px;
+            max-width: 300px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 9;
+            bottom: 120px;
+            left: 60px;
+        }
+        
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 30px;
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: white transparent;
+        }
+        
+        #quiz-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            background-color: #f0f5ff;
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 5px 0;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 300px;
+        }
+        
+        .quiz-option:hover {
+            background-color: #e0ebff;
+        }
+        
+        .quiz-option.correct {
+            background-color: #d4ffda;
+        }
+        
+        .quiz-option.incorrect {
+            background-color: #ffebeb;
+        }
+        
+        .level-selector {
+            display: flex;
+            margin-top: 15px;
+            gap: 10px;
+        }
+        
+        .level-btn {
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #e0ebff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .level-btn.active {
+            background-color: #4a6fa5;
+            color: white;
+        }
+        
+        #progress-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        
+        .progress-star {
+            width: 25px;
+            height: 25px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23cccccc' d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            transition: background-image 0.3s;
+        }
+        
+        .progress-star.earned {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%23FFD700' d='M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'/%3E%3C/svg%3E");
+        }
+        
+        .mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            background-color: #e0ebff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Comic Neue', cursive;
+            transition: background-color 0.3s;
+        }
+        
+        .mode-btn.active {
+            background-color: #4a6fa5;
+            color: white;
+        }
+        
+        canvas {
+            display: block;
+        }
+        
+        #achievements {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 15px;
+        }
+        
+        .achievement {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            position: relative;
+        }
+        
+        .achievement.unlocked {
+            background-color: #ffd700;
+        }
+        
+        .achievement-tooltip {
+            position: absolute;
+            bottom: 45px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            white-space: nowrap;
+            display: none;
+            z-index: 100;
+        }
+        
+        .achievement:hover .achievement-tooltip {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="header">
+            <h1>Trigonometry Adventure</h1>
+            <div id="progress-container">
+                <div class="progress-star" id="star1"></div>
+                <div class="progress-star" id="star2"></div>
+                <div class="progress-star" id="star3"></div>
+                <div class="progress-star" id="star4"></div>
+                <div class="progress-star" id="star5"></div>
+            </div>
+        </div>
+        <div id="main-content">
+            <div id="game-area">
+                <!-- This will contain the p5 canvas -->
+                <div id="quiz-container">
+                    <h2 id="quiz-question">Question:</h2>
+                    <div id="quiz-options">
+                        <!-- Quiz options will be added here dynamically -->
+                    </div>
+                    <p id="quiz-feedback"></p>
+                    <div class="button" id="next-question" style="display: none;">Next Question</div>
+                </div>
+            </div>
+            <div id="controls">
+                <div class="mode-selector">
+                    <button class="mode-btn active" data-mode="circle">Circle</button>
+                    <button class="mode-btn" data-mode="triangle">Triangle</button>
+                    <button class="mode-btn" data-mode="playground">Playground</button>
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Angle:</span>
+                        <span id="angle-value">0°</span>
+                    </div>
+                    <input type="range" id="angle-slider" min="0" max="360" value="0">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Speed:</span>
+                        <span id="speed-value">1x</span>
+                    </div>
+                    <input type="range" id="speed-slider" min="0" max="5" value="1" step="0.1">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Size:</span>
+                        <span id="size-value">100</span>
+                    </div>
+                    <input type="range" id="size-slider" min="50" max="200" value="100">
+                </div>
+                
+                <div class="level-selector">
+                    <div class="level-btn active" data-level="1">1</div>
+                    <div class="level-btn" data-level="2">2</div>
+                    <div class="level-btn" data-level="3">3</div>
+                </div>
+                
+                <div class="button" id="quiz-btn">Take a Quiz!</div>
+                
+                <h3>Show Values:</h3>
+                <div>
+                    <input type="checkbox" id="show-sin" checked>
+                    <label for="show-sin">Sine</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="show-cos" checked>
+                    <label for="show-cos">Cosine</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="show-tan" checked>
+                    <label for="show-tan">Tangent</label>
+                </div>
+                
+                <h3>Achievements:</h3>
+                <div id="achievements">
+                    <div class="achievement" id="ach-full-circle">
+                        🔄
+                        <div class="achievement-tooltip">Complete a full circle</div>
+                    </div>
+                    <div class="achievement" id="ach-quiz">
+                        🏆
+                        <div class="achievement-tooltip">Pass all quizzes</div>
+                    </div>
+                    <div class="achievement" id="ach-triangle">
+                        📐
+                        <div class="achievement-tooltip">Explore all triangle angles</div>
+                    </div>
+                    <div class="achievement" id="ach-playground">
+                        🎮
+                        <div class="achievement-tooltip">Create your own trig pattern</div>
+                    </div>
+                    <div class="achievement" id="ach-master">
+                        🧠
+                        <div class="achievement-tooltip">Trig Master!</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            currentMode: 'circle',
+            currentLevel: 1,
+            angle: 0,
+            speed: 1,
+            size: 100,
+            showSin: true,
+            showCos: true,
+            showTan: true,
+            autoRotate: false,
+            characters: {
+                professor: {
+                    x: 80,
+                    y: 120,
+                    width: 100,
+                    height: 120,
+                    message: "Hi! I'm Professor Pi! Let's learn about sine, cosine, and tangent together!"
+                }
+            },
+            quizActive: false,
+            currentQuiz: null,
+            quizIndex: 0,
+            stars: 0,
+            achievements: {
+                fullCircle: false,
+                allQuizzes: false,
+                triangle: false,
+                playground: false,
+                master: false
+            },
+            visitedAngles: new Set(),
+            lastMessageTime: 0,
+            messageQueue: []
+        };
+
+        // Character dialog by level and mode
+        const characterDialogs = {
+            circle: {
+                1: [
+                    "Welcome to the Unit Circle! This special circle has a radius of 1.",
+                    "Watch how the angle changes as we rotate around the circle.",
+                    "The blue line shows the sine (up and down movement).",
+                    "The red line shows the cosine (left and right movement).",
+                    "Try moving the angle slider to see how they change!"
+                ],
+                2: [
+                    "Now we can see patterns! Sine and cosine make waves.",
+                    "Look at how sine equals 0 at 0° and 180°, and equals 1 at 90°.",
+                    "Cosine equals 1 at 0°, 0 at 90°, and -1 at 180°.",
+                    "These patterns repeat every 360 degrees!"
+                ],
+                3: [
+                    "Let's add tangent! Tangent equals sine divided by cosine.",
+                    "Notice how tangent gets very large when cosine gets close to 0.",
+                    "This is called an 'asymptote' - tangent shoots up toward infinity!",
+                    "Tangent repeats every 180 degrees, not 360 like sine and cosine."
+                ]
+            },
+            triangle: {
+                1: [
+                    "This is a right triangle. It always has one 90° angle.",
+                    "In a right triangle, sine equals opposite side divided by hypotenuse.",
+                    "Cosine equals adjacent side divided by hypotenuse.",
+                    "Move the angle slider to change the triangle's shape!"
+                ],
+                2: [
+                    "Now we can see tangent in our triangle!",
+                    "Tangent equals opposite side divided by adjacent side.",
+                    "Notice how tangent also equals sine divided by cosine!",
+                    "As the angle gets bigger, the triangle stretches more!"
+                ],
+                3: [
+                    "These triangle ratios are the same no matter how big the triangle is!",
+                    "Try changing the size slider - the ratios stay the same.",
+                    "That's why trigonometry is so powerful - it works for all similar triangles.",
+                    "These ratios help us solve problems with triangles!"
+                ]
+            },
+            playground: {
+                1: [
+                    "Welcome to the Playground! Here you can experiment!",
+                    "Try different angles and see the patterns they make.",
+                    "The waves you see are sine and cosine functions.",
+                    "Change the speed to see them move faster or slower."
+                ],
+                2: [
+                    "Look at how sine and cosine are related!",
+                    "They have the same shape, but are shifted by 90 degrees.",
+                    "This is why we say they are 'out of phase' with each other.",
+                    "Try checking and unchecking different values to see them separately."
+                ],
+                3: [
+                    "Now we're creating Lissajous patterns!",
+                    "These beautiful shapes come from combining sine and cosine.",
+                    "Scientists use these patterns to study vibrations and waves.",
+                    "Try changing the speeds to create your own unique patterns!"
+                ]
+            }
+        };
+
+        // Quiz questions by level
+        const quizzes = {
+            1: [
+                {
+                    question: "What does sine measure in a right triangle?",
+                    options: [
+                        "Opposite side divided by hypotenuse",
+                        "Adjacent side divided by hypotenuse",
+                        "Opposite side divided by adjacent side",
+                        "Hypotenuse divided by opposite side"
+                    ],
+                    correct: 0
+                },
+                {
+                    question: "What does cosine measure in a right triangle?",
+                    options: [
+                        "Opposite side divided by hypotenuse",
+                        "Adjacent side divided by hypotenuse",
+                        "Opposite side divided by adjacent side",
+                        "Hypotenuse divided by adjacent side"
+                    ],
+                    correct: 1
+                },
+                {
+                    question: "Where on the unit circle is sine equal to 1?",
+                    options: [
+                        "At 0 degrees",
+                        "At 90 degrees",
+                        "At 180 degrees",
+                        "At 270 degrees"
+                    ],
+                    correct: 1
+                }
+            ],
+            2: [
+                {
+                    question: "What does tangent measure in a right triangle?",
+                    options: [
+                        "Opposite side divided by hypotenuse",
+                        "Adjacent side divided by hypotenuse",
+                        "Opposite side divided by adjacent side",
+                        "Hypotenuse divided by opposite side"
+                    ],
+                    correct: 2
+                },
+                {
+                    question: "How does tangent relate to sine and cosine?",
+                    options: [
+                        "Tangent = sine × cosine",
+                        "Tangent = sine + cosine",
+                        "Tangent = sine ÷ cosine",
+                        "Tangent = cosine ÷ sine"
+                    ],
+                    correct: 2
+                },
+                {
+                    question: "At what angle does cosine equal 0?",
+                    options: [
+                        "0 degrees",
+                        "90 degrees",
+                        "180 degrees",
+                        "270 degrees"
+                    ],
+                    correct: 1
+                }
+            ],
+            3: [
+                {
+                    question: "If sine = 0.6, what is the approximate angle?",
+                    options: [
+                        "About 30 degrees",
+                        "About 37 degrees",
+                        "About 45 degrees",
+                        "About 53 degrees"
+                    ],
+                    correct: 1
+                },
+                {
+                    question: "When does tangent have asymptotes (goes to infinity)?",
+                    options: [
+                        "When sine = 0",
+                        "When cosine = 0",
+                        "When sine = cosine",
+                        "When sine = 1"
+                    ],
+                    correct: 1
+                },
+                {
+                    question: "What is special about the patterns of sine and cosine?",
+                    options: [
+                        "They repeat every 90 degrees",
+                        "They repeat every 180 degrees",
+                        "They repeat every 270 degrees",
+                        "They repeat every 360 degrees"
+                    ],
+                    correct: 3
+                }
+            ]
+        };
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mode buttons
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const mode = this.getAttribute('data-mode');
+                    setMode(mode);
+                    
+                    // Update UI
+                    document.querySelectorAll('.mode-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                });
+            });
+            
+            // Level buttons
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const level = parseInt(this.getAttribute('data-level'));
+                    setLevel(level);
+                    
+                    // Update UI
+                    document.querySelectorAll('.level-btn').forEach(b => {
+                        b.classList.remove('active');
+                    });
+                    this.classList.add('active');
+                });
+            });
+            
+            // Sliders
+            document.getElementById('angle-slider').addEventListener('input', function() {
+                gameState.angle = parseInt(this.value);
+                document.getElementById('angle-value').textContent = `${gameState.angle}°`;
+                gameState.visitedAngles.add(Math.floor(gameState.angle / 10) * 10);
+                
+                // Check if visited all important angles
+                if (gameState.visitedAngles.size >= 36 && !gameState.achievements.fullCircle) {
+                    gameState.achievements.fullCircle = true;
+                    document.getElementById('ach-full-circle').classList.add('unlocked');
+                    addMessage("Achievement Unlocked: Full Circle Explorer!");
+                    checkMaster();
+                }
+            });
+            
+            document.getElementById('speed-slider').addEventListener('input', function() {
+                gameState.speed = parseFloat(this.value);
+                document.getElementById('speed-value').textContent = `${gameState.speed.toFixed(1)}x`;
+            });
+            
+            document.getElementById('size-slider').addEventListener('input', function() {
+                gameState.size = parseInt(this.value);
+                document.getElementById('size-value').textContent = gameState.size;
+            });
+            
+            // Checkbox toggles
+            document.getElementById('show-sin').addEventListener('change', function() {
+                gameState.showSin = this.checked;
+            });
+            
+            document.getElementById('show-cos').addEventListener('change', function() {
+                gameState.showCos = this.checked;
+            });
+            
+            document.getElementById('show-tan').addEventListener('change', function() {
+                gameState.showTan = this.checked;
+            });
+            
+            // Quiz button
+            document.getElementById('quiz-btn').addEventListener('click', function() {
+                startQuiz();
+            });
+            
+            // Next question button
+            document.getElementById('next-question').addEventListener('click', function() {
+                if (gameState.quizIndex < quizzes[gameState.currentLevel].length - 1) {
+                    gameState.quizIndex++;
+                    displayQuizQuestion();
+                } else {
+                    // End of quiz
+                    gameState.quizActive = false;
+                    document.getElementById('quiz-container').style.display = 'none';
+                    
+                    // Award star if perfect score
+                    if (!document.getElementById(`star${gameState.currentLevel}`).classList.contains('earned')) {
+                        document.getElementById(`star${gameState.currentLevel}`).classList.add('earned');
+                        gameState.stars++;
+                        addMessage(`Congratulations! You earned a star for Level ${gameState.currentLevel}!`);
+                    }
+                    
+                    // Check for quiz achievement
+                    if (gameState.stars >= 3 && !gameState.achievements.allQuizzes) {
+                        gameState.achievements.allQuizzes = true;
+                        document.getElementById('ach-quiz').classList.add('unlocked');
+                        addMessage("Achievement Unlocked: Quiz Master!");
+                        checkMaster();
+                    }
+                }
+            });
+        });
+
+        function setMode(mode) {
+            gameState.currentMode = mode;
+            
+            // Reset message queue
+            gameState.messageQueue = [];
+            
+            // Add messages for the new mode/level
+            if (characterDialogs[mode] && characterDialogs[mode][gameState.currentLevel]) {
+                characterDialogs[mode][gameState.currentLevel].forEach(msg => {
+                    addMessage(msg);
+                });
+            }
+            
+            // Check for triangle achievement
+            if (mode === 'triangle' && !gameState.achievements.triangle) {
+                setTimeout(() => {
+                    gameState.achievements.triangle = true;
+                    document.getElementById('ach-triangle').classList.add('unlocked');
+                    addMessage("Achievement Unlocked: Triangle Explorer!");
+                    checkMaster();
+                }, 5000);
+            }
+            
+            // Check for playground achievement
+            if (mode === 'playground' && !gameState.achievements.playground) {
+                setTimeout(() => {
+                    gameState.achievements.playground = true;
+                    document.getElementById('ach-playground').classList.add('unlocked');
+                    addMessage("Achievement Unlocked: Playground Pioneer!");
+                    checkMaster();
+                }, 8000);
+            }
+        }
+
+        function setLevel(level) {
+            gameState.currentLevel = level;
+            
+            // Reset message queue and add new level messages
+            gameState.messageQueue = [];
+            
+            if (characterDialogs[gameState.currentMode] && 
+                characterDialogs[gameState.currentMode][level]) {
+                characterDialogs[gameState.currentMode][level].forEach(msg => {
+                    addMessage(msg);
+                });
+            }
+        }
+
+        function addMessage(message) {
+            gameState.messageQueue.push(message);
+        }
+
+        function startQuiz() {
+            gameState.quizActive = true;
+            gameState.quizIndex = 0;
+            document.getElementById('quiz-container').style.display = 'flex';
+            displayQuizQuestion();
+        }
+
+        function displayQuizQuestion() {
+            const quizData = quizzes[gameState.currentLevel][gameState.quizIndex];
+            document.getElementById('quiz-question').textContent = quizData.question;
+            
+            // Clear previous options
+            document.getElementById('quiz-options').innerHTML = '';
+            
+            // Add new options
+            quizData.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'quiz-option';
+                optionDiv.textContent = option;
+                optionDiv.dataset.index = index;
+                
+                optionDiv.addEventListener('click', function() {
+                    const selectedIndex = parseInt(this.dataset.index);
+                    checkAnswer(selectedIndex);
+                });
+                
+                document.getElementById('quiz-options').appendChild(optionDiv);
+            });
+            
+            // Reset feedback and next button
+            document.getElementById('quiz-feedback').textContent = '';
+            document.getElementById('next-question').style.display = 'none';
+        }
+
+        function checkAnswer(selectedIndex) {
+            const quizData = quizzes[gameState.currentLevel][gameState.quizIndex];
+            const options = document.querySelectorAll('.quiz-option');
+            
+            options.forEach(option => {
+                option.classList.remove('correct', 'incorrect');
+                option.style.pointerEvents = 'none';
+            });
+            
+            if (selectedIndex === quizData.correct) {
+                options[selectedIndex].classList.add('correct');
+                document.getElementById('quiz-feedback').textContent = 'Correct! Great job!';
+            } else {
+                options[selectedIndex].classList.add('incorrect');
+                options[quizData.correct].classList.add('correct');
+                document.getElementById('quiz-feedback').textContent = 'Not quite! Let\'s try another one.';
+            }
+            
+            document.getElementById('next-question').style.display = 'block';
+        }
+
+        function checkMaster() {
+            if (gameState.achievements.fullCircle && 
+                gameState.achievements.allQuizzes && 
+                gameState.achievements.triangle && 
+                gameState.achievements.playground &&
+                !gameState.achievements.master) {
+                
+                gameState.achievements.master = true;
+                document.getElementById('ach-master').classList.add('unlocked');
+                addMessage("WOW! Achievement Unlocked: Trigonometry Master!");
+                addMessage("You've conquered all the challenges! Amazing work!");
+            }
+        }
+
+        // P5.js sketch
+        let sketch = function(p) {
+            let cnv;
+            let professorSprite;
+            
+            p.setup = function() {
+                cnv = p.createCanvas(document.getElementById('game-area').offsetWidth, 
+                                      document.getElementById('game-area').offsetHeight);
+                cnv.parent('game-area');
+                
+                // Create professor character
+                professorSprite = new ProfessorSprite();
+                
+                // Add initial messages
+                if (characterDialogs[gameState.currentMode] && 
+                    characterDialogs[gameState.currentMode][gameState.currentLevel]) {
+                    characterDialogs[gameState.currentMode][gameState.currentLevel].forEach(msg => {
+                        addMessage(msg);
+                    });
+                }
+            };
+            
+            p.draw = function() {
+                p.background(255);
+                
+                // Auto-rotate if enabled
+                if (gameState.autoRotate) {
+                    gameState.angle = (gameState.angle + gameState.speed * 0.5) % 360;
+                    document.getElementById('angle-slider').value = gameState.angle;
+                    document.getElementById('angle-value').textContent = `${Math.round(gameState.angle)}°`;
+                    
+                    // Record visited angles for achievement
+                    gameState.visitedAngles.add(Math.floor(gameState.angle / 10) * 10);
+                    
+                    // Check full circle achievement
+                    if (gameState.visitedAngles.size >= 36 && !gameState.achievements.fullCircle) {
+                        gameState.achievements.fullCircle = true;
+                        document.getElementById('ach-full-circle').classList.add('unlocked');
+                        addMessage("Achievement Unlocked: Full Circle Explorer!");
+                        checkMaster();
+                    }
+                }
+                
+                // Calculate trigonometric values
+                const angle = p.radians(gameState.angle);
+                const sinValue = p.sin(angle);
+                const cosValue = p.cos(angle);
+                const tanValue = sinValue / cosValue;
+                
+                // Draw appropriate mode
+                switch (gameState.currentMode) {
+                    case 'circle':
+                        drawUnitCircle(sinValue, cosValue, tanValue, angle);
+                        break;
+                    case 'triangle':
+                        drawRightTriangle(sinValue, cosValue, tanValue, angle);
+                        break;
+                    case 'playground':
+                        drawPlayground(sinValue, cosValue, tanValue, angle);
+                        break;
+                }
+                
+                // Draw character
+                professorSprite.display();
+                
+                // Handle message queue
+                if (gameState.messageQueue.length > 0 && 
+                    p.millis() - gameState.lastMessageTime > 5000) {
+                    professorSprite.say(gameState.messageQueue.shift());
+                    gameState.lastMessageTime = p.millis();
+                }
+            };
+            
+            p.windowResized = function() {
+                p.resizeCanvas(document.getElementById('game-area').offsetWidth, 
+                              document.getElementById('game-area').offsetHeight);
+            };
+            
+            function drawUnitCircle(sinValue, cosValue, tanValue, angle) {
+                const centerX = p.width / 2;
+                const centerY = p.height / 2;
+                const radius = gameState.size * 1.5;
+                
+                // Draw coordinate system
+                p.stroke(200);
+                p.strokeWeight(1);
+                p.line(centerX - radius - 50, centerY, centerX + radius + 50, centerY); // x-axis
+                p.line(centerX, centerY - radius - 50, centerX, centerY + radius + 50); // y-axis
+                
+                // Draw unit circle
+                p.noFill();
+                p.stroke(150);
+                p.strokeWeight(1);
+                p.ellipse(centerX, centerY, radius * 2);
+                
+                // Draw angle
+                const endX = centerX + cosValue * radius;
+                const endY = centerY - sinValue * radius;
+                
+                // Draw radius line
+                p.stroke(100);
+                p.strokeWeight(2);
+                p.line(centerX, centerY, endX, endY);
+                
+                // Draw angle arc
+                p.noFill();
+                p.stroke(100);
+                p.strokeWeight(1);
+                p.arc(centerX, centerY, radius * 0.5, radius * 0.5, 0, -angle);
+                
+                // Draw angle label
+                p.noStroke();
+                p.fill(100);
+                p.textSize(14);
+                const labelX = centerX + p.cos(-angle / 2) * radius * 0.3;
+                const labelY = centerY + p.sin(-angle / 2) * radius * 0.3;
+                p.text(`${Math.round(gameState.angle)}°`, labelX, labelY);
+                
+                // Draw sine line (vertical)
+                if (gameState.showSin) {
+                    p.stroke(0, 0, 255);
+                    p.strokeWeight(3);
+                    p.line(endX, centerY, endX, endY);
+                    
+                    // Draw sine label
+                    p.noStroke();
+                    p.fill(0, 0, 255);
+                    p.textSize(16);
+                    p.text(`sin(${Math.round(gameState.angle)}°) = ${sinValue.toFixed(2)}`, 
+                        centerX - radius, centerY + radius + 30);
+                }
+                
+                // Draw cosine line (horizontal)
+                if (gameState.showCos) {
+                    p.stroke(255, 0, 0);
+                    p.strokeWeight(3);
+                    p.line(centerX, centerY, endX, centerY);
+                    
+                    // Draw cosine label
+                    p.noStroke();
+                    p.fill(255, 0, 0);
+                    p.textSize(16);
+                    p.text(`cos(${Math.round(gameState.angle)}°) = ${cosValue.toFixed(2)}`, 
+                        centerX - radius, centerY + radius + 60);
+                }
+                
+                // Draw tangent line
+                if (gameState.showTan && gameState.currentLevel >= 2) {
+                    // Only show when not close to asymptote
+                    if (Math.abs(cosValue) > 0.1) {
+                        const tanLength = Math.min(Math.abs(tanValue) * radius, radius * 5);
+                        const tanDirection = tanValue >= 0 ? -1 : 1;
+                        
+                        p.stroke(0, 150, 0);
+                        p.strokeWeight(3);
+                        p.line(centerX + radius, centerY, 
+                              centerX + radius, centerY + tanDirection * tanLength);
+                        
+                        // Draw tangent label
+                        p.noStroke();
+                        p.fill(0, 150, 0);
+                        p.textSize(16);
+                        p.text(`tan(${Math.round(gameState.angle)}°) = ${tanValue.toFixed(2)}`, 
+                            centerX - radius, centerY + radius + 90);
+                    } else {
+                        p.noStroke();
+                        p.fill(0, 150, 0);
+                        p.textSize(16);
+                        p.text(`tan(${Math.round(gameState.angle)}°) = undefined (asymptote)`, 
+                            centerX - radius, centerY + radius + 90);
+                    }
+                }
+                
+                if (gameState.currentLevel >= 3) {
+                    // Draw sine and cosine waves
+                    p.noFill();
+                    
+                    const waveRadius = radius * 0.5;
+                    const waveStep = 0.1;
+                    
+                    // Sine wave
+                    if (gameState.showSin) {
+                        p.stroke(0, 0, 255, 150);
+                        p.strokeWeight(2);
+                        p.beginShape();
+                        for (let a = -p.PI; a <= p.PI; a += waveStep) {
+                            const x = centerX + a * waveRadius;
+                            const y = centerY - p.sin(a) * waveRadius;
+                            p.vertex(x, y);
+                        }
+                        p.endShape();
+                    }
+                    
+                    // Cosine wave
+                    if (gameState.showCos) {
+                        p.stroke(255, 0, 0, 150);
+                        p.strokeWeight(2);
+                        p.beginShape();
+                        for (let a = -p.PI; a <= p.PI; a += waveStep) {
+                            const x = centerX + a * waveRadius;
+                            const y = centerY - p.cos(a) * waveRadius;
+                            p.vertex(x, y);
+                        }
+                        p.endShape();
+                    }
+                }
+                
+                // Draw point on unit circle
+                p.fill(255);
+                p.stroke(0);
+                p.strokeWeight(1);
+                p.ellipse(endX, endY, 10, 10);
+            }
+            
+            function drawRightTriangle(sinValue, cosValue, tanValue, angle) {
+                const centerX = p.width / 2 - 100;
+                const centerY = p.height / 2 + 100;
+                const baseSize = gameState.size * 2;
+                
+                // Calculate triangle points
+                // We'll cap the angle at 80 degrees for the triangle
+                const clampedAngle = p.min(80, gameState.angle);
+                const radAngle = p.radians(clampedAngle);
+                
+                // Get three points of right triangle
+                const p1 = { x: centerX, y: centerY }; // right angle corner
+                const p2 = { x: centerX + baseSize, y: centerY }; // bottom right
+                const p3 = { x: centerX, y: centerY - p.tan(radAngle) * baseSize }; // top left
+                
+                // Calculate side lengths
+                const adjacent = baseSize;
+                const opposite = p.abs(p3.y - p1.y);
+                const hypotenuse = p.sqrt(adjacent * adjacent + opposite * opposite);
+                
+                // Draw coordinate system
+                p.stroke(200);
+                p.strokeWeight(1);
+                p.line(centerX - 50, centerY, centerX + baseSize + 50, centerY); // x-axis
+                p.line(centerX, centerY + 50, centerX, centerY - p3.y + p1.y - 50); // y-axis
+                
+                // Draw triangle
+                p.stroke(0);
+                p.strokeWeight(2);
+                p.noFill();
+                p.beginShape();
+                p.vertex(p1.x, p1.y);
+                p.vertex(p2.x, p2.y);
+                p.vertex(p3.x, p3.y);
+                p.vertex(p1.x, p1.y);
+                p.endShape();
+                
+                // Draw right angle marker
+                p.noFill();
+                p.stroke(0);
+                p.strokeWeight(1);
+                const squareSize = 20;
+                p.rect(p1.x, p1.y - squareSize, squareSize, squareSize);
+                
+                // Draw angle arc
+                p.noFill();
+                p.stroke(100);
+                p.strokeWeight(1);
+                p.arc(p2.x, p2.y, 40, 40, p.PI, p.PI - radAngle);
+                
+                // Draw angle label
+                p.noStroke();
+                p.fill(100);
+                p.textSize(14);
+                const labelAngle = p.PI - radAngle / 2;
+                const labelX = p2.x + p.cos(labelAngle) * 30;
+                const labelY = p2.y + p.sin(labelAngle) * 30;
+                p.text(`${clampedAngle.toFixed(0)}°`, labelX, labelY);
+                
+                // Draw side length labels
+                p.noStroke();
+                p.fill(0);
+                p.textSize(16);
+                
+                // Adjacent label
+                p.text("Adjacent = " + adjacent.toFixed(0), 
+                    (p1.x + p2.x) / 2, p1.y + 25);
+                
+                // Opposite label
+                p.text("Opposite = " + opposite.toFixed(0), 
+                    p1.x - 100, (p1.y + p3.y) / 2);
+                
+                // Hypotenuse label
+                p.text("Hypotenuse = " + hypotenuse.toFixed(0), 
+                    (p2.x + p3.x) / 2 - 30, (p2.y + p3.y) / 2 - 10);
+                
+                // Draw trig ratio labels
+                const trigX = centerX + baseSize + 50;
+                const trigY = centerY - 100;
+                
+                p.noStroke();
+                p.textSize(18);
+                
+                if (gameState.showSin) {
+                    p.fill(0, 0, 255);
+                    p.text(`sin(${clampedAngle.toFixed(0)}°) = Opposite/Hypotenuse = ${(opposite/hypotenuse).toFixed(2)}`, 
+                          trigX, trigY);
+                }
+                
+                if (gameState.showCos) {
+                    p.fill(255, 0, 0);
+                    p.text(`cos(${clampedAngle.toFixed(0)}°) = Adjacent/Hypotenuse = ${(adjacent/hypotenuse).toFixed(2)}`, 
+                          trigX, trigY + 30);
+                }
+                
+                if (gameState.showTan && gameState.currentLevel >= 2) {
+                    p.fill(0, 150, 0);
+                    p.text(`tan(${clampedAngle.toFixed(0)}°) = Opposite/Adjacent = ${(opposite/adjacent).toFixed(2)}`, 
+                          trigX, trigY + 60);
+                }
+                
+                // Draw mnemonic for level 3
+                if (gameState.currentLevel >= 3) {
+                    p.noStroke();
+                    p.fill(0);
+                    p.textSize(24);
+                    p.text("SOH CAH TOA", trigX, trigY + 120);
+                    
+                    p.textSize(16);
+                    p.text("Sin = Opposite / Hypotenuse", trigX, trigY + 150);
+                    p.text("Cos = Adjacent / Hypotenuse", trigX, trigY + 180);
+                    p.text("Tan = Opposite / Adjacent", trigX, trigY + 210);
+                }
+            }
+            
+            function drawPlayground(sinValue, cosValue, tanValue, angle) {
+                const centerX = p.width / 2;
+                const centerY = p.height / 2;
+                const radius = gameState.size * 1.5;
+                
+                // Level 1: Simple wave visualization
+                if (gameState.currentLevel === 1) {
+                    // Draw time-based waves
+                    const time = p.frameCount * 0.02 * gameState.speed;
+                    const waveHeight = radius * 0.8;
+                    const waveWidth = radius * 2;
+                    
+                    // Sin wave
+                    if (gameState.showSin) {
+                        p.stroke(0, 0, 255);
+                        p.strokeWeight(3);
+                        p.noFill();
+                        p.beginShape();
+                        for (let x = -waveWidth; x <= waveWidth; x += 10) {
+                            const xPos = centerX + x;
+                            const yPos = centerY - 100 + p.sin(x * 0.02 + time) * waveHeight * 0.5;
+                            p.vertex(xPos, yPos);
+                        }
+                        p.endShape();
+                        
+                        p.noStroke();
+                        p.fill(0, 0, 255);
+                        p.text("Sine Wave", centerX - waveWidth, centerY - 100 - waveHeight * 0.5 - 10);
+                    }
+                    
+                    // Cos wave
+                    if (gameState.showCos) {
+                        p.stroke(255, 0, 0);
+                        p.strokeWeight(3);
+                        p.noFill();
+                        p.beginShape();
+                        for (let x = -waveWidth; x <= waveWidth; x += 10) {
+                            const xPos = centerX + x;
+                            const yPos = centerY + 100 + p.cos(x * 0.02 + time) * waveHeight * 0.5;
+                            p.vertex(xPos, yPos);
+                        }
+                        p.endShape();
+                        
+                        p.noStroke();
+                        p.fill(255, 0, 0);
+                        p.text("Cosine Wave", centerX - waveWidth, centerY + 100 - waveHeight * 0.5 - 10);
+                    }
+                    
+                    // Draw angle marker
+                    p.fill(255);
+                    p.stroke(0);
+                    p.ellipse(centerX + p.cos(time) * waveWidth * 0.8, 
+                             centerY - 100 + p.sin(time) * waveHeight * 0.5, 10, 10);
+                    
+                    p.ellipse(centerX + p.cos(time) * waveWidth * 0.8, 
+                             centerY + 100 + p.cos(time) * waveHeight * 0.5, 10, 10);
+                    
+                } 
+                // Level 2: Connected waves
+                else if (gameState.currentLevel === 2) {
+                    const time = p.frameCount * 0.02 * gameState.speed;
+                    const amplitude = radius * 0.8;
+                    
+                    // Draw unit circle
+                    p.noFill();
+                    p.stroke(150);
+                    p.strokeWeight(1);
+                    p.ellipse(centerX - 200, centerY, amplitude);
+                    
+                    // Draw rotating point on circle
+                    const angle = time;
+                    const pointX = centerX - 200 + p.cos(angle) * amplitude * 0.5;
+                    const pointY = centerY - p.sin(angle) * amplitude * 0.5;
+                    
+                    p.fill(0);
+                    p.stroke(0);
+                    p.ellipse(pointX, pointY, 10, 10);
+                    
+                    // Draw sine and cosine projections
+                    if (gameState.showSin) {
+                        // Sine projection point
+                        p.fill(0, 0, 255);
+                        p.ellipse(centerX - 100, pointY, 10, 10);
+                        
+                        // Line from circle to sine point
+                        p.stroke(0, 0, 255, 150);
+                        p.strokeWeight(1);
+                        p.line(pointX, pointY, centerX - 100, pointY);
+                        
+                        // Sine wave
+                        p.noFill();
+                        p.stroke(0, 0, 255);
+                        p.strokeWeight(2);
+                        p.beginShape();
+                        for (let t = 0; t < 4 * p.PI; t += 0.1) {
+                            const x = centerX - 100 + t * 50;
+                            const y = centerY - p.sin(t) * amplitude * 0.5;
+                            p.vertex(x, y);
+                        }
+                        p.endShape();
+                        
+                        // Current value marker
+                        p.fill(0, 0, 255);
+                        p.ellipse(centerX - 100 + angle * 50, pointY, 10, 10);
+                        
+                        // Connecting line
+                        p.stroke(0, 0, 255, 150);
+                        p.line(centerX - 100, pointY, centerX - 100 + angle * 50, pointY);
+                    }
+                    
+                    if (gameState.showCos) {
+                        // Cosine projection point
+                        p.fill(255, 0, 0);
+                        p.ellipse(pointX, centerY + 100, 10, 10);
+                        
+                        // Line from circle to cosine point
+                        p.stroke(255, 0, 0, 150);
+                        p.strokeWeight(1);
+                        p.line(pointX, pointY, pointX, centerY + 100);
+                        
+                        // Cosine wave
+                        p.noFill();
+                        p.stroke(255, 0, 0);
+                        p.strokeWeight(2);
+                        p.beginShape();
+                        for (let t = 0; t < 4 * p.PI; t += 0.1) {
+                            const x = centerX - 200 + p.cos(0) * amplitude * 0.5 + t * 50;
+                            const y = centerY + 100 - p.cos(t) * amplitude * 0.5;
+                            p.vertex(x, y);
+                        }
+                        p.endShape();
+                        
+                        // Current value marker
+                        p.fill(255, 0, 0);
+                        p.ellipse(centerX - 200 + p.cos(0) * amplitude * 0.5 + angle * 50, 
+                                 centerY + 100 - p.cos(angle) * amplitude * 0.5, 10, 10);
+                        
+                        // Connecting line
+                        p.stroke(255, 0, 0, 150);
+                        p.line(pointX, centerY + 100, 
+                              centerX - 200 + p.cos(0) * amplitude * 0.5 + angle * 50, 
+                              centerY + 100 - p.cos(angle) * amplitude * 0.5);
+                    }
+                    
+                    // Labels
+                    p.noStroke();
+                    p.fill(0);
+                    p.textSize(16);
+                    p.text("Unit Circle", centerX - 230, centerY - amplitude * 0.5 - 10);
+                    
+                    if (gameState.showSin) {
+                        p.fill(0, 0, 255);
+                        p.text("Sine Wave", centerX, centerY - amplitude * 0.5 - 10);
+                    }
+                    
+                    if (gameState.showCos) {
+                        p.fill(255, 0, 0);
+                        p.text("Cosine Wave", centerX, centerY + 100 - amplitude * 0.5 - 10);
+                    }
+                } 
+                // Level 3: Lissajous patterns
+                else if (gameState.currentLevel === 3) {
+                    const time = p.frameCount * 0.01 * gameState.speed;
+                    
+                    // Create Lissajous pattern
+                    const freqRatio = gameState.speed;
+                    const phase = p.radians(gameState.angle);
+                    
+                    // Draw the pattern
+                    p.stroke(0, 100, 200);
+                    p.strokeWeight(2);
+                    p.noFill();
+                    p.beginShape();
+                    for (let t = 0; t < p.TWO_PI * 10; t += 0.05) {
+                        const x = centerX + p.sin(t * freqRatio + phase) * radius;
+                        const y = centerY + p.sin(t) * radius;
+                        p.vertex(x, y);
+                    }
+                    p.endShape();
+                    
+                    // Draw current point
+                    p.fill(255);
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    const currentX = centerX + p.sin(time * freqRatio + phase) * radius;
+                    const currentY = centerY + p.sin(time) * radius;
+                    p.ellipse(currentX, currentY, 10, 10);
+                    
+                    // Draw parameter info
+                    p.noStroke();
+                    p.fill(0);
+                    p.textSize(18);
+                    p.text(`Lissajous Pattern - Frequency Ratio: ${freqRatio.toFixed(1)}, Phase: ${Math.round(gameState.angle)}°`, 
+                          centerX - 200, centerY - radius - 30);
+                    
+                    p.textSize(14);
+                    p.text("Change the Speed and Angle to create different patterns!", 
+                          centerX - 200, centerY - radius - 10);
+                    
+                    // Draw axes
+                    p.stroke(200);
+                    p.strokeWeight(1);
+                    p.line(centerX - radius - 10, centerY, centerX + radius + 10, centerY);
+                    p.line(centerX, centerY - radius - 10, centerX, centerY + radius + 10);
+                    
+                    // Show x and y components
+                    if (gameState.showSin) {
+                        p.stroke(0, 0, 255);
+                        p.strokeWeight(2);
+                        p.line(centerX, currentY, currentX, currentY);
+                        p.noStroke();
+                        p.fill(0, 0, 255);
+                        p.text(`x(t) = sin(${freqRatio.toFixed(1)}t + ${Math.round(gameState.angle)}°)`, 
+                              centerX - radius, centerY + radius + 20);
+                    }
+                    
+                    if (gameState.showCos) {
+                        p.stroke(255, 0, 0);
+                        p.strokeWeight(2);
+                        p.line(currentX, centerY, currentX, currentY);
+                        p.noStroke();
+                        p.fill(255, 0, 0);
+                        p.text(`y(t) = sin(t)`, centerX - radius, centerY + radius + 40);
+                    }
+                }
+            }
+            
+            // Professor character
+            function ProfessorSprite() {
+                this.x = 100;
+                this.y = p.height - 120;
+                this.message = null;
+                this.messageTimer = 0;
+                
+                this.say = function(message) {
+                    this.message = message;
+                    this.messageTimer = p.millis() + 5000; // Display for 5 seconds
+                };
+                
+                this.display = function() {
+                    // Draw professor character
+                    // Head
+                    p.fill(255, 220, 180);
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.ellipse(this.x, this.y - 60, 70, 70);
+                    
+                    // Eyes
+                    p.fill(255);
+                    p.ellipse(this.x - 15, this.y - 60, 15, 15);
+                    p.ellipse(this.x + 15, this.y - 60, 15, 15);
+                    
+                    // Pupils
+                    p.fill(0);
+                    p.ellipse(this.x - 13, this.y - 60, 7, 7);
+                    p.ellipse(this.x + 17, this.y - 60, 7, 7);
+                    
+                    // Glasses
+                    p.noFill();
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    p.ellipse(this.x - 15, this.y - 60, 25, 25);
+                    p.ellipse(this.x + 15, this.y - 60, 25, 25);
+                    p.line(this.x - 3, this.y - 60, this.x + 3, this.y - 60);
+                    
+                    // Smile
+                    p.noFill();
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.arc(this.x, this.y - 45, 30, 20, 0, p.PI);
+                    
+                    // Hair
+                    p.fill(100);
+                    p.noStroke();
+                    p.ellipse(this.x, this.y - 85, 60, 20);
+                    
+                    // Body
+                    p.fill(200, 200, 255);
+                    p.stroke(0);
+                    p.strokeWeight(1);
+                    p.rect(this.x - 25, this.y - 25, 50, 60, 10);
+                    
+                    // Arms
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    p.line(this.x - 25, this.y - 15, this.x - 45, this.y);
+                    p.line(this.x + 25, this.y - 15, this.x + 45, this.y);
+                    
+                    // Speech bubble
+                    if (this.message) {
+                        // Automatic sizing based on text length
+                        const bubbleWidth = p.min(p.max(p.textWidth(this.message) + 40, 150), p.width / 2);
+                        const textLines = [];
+                        let currentLine = "";
+                        const words = this.message.split(" ");
+                        
+                        for (let i = 0; i < words.length; i++) {
+                            const testLine = currentLine + words[i] + " ";
+                            if (p.textWidth(testLine) > bubbleWidth - 30) {
+                                textLines.push(currentLine);
+                                currentLine = words[i] + " ";
+                            } else {
+                                currentLine = testLine;
+                            }
+                        }
+                        
+                        if (currentLine != "") {
+                            textLines.push(currentLine);
+                        }
+                        
+                        const lineHeight = 20;
+                        const bubbleHeight = textLines.length * lineHeight + 30;
+                        
+                        // Draw the bubble
+                        p.fill(255);
+                        p.stroke(0);
+                        p.strokeWeight(1);
+                        p.rect(this.x + 50, this.y - 100, bubbleWidth, bubbleHeight, 15);
+                        
+                        // Draw the pointer
+                        p.beginShape();
+                        p.vertex(this.x + 50, this.y - 60);
+                        p.vertex(this.x + 30, this.y - 40);
+                        p.vertex(this.x + 50, this.y - 40);
+                        p.endShape(p.CLOSE);
+                        
+                        // Draw the text
+                        p.fill(0);
+                        p.noStroke();
+                        p.textSize(16);
+                        p.textAlign(p.LEFT, p.TOP);
+                        
+                        for (let i = 0; i < textLines.length; i++) {
+                            p.text(textLines[i], this.x + 65, this.y - 90 + i * lineHeight);
+                        }
+                        
+                        // Reset alignment
+                        p.textAlign(p.LEFT, p.BASELINE);
+                        
+                        // Clear message if timer is up
+                        if (p.millis() > this.messageTimer) {
+                            this.message = null;
+                        }
+                    }
+                };
+            }
+        };
+        
+        new p5(sketch);
+    </script>
+</body>
+</html>

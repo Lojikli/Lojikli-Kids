@@ -1,0 +1,2341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World Explorer: Geography Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        
+        body {
+            overflow: hidden;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #canvas-container {
+            position: relative;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #ui-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #top-bar {
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: auto;
+        }
+        
+        #score-container {
+            display: flex;
+            align-items: center;
+            font-size: 20px;
+            gap: 10px;
+        }
+        
+        #score {
+            font-weight: bold;
+            font-size: 24px;
+            color: #FFD700;
+        }
+        
+        #timer {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        
+        #level-display {
+            padding: 5px 15px;
+            background-color: #4CAF50;
+            border-radius: 20px;
+            color: white;
+            font-weight: bold;
+        }
+        
+        #question-container {
+            margin: 20px auto;
+            max-width: 70%;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 3px solid #FFD700;
+            pointer-events: auto;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        
+        #question {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #FFD700;
+        }
+        
+        #hint {
+            font-size: 18px;
+            font-style: italic;
+            color: #96e6a1;
+            margin-bottom: 15px;
+        }
+        
+        #difficulty-selector {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .difficulty-btn {
+            padding: 5px 15px;
+            border-radius: 15px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+            border: none;
+        }
+        
+        .difficulty-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        #easy-btn {
+            background-color: #4CAF50;
+        }
+        
+        #medium-btn {
+            background-color: #FF9800;
+        }
+        
+        #hard-btn {
+            background-color: #F44336;
+        }
+        
+        #character-container {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            width: 180px;
+            height: 220px;
+            pointer-events: auto;
+        }
+        
+        #character {
+            width: 130px;
+            height: 130px;
+            background-color: #FFD700;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 5px solid white;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        #character-face {
+            position: relative;
+        }
+        
+        #character-speech {
+            background-color: white;
+            color: #333;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 14px;
+            position: relative;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #character-speech:before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: -10px;
+            border-bottom: 10px solid white;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+        }
+        
+        #control-panel {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 15px;
+            pointer-events: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+            border: 2px solid #4CAF50;
+        }
+        
+        #control-panel h3 {
+            color: #FFD700;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .control-label {
+            flex: 1;
+            font-weight: bold;
+        }
+        
+        .control-btn {
+            padding: 5px 12px;
+            border-radius: 5px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        
+        .control-btn:hover {
+            transform: scale(1.05);
+            background-color: #2E7D32;
+        }
+        
+        #rotation-speed, #zoom-speed {
+            width: 70px;
+        }
+        
+        #mode-selector {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            border-radius: 10px;
+            color: white;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .mode-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        #game-mode-btn {
+            background-color: #2196F3;
+        }
+        
+        #explore-mode-btn {
+            background-color: #9C27B0;
+        }
+        
+        #modal-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        #modal-container.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        #modal-content {
+            background-color: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            border: 4px solid #FFD700;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        #modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eee;
+        }
+        
+        #modal-title {
+            font-size: 28px;
+            color: #2196F3;
+            font-weight: bold;
+        }
+        
+        #close-modal {
+            background-color: #F44336;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            font-size: 18px;
+        }
+        
+        #modal-body {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        
+        #modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 15px;
+            border-top: 2px solid #eee;
+        }
+        
+        #modal-button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #info-button {
+            background-color: rgba(255, 255, 255, 0.3);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            border: none;
+            font-size: 24px;
+            color: white;
+            cursor: pointer;
+        }
+        
+        #quiz-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        #quiz-container.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        #quiz-content {
+            background-color: white;
+            color: #333;
+            padding: 30px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
+            border: 4px solid #4CAF50;
+        }
+        
+        #quiz-question {
+            font-size: 22px;
+            font-weight: bold;
+            color: #2196F3;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        #quiz-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .quiz-option {
+            padding: 15px;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .quiz-option:hover {
+            background-color: #e0e0e0;
+            transform: scale(1.03);
+        }
+        
+        .quiz-option.correct {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .quiz-option.incorrect {
+            background-color: #F44336;
+            color: white;
+        }
+        
+        #feedback-container {
+            margin-top: 20px;
+            text-align: center;
+            min-height: 50px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        #next-question {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            display: none;
+        }
+        
+        #congratulations {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s;
+        }
+        
+        #congratulations.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        #congrats-content {
+            text-align: center;
+            color: white;
+        }
+        
+        #congrats-title {
+            font-size: 50px;
+            font-weight: bold;
+            color: #FFD700;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+        }
+        
+        #congrats-message {
+            font-size: 24px;
+            margin-bottom: 30px;
+        }
+        
+        #congrats-score {
+            font-size: 36px;
+            color: #4CAF50;
+            font-weight: bold;
+            margin-bottom: 30px;
+        }
+        
+        #continue-btn {
+            padding: 15px 30px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #continue-btn:hover {
+            transform: scale(1.05);
+            background-color: #2E7D32;
+        }
+        
+        .firework {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        @keyframes blink {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 30;
+        }
+        
+        #logo {
+            font-size: 60px;
+            font-weight: bold;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+            margin-bottom: 30px;
+            text-align: center;
+            line-height: 1.2;
+        }
+        
+        #subtitle {
+            font-size: 24px;
+            color: white;
+            margin-bottom: 50px;
+            text-align: center;
+        }
+        
+        #start-button {
+            padding: 20px 50px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            animation: blink 2s infinite;
+        }
+        
+        #start-button:hover {
+            transform: scale(1.1);
+            background-color: #2E7D32;
+        }
+        
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        #loading-text {
+            font-size: 18px;
+            color: white;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #region-toggle, #flag-toggle, #landmark-toggle {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="start-screen">
+        <div id="logo">World Explorer<br>Geography Adventure</div>
+        <div id="subtitle">An amazing journey around the world for curious young minds!</div>
+        <button id="start-button">START ADVENTURE</button>
+        <div id="loading" style="display: none;">
+            <div class="loader"></div>
+            <div id="loading-text">Loading world data...</div>
+        </div>
+    </div>
+    
+    <div id="canvas-container">
+        <canvas id="globe"></canvas>
+    </div>
+    
+    <div id="ui-container">
+        <div id="top-bar">
+            <div id="score-container">
+                <span>Score:</span>
+                <span id="score">0</span>
+                <span id="level-display">Level 1</span>
+            </div>
+            <div id="timer">00:00</div>
+            <button id="info-button">?</button>
+        </div>
+        
+        <div id="question-container">
+            <div id="question">Find a country on the map!</div>
+            <div id="hint">Click on the globe to explore the world</div>
+            <div id="difficulty-selector">
+                <button id="easy-btn" class="difficulty-btn">Easy</button>
+                <button id="medium-btn" class="difficulty-btn">Medium</button>
+                <button id="hard-btn" class="difficulty-btn">Hard</button>
+            </div>
+        </div>
+        
+        <div id="character-container">
+            <div id="character">
+                <div id="character-face"></div>
+            </div>
+            <div id="character-speech">Hi! I'm Geo! Let's explore our amazing planet together!</div>
+        </div>
+        
+        <div id="control-panel">
+            <h3>Explorer Controls</h3>
+            <div class="control-group">
+                <label class="control-label" for="rotation-speed">Globe Speed:</label>
+                <input type="range" id="rotation-speed" min="0" max="10" value="2">
+            </div>
+            <div class="control-group">
+                <label class="control-label" for="zoom-speed">Zoom Speed:</label>
+                <input type="range" id="zoom-speed" min="1" max="10" value="5">
+            </div>
+            <div class="control-group">
+                <label class="control-label">Show Regions:</label>
+                <input type="checkbox" id="region-toggle" checked>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Show Flags:</label>
+                <input type="checkbox" id="flag-toggle" checked>
+            </div>
+            <div class="control-group">
+                <label class="control-label">Show Landmarks:</label>
+                <input type="checkbox" id="landmark-toggle" checked>
+            </div>
+            <div id="mode-selector">
+                <button id="game-mode-btn" class="mode-btn">Game Mode</button>
+                <button id="explore-mode-btn" class="mode-btn">Free Explore</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="modal-container">
+        <div id="modal-content">
+            <div id="modal-header">
+                <div id="modal-title">Welcome to World Explorer!</div>
+                <button id="close-modal">×</button>
+            </div>
+            <div id="modal-body">
+                <p>Welcome, young explorer! Get ready for an amazing journey around our beautiful planet Earth!</p>
+                <p>In this adventure, you will:</p>
+                <ul>
+                    <li>Find countries, capitals, and famous landmarks on our 3D globe</li>
+                    <li>Learn fascinating facts about different places</li>
+                    <li>Test your knowledge with fun quizzes</li>
+                    <li>Explore freely and discover the wonders of our world</li>
+                </ul>
+                <p>How to play:</p>
+                <ul>
+                    <li>Use your mouse to rotate and zoom the globe</li>
+                    <li>Click on countries to identify them</li>
+                    <li>Follow Geo's clues to find the right locations</li>
+                    <li>Earn points by answering correctly</li>
+                </ul>
+                <p>Ready for an adventure around the world? Let's go!</p>
+            </div>
+            <div id="modal-footer">
+                <button id="modal-button">Let's Explore!</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="quiz-container">
+        <div id="quiz-content">
+            <div id="quiz-question">What is the capital of France?</div>
+            <div id="quiz-options">
+                <div class="quiz-option" data-correct="false">London</div>
+                <div class="quiz-option" data-correct="true">Paris</div>
+                <div class="quiz-option" data-correct="false">Berlin</div>
+                <div class="quiz-option" data-correct="false">Rome</div>
+            </div>
+            <div id="feedback-container"></div>
+            <button id="next-question">Next Question</button>
+        </div>
+    </div>
+    
+    <div id="congratulations">
+        <div id="congrats-content">
+            <div id="congrats-title">Congratulations!</div>
+            <div id="congrats-message">You've completed this level!</div>
+            <div id="congrats-score">Score: 1200</div>
+            <button id="continue-btn">Continue Adventure</button>
+        </div>
+    </div>
+
+    <script>
+        // Set up character expressions
+        document.getElementById('character-face').innerHTML = characterExpressions.happy;
+        
+        // Main game variables
+        let scene, camera, renderer, globe, raycaster, mouse, controls;
+        let rotationSpeed = 0.002;
+        let targetRotationY = 0;
+        let countries = [];
+        let capitals = [];
+        let landmarks = [];
+        let timeRemaining = 0;
+        let timerInterval;
+        let currentScore = 0;
+        let currentLevel = 1;
+        let currentDifficulty = 'easy';
+        let gameMode = true;
+        let targetCountry = null;
+        let targetCapital = null;
+        let targetLandmark = null;
+        let questionsAnswered = 0;
+        let questionType = 'country'; // 'country', 'capital', or 'landmark'
+        let showRegions = true;
+        let showFlags = true;
+        let showLandmarks = true;
+        let zoomSpeed = 0.5;
+        let isLoading = false;
+        
+        // Initialize country data
+        initializeGeographyData();
+        
+        // Character expressions and animations
+        const characterExpressions = {
+            happy: '<svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#FFD700" stroke="#E6C200" stroke-width="5"/><circle cx="30" cy="40" r="7" fill="#333"/><circle cx="70" cy="40" r="7" fill="#333"/><path d="M 30 65 Q 50 80 70 65" stroke="#333" stroke-width="5" fill="none"/></svg>',
+            thinking: '<svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#FFD700" stroke="#E6C200" stroke-width="5"/><circle cx="30" cy="40" r="7" fill="#333"/><circle cx="70" cy="40" r="7" fill="#333"/><path d="M 30 70 Q 50 70 70 70" stroke="#333" stroke-width="5" fill="none"/><path d="M 80 30 Q 90 35 85 40" stroke="#333" stroke-width="3" fill="none"/></svg>',
+            excited: '<svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#FFD700" stroke="#E6C200" stroke-width="5"/><circle cx="30" cy="35" r="8" fill="#333"/><circle cx="70" cy="35" r="8" fill="#333"/><path d="M 30 65 Q 50 85 70 65" stroke="#333" stroke-width="5" fill="none"/><path d="M 23 25 L 37 25" stroke="#333" stroke-width="3"/><path d="M 63 25 L 77 25" stroke="#333" stroke-width="3"/></svg>',
+            sad: '<svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#FFD700" stroke="#E6C200" stroke-width="5"/><circle cx="30" cy="40" r="7" fill="#333"/><circle cx="70" cy="40" r="7" fill="#333"/><path d="M 30 75 Q 50 65 70 75" stroke="#333" stroke-width="5" fill="none"/></svg>'
+        };
+        
+        // Character tips and educational content
+        const characterDialogues = {
+            startup: [
+                "Hi! I'm Geo! Let's explore our amazing planet together!",
+                "Our Earth is home to 195 countries and over 7 billion people!",
+                "Did you know the Earth is about 4.5 billion years old? That's really old!",
+                "Earth is the third planet from the Sun and the only known place with life!",
+                "Let's start our adventure around the world!"
+            ],
+            correctAnswer: [
+                "Amazing job! You're a natural geographer!",
+                "Excellent work! You found it!",
+                "Wow! You're really good at this!",
+                "Fantastic! Keep up the great work!",
+                "That's correct! You're learning so quickly!"
+            ],
+            incorrectAnswer: [
+                "Not quite, but you're getting closer! Try looking at a different part of the globe.",
+                "That's not it, but good try! Remember to look for the clues I gave you.",
+                "Almost there! Think about the hint and try again.",
+                "Keep exploring! You'll find it soon!",
+                "That's not the right place, but don't give up!"
+            ],
+            hints: {
+                africa: "This is Africa, the second-largest continent. It has 54 countries and is home to the Sahara Desert, the largest hot desert in the world!",
+                asia: "This is Asia, the largest continent. It's home to more than half of the world's population and has the highest mountain, Mount Everest!",
+                europe: "This is Europe! Though it's one of the smaller continents, it has many countries with rich history and culture.",
+                northAmerica: "This is North America! It has the largest freshwater lakes system in the world, the Great Lakes.",
+                southAmerica: "This is South America! It's home to the Amazon Rainforest, which produces about 20% of Earth's oxygen!",
+                australia: "This is Australia! It's the smallest continent and the only one that's also a country.",
+                antarctica: "This is Antarctica! It's the coldest place on Earth and is covered in ice that's about 1 mile thick!"
+            },
+            countryFacts: {
+                // Will be populated dynamically
+            },
+            quizCorrect: [
+                "Excellent! That's the right answer!",
+                "Perfect! You're so smart!",
+                "You got it! Great job!",
+                "That's correct! You're becoming a geography expert!",
+                "Absolutely right! I'm impressed!"
+            ],
+            quizIncorrect: [
+                "That's not quite right. Let's learn from this!",
+                "Not this time, but now you've learned something new!",
+                "Good try! Now you know the correct answer.",
+                "That's okay! We learn by making mistakes sometimes.",
+                "Not correct, but that's how we learn!"
+            ]
+        };
+        
+        // Quiz database
+        const quizDatabase = {
+            easy: [
+                {
+                    question: "Which continent is the largest?",
+                    options: ["Africa", "Asia", "North America", "Europe"],
+                    correct: 1,
+                    explanation: "Asia is the largest continent on Earth. It covers about 30% of Earth's total land area!"
+                },
+                {
+                    question: "Which of these is NOT a continent?",
+                    options: ["Africa", "Australia", "Antarctica", "Atlantis"],
+                    correct: 3,
+                    explanation: "Atlantis is a mythical island, not a real continent. The seven continents are: Asia, Africa, North America, South America, Antarctica, Europe, and Australia."
+                },
+                {
+                    question: "Which ocean is the largest?",
+                    options: ["Atlantic Ocean", "Indian Ocean", "Pacific Ocean", "Arctic Ocean"],
+                    correct: 2,
+                    explanation: "The Pacific Ocean is the largest and deepest ocean on Earth. It covers more area than all the land on Earth combined!"
+                },
+                {
+                    question: "Which of these countries is an island?",
+                    options: ["Japan", "China", "Russia", "Mexico"],
+                    correct: 0,
+                    explanation: "Japan is an island country made up of over 6,800 islands! The main islands are Honshu, Hokkaido, Kyushu, and Shikoku."
+                },
+                {
+                    question: "What is a capital city?",
+                    options: ["The biggest city", "The city where the government is", "The oldest city", "The richest city"],
+                    correct: 1,
+                    explanation: "A capital city is where a country's government is located. It's like the 'headquarters' of a country!"
+                },
+                {
+                    question: "What is the equator?",
+                    options: ["A mountain range", "An imaginary line around the middle of Earth", "A big river", "A type of weather"],
+                    correct: 1,
+                    explanation: "The equator is an imaginary line that circles Earth exactly in the middle, dividing it into the Northern and Southern Hemispheres. It's where the Earth is hottest!"
+                }
+            ],
+            medium: [
+                {
+                    question: "Which continent has the most countries?",
+                    options: ["Europe", "Africa", "Asia", "South America"],
+                    correct: 1,
+                    explanation: "Africa has 54 countries, making it the continent with the most independent nations."
+                },
+                {
+                    question: "What are the four main directions on a map?",
+                    options: ["Up, down, left, right", "North, South, East, West", "Forward, backward, sideways, diagonal", "Hot, cold, wet, dry"],
+                    correct: 1,
+                    explanation: "The four main directions on a map are North, South, East, and West. We can use these to find our way around the world!"
+                },
+                {
+                    question: "What do the blue areas on a map usually represent?",
+                    options: ["Cold places", "Water", "Sky", "Rain"],
+                    correct: 1,
+                    explanation: "Blue areas on a map usually represent water - like oceans, seas, lakes, and rivers."
+                },
+                {
+                    question: "Which of these is NOT a type of map?",
+                    options: ["Political map", "Physical map", "Imaginary map", "Climate map"],
+                    correct: 2,
+                    explanation: "While there are many types of real maps (political, physical, climate, etc.), an 'imaginary map' isn't a standard type of map used by geographers."
+                }
+            ],
+            hard: [
+                {
+                    question: "What is a peninsula?",
+                    options: ["A type of mountain", "Land surrounded by water on three sides", "A small island", "A bridge connecting countries"],
+                    correct: 1,
+                    explanation: "A peninsula is a piece of land that is surrounded by water on three sides but connected to mainland on one side. Florida and Italy are examples of peninsulas!"
+                },
+                {
+                    question: "What are lines of latitude?",
+                    options: ["Imaginary lines going north to south on Earth", "Imaginary lines going east to west on Earth", "The edges of continents", "Paths for ships to follow"],
+                    correct: 1,
+                    explanation: "Lines of latitude are imaginary lines that circle around the Earth from east to west. They measure how far north or south a place is from the equator."
+                },
+                {
+                    question: "What is a strait?",
+                    options: ["A narrow passage of water connecting two larger bodies of water", "A flat plain between mountains", "The highest point on a mountain", "A type of river"],
+                    correct: 0,
+                    explanation: "A strait is a narrow channel of water that connects two larger bodies of water. The Strait of Gibraltar connects the Atlantic Ocean to the Mediterranean Sea."
+                },
+                {
+                    question: "Which of these natural features creates a political border between countries?",
+                    options: ["Only mountains", "Only rivers", "Only deserts", "Any of these can be used as borders"],
+                    correct: 3,
+                    explanation: "Countries often use natural features like mountains, rivers, and deserts as borders because they create clear dividing lines between territories."
+                }
+            ]
+        };
+        
+        // Country database
+        const countryData = {
+            // Will be populated with countries information
+        };
+        
+        // Capital cities database
+        const capitalData = {
+            // Will be populated with capital cities information
+        };
+        
+        // Landmarks database
+        const landmarkData = {
+            // Will be populated with landmark information
+        };
+        
+        // Initialize country data with some examples (will be expanded)
+        function initializeGeographyData() {
+            // Define regions and their colors
+            const regions = {
+                northAmerica: "#4CAF50", // Green
+                southAmerica: "#FF9800", // Orange
+                europe: "#2196F3",       // Blue
+                africa: "#F44336",       // Red
+                asia: "#9C27B0",         // Purple
+                oceania: "#FFEB3B",      // Yellow
+                antarctica: "#FFFFFF"    // White
+            };
+            
+            // Initialize some sample countries (will be expanded)
+            countryData.unitedStates = {
+                name: "United States",
+                region: "northAmerica",
+                color: regions.northAmerica,
+                capital: "Washington D.C.",
+                population: "331 million",
+                coordinates: { lat: 37.0902, lng: -95.7129 },
+                flagEmoji: "🇺🇸",
+                funFact: "The United States has 50 states and is the third largest country by size!",
+                difficulty: "easy"
+            };
+            
+            countryData.canada = {
+                name: "Canada",
+                region: "northAmerica",
+                color: regions.northAmerica,
+                capital: "Ottawa",
+                population: "38 million",
+                coordinates: { lat: 56.1304, lng: -106.3468 },
+                flagEmoji: "🇨🇦",
+                funFact: "Canada has the longest coastline of any country in the world!",
+                difficulty: "easy"
+            };
+            
+            countryData.mexico = {
+                name: "Mexico",
+                region: "northAmerica",
+                color: regions.northAmerica,
+                capital: "Mexico City",
+                population: "126 million",
+                coordinates: { lat: 23.6345, lng: -102.5528 },
+                flagEmoji: "🇲🇽",
+                funFact: "Mexico introduced chocolate, corn, and chilis to the world!",
+                difficulty: "easy"
+            };
+            
+            countryData.brazil = {
+                name: "Brazil",
+                region: "southAmerica",
+                color: regions.southAmerica,
+                capital: "Brasília",
+                population: "212 million",
+                coordinates: { lat: -14.2350, lng: -51.9253 },
+                flagEmoji: "🇧🇷",
+                funFact: "Brazil is home to the Amazon Rainforest, which produces 20% of Earth's oxygen!",
+                difficulty: "easy"
+            };
+            
+            countryData.argentina = {
+                name: "Argentina",
+                region: "southAmerica",
+                color: regions.southAmerica,
+                capital: "Buenos Aires",
+                population: "45 million",
+                coordinates: { lat: -38.4161, lng: -63.6167 },
+                flagEmoji: "🇦🇷",
+                funFact: "Argentina has the highest mountain in the Americas, called Aconcagua!",
+                difficulty: "medium"
+            };
+            
+            countryData.unitedKingdom = {
+                name: "United Kingdom",
+                region: "europe",
+                color: regions.europe,
+                capital: "London",
+                population: "67 million",
+                coordinates: { lat: 55.3781, lng: -3.4360 },
+                flagEmoji: "🇬🇧",
+                funFact: "The United Kingdom is made up of four countries: England, Scotland, Wales, and Northern Ireland!",
+                difficulty: "easy"
+            };
+            
+            countryData.france = {
+                name: "France",
+                region: "europe",
+                color: regions.europe,
+                capital: "Paris",
+                population: "67 million",
+                coordinates: { lat: 46.2276, lng: 2.2137 },
+                flagEmoji: "🇫🇷",
+                funFact: "The Eiffel Tower in Paris was originally built to be temporary for the 1889 World's Fair!",
+                difficulty: "easy"
+            };
+            
+            countryData.germany = {
+                name: "Germany",
+                region: "europe",
+                color: regions.europe,
+                capital: "Berlin",
+                population: "83 million",
+                coordinates: { lat: 51.1657, lng: 10.4515 },
+                flagEmoji: "🇩🇪",
+                funFact: "Germany invented the printing press, X-rays, and the automobile!",
+                difficulty: "easy"
+            };
+            
+            countryData.italy = {
+                name: "Italy",
+                region: "europe",
+                color: regions.europe,
+                capital: "Rome",
+                population: "60 million",
+                coordinates: { lat: 41.8719, lng: 12.5674 },
+                flagEmoji: "🇮🇹",
+                funFact: "Italy is shaped like a boot and has more than 1,500 lakes!",
+                difficulty: "easy"
+            };
+            
+            countryData.spain = {
+                name: "Spain",
+                region: "europe",
+                color: regions.europe,
+                capital: "Madrid",
+                population: "47 million",
+                coordinates: { lat: 40.4637, lng: -3.7492 },
+                flagEmoji: "🇪🇸",
+                funFact: "Spain has 44 UNESCO World Heritage Sites, one of the highest numbers in the world!",
+                difficulty: "easy"
+            };
+            
+            countryData.egypt = {
+                name: "Egypt",
+                region: "africa",
+                color: regions.africa,
+                capital: "Cairo",
+                population: "102 million",
+                coordinates: { lat: 26.8206, lng: 30.8025 },
+                flagEmoji: "🇪🇬",
+                funFact: "Egypt is home to the Great Pyramids, which are over 4,500 years old!",
+                difficulty: "easy"
+            };
+            
+            countryData.southAfrica = {
+                name: "South Africa",
+                region: "africa",
+                color: regions.africa,
+                capital: "Pretoria",
+                population: "59 million",
+                coordinates: { lat: -30.5595, lng: 22.9375 },
+                flagEmoji: "🇿🇦",
+                funFact: "South Africa has 11 official languages and is home to many different cultures!",
+                difficulty: "medium"
+            };
+            
+            countryData.nigeria = {
+                name: "Nigeria",
+                region: "africa",
+                color: regions.africa,
+                capital: "Abuja",
+                population: "206 million",
+                coordinates: { lat: 9.0820, lng: 8.6753 },
+                flagEmoji: "🇳🇬",
+                funFact: "Nigeria is Africa's most populous country with over 250 ethnic groups!",
+                difficulty: "medium"
+            };
+            
+            countryData.kenya = {
+                name: "Kenya",
+                region: "africa",
+                color: regions.africa,
+                capital: "Nairobi",
+                population: "53 million",
+                coordinates: { lat: -0.0236, lng: 37.9062 },
+                flagEmoji: "🇰🇪",
+                funFact: "Kenya is famous for long-distance runners and amazing wildlife safaris!",
+                difficulty: "medium"
+            };
+            
+            countryData.china = {
+                name: "China",
+                region: "asia",
+                color: regions.asia,
+                capital: "Beijing",
+                population: "1.4 billion",
+                coordinates: { lat: 35.8617, lng: 104.1954 },
+                flagEmoji: "🇨🇳",
+                funFact: "The Great Wall of China is over 13,000 miles long - that's half the length of the equator!",
+                difficulty: "easy"
+            };
+            
+            countryData.india = {
+                name: "India",
+                region: "asia",
+                color: regions.asia,
+                capital: "New Delhi",
+                population: "1.38 billion",
+                coordinates: { lat: 20.5937, lng: 78.9629 },
+                flagEmoji: "🇮🇳",
+                funFact: "India invented the number system we use today, including the concept of zero!",
+                difficulty: "easy"
+            };
+            
+            countryData.japan = {
+                name: "Japan",
+                region: "asia",
+                color: regions.asia,
+                capital: "Tokyo",
+                population: "126 million",
+                coordinates: { lat: 36.2048, lng: 138.2529 },
+                flagEmoji: "🇯🇵",
+                funFact: "Japan has over 6,800 islands and more than 200 volcanoes!",
+                difficulty: "easy"
+            };
+            
+            countryData.australia = {
+                name: "Australia",
+                region: "oceania",
+                color: regions.oceania,
+                capital: "Canberra",
+                population: "25 million",
+                coordinates: { lat: -25.2744, lng: 133.7751 },
+                flagEmoji: "🇦🇺",
+                funFact: "Australia is the only country that is also a continent!",
+                difficulty: "easy"
+            };
+            
+            countryData.newZealand = {
+                name: "New Zealand",
+                region: "oceania",
+                color: regions.oceania,
+                capital: "Wellington",
+                population: "5 million",
+                coordinates: { lat: -40.9006, lng: 174.8860 },
+                flagEmoji: "🇳🇿",
+                funFact: "New Zealand has more sheep than people - about 5 sheep for every person!",
+                difficulty: "medium"
+            };
+            
+            countryData.antarctica = {
+                name: "Antarctica",
+                region: "antarctica",
+                color: regions.antarctica,
+                capital: "None",
+                population: "No permanent residents",
+                coordinates: { lat: -82.8628, lng: 135.0000 },
+                flagEmoji: "🏳️",
+                funFact: "Antarctica is the coldest place on Earth, with temperatures as low as -128.6°F (-89.2°C)!",
+                difficulty: "easy"
+            };
+            
+            // Adding more countries to make it comprehensive
+            countryData.russia = {
+                name: "Russia",
+                region: "asia",
+                color: regions.asia,
+                capital: "Moscow",
+                population: "144 million",
+                coordinates: { lat: 61.5240, lng: 105.3188 },
+                flagEmoji: "🇷🇺",
+                funFact: "Russia is the largest country in the world, covering more than one-eighth of Earth's inhabited land area!",
+                difficulty: "easy"
+            };
+            
+            countryData.peru = {
+                name: "Peru",
+                region: "southAmerica",
+                color: regions.southAmerica,
+                capital: "Lima",
+                population: "33 million",
+                coordinates: { lat: -9.1900, lng: -75.0152 },
+                flagEmoji: "🇵🇪",
+                funFact: "Peru is home to Machu Picchu, an ancient Inca city built high in the Andes mountains!",
+                difficulty: "medium"
+            };
+            
+            countryData.greece = {
+                name: "Greece",
+                region: "europe",
+                color: regions.europe,
+                capital: "Athens",
+                population: "10.7 million",
+                coordinates: { lat: 39.0742, lng: 21.8243 },
+                flagEmoji: "🇬🇷",
+                funFact: "Greece is often called the cradle of Western civilization and is home to the first Olympic Games!",
+                difficulty: "medium"
+            };
+            
+            countryData.morocco = {
+                name: "Morocco",
+                region: "africa",
+                color: regions.africa,
+                capital: "Rabat",
+                population: "36 million",
+                coordinates: { lat: 31.7917, lng: -7.0926 },
+                flagEmoji: "🇲🇦",
+                funFact: "Morocco has both Atlantic and Mediterranean coastlines and is just 8 miles from Europe across the Strait of Gibraltar!",
+                difficulty: "medium"
+            };
+            
+            countryData.thailand = {
+                name: "Thailand",
+                region: "asia",
+                color: regions.asia,
+                capital: "Bangkok",
+                population: "69 million",
+                coordinates: { lat: 15.8700, lng: 100.9925 },
+                flagEmoji: "🇹🇭",
+                funFact: "Thailand is the only Southeast Asian country that was never colonized by a European power!",
+                difficulty: "medium"
+            };
+            
+            // Initialize some of the important capitals
+            capitalData.washington = {
+                name: "Washington D.C.",
+                country: "United States",
+                coordinates: { lat: 38.9072, lng: -77.0369 },
+                funFact: "Washington D.C. has many important buildings like the White House, where the president lives!",
+                difficulty: "easy"
+            };
+            
+            capitalData.london = {
+                name: "London",
+                country: "United Kingdom",
+                coordinates: { lat: 51.5074, lng: -0.1278 },
+                funFact: "London has a famous clock tower called Big Ben and a big wheel called the London Eye!",
+                difficulty: "easy"
+            };
+            
+            capitalData.paris = {
+                name: "Paris",
+                country: "France",
+                coordinates: { lat: 48.8566, lng: 2.3522 },
+                funFact: "Paris has a huge tower called the Eiffel Tower that lights up at night!",
+                difficulty: "easy"
+            };
+            
+            capitalData.tokyo = {
+                name: "Tokyo",
+                country: "Japan",
+                coordinates: { lat: 35.6762, lng: 139.6503 },
+                funFact: "Tokyo is the largest metropolitan area in the world with over 37 million people!",
+                difficulty: "easy"
+            };
+            
+            capitalData.beijing = {
+                name: "Beijing",
+                country: "China",
+                coordinates: { lat: 39.9042, lng: 116.4074 },
+                funFact: "Beijing has a huge palace called the Forbidden City where emperors lived for 500 years!",
+                difficulty: "easy"
+            };
+            
+            capitalData.moscow = {
+                name: "Moscow",
+                country: "Russia",
+                coordinates: { lat: 55.7558, lng: 37.6173 },
+                funFact: "Moscow has a famous square called Red Square and a colorful cathedral called St. Basil's!",
+                difficulty: "medium"
+            };
+            
+            capitalData.cairo = {
+                name: "Cairo",
+                country: "Egypt",
+                coordinates: { lat: 30.0444, lng: 31.2357 },
+                funFact: "Cairo is near the Great Pyramids and the Sphinx, which are thousands of years old!",
+                difficulty: "medium"
+            };
+            
+            capitalData.canberra = {
+                name: "Canberra",
+                country: "Australia",
+                coordinates: { lat: -35.2809, lng: 149.1300 },
+                funFact: "Canberra was specially designed to be Australia's capital city in 1913!",
+                difficulty: "hard"
+            };
+            
+            // Initialize some world-famous landmarks
+            landmarkData.eiffelTower = {
+                name: "Eiffel Tower",
+                country: "France",
+                coordinates: { lat: 48.8584, lng: 2.2945 },
+                funFact: "The Eiffel Tower was built for the 1889 World's Fair and was once the tallest structure in the world!",
+                difficulty: "easy"
+            };
+            
+            landmarkData.statueOfLiberty = {
+                name: "Statue of Liberty",
+                country: "United States",
+                coordinates: { lat: 40.6892, lng: -74.0445 },
+                funFact: "The Statue of Liberty was a gift from France to the United States and symbolizes freedom!",
+                difficulty: "easy"
+            };
+            
+            landmarkData.greatWallOfChina = {
+                name: "Great Wall of China",
+                country: "China",
+                coordinates: { lat: 40.4319, lng: 116.5704 },
+                funFact: "The Great Wall of China is over 13,000 miles long and took more than 2,000 years to build!",
+                difficulty: "easy"
+            };
+            
+            landmarkData.pyramidsOfGiza = {
+                name: "Pyramids of Giza",
+                country: "Egypt",
+                coordinates: { lat: 29.9791, lng: 31.1342 },
+                funFact: "The Great Pyramid of Giza is the oldest of the Seven Wonders of the Ancient World and the only one still standing!",
+                difficulty: "easy"
+            };
+            
+            landmarkData.tajMahal = {
+                name: "Taj Mahal",
+                country: "India",
+                coordinates: { lat: 27.1751, lng: 78.0421 },
+                funFact: "The Taj Mahal is a beautiful white marble building built by an emperor as a tomb for his favorite wife!",
+                difficulty: "medium"
+            };
+            
+            landmarkData.machuPicchu = {
+                name: "Machu Picchu",
+                country: "Peru",
+                coordinates: { lat: -13.1631, lng: -72.5450 },
+                funFact: "Machu Picchu is an ancient city built by the Inca civilization high in the mountains of Peru!",
+                difficulty: "medium"
+            };
+            
+            landmarkData.colosseum = {
+                name: "Colosseum",
+                country: "Italy",
+                coordinates: { lat: 41.8902, lng: 12.4922 },
+                funFact: "The Colosseum in Rome is a huge ancient arena where gladiators used to battle 2,000 years ago!",
+                difficulty: "medium"
+            };
+            
+            landmarkData.operaHouse = {
+                name: "Sydney Opera House",
+                country: "Australia",
+                coordinates: { lat: -33.8568, lng: 151.2153 },
+                funFact: "The Sydney Opera House has a roof shaped like giant shells or sails and is one of the most famous buildings in the world!",
+                difficulty: "medium"
+            };
+        }
+        
+        // Function to get a random target based on difficulty and type
+        function getRandomTarget(difficulty, type) {
+            let possibleTargets = [];
+            
+            if (type === 'country') {
+                for (const key in countryData) {
+                    if (countryData[key].difficulty === difficulty) {
+                        possibleTargets.push(key);
+                    }
+                }
+            } else if (type === 'capital') {
+                for (const key in capitalData) {
+                    if (capitalData[key].difficulty === difficulty) {
+                        possibleTargets.push(key);
+                    }
+                }
+            } else if (type === 'landmark') {
+                for (const key in landmarkData) {
+                    if (landmarkData[key].difficulty === difficulty) {
+                        possibleTargets.push(key);
+                    }
+                }
+            }
+            
+            if (possibleTargets.length === 0) {
+                // If no targets match the criteria, use any target of that type
+                if (type === 'country') {
+                    possibleTargets = Object.keys(countryData);
+                } else if (type === 'capital') {
+                    possibleTargets = Object.keys(capitalData);
+                } else if (type === 'landmark') {
+                    possibleTargets = Object.keys(landmarkData);
+                }
+            }
+            
+            const randomIndex = Math.floor(Math.random() * possibleTargets.length);
+            return possibleTargets[randomIndex];
+        }
+        
+        // Function to set a new target
+        function setNewTarget() {
+            // Determine question type based on progress
+            if (questionsAnswered % 3 === 0) {
+                questionType = 'country';
+            } else if (questionsAnswered % 3 === 1) {
+                questionType = 'capital';
+            } else {
+                questionType = 'landmark';
+            }
+            
+            // Get random target based on current difficulty and type
+            if (questionType === 'country') {
+                const targetKey = getRandomTarget(currentDifficulty, 'country');
+                targetCountry = targetKey;
+                targetCapital = null;
+                targetLandmark = null;
+                
+                // Set question and hint
+                document.getElementById('question').textContent = `Find ${countryData[targetKey].name} on the map!`;
+                document.getElementById('hint').textContent = `Hint: It's in ${countryData[targetKey].region.replace(/([A-Z])/g, ' $1').trim()} and its capital is ${countryData[targetKey].capital}`;
+                
+                // Update character
+                setCharacterExpression('thinking');
+                setCharacterSpeech(`Let's find ${countryData[targetKey].name}! It's a ${currentDifficulty} country to find. ${countryData[targetKey].funFact}`);
+            } else if (questionType === 'capital') {
+                const targetKey = getRandomTarget(currentDifficulty, 'capital');
+                targetCountry = null;
+                targetCapital = targetKey;
+                targetLandmark = null;
+                
+                // Set question and hint
+                document.getElementById('question').textContent = `Find ${capitalData[targetKey].name} on the map!`;
+                document.getElementById('hint').textContent = `Hint: It's the capital of ${capitalData[targetKey].country}`;
+                
+                // Update character
+                setCharacterExpression('thinking');
+                setCharacterSpeech(`Let's find ${capitalData[targetKey].name}! It's the capital of ${capitalData[targetKey].country}. ${capitalData[targetKey].funFact}`);
+            } else {
+                const targetKey = getRandomTarget(currentDifficulty, 'landmark');
+                targetCountry = null;
+                targetCapital = null;
+                targetLandmark = targetKey;
+                
+                // Set question and hint
+                document.getElementById('question').textContent = `Find the ${landmarkData[targetKey].name} on the map!`;
+                document.getElementById('hint').textContent = `Hint: It's in ${landmarkData[targetKey].country}`;
+                
+                // Update character
+                setCharacterExpression('thinking');
+                setCharacterSpeech(`Let's find the ${landmarkData[targetKey].name}! It's a famous landmark in ${landmarkData[targetKey].country}. ${landmarkData[targetKey].funFact}`);
+            }
+            
+            // Set timer based on difficulty
+            if (currentDifficulty === 'easy') {
+                timeRemaining = 60;
+            } else if (currentDifficulty === 'medium') {
+                timeRemaining = 45;
+            } else {
+                timeRemaining = 30;
+            }
+            
+            // Start timer
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
+            updateTimer();
+        }
+        
+        // Function to update the timer
+        function updateTimer() {
+            if (timeRemaining <= 0) {
+                clearInterval(timerInterval);
+                handleTimeUp();
+                return;
+            }
+            
+            timeRemaining--;
+            const minutes = Math.floor(timeRemaining / 60);
+            const seconds = timeRemaining % 60;
+            document.getElementById('timer').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Change color based on time remaining
+            if (timeRemaining <= 10) {
+                document.getElementById('timer').style.color = '#F44336';
+            } else if (timeRemaining <= 20) {
+                document.getElementById('timer').style.color = '#FF9800';
+            } else {
+                document.getElementById('timer').style.color = '#4CAF50';
+            }
+        }
+        
+        // Function to handle time up
+        function handleTimeUp() {
+            // Update character
+            setCharacterExpression('sad');
+            setCharacterSpeech("Oh no! We ran out of time. That's okay, let's try another question!");
+            
+            // Start quiz to reinforce learning
+            startQuiz();
+        }
+        
+        // Function to start quiz
+        function startQuiz() {
+            // Get quiz questions based on difficulty
+            const quizQuestions = quizDatabase[currentDifficulty];
+            const randomIndex = Math.floor(Math.random() * quizQuestions.length);
+            const quizQuestion = quizQuestions[randomIndex];
+            
+            // Set up quiz UI
+            document.getElementById('quiz-question').textContent = quizQuestion.question;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            quizQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.dataset.correct = (index === quizQuestion.correct).toString();
+                optionElement.addEventListener('click', handleQuizSelection);
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            document.getElementById('feedback-container').textContent = '';
+            document.getElementById('next-question').style.display = 'none';
+            
+            // Show quiz
+            document.getElementById('quiz-container').classList.add('active');
+        }
+        
+        // Function to handle quiz selection
+        function handleQuizSelection(event) {
+            const selectedOption = event.target;
+            const isCorrect = selectedOption.dataset.correct === 'true';
+            
+            // Disable all options
+            document.querySelectorAll('.quiz-option').forEach(option => {
+                option.removeEventListener('click', handleQuizSelection);
+                
+                if (option.dataset.correct === 'true') {
+                    option.classList.add('correct');
+                } else if (option === selectedOption && !isCorrect) {
+                    option.classList.add('incorrect');
+                }
+            });
+            
+            // Show feedback
+            const feedbackContainer = document.getElementById('feedback-container');
+            const quizQuestions = quizDatabase[currentDifficulty];
+            const questionText = document.getElementById('quiz-question').textContent;
+            const question = quizQuestions.find(q => q.question === questionText);
+            
+            if (isCorrect) {
+                feedbackContainer.textContent = characterDialogues.quizCorrect[Math.floor(Math.random() * characterDialogues.quizCorrect.length)];
+                feedbackContainer.style.color = '#4CAF50';
+                
+                // Update character
+                setCharacterExpression('excited');
+                setCharacterSpeech(question.explanation);
+                
+                // Add bonus points
+                let bonusPoints = currentDifficulty === 'easy' ? 50 : (currentDifficulty === 'medium' ? 75 : 100);
+                currentScore += bonusPoints;
+                document.getElementById('score').textContent = currentScore;
+            } else {
+                feedbackContainer.textContent = characterDialogues.quizIncorrect[Math.floor(Math.random() * characterDialogues.quizIncorrect.length)];
+                feedbackContainer.style.color = '#F44336';
+                
+                // Update character
+                setCharacterExpression('sad');
+                setCharacterSpeech(question.explanation);
+            }
+            
+            // Show next question button
+            document.getElementById('next-question').style.display = 'block';
+            document.getElementById('next-question').addEventListener('click', closeQuizAndContinue, { once: true });
+        }
+        
+        // Function to close quiz and continue game
+        function closeQuizAndContinue() {
+            document.getElementById('quiz-container').classList.remove('active');
+            setNewTarget();
+        }
+        
+        // Function to start a new level
+        function startNewLevel() {
+            currentLevel++;
+            document.getElementById('level-display').textContent = `Level ${currentLevel}`;
+            
+            // Adjust difficulty based on level
+            if (currentLevel <= 3) {
+                currentDifficulty = 'easy';
+            } else if (currentLevel <= 6) {
+                currentDifficulty = 'medium';
+            } else {
+                currentDifficulty = 'hard';
+            }
+            
+            // Update UI to reflect current difficulty
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.style.fontWeight = 'normal';
+                btn.style.transform = 'scale(1)';
+            });
+            
+            const difficultyBtn = document.getElementById(`${currentDifficulty}-btn`);
+            if (difficultyBtn) {
+                difficultyBtn.style.fontWeight = 'bold';
+                difficultyBtn.style.transform = 'scale(1.1)';
+            }
+            
+            // Reset question counter
+            questionsAnswered = 0;
+            
+            // Set new target
+            setNewTarget();
+            
+            // Show level message
+            showCongratulations(`You've reached Level ${currentLevel}!`, `Now we'll explore ${currentDifficulty} geography challenges. Ready to learn more?`);
+        }
+        
+        // Function to handle country selection
+        function handleSelection(key, type) {
+            if (!gameMode) {
+                // In explore mode, just show info about the selected item
+                if (type === 'country') {
+                    setCharacterExpression('happy');
+                    setCharacterSpeech(`This is ${countryData[key].name}! ${countryData[key].funFact}`);
+                } else if (type === 'capital') {
+                    setCharacterExpression('happy');
+                    setCharacterSpeech(`This is ${capitalData[key].name}, the capital of ${capitalData[key].country}! ${capitalData[key].funFact}`);
+                } else if (type === 'landmark') {
+                    setCharacterExpression('happy');
+                    setCharacterSpeech(`This is the ${landmarkData[key].name}! ${landmarkData[key].funFact}`);
+                }
+                return;
+            }
+            
+            // In game mode, check if the selection matches the target
+            if (
+                (questionType === 'country' && key === targetCountry) ||
+                (questionType === 'capital' && key === targetCapital) ||
+                (questionType === 'landmark' && key === targetLandmark)
+            ) {
+                // Correct selection
+                clearInterval(timerInterval);
+                
+                // Update score based on difficulty and time
+                let pointsEarned = 0;
+                if (currentDifficulty === 'easy') {
+                    pointsEarned = 100 + timeRemaining;
+                } else if (currentDifficulty === 'medium') {
+                    pointsEarned = 200 + timeRemaining * 2;
+                } else {
+                    pointsEarned = 300 + timeRemaining * 3;
+                }
+                
+                currentScore += pointsEarned;
+                document.getElementById('score').textContent = currentScore;
+                
+                // Increase questions answered
+                questionsAnswered++;
+                
+                // Update character
+                setCharacterExpression('excited');
+                const randomIndex = Math.floor(Math.random() * characterDialogues.correctAnswer.length);
+                setCharacterSpeech(`${characterDialogues.correctAnswer[randomIndex]} You earned ${pointsEarned} points!`);
+                
+                // Check if we should level up
+                if (questionsAnswered >= 5) {
+                    startNewLevel();
+                } else {
+                    // Start quiz to reinforce learning
+                    startQuiz();
+                }
+            } else {
+                // Incorrect selection
+                // Update character
+                setCharacterExpression('sad');
+                const randomIndex = Math.floor(Math.random() * characterDialogues.incorrectAnswer.length);
+                setCharacterSpeech(characterDialogues.incorrectAnswer[randomIndex]);
+                
+                // Deduct points
+                let pointsDeducted = 0;
+                if (currentDifficulty === 'easy') {
+                    pointsDeducted = 10;
+                } else if (currentDifficulty === 'medium') {
+                    pointsDeducted = 20;
+                } else {
+                    pointsDeducted = 30;
+                }
+                
+                currentScore = Math.max(0, currentScore - pointsDeducted);
+                document.getElementById('score').textContent = currentScore;
+            }
+
+
+            // Continuing from where the previous code left off
+        }
+        
+        
+        // Function to start quiz
+        function startQuiz() {
+            // Get quiz questions based on difficulty
+            const quizQuestions = quizDatabase[currentDifficulty];
+            const randomIndex = Math.floor(Math.random() * quizQuestions.length);
+            const quizQuestion = quizQuestions[randomIndex];
+            
+            // Set up quiz UI
+            document.getElementById('quiz-question').textContent = quizQuestion.question;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            quizQuestion.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.dataset.correct = (index === quizQuestion.correct).toString();
+                optionElement.addEventListener('click', handleQuizSelection);
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            document.getElementById('feedback-container').textContent = '';
+            document.getElementById('next-question').style.display = 'none';
+            
+            // Show quiz
+            document.getElementById('quiz-container').classList.add('active');
+        }
+        
+        // Function to handle quiz selection
+        function handleQuizSelection(event) {
+            const selectedOption = event.target;
+            const isCorrect = selectedOption.dataset.correct === 'true';
+            
+            // Disable all options
+            document.querySelectorAll('.quiz-option').forEach(option => {
+                option.removeEventListener('click', handleQuizSelection);
+                
+                if (option.dataset.correct === 'true') {
+                    option.classList.add('correct');
+                } else if (option === selectedOption && !isCorrect) {
+                    option.classList.add('incorrect');
+                }
+            });
+            
+            // Show feedback
+            const feedbackContainer = document.getElementById('feedback-container');
+            const quizQuestions = quizDatabase[currentDifficulty];
+            const questionText = document.getElementById('quiz-question').textContent;
+            const question = quizQuestions.find(q => q.question === questionText);
+            
+            if (isCorrect) {
+                feedbackContainer.textContent = characterDialogues.quizCorrect[Math.floor(Math.random() * characterDialogues.quizCorrect.length)];
+                feedbackContainer.style.color = '#4CAF50';
+                
+                // Update character
+                setCharacterExpression('excited');
+                setCharacterSpeech(question.explanation);
+                
+                // Add bonus points
+                let bonusPoints = currentDifficulty === 'easy' ? 50 : (currentDifficulty === 'medium' ? 75 : 100);
+                currentScore += bonusPoints;
+                document.getElementById('score').textContent = currentScore;
+            } else {
+                feedbackContainer.textContent = characterDialogues.quizIncorrect[Math.floor(Math.random() * characterDialogues.quizIncorrect.length)];
+                feedbackContainer.style.color = '#F44336';
+                
+                // Update character
+                setCharacterExpression('sad');
+                setCharacterSpeech(question.explanation);
+            }
+            
+            // Show next question button
+            document.getElementById('next-question').style.display = 'block';
+            document.getElementById('next-question').addEventListener('click', closeQuizAndContinue, { once: true });
+        }
+        
+        // Function to close quiz and continue game
+        function closeQuizAndContinue() {
+            document.getElementById('quiz-container').classList.remove('active');
+            setNewTarget();
+        }
+        
+        // Function to show congratulations screen
+        function showCongratulations(title, message) {
+            document.getElementById('congrats-title').textContent = title;
+            document.getElementById('congrats-message').textContent = message;
+            document.getElementById('congrats-score').textContent = `Score: ${currentScore}`;
+            
+            document.getElementById('congratulations').classList.add('active');
+            
+            // Create fireworks
+            createFireworks();
+            
+            // Add continue button event
+            document.getElementById('continue-btn').addEventListener('click', () => {
+                document.getElementById('congratulations').classList.remove('active');
+            }, { once: true });
+        }
+        
+        // Function to create fireworks
+        function createFireworks() {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const firework = document.createElement('div');
+                    firework.className = 'firework';
+                    
+                    // Random position
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    
+                    // Random color
+                    const hue = Math.floor(Math.random() * 360);
+                    const color = `hsl(${hue}, 100%, 50%)`;
+                    
+                    firework.style.left = `${x}px`;
+                    firework.style.top = `${y}px`;
+                    firework.style.backgroundColor = color;
+                    
+                    document.getElementById('congratulations').appendChild(firework);
+                    
+                    // Animate
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 2 + Math.random() * 4;
+                    const size = 5 + Math.random() * 7;
+                    
+                    firework.style.width = `${size}px`;
+                    firework.style.height = `${size}px`;
+                    
+                    gsap.to(firework, {
+                        duration: 0.5 + Math.random() * 1,
+                        x: Math.cos(angle) * (100 + Math.random() * 200),
+                        y: Math.sin(angle) * (100 + Math.random() * 200),
+                        scale: 0,
+                        opacity: 0,
+                        ease: "power1.out",
+                        onComplete: () => {
+                            firework.remove();
+                        }
+                    });
+                }, i * 100);
+            }
+        }
+        
+        // Main initialization
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up start screen
+            document.getElementById('start-button').addEventListener('click', () => {
+                document.getElementById('start-button').style.display = 'none';
+                document.getElementById('loading').style.display = 'block';
+                
+                // Simulate loading time
+                setTimeout(() => {
+                    initApp();
+                    document.getElementById('start-screen').style.display = 'none';
+                    showInstructions();
+                }, 2000);
+            });
+            
+            // Set up difficulty buttons
+            document.getElementById('easy-btn').addEventListener('click', () => {
+                currentDifficulty = 'easy';
+                updateDifficultyUI();
+                setNewTarget();
+            });
+            
+            document.getElementById('medium-btn').addEventListener('click', () => {
+                currentDifficulty = 'medium';
+                updateDifficultyUI();
+                setNewTarget();
+            });
+            
+            document.getElementById('hard-btn').addEventListener('click', () => {
+                currentDifficulty = 'hard';
+                updateDifficultyUI();
+                setNewTarget();
+            });
+            
+            // Set up mode buttons
+            document.getElementById('game-mode-btn').addEventListener('click', () => {
+                gameMode = true;
+                document.getElementById('game-mode-btn').style.fontWeight = 'bold';
+                document.getElementById('explore-mode-btn').style.fontWeight = 'normal';
+                document.getElementById('question-container').style.display = 'block';
+                setNewTarget();
+            });
+            
+            document.getElementById('explore-mode-btn').addEventListener('click', () => {
+                gameMode = false;
+                document.getElementById('game-mode-btn').style.fontWeight = 'normal';
+                document.getElementById('explore-mode-btn').style.fontWeight = 'bold';
+                document.getElementById('question-container').style.display = 'none';
+                clearInterval(timerInterval);
+                setCharacterExpression('happy');
+                setCharacterSpeech("Explore mode activated! Click on any country, capital, or landmark to learn more about it!");
+            });
+            
+            // Set up info button
+            document.getElementById('info-button').addEventListener('click', showInstructions);
+            
+            // Set up modal close button
+            document.getElementById('close-modal').addEventListener('click', () => {
+                document.getElementById('modal-container').classList.remove('active');
+            });
+            
+            document.getElementById('modal-button').addEventListener('click', () => {
+                document.getElementById('modal-container').classList.remove('active');
+            });
+            
+            // Set up quiz next button
+            document.getElementById('next-question').addEventListener('click', () => {
+                document.getElementById('quiz-container').classList.remove('active');
+                setNewTarget();
+            });
+            
+            // Set up control panel sliders
+            document.getElementById('rotation-speed').addEventListener('input', (e) => {
+                rotationSpeed = parseFloat(e.target.value) * 0.001;
+            });
+            
+            document.getElementById('zoom-speed').addEventListener('input', (e) => {
+                zoomSpeed = parseFloat(e.target.value) * 0.1;
+            });
+            
+            // Set up toggle controls
+            document.getElementById('region-toggle').addEventListener('change', (e) => {
+                showRegions = e.target.checked;
+                updateGlobeVisibility();
+            });
+            
+            document.getElementById('flag-toggle').addEventListener('change', (e) => {
+                showFlags = e.target.checked;
+                updateGlobeVisibility();
+            });
+            
+            document.getElementById('landmark-toggle').addEventListener('change', (e) => {
+                showLandmarks = e.target.checked;
+                updateGlobeVisibility();
+            });
+        });
+        
+        // Function to update difficulty UI
+        function updateDifficultyUI() {
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.style.fontWeight = 'normal';
+                btn.style.transform = 'scale(1)';
+            });
+            
+            const difficultyBtn = document.getElementById(`${currentDifficulty}-btn`);
+            if (difficultyBtn) {
+                difficultyBtn.style.fontWeight = 'bold';
+                difficultyBtn.style.transform = 'scale(1.1)';
+            }
+        }
+        
+        // Function to show instructions
+        function showInstructions() {
+            document.getElementById('modal-container').classList.add('active');
+        }
+        
+        // Function to set character expression
+        function setCharacterExpression(expression) {
+            document.getElementById('character-face').innerHTML = characterExpressions[expression];
+        }
+        
+        // Function to set character speech
+        function setCharacterSpeech(text) {
+            document.getElementById('character-speech').textContent = text;
+        }
+        
+        // Function to initialize the 3D application
+        function initApp() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x1a237e);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 5;
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true, canvas: document.getElementById('globe') });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            
+            // Create raycaster for interaction
+            raycaster = new THREE.Raycaster();
+            mouse = new THREE.Vector2();
+            
+            // Create globe
+            createGlobe();
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Handle mouse interaction
+            document.getElementById('globe').addEventListener('mousedown', onMouseDown);
+            document.getElementById('globe').addEventListener('mousemove', onMouseMove);
+            document.getElementById('globe').addEventListener('wheel', onMouseWheel);
+            
+            // Start animation loop
+            animate();
+        }
+        
+        // Function to create the globe
+        function createGlobe() {
+            // Create earth sphere
+            const earthGeometry = new THREE.SphereGeometry(2, 64, 64);
+            const earthMaterial = new THREE.MeshBasicMaterial({
+                color: 0x2196F3, // Ocean blue
+                transparent: true,
+                opacity: 0.8
+            });
+            globe = new THREE.Mesh(earthGeometry, earthMaterial);
+            scene.add(globe);
+            
+            // Add continents as separate geometries
+            createContinents();
+            
+            // Add countries
+            createCountries();
+            
+            // Add capitals
+            createCapitals();
+            
+            // Add landmarks
+            createLandmarks();
+            
+            // Add simple atmosphere
+            createAtmosphere();
+        }
+        
+        // Function to create continents (simplified shapes)
+        function createContinents() {
+            // This is a simplified representation using primitives
+            // In a full implementation, we would use GeoJSON data for accurate continent shapes
+            
+            // North America (simplified shape)
+            const northAmericaGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+            const northAmericaMaterial = new THREE.MeshBasicMaterial({ color: 0x4CAF50 });
+            const northAmerica = new THREE.Mesh(northAmericaGeometry, northAmericaMaterial);
+            northAmerica.position.set(-1.3, 0.8, 1.6);
+            northAmerica.scale.set(1.4, 1, 0.7);
+            globe.add(northAmerica);
+            
+            // South America (simplified shape)
+            const southAmericaGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+            const southAmericaMaterial = new THREE.MeshBasicMaterial({ color: 0xFF9800 });
+            const southAmerica = new THREE.Mesh(southAmericaGeometry, southAmericaMaterial);
+            southAmerica.position.set(-0.9, -0.7, 1.8);
+            southAmerica.scale.set(0.8, 1.5, 0.7);
+            globe.add(southAmerica);
+            
+            // Europe (simplified shape)
+            const europeGeometry = new THREE.SphereGeometry(0.25, 32, 32);
+            const europeMaterial = new THREE.MeshBasicMaterial({ color: 0x2196F3 });
+            const europe = new THREE.Mesh(europeGeometry, europeMaterial);
+            europe.position.set(0.5, 1.2, 1.6);
+            europe.scale.set(1.2, 0.8, 0.7);
+            globe.add(europe);
+            
+            // Africa (simplified shape)
+            const africaGeometry = new THREE.SphereGeometry(0.4, 32, 32);
+            const africaMaterial = new THREE.MeshBasicMaterial({ color: 0xF44336 });
+            const africa = new THREE.Mesh(africaGeometry, africaMaterial);
+            africa.position.set(0.6, -0.3, 1.8);
+            africa.scale.set(1, 1.5, 0.7);
+            globe.add(africa);
+            
+            // Asia (simplified shape)
+            const asiaGeometry = new THREE.SphereGeometry(0.6, 32, 32);
+            const asiaMaterial = new THREE.MeshBasicMaterial({ color: 0x9C27B0 });
+            const asia = new THREE.Mesh(asiaGeometry, asiaMaterial);
+            asia.position.set(1.3, 0.8, 1.3);
+            asia.scale.set(1.5, 1.2, 0.7);
+            globe.add(asia);
+            
+            // Australia (simplified shape)
+            const australiaGeometry = new THREE.SphereGeometry(0.25, 32, 32);
+            const australiaMaterial = new THREE.MeshBasicMaterial({ color: 0xFFEB3B });
+            const australia = new THREE.Mesh(australiaGeometry, australiaMaterial);
+            australia.position.set(1.5, -1, 1.2);
+            australia.scale.set(1, 0.7, 0.7);
+            globe.add(australia);
+            
+            // Antarctica (simplified shape)
+            const antarcticaGeometry = new THREE.SphereGeometry(0.3, 32, 32);
+            const antarcticaMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+            const antarctica = new THREE.Mesh(antarcticaGeometry, antarcticaMaterial);
+            antarctica.position.set(0, -1.8, 0.5);
+            antarctica.scale.set(1.5, 0.5, 1.5);
+            globe.add(antarctica);
+        }
+        
+        // Function to create country representations
+        function createCountries() {
+            countries = [];
+            
+            for (const key in countryData) {
+                const country = countryData[key];
+                
+                // Convert lat/lng to 3D coordinates
+                const position = latLngToVector3(country.coordinates.lat, country.coordinates.lng, 2.05);
+                
+                // Create marker for country
+                const markerGeometry = new THREE.SphereGeometry(0.03, 16, 16);
+                const markerMaterial = new THREE.MeshBasicMaterial({ color: country.color });
+                const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+                marker.position.copy(position);
+                marker.userData = { type: 'country', key: key };
+                globe.add(marker);
+                
+                countries.push(marker);
+                
+                // Create country label (flag emoji)
+                if (showFlags) {
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = 64;
+                    canvas.height = 64;
+                    context.font = '48px Arial';
+                    context.fillText(country.flagEmoji, 8, 48);
+                    
+                    const texture = new THREE.CanvasTexture(canvas);
+                    const labelMaterial = new THREE.SpriteMaterial({ map: texture });
+                    const label = new THREE.Sprite(labelMaterial);
+                    label.position.copy(position);
+                    label.position.multiplyScalar(1.1);
+                    label.scale.set(0.2, 0.2, 0.2);
+                    label.userData = { type: 'flag', key: key };
+                    globe.add(label);
+                }
+            }
+        }
+        
+        // Function to create capital city representations
+        function createCapitals() {
+            capitals = [];
+            
+            for (const key in capitalData) {
+                const capital = capitalData[key];
+                
+                // Convert lat/lng to 3D coordinates
+                const position = latLngToVector3(capital.coordinates.lat, capital.coordinates.lng, 2.08);
+                
+                // Create marker for capital
+                const markerGeometry = new THREE.SphereGeometry(0.02, 16, 16);
+                const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+                const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+                marker.position.copy(position);
+                marker.userData = { type: 'capital', key: key };
+                globe.add(marker);
+                
+                capitals.push(marker);
+                
+                // Create simple star to indicate capital
+                const starGeometry = new THREE.CircleGeometry(0.01, 5);
+                const starMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+                const star = new THREE.Mesh(starGeometry, starMaterial);
+                star.position.copy(position);
+                star.position.multiplyScalar(1.01);
+                star.lookAt(0, 0, 0);
+                star.userData = { type: 'capitalStar', key: key };
+                globe.add(star);
+            }
+        }
+        
+        // Function to create landmark representations
+        function createLandmarks() {
+            landmarks = [];
+            
+            for (const key in landmarkData) {
+                const landmark = landmarkData[key];
+                
+                // Convert lat/lng to 3D coordinates
+                const position = latLngToVector3(landmark.coordinates.lat, landmark.coordinates.lng, 2.1);
+                
+                // Create marker for landmark
+                const markerGeometry = new THREE.ConeGeometry(0.02, 0.05, 8);
+                const markerMaterial = new THREE.MeshBasicMaterial({ color: 0xFF4081 });
+                const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+                marker.position.copy(position);
+                marker.lookAt(0, 0, 0);
+                marker.rotateX(Math.PI / 2);
+                marker.userData = { type: 'landmark', key: key };
+                globe.add(marker);
+                
+                landmarks.push(marker);
+            }
+        }
+        
+        // Function to create a simple atmosphere effect
+        function createAtmosphere() {
+            const atmosphereGeometry = new THREE.SphereGeometry(2.1, 64, 64);
+            const atmosphereMaterial = new THREE.MeshBasicMaterial({
+                color: 0x8FBCD4,
+                transparent: true,
+                opacity: 0.2,
+                side: THREE.BackSide
+            });
+            const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
+            scene.add(atmosphere);
+        }
+        
+        // Function to convert latitude/longitude to 3D vector
+        function latLngToVector3(lat, lng, radius) {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lng + 180) * (Math.PI / 180);
+            
+            const x = -radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.cos(phi);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            
+            return new THREE.Vector3(x, y, z);
+        }
+        
+        // Function to update globe visibility (show/hide regions, flags, landmarks)
+        function updateGlobeVisibility() {
+            // Implementation would update visibility of different globe elements
+            // based on toggle settings (showRegions, showFlags, showLandmarks)
+            globe.children.forEach(child => {
+                if (child.userData && child.userData.type) {
+                    if (child.userData.type === 'flag' && !showFlags) {
+                        child.visible = false;
+                    } else if ((child.userData.type === 'landmark') && !showLandmarks) {
+                        child.visible = false;
+                    } else {
+                        child.visible = true;
+                    }
+                }
+            });
+        }
+        
+        // Handle window resize
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Handle mouse down for interaction
+        function onMouseDown(event) {
+            // Calculate mouse position in normalized device coordinates
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            // Update the picking ray with the camera and mouse position
+            raycaster.setFromCamera(mouse, camera);
+            
+            // Calculate objects intersecting the picking ray
+            const intersects = raycaster.intersectObjects(globe.children, true);
+            
+            if (intersects.length > 0) {
+                const intersect = intersects[0];
+                const object = intersect.object;
+                
+                if (object.userData && object.userData.type) {
+                    if (object.userData.type === 'country') {
+                        handleSelection(object.userData.key, 'country');
+                    } else if (object.userData.type === 'capital' || object.userData.type === 'capitalStar') {
+                        handleSelection(object.userData.key, 'capital');
+                    } else if (object.userData.type === 'landmark') {
+                        handleSelection(object.userData.key, 'landmark');
+                    }
+                }
+            }
+        }
+        
+        // Handle mouse move for rotation
+        function onMouseMove(event) {
+            if (event.buttons === 1) {
+                // Left mouse button pressed - rotate globe
+                const movementX = event.movementX || 0;
+                const movementY = event.movementY || 0;
+                
+                globe.rotation.y += movementX * 0.01;
+                globe.rotation.x += movementY * 0.01;
+                
+                // Limit rotation on x-axis to prevent flipping
+                globe.rotation.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, globe.rotation.x));
+            }
+        }
+        
+        // Handle mouse wheel for zoom
+        function onMouseWheel(event) {
+            event.preventDefault();
+            
+            // Adjust camera position based on scroll
+            const delta = Math.sign(event.deltaY);
+            camera.position.z += delta * zoomSpeed;
+            
+            // Limit zoom range
+            camera.position.z = Math.max(3, Math.min(10, camera.position.z));
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Auto-rotate globe when not interacting
+            if (!gameMode) {
+                globe.rotation.y += rotationSpeed;
+            }
+            
+            renderer.render(scene, camera);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cube Perspective Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            color: #333;
+        }
+        
+        #container {
+            display: flex;
+            flex-direction: column;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #header {
+            text-align: center;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        h1 {
+            margin: 0;
+            color: #4a6fa5;
+            font-size: 2.2em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        #game-container {
+            display: flex;
+            flex: 1;
+            position: relative;
+        }
+        
+        #left-panel, #right-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            position: relative;
+        }
+        
+        #right-panel {
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #canvas-container {
+            flex: 1;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        
+        #controls {
+            position: relative;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 20px;
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        .control-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #4a6fa5;
+        }
+        
+        button {
+            background-color: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 1em;
+            cursor: pointer;
+            margin: 5px;
+            transition: all 0.3s ease;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        
+        button:hover {
+            background-color: #6889b8;
+            transform: scale(1.05);
+        }
+        
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        #task-container {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: none;
+            text-align: center;
+        }
+        
+        #view-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        #message {
+            font-size: 1.5em;
+            color: #4a6fa5;
+            margin: 20px 0;
+            text-align: center;
+            min-height: 40px;
+        }
+        
+        #quiz-container {
+            display: none;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 20px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            text-align: center;
+        }
+        
+        #quiz-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .quiz-option {
+            padding: 10px;
+            border: 2px solid #4a6fa5;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quiz-option:hover {
+            background-color: #e6f2ff;
+        }
+        
+        .quiz-option.selected {
+            background-color: #4a6fa5;
+            color: white;
+        }
+        
+        #progress-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        #stars {
+            display: flex;
+            justify-content: center;
+        }
+        
+        .star {
+            font-size: 24px;
+            color: #ccc;
+            margin: 0 5px;
+        }
+        
+        .star.earned {
+            color: gold;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        
+        #intro-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        #intro-content {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 80%;
+            max-width: 700px;
+            text-align: center;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+        
+        #intro-title {
+            font-size: 2.5em;
+            color: #4a6fa5;
+            margin-bottom: 20px;
+        }
+        
+        #intro-text {
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        #start-game {
+            font-size: 1.5em;
+            padding: 15px 30px;
+        }
+        
+        .parameter-control {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .parameter-control label {
+            flex: 1;
+            margin-right: 10px;
+        }
+        
+        .parameter-control input, .parameter-control select {
+            flex: 1;
+            padding: 5px;
+            border-radius: 10px;
+            border: 1px solid #4a6fa5;
+        }
+
+        .character {
+            position: absolute;
+            bottom: 20px;
+            width: 120px;
+            height: 120px;
+            z-index: 5;
+        }
+
+        #professor {
+            left: 20px;
+            transform: scaleX(-1);
+        }
+
+        #student {
+            right: 20px;
+        }
+
+        .speech-bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px;
+            max-width: 250px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 6;
+            display: none;
+            font-size: 0.9em;
+        }
+
+        #professor-bubble {
+            left: 150px;
+            bottom: 100px;
+        }
+
+        #professor-bubble:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+            border-right-color: white;
+            border-left: 0;
+            margin-top: -15px;
+            margin-left: -15px;
+        }
+
+        #student-bubble {
+            right: 150px;
+            bottom: 100px;
+        }
+
+        #student-bubble:after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+            border-left-color: white;
+            border-right: 0;
+            margin-top: -15px;
+            margin-right: -15px;
+        }
+
+        #help-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #f5cc00;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 50;
+        }
+        
+        #help-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #help-content {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+        
+        #close-help {
+            margin-top: 20px;
+        }
+
+        #levels-container {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .level-button {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .level-button.active {
+            background-color: #4a6fa5;
+            color: white;
+        }
+
+        .level-button.completed {
+            background-color: #8bc34a;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            #game-container {
+                flex-direction: column;
+            }
+            
+            #left-panel, #right-panel {
+                width: 100%;
+                height: 50vh;
+            }
+            
+            #controls, #task-container {
+                width: 90%;
+            }
+            
+            .character {
+                width: 80px;
+                height: 80px;
+            }
+            
+            #professor-bubble, #student-bubble {
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="header">
+            <h1>Cube Explorer: 3D Perspective Adventure</h1>
+        </div>
+        
+        <div id="levels-container">
+            <div class="level-button active" data-level="1">1</div>
+            <div class="level-button" data-level="2">2</div>
+            <div class="level-button" data-level="3">3</div>
+            <div class="level-button" data-level="4">4</div>
+            <div class="level-button" data-level="5">5</div>
+        </div>
+        
+        <div id="game-container">
+            <div id="left-panel">
+                <div id="canvas-container"></div>
+            </div>
+            
+            <div id="right-panel">
+                <div id="controls">
+                    <div class="control-group">
+                        <div class="control-title">Rotate the 3D Model</div>
+                        <button id="rotate-left">Rotate Left</button>
+                        <button id="rotate-right">Rotate Right</button>
+                        <button id="rotate-up">Rotate Up</button>
+                        <button id="rotate-down">Rotate Down</button>
+                    </div>
+                    
+                    <div class="control-group" id="parameters-section">
+                        <div class="control-title">Advanced Settings</div>
+                        <div class="parameter-control">
+                            <label for="cube-size">Cube Size:</label>
+                            <input type="range" id="cube-size" min="0.5" max="2" step="0.1" value="1">
+                        </div>
+                        <div class="parameter-control">
+                            <label for="cube-spacing">Cube Spacing:</label>
+                            <input type="range" id="cube-spacing" min="0" max="1" step="0.1" value="0.1">
+                        </div>
+                        <div class="parameter-control">
+                            <label for="camera-distance">Camera Distance:</label>
+                            <input type="range" id="camera-distance" min="5" max="20" step="1" value="10">
+                        </div>
+                        <div class="parameter-control">
+                            <label for="color-scheme">Color Scheme:</label>
+                            <select id="color-scheme">
+                                <option value="rainbow">Rainbow</option>
+                                <option value="pastel">Pastel</option>
+                                <option value="primary">Primary Colors</option>
+                                <option value="monochrome">Monochrome</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button id="start-challenge">Start Challenge</button>
+                </div>
+                
+                <div id="task-container">
+                    <h3>Which view matches this 3D structure?</h3>
+                    <div id="view-options"></div>
+                    <div id="message"></div>
+                    <button id="next-challenge" style="display: none;">Next Challenge</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="progress-container">
+            <div id="stars">
+                <div class="star">★</div>
+                <div class="star">★</div>
+                <div class="star">★</div>
+                <div class="star">★</div>
+                <div class="star">★</div>
+            </div>
+        </div>
+        
+        <div id="help-button">?</div>
+        
+        <div id="help-modal">
+            <div id="help-content">
+                <h2>How to Play Cube Explorer</h2>
+                <h3>Understanding 3D Perspectives</h3>
+                <p>When we look at a 3D object, what we see depends on our viewpoint. The same object can look completely different when viewed from different angles!</p>
+                <p>This game helps you understand how 3D objects made of cubes look from different perspectives - front, top, side, etc.</p>
+                
+                <h3>Game Controls</h3>
+                <ul>
+                    <li><strong>Rotate buttons</strong>: Move the 3D structure to see it from different angles</li>
+                    <li><strong>Advanced Settings</strong>: Change how the cubes look and behave</li>
+                    <li><strong>Start Challenge</strong>: Begin a challenge where you'll match views</li>
+                </ul>
+                
+                <h3>Challenge Mode</h3>
+                <p>In challenges, you'll see a 3D structure and need to identify which 2D view matches it from a specific angle (top, front, etc.).</p>
+                
+                <h3>Why This Matters</h3>
+                <p>This skill is important for:</p>
+                <ul>
+                    <li>IQ tests and spatial reasoning tests</li>
+                    <li>Mathematics (geometry and calculus)</li>
+                    <li>Engineering and architecture</li>
+                    <li>Reading blueprints and diagrams</li>
+                    <li>Computer programming and game design</li>
+                </ul>
+                
+                <h3>Learning Tips</h3>
+                <p>Try to visualize how the structure would look if you were looking at it from directly above, from the front, or from the side.</p>
+                <p>Pay attention to which cubes would be visible and which would be hidden from each perspective.</p>
+                
+                <button id="close-help">Got it!</button>
+            </div>
+        </div>
+        
+        <!-- Characters -->
+        <div id="professor" class="character">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                <circle cx="50" cy="30" r="20" fill="#FFD700"/>
+                <circle cx="42" cy="25" r="3" fill="#333"/>
+                <circle cx="58" cy="25" r="3" fill="#333"/>
+                <path d="M45 35 Q50 40 55 35" stroke="#333" stroke-width="2" fill="none"/>
+                <path d="M30 25 Q25 15 30 5" stroke="#333" stroke-width="2" fill="none"/>
+                <path d="M70 25 Q75 15 70 5" stroke="#333" stroke-width="2" fill="none"/>
+                <rect x="35" y="50" width="30" height="40" fill="#4169E1"/>
+                <rect x="35" y="90" width="10" height="10" fill="#8B4513"/>
+                <rect x="55" y="90" width="10" height="10" fill="#8B4513"/>
+                <rect x="20" y="50" width="15" height="5" fill="#4169E1"/>
+                <rect x="65" y="50" width="15" height="5" fill="#4169E1"/>
+                <circle cx="50" cy="30" r="22" stroke="#333" stroke-width="2" fill="none"/>
+                <path d="M50 50 Q40 60 30 55" stroke="#333" stroke-width="1" fill="none"/>
+                <path d="M50 50 Q60 60 70 55" stroke="#333" stroke-width="1" fill="none"/>
+                <path d="M42 20 Q50 15 58 20" stroke="#333" stroke-width="1" fill="none"/>
+                <rect x="40" y="10" width="20" height="10" fill="#333"/>
+                <rect x="45" y="5" width="10" height="5" fill="#333"/>
+            </svg>
+        </div>
+        
+        <div id="student" class="character">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+                <circle cx="50" cy="30" r="20" fill="#FFA07A"/>
+                <circle cx="42" cy="25" r="3" fill="#333"/>
+                <circle cx="58" cy="25" r="3" fill="#333"/>
+                <path d="M45 35 Q50 40 55 35" stroke="#333" stroke-width="2" fill="none"/>
+                <rect x="35" y="50" width="30" height="40" fill="#9370DB"/>
+                <rect x="35" y="90" width="10" height="10" fill="#8B4513"/>
+                <rect x="55" y="90" width="10" height="10" fill="#8B4513"/>
+                <rect x="20" y="50" width="15" height="5" fill="#9370DB"/>
+                <rect x="65" y="50" width="15" height="5" fill="#9370DB"/>
+                <path d="M30 20 Q50 0 70 20" stroke="#333" stroke-width="2" fill="none"/>
+                <path d="M30 20 Q50 10 70 20" stroke="#FFC0CB" stroke-width="10" fill="none"/>
+            </svg>
+        </div>
+        
+        <div id="professor-bubble" class="speech-bubble">
+            Welcome to Cube Explorer! I'm Professor Blocko, and I'll help you understand 3D perspectives!
+        </div>
+        
+        <div id="student-bubble" class="speech-bubble">
+            Hi! I'm Cubie! I'm learning about 3D shapes too. Let's explore together!
+        </div>
+        
+        <div id="quiz-container">
+            <h2 id="quiz-question">Question</h2>
+            <div id="quiz-options"></div>
+            <button id="submit-answer" style="margin-top: 20px;">Submit Answer</button>
+        </div>
+        
+        <div id="intro-screen">
+            <div id="intro-content">
+                <div id="intro-title">Welcome to Cube Explorer!</div>
+                <div id="intro-text">
+                    <p>Join Professor Blocko and Cubie on an exciting journey into the world of 3D shapes and spatial reasoning!</p>
+                    <p>In this adventure, you'll learn to see 3D objects from different perspectives - a crucial skill for solving puzzles, understanding mathematics, and even acing IQ tests!</p>
+                    <p>You'll get to build and manipulate 3D structures made of colorful cubes, solve perspective challenges, and unlock exciting new levels as you improve.</p>
+                    <p>Are you ready to become a master of spatial reasoning?</p>
+                </div>
+                <button id="start-game">Let's Begin!</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Main game variables
+        let scene, camera, renderer, controls;
+        let cubeGroup, currentStructure;
+        let cubeSize = 1;
+        let cubeSpacing = 0.1;
+        let cameraDistance = 10;
+        let colorScheme = 'rainbow';
+        let rotationSpeed = 0.01;
+        let autoRotate = false;
+        let level = 1;
+        let stars = 0;
+        let completedLevels = [];
+        let challengeActive = false;
+        let currentChallenge = null;
+        let currentChallengeIndex = 0;
+        let viewOptions = [];
+        let structures = [];
+        
+        // Initialize the scene and set up event listeners when the window loads
+        window.onload = function() {
+            init3DScene();
+            initEventListeners();
+            showIntroScreen();
+            generateStructures();
+            createStructure();
+            
+            // Show character speech bubbles with a delay
+            setTimeout(() => {
+                document.getElementById('professor-bubble').style.display = 'block';
+                
+                setTimeout(() => {
+                    document.getElementById('student-bubble').style.display = 'block';
+                    
+                    setTimeout(() => {
+                        document.getElementById('professor-bubble').style.display = 'none';
+                        document.getElementById('student-bubble').style.display = 'none';
+                    }, 8000);
+                }, 4000);
+            }, 1000);
+            
+            // Start animation loop
+            animate();
+        };
+        
+        // Initialize the 3D scene with Three.js
+        function init3DScene() {
+            // Create scene, camera, and renderer
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f0f0);
+            
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / 2 / window.innerHeight, 0.1, 1000);
+            camera.position.z = cameraDistance;
+            
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth / 2, window.innerHeight);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            
+            // Add lights to the scene
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // Create a container for the cubes
+            cubeGroup = new THREE.Group();
+            scene.add(cubeGroup);
+            
+            // Add grid helper for better spatial reference
+            const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
+            gridHelper.position.y = -2;
+            scene.add(gridHelper);
+            
+            // Add axis helper for orientation reference
+            const axisHelper = new THREE.AxesHelper(5);
+            scene.add(axisHelper);
+            
+            // Handle window resizing
+            window.addEventListener('resize', onWindowResize, false);
+        }
+        
+        // Update camera and renderer when window is resized
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / 2 / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth / 2, window.innerHeight);
+        }
+        
+        // Set up all event listeners
+        function initEventListeners() {
+            // Rotation buttons
+            document.getElementById('rotate-left').addEventListener('click', function() {
+                cubeGroup.rotation.y -= Math.PI / 4;
+            });
+            
+            document.getElementById('rotate-right').addEventListener('click', function() {
+                cubeGroup.rotation.y += Math.PI / 4;
+            });
+            
+            document.getElementById('rotate-up').addEventListener('click', function() {
+                cubeGroup.rotation.x -= Math.PI / 4;
+            });
+            
+            document.getElementById('rotate-down').addEventListener('click', function() {
+                cubeGroup.rotation.x += Math.PI / 4;
+            });
+            
+            // Parameter controls
+            document.getElementById('cube-size').addEventListener('input', function() {
+                cubeSize = parseFloat(this.value);
+                createStructure(currentStructure);
+            });
+            
+            document.getElementById('cube-spacing').addEventListener('input', function() {
+                cubeSpacing = parseFloat(this.value);
+                createStructure(currentStructure);
+            });
+            
+            document.getElementById('camera-distance').addEventListener('input', function() {
+                cameraDistance = parseFloat(this.value);
+                camera.position.z = cameraDistance;
+            });
+            
+            document.getElementById('color-scheme').addEventListener('change', function() {
+                colorScheme = this.value;
+                createStructure(currentStructure);
+            });
+            
+            // Game buttons
+            document.getElementById('start-challenge').addEventListener('click', startChallenge);
+            document.getElementById('next-challenge').addEventListener('click', nextChallenge);
+            document.getElementById('start-game').addEventListener('click', closeIntroScreen);
+            
+            // Help modal
+            document.getElementById('help-button').addEventListener('click', function() {
+                document.getElementById('help-modal').style.display = 'flex';
+            });
+            
+            document.getElementById('close-help').addEventListener('click', function() {
+                document.getElementById('help-modal').style.display = 'none';
+            });
+            
+            // Level selection
+            const levelButtons = document.querySelectorAll('.level-button');
+            levelButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    if (challengeActive) return;
+                    
+                    const newLevel = parseInt(this.getAttribute('data-level'));
+                    if (newLevel > 1 && !completedLevels.includes(newLevel - 1)) {
+                        showCharacterMessage("Complete the previous level first!", "professor");
+                        return;
+                    }
+                    
+                    // Update active level button
+                    levelButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Set new level
+                    level = newLevel;
+                    currentChallengeIndex = 0;
+                    createStructure();
+                });
+            });
+        }
+        
+        // Generate different 3D structures for each level
+        function generateStructures() {
+            // Level 1: Simple structures (2-3 cubes)
+            structures[1] = [
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}],
+                [{x: 0, y: 0, z: 0}, {x: 0, y: 1, z: 0}],
+                [{x: 0, y: 0, z: 0}, {x: 0, y: 0, z: 1}],
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 1, z: 0}]
+            ];
+            
+            // Level 2: L-shapes and T-shapes (3-4 cubes)
+            structures[2] = [
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 0, y: 1, z: 0}],
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 2, y: 0, z: 0}, {x: 1, y: 1, z: 0}],
+                [{x: 0, y: 0, z: 0}, {x: 0, y: 1, z: 0}, {x: 0, y: 0, z: 1}, {x: 0, y: 1, z: 1}],
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 1, y: 1, z: 0}, {x: 1, y: 0, z: 1}]
+            ];
+            
+            // Level 3: Staircases and complex shapes (5-6 cubes)
+            structures[3] = [
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 1, y: 1, z: 0}, {x: 2, y: 1, z: 0}, {x: 2, y: 2, z: 0}],
+                [{x: 0, y: 0, z: 0}, {x: 0, y: 1, z: 0}, {x: 0, y: 2, z: 0}, {x: 1, y: 0, z: 0}, {x: 2, y: 0, z: 0}],
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 0, y: 1, z: 0}, {x: 0, y: 0, z: 1}, {x: 1, y: 0, z: 1}],
+                [{x: 0, y: 0, z: 0}, {x: 0, y: 1, z: 0}, {x: 0, y: 1, z: 1}, {x: 0, y: 0, z: 1}, {x: 1, y: 0, z: 0}, {x: 1, y: 0, z: 1}]
+            ];
+            
+            // Level 4: 3D structures (requires understanding depth)
+            structures[4] = [
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 0, y: 1, z: 0}, {x: 0, y: 0, z: 1}, {x: 1, y: 1, z: 1}],
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 2, y: 0, z: 0}, {x: 0, y: 1, z: 0}, {x: 0, y: 2, z: 0}, {x: 0, y: 0, z: 1}, {x: 0, y: 0, z: 2}],
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 1, y: 1, z: 0}, {x: 1, y: 1, z: 1}, {x: 0, y: 0, z: 1}, {x: 0, y: 1, z: 1}],
+                [{x: 0, y: 0, z: 0}, {x: 0, y: 1, z: 0}, {x: 0, y: 2, z: 0}, {x: 1, y: 0, z: 0}, {x: 1, y: 0, z: 1}, {x: 1, y: 0, z: 2}]
+            ];
+            
+            // Level 5: Complex 3D puzzles (challenging configurations)
+            structures[5] = [
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 2, y: 0, z: 0}, {x: 0, y: 1, z: 0}, {x: 0, y: 2, z: 0}, 
+                 {x: 0, y: 0, z: 1}, {x: 0, y: 0, z: 2}, {x: 1, y: 1, z: 1}],
+                [{x: 0, y: 0, z: 0}, {x: 0, y: 1, z: 0}, {x: 0, y: 2, z: 0}, {x: 1, y: 0, z: 0}, {x: 1, y: 1, z: 0}, 
+                 {x: 1, y: 0, z: 1}, {x: 2, y: 0, z: 0}, {x: 2, y: 0, z: 1}],
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 1, y: 1, z: 0}, {x: 2, y: 1, z: 0}, {x: 2, y: 1, z: 1}, 
+                 {x: 1, y: 1, z: 1}, {x: 1, y: 0, z: 1}, {x: 0, y: 0, z: 1}],
+                [{x: 0, y: 0, z: 0}, {x: 1, y: 0, z: 0}, {x: 1, y: 1, z: 0}, {x: 0, y: 1, z: 0}, {x: 0, y: 0, z: 1}, 
+                 {x: 1, y: 0, z: 1}, {x: 1, y: 1, z: 1}, {x: 0, y: 1, z: 1}]
+            ];
+        }
+        
+        // Create a 3D structure based on the coordinates
+        function createStructure(coords) {
+            // If no specific structure provided, choose one from the current level
+            if (!coords) {
+                const structures_for_level = structures[level];
+                const index = currentChallengeIndex % structures_for_level.length;
+                coords = structures_for_level[index];
+            }
+            
+            // Store current structure
+            currentStructure = coords;
+            
+            // Clear existing structure
+            while (cubeGroup.children.length > 0) {
+                cubeGroup.remove(cubeGroup.children[0]);
+            }
+            
+            // Add new cubes based on coordinates
+            coords.forEach((pos, index) => {
+                const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+                const cubeMaterial = new THREE.MeshLambertMaterial({ color: getCubeColor(index) });
+                
+                const cube = new THREE.Mesh(cubeGeometry, cubeMaterial);
+                cube.position.set(
+                    (pos.x - getCenter(coords, 'x')) * (cubeSize + cubeSpacing),
+                    (pos.y - getCenter(coords, 'y')) * (cubeSize + cubeSpacing),
+                    (pos.z - getCenter(coords, 'z')) * (cubeSize + cubeSpacing)
+                );
+                
+                // Add edges to the cube for better visibility
+                const edgesGeometry = new THREE.EdgesGeometry(cubeGeometry);
+                const edgesMaterial = new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 1 });
+                const edges = new THREE.LineSegments(edgesGeometry, edgesMaterial);
+                cube.add(edges);
+                
+                cubeGroup.add(cube);
+            });
+            
+            // Reset cube group rotation
+            cubeGroup.rotation.set(0, 0, 0);
+        }
+        
+        // Get center point of the structure for centering
+        function getCenter(coords, axis) {
+            const values = coords.map(pos => pos[axis]);
+            const min = Math.min(...values);
+            const max = Math.max(...values);
+            return (min + max) / 2;
+        }
+        
+        // Get color for cube based on index and color scheme
+        function getCubeColor(index) {
+            switch (colorScheme) {
+                case 'rainbow':
+                    // Rainbow colors
+                    const hue = (index * 30) % 360;
+                    return new THREE.Color(`hsl(${hue}, 100%, 50%)`);
+                case 'pastel':
+                    // Pastel colors
+                    const pastelHue = (index * 60) % 360;
+                    return new THREE.Color(`hsl(${pastelHue}, 70%, 80%)`);
+                case 'primary':
+                    // Primary colors (red, blue, yellow, green, purple, orange)
+                    const primaryColors = [0xff0000, 0x0000ff, 0xffff00, 0x00ff00, 0x800080, 0xffa500];
+                    return primaryColors[index % primaryColors.length];
+                case 'monochrome':
+                    // Monochrome (shades of blue)
+                    const shade = 40 + (index * 10) % 50;
+                    return new THREE.Color(`hsl(210, 100%, ${shade}%)`);
+                default:
+                    return 0x00aaff;
+            }
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            if (autoRotate) {
+                cubeGroup.rotation.y += rotationSpeed;
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Start a challenge
+        function startChallenge() {
+            challengeActive = true;
+            
+            // Hide parameters section and show task container
+            document.getElementById('controls').style.display = 'none';
+            document.getElementById('task-container').style.display = 'block';
+            
+            // Create a new challenge
+            createChallenge();
+        }
+        
+        // Create the challenge with target and options
+        function createChallenge() {
+            // Reset view options container
+            const viewOptionsContainer = document.getElementById('view-options');
+            viewOptionsContainer.innerHTML = '';
+            
+            // Reset message
+            document.getElementById('message').innerHTML = '';
+            document.getElementById('next-challenge').style.display = 'none';
+            
+            // Create structure
+            createStructure();
+            
+            // Generate view options
+            generateViewOptions();
+            
+            // Display view options
+            viewOptions.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.innerHTML = option.name;
+                button.dataset.view = option.view;
+                button.onclick = function() {
+                    checkAnswer(option.view);
+                };
+                viewOptionsContainer.appendChild(button);
+            });
+            
+            // Show character message
+            const messages = [
+                "Which view matches our 3D structure?",
+                "Look carefully at all sides!",
+                "Remember to visualize the shape from different angles!",
+                "Try to picture how it looks from each view!",
+                "Focus on which cubes you can see from each angle!"
+            ];
+            showCharacterMessage(messages[Math.floor(Math.random() * messages.length)], "professor");
+        }
+        
+        // Generate view options for the challenge
+        function generateViewOptions() {
+            // Define the potential views
+            const possibleViews = ['front', 'top', 'right', 'back', 'bottom', 'left'];
+            
+            // Pick 4 random views
+            const selectedViews = [];
+            while (selectedViews.length < 4) {
+                const view = possibleViews[Math.floor(Math.random() * possibleViews.length)];
+                if (!selectedViews.includes(view)) {
+                    selectedViews.push(view);
+                }
+            }
+            
+            // Create correct view option
+            const correctView = selectedViews[0];
+            
+            // Generate options
+            viewOptions = selectedViews.map(view => ({
+                name: capitalizeFirstLetter(view) + ' View',
+                view: view,
+                isCorrect: view === correctView
+            }));
+            
+            // Shuffle options
+            viewOptions = shuffleArray(viewOptions);
+            
+            // Store correct answer
+            currentChallenge = { correctView };
+            
+            // Set camera to correct view for a moment, then reset
+            setCameraToView(correctView);
+            setTimeout(() => {
+                camera.position.set(0, 0, cameraDistance);
+                camera.lookAt(0, 0, 0);
+                camera.up.set(0, 1, 0);
+            }, 100);
+        }
+        
+        // Check if the answer is correct
+        function checkAnswer(selectedView) {
+            const isCorrect = selectedView === currentChallenge.correctView;
+            
+            if (isCorrect) {
+                document.getElementById('message').innerHTML = '<span style="color: green;">Correct! Well done!</span>';
+                showCharacterMessage("Great job! You got it right!", "student");
+                
+                // Add a star if this is a new challenge
+                if (!completedLevels.includes(level)) {
+                    stars++;
+                    updateStars();
+                    
+                    // Check if level is completed (3 correct answers)
+                    if (stars % 3 === 0) {
+                        completedLevels.push(level);
+                        document.querySelector(`.level-button[data-level="${level}"]`).classList.add('completed');
+                        showCompletionMessage();
+                    }
+                }
+            } else {
+                document.getElementById('message').innerHTML = '<span style="color: red;">Not quite. Try looking at it from another angle!</span>';
+                showCharacterMessage("Let's try again! Think about how the structure looks from the " + currentChallenge.correctView + ".", "professor");
+                
+                // Show the correct view
+                setCameraToView(currentChallenge.correctView);
+                setTimeout(() => {
+                    camera.position.set(0, 0, cameraDistance);
+                    camera.lookAt(0, 0, 0);
+                    camera.up.set(0, 1, 0);
+                }, 2000);
+            }
+            
+            // Show next challenge button
+            document.getElementById('next-challenge').style.display = 'block';
+        }
+        
+        // Set camera to specific view
+        function setCameraToView(view) {
+            switch (view) {
+                case 'front':
+                    camera.position.set(0, 0, cameraDistance);
+                    break;
+                case 'back':
+                    camera.position.set(0, 0, -cameraDistance);
+                    break;
+                case 'left':
+                    camera.position.set(-cameraDistance, 0, 0);
+                    break;
+                case 'right':
+                    camera.position.set(cameraDistance, 0, 0);
+                    break;
+                case 'top':
+                    camera.position.set(0, cameraDistance, 0);
+                    camera.up.set(0, 0, -1);
+                    break;
+                case 'bottom':
+                    camera.position.set(0, -cameraDistance, 0);
+                    camera.up.set(0, 0, 1);
+                    break;
+            }
+            camera.lookAt(0, 0, 0);
+        }
+        
+        // Move to next challenge
+        function nextChallenge() {
+            currentChallengeIndex++;
+            
+            // Check if we need to show a quiz
+            if (currentChallengeIndex % 3 === 0 && !completedLevels.includes(level)) {
+                showQuiz();
+            } else {
+                createChallenge();
+            }
+        }
+        
+        // Show a quiz to test understanding
+        function showQuiz() {
+            // Create quiz questions for each level
+            const quizzes = {
+                1: {
+                    question: "Which statement is true about a cube seen from different angles?",
+                    options: [
+                        "A cube always looks the same no matter the angle",
+                        "A cube can appear as a square when viewed from certain angles",
+                        "A cube can never appear as a 2D shape",
+                        "A cube always shows all 8 corners from any angle"
+                    ],
+                    correctIndex: 1
+                },
+                2: {
+                    question: "When looking at a 3D structure from the top, what do you see?",
+                    options: [
+                        "A view showing height and width",
+                        "A view showing width and depth",
+                        "A view showing height and depth",
+                        "All three dimensions equally"
+                    ],
+                    correctIndex: 1
+                },
+                3: {
+                    question: "Which is most important when identifying a 3D structure from a 2D view?",
+                    options: [
+                        "The colors of the cubes",
+                        "The number of cubes visible from that angle",
+                        "The size of each cube",
+                        "The rotation speed of the structure"
+                    ],
+                    correctIndex: 1
+                },
+                4: {
+                    question: "What happens to cubes that are directly behind other cubes when viewed from the front?",
+                    options: [
+                        "They appear smaller",
+                        "They appear transparent",
+                        "They are not visible",
+                        "They appear darker"
+                    ],
+                    correctIndex: 2
+                },
+                5: {
+                    question: "Which skill is most important for solving 3D visualization problems?",
+                    options: [
+                        "Fast calculation ability",
+                        "Color recognition",
+                        "Memory for patterns",
+                        "Mental rotation of objects"
+                    ],
+                    correctIndex: 3
+                }
+            };
+            
+            // Get quiz for current level
+            const quiz = quizzes[level];
+            
+            // Set up quiz in the UI
+            document.getElementById('quiz-question').textContent = quiz.question;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            quiz.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                optionElement.onclick = function() {
+                    // Remove selection from all options
+                    document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+                    // Add selection to this option
+                    this.classList.add('selected');
+                };
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Show quiz container
+            document.getElementById('quiz-container').style.display = 'block';
+            
+            // Add event listener for submit button
+            document.getElementById('submit-answer').onclick = function() {
+                const selectedOption = document.querySelector('.quiz-option.selected');
+                if (!selectedOption) {
+                    showCharacterMessage("Please select an answer before submitting!", "professor");
+                    return;
+                }
+                
+                const selectedIndex = parseInt(selectedOption.dataset.index);
+                if (selectedIndex === quiz.correctIndex) {
+                    showCharacterMessage("Excellent! That's correct!", "professor");
+                    // Give an extra star for correct quiz answer
+                    stars++;
+                    updateStars();
+                } else {
+                    showCharacterMessage("Not quite. The correct answer is: " + quiz.options[quiz.correctIndex], "professor");
+                }
+                
+                // Hide quiz after a delay
+                setTimeout(() => {
+                    document.getElementById('quiz-container').style.display = 'none';
+                    createChallenge();
+                }, 3000);
+            };
+        }
+        
+        // Show message about level completion
+        function showCompletionMessage() {
+            if (level === 5) {
+                showFinalCongratulations();
+                return;
+            }
+            
+            const messages = [
+                `Great job! You've completed Level ${level}! Ready for Level ${level + 1}?`,
+                `Fantastic! Level ${level} complete! Your spatial reasoning skills are growing!`,
+                `You did it! Level ${level} mastered! Let's move to the next challenge!`
+            ];
+            
+            showCharacterMessage(messages[Math.floor(Math.random() * messages.length)], "student");
+            
+            // Unlock next level
+            setTimeout(() => {
+                const nextLevelButton = document.querySelector(`.level-button[data-level="${level + 1}"]`);
+                if (nextLevelButton) {
+                    nextLevelButton.click();
+                }
+            }, 3000);
+        }
+        
+        // Show final congratulations message
+        function showFinalCongratulations() {
+            // Create a special congratulations screen
+            const congratsElement = document.createElement('div');
+            congratsElement.style.position = 'fixed';
+            congratsElement.style.top = '0';
+            congratsElement.style.left = '0';
+            congratsElement.style.width = '100%';
+            congratsElement.style.height = '100%';
+            congratsElement.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+            congratsElement.style.display = 'flex';
+            congratsElement.style.justifyContent = 'center';
+            congratsElement.style.alignItems = 'center';
+            congratsElement.style.zIndex = '1000';
+            
+            const congratsContent = document.createElement('div');
+            congratsContent.style.backgroundColor = 'white';
+            congratsContent.style.borderRadius = '20px';
+            congratsContent.style.padding = '30px';
+            congratsContent.style.width = '80%';
+            congratsContent.style.maxWidth = '600px';
+            congratsContent.style.textAlign = 'center';
+            congratsContent.style.boxShadow = '0 0 30px rgba(255, 215, 0, 0.5)';
+            
+            congratsContent.innerHTML = `
+                <h1 style="color: #4a6fa5; font-size: 2.5em; margin-bottom: 20px;">Congratulations!</h1>
+                <h2 style="color: #333; margin-bottom: 20px;">You're a 3D Perspective Master!</h2>
+                <p style="font-size: 1.2em; margin-bottom: 20px;">You've completed all the challenges in Cube Explorer! Your spatial reasoning skills are now at an advanced level.</p>
+                <p style="font-size: 1.2em; margin-bottom: 30px;">These skills will help you excel in:</p>
+                <ul style="text-align: left; font-size: 1.1em; margin-bottom: 30px;">
+                    <li>IQ tests and spatial reasoning puzzles</li>
+                    <li>Mathematics and geometry</li>
+                    <li>Engineering and design</li>
+                    <li>Reading blueprints and technical drawings</li>
+                    <li>And many more advanced thinking tasks!</li>
+                </ul>
+                <button id="restart-game" style="background-color: #4a6fa5; color: white; border: none; border-radius: 20px; padding: 15px 30px; font-size: 1.2em; cursor: pointer;">Play Again</button>
+            `;
+            
+            congratsElement.appendChild(congratsContent);
+            document.body.appendChild(congratsElement);
+            
+            // Add confetti effect
+            createConfetti();
+            
+            // Add event listener for restart button
+            document.getElementById('restart-game').addEventListener('click', function() {
+                document.body.removeChild(congratsElement);
+                resetGame();
+            });
+        }
+        
+        // Reset the game to start over
+        function resetGame() {
+            // Reset game state
+            level = 1;
+            stars = 0;
+            completedLevels = [];
+            currentChallengeIndex = 0;
+            challengeActive = false;
+            
+            // Reset UI
+            updateStars();
+            document.querySelectorAll('.level-button').forEach(button => {
+                button.classList.remove('active', 'completed');
+            });
+            document.querySelector('.level-button[data-level="1"]').classList.add('active');
+            
+            // Show controls and hide task container
+            document.getElementById('controls').style.display = 'block';
+            document.getElementById('task-container').style.display = 'none';
+            
+            // Create new structure
+            createStructure();
+        }
+        
+        // Create confetti effect for celebration
+        function createConfetti() {
+            const confettiCount = 200;
+            const container = document.createElement('div');
+            container.style.position = 'fixed';
+            container.style.top = '0';
+            container.style.left = '0';
+            container.style.width = '100%';
+            container.style.height = '100%';
+            container.style.pointerEvents = 'none';
+            container.style.zIndex = '999';
+            document.body.appendChild(container);
+            
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+            
+            for (let i = 0; i < confettiCount; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.position = 'absolute';
+                confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '0';
+                confetti.style.top = '-20px';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                
+                container.appendChild(confetti);
+                
+                const duration = Math.random() * 3 + 2;
+                const delay = Math.random() * 5;
+                
+                confetti.animate(
+                    [
+                        { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
+                        { transform: `translateY(100vh) translateX(${Math.random() * 200 - 100}px) rotate(${Math.random() * 360}deg)`, opacity: 0 }
+                    ],
+                    {
+                        duration: duration * 1000,
+                        delay: delay * 1000,
+                        fill: 'forwards'
+                    }
+                );
+            }
+            
+            // Remove confetti after animation
+            setTimeout(() => {
+                document.body.removeChild(container);
+            }, 8000);
+        }
+        
+        // Show the intro screen
+        function showIntroScreen() {
+            document.getElementById('intro-screen').style.display = 'flex';
+        }
+        
+        // Close the intro screen
+        function closeIntroScreen() {
+            document.getElementById('intro-screen').style.display = 'none';
+            
+            // Show tutorial message
+            showTutorial();
+        }
+        
+        // Show tutorial messages
+        function showTutorial() {
+            const steps = [
+                { character: 'professor', message: "Welcome to Cube Explorer! Let me show you how it works." },
+                { character: 'professor', message: "On the left, you'll see our 3D structure made of colorful cubes." },
+                { character: 'student', message: "And on the right, you can control how you view the structure!" },
+                { character: 'professor', message: "Try using the rotation buttons to look at the structure from different angles." },
+                { character: 'student', message: "When you're ready, click 'Start Challenge' to test your perspective skills!" },
+                { character: 'professor', message: "In the challenge, you'll need to identify which 2D view matches our 3D structure." },
+                { character: 'student', message: "Don't worry if it's tough at first. Your brain will get better with practice!" },
+                { character: 'professor', message: "Let's get started! Rotate the structure to explore it from all sides." }
+            ];
+            
+            // Show each step with delay
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    showCharacterMessage(step.message, step.character);
+                }, index * 4000);
+            });
+        }
+        
+        // Show character speech bubble
+        function showCharacterMessage(message, character) {
+            const bubble = document.getElementById(character + '-bubble');
+            bubble.textContent = message;
+            bubble.style.display = 'block';
+            
+            // Hide message after a delay
+            setTimeout(() => {
+                bubble.style.display = 'none';
+            }, 4000);
+        }
+        
+        // Update stars display
+        function updateStars() {
+            const starElements = document.querySelectorAll('.star');
+            starElements.forEach((star, index) => {
+                if (index < stars) {
+                    star.classList.add('earned');
+                } else {
+                    star.classList.remove('earned');
+                }
+            });
+        }
+        
+        // Helper functions
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1);
+        }
+        
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+    </script>
+</body>
+</html>

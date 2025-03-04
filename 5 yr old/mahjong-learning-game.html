@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mahjong Tiles Learning Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #ff9e80;
+            --secondary-color: #4caf50;
+            --accent-color: #2196f3;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --shadow-color: rgba(0, 0, 0, 0.2);
+            --tile-color: #fff;
+            --tile-border: #d0d0d0;
+            --success-color: #4CAF50;
+            --error-color: #F44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            box-shadow: 0 4px 8px var(--shadow-color);
+            position: relative;
+            z-index: 100;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        /* Navigation */
+        nav {
+            background-color: var(--secondary-color);
+            padding: 10px 0;
+            text-align: center;
+        }
+
+        nav button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 0 10px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        nav button:hover {
+            background-color: #0b7dda;
+            transform: scale(1.05);
+        }
+
+        nav button.active {
+            background-color: #004d99;
+            transform: scale(1.05);
+        }
+
+        /* Section Styles */
+        section {
+            padding: 20px;
+            margin: 20px 0;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px var(--shadow-color);
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 2em;
+        }
+
+        h3 {
+            color: var(--accent-color);
+            margin: 15px 0;
+            font-size: 1.5em;
+        }
+
+        p {
+            line-height: 1.6;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        /* Character Styles */
+        .character {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: #fff9c4;
+            border-radius: 15px;
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        .character-icon {
+            width: 100px;
+            height: 100px;
+            margin-right: 20px;
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 3em;
+            flex-shrink: 0;
+        }
+
+        .character-speech {
+            flex-grow: 1;
+            position: relative;
+            padding: 15px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+
+        .character-speech:before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 20px;
+            border-width: 10px 10px 10px 0;
+            border-style: solid;
+            border-color: transparent white transparent transparent;
+        }
+
+        /* 3D Viewer */
+        #tile-viewer {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 10px;
+            gap: 10px;
+        }
+
+        .controls button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .controls button:hover {
+            background-color: #0b7dda;
+            transform: scale(1.05);
+        }
+
+        /* Tile Sets Display */
+        .tile-sets {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .tile-set {
+            padding: 15px;
+            background-color: #e3f2fd;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tile-set:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px var(--shadow-color);
+        }
+
+        .tile-set img, .tile-set svg {
+            width: 100%;
+            height: 150px;
+            object-fit: contain;
+            margin-bottom: 10px;
+        }
+
+        /* Game Board */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .tile {
+            height: 100px;
+            background-color: var(--tile-color);
+            border: 2px solid var(--tile-border);
+            border-radius: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px var(--shadow-color);
+            position: relative;
+        }
+
+        .tile:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px var(--shadow-color);
+        }
+
+        .tile.selected {
+            border-color: var(--accent-color);
+            transform: scale(1.05);
+            box-shadow: 0 0 10px var(--accent-color);
+        }
+
+        .tile.matched {
+            border-color: var(--success-color);
+            background-color: rgba(76, 175, 80, 0.1);
+            cursor: default;
+        }
+
+        /* Quiz Styles */
+        .quiz-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .quiz-question {
+            margin: 20px 0;
+            padding: 20px;
+            background-color: #e8f5e9;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px var(--shadow-color);
+        }
+
+        .quiz-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .quiz-option {
+            padding: 15px;
+            background-color: #bbdefb;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .quiz-option:hover {
+            background-color: #90caf9;
+            transform: translateY(-3px);
+            box-shadow: 0 3px 10px var(--shadow-color);
+        }
+
+        .quiz-option.correct {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .quiz-option.incorrect {
+            background-color: var(--error-color);
+            color: white;
+        }
+
+        .quiz-result {
+            margin: 20px 0;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.2em;
+            border-radius: 10px;
+        }
+
+        .quiz-result.correct {
+            background-color: rgba(76, 175, 80, 0.2);
+            color: var(--success-color);
+        }
+
+        .quiz-result.incorrect {
+            background-color: rgba(244, 67, 54, 0.2);
+            color: var(--error-color);
+        }
+
+        /* Settings Panel */
+        #settings-panel {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .setting-group {
+            margin-bottom: 20px;
+        }
+
+        .setting-label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .setting-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .setting-option {
+            padding: 10px 15px;
+            background-color: #e0e0e0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .setting-option:hover {
+            background-color: #bdbdbd;
+        }
+
+        .setting-option.selected {
+            background-color: var(--accent-color);
+            color: white;
+        }
+
+        /* Slider Controls */
+        .slider-control {
+            margin: 10px 0;
+        }
+
+        .slider {
+            width: 100%;
+            height: 10px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity .2s;
+        }
+
+        .slider:hover {
+            opacity: 1;
+        }
+
+        /* Progress Tracker */
+        .progress-container {
+            margin: 20px 0;
+            background-color: #e0e0e0;
+            border-radius: 20px;
+            height: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--secondary-color);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .score-display {
+            text-align: center;
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+
+        /* Achievement badges */
+        .achievements {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+            justify-content: center;
+        }
+
+        .badge {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            color: #757575;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .badge.unlocked {
+            background-color: var(--accent-color);
+            color: white;
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+
+        .badge-tooltip {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: black;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-size: 0.4em;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .badge:hover .badge-tooltip {
+            opacity: 1;
+        }
+
+        /* Animations */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .bounce {
+            animation: bounce 2s infinite;
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            .tile-sets, .game-board, .quiz-options {
+                grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            }
+
+            .character {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .character-icon {
+                margin-right: 0;
+                margin-bottom: 15px;
+            }
+
+            .character-speech:before {
+                left: 50%;
+                top: -10px;
+                transform: translateX(-50%);
+                border-width: 0 10px 10px 10px;
+                border-color: transparent transparent white transparent;
+            }
+
+            nav button {
+                padding: 8px 12px;
+                margin: 0 5px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Mahjong Tiles Learning Adventure</h1>
+        <p>A magical journey to learn about Mahjong tiles</p>
+    </header>
+
+    <nav>
+        <button id="learn-btn">Learn</button>
+        <button id="play-btn">Play</button>
+        <button id="quiz-btn">Quiz</button>
+        <button id="settings-btn">Settings</button>
+    </nav>
+
+    <div class="container">
+        <!-- Learn Section -->
+        <section id="learn-section">
+            <h2>Welcome to the World of Mahjong Tiles!</h2>
+            
+            <div class="character">
+                <div class="character-icon">🐼</div>
+                <div class="character-speech">
+                    <p>Hi there! I'm Panda Master, and I'll be your guide to the amazing world of Mahjong tiles! Let's explore together!</p>
+                </div>
+            </div>
+            
+            <h3>What are Mahjong Tiles?</h3>
+            <p>Mahjong is an ancient game from China played with beautiful tiles. Each tile has special symbols and meanings!</p>
+            
+            <div class="character">
+                <div class="character-icon">🐉</div>
+                <div class="character-speech">
+                    <p>I'm Dragon Sage! Mahjong has been played for over 100 years and is loved by people all around the world. The tiles tell stories of ancient Chinese culture!</p>
+                </div>
+            </div>
+
+            <h3>Let's Look at a Mahjong Tile in 3D!</h3>
+            <div id="tile-viewer"></div>
+            <div class="controls">
+                <button id="rotate-left">Rotate Left</button>
+                <button id="rotate-right">Rotate Right</button>
+                <button id="next-tile">Next Tile</button>
+            </div>
+            
+            <h3>The Three Main Suits of Tiles</h3>
+            
+            <div class="tile-sets">
+                <div class="tile-set" data-set="bamboo">
+                    <svg viewBox="0 0 100 100">
+                        <rect x="10" y="10" width="80" height="80" fill="#fffbeb" stroke="#d0d0d0" stroke-width="2" rx="5" />
+                        <circle cx="50" cy="30" r="8" fill="#4caf50" />
+                        <rect x="48" y="30" width="4" height="40" fill="#8d6e63" />
+                        <circle cx="30" cy="60" r="8" fill="#4caf50" />
+                        <rect x="28" y="60" width="4" height="30" fill="#8d6e63" />
+                        <circle cx="70" cy="50" r="8" fill="#4caf50" />
+                        <rect x="68" y="50" width="4" height="35" fill="#8d6e63" />
+                    </svg>
+                    <h4>Bamboo Suit</h4>
+                    <p>These tiles show bamboo sticks!</p>
+                </div>
+                
+                <div class="tile-set" data-set="dots">
+                    <svg viewBox="0 0 100 100">
+                        <rect x="10" y="10" width="80" height="80" fill="#fffbeb" stroke="#d0d0d0" stroke-width="2" rx="5" />
+                        <circle cx="35" cy="30" r="8" fill="#f44336" />
+                        <circle cx="65" cy="30" r="8" fill="#f44336" />
+                        <circle cx="35" cy="50" r="8" fill="#f44336" />
+                        <circle cx="65" cy="50" r="8" fill="#f44336" />
+                        <circle cx="35" cy="70" r="8" fill="#f44336" />
+                        <circle cx="65" cy="70" r="8" fill="#f44336" />
+                    </svg>
+                    <h4>Dots Suit</h4>
+                    <p>These tiles have colorful circles!</p>
+                </div>
+                
+                <div class="tile-set" data-set="characters">
+                    <svg viewBox="0 0 100 100">
+                        <rect x="10" y="10" width="80" height="80" fill="#fffbeb" stroke="#d0d0d0" stroke-width="2" rx="5" />
+                        <text x="50" y="55" font-family="Arial" font-size="30" text-anchor="middle" fill="#000">一</text>
+                    </svg>
+                    <h4>Characters Suit</h4>
+                    <p>These tiles show Chinese numbers!</p>
+                </div>
+            </div>
+            
+            <h3>Honor Tiles</h3>
+            <div class="tile-sets">
+                <div class="tile-set" data-set="winds">
+                    <svg viewBox="0 0 100 100">
+                        <rect x="10" y="10" width="80" height="80" fill="#fffbeb" stroke="#d0d0d0" stroke-width="2" rx="5" />
+                        <text x="50" y="55" font-family="Arial" font-size="30" text-anchor="middle" fill="#5d4037">東</text>
+                    </svg>
+                    <h4>Wind Tiles</h4>
+                    <p>East, South, West, and North!</p>
+                </div>
+                
+                <div class="tile-set" data-set="dragons">
+                    <svg viewBox="0 0 100 100">
+                        <rect x="10" y="10" width="80" height="80" fill="#fffbeb" stroke="#d0d0d0" stroke-width="2" rx="5" />
+                        <circle cx="50" cy="50" r="20" fill="#ff5722" />
+                    </svg>
+                    <h4>Dragon Tiles</h4>
+                    <p>Red, Green, and White Dragons!</p>
+                </div>
+            </div>
+            
+            <div class="character">
+                <div class="character-icon">🦉</div>
+                <div class="character-speech">
+                    <p>I'm Owl Professor! Did you know that a full set of Mahjong tiles has 144 pieces? That's a lot to play with!</p>
+                </div>
+            </div>
+            
+            <h3>How Mahjong Is Played</h3>
+            <p>In Mahjong, players take turns picking and discarding tiles to create special patterns. It's like making a card hand in games like poker, but with beautiful tiles instead!</p>
+            
+            <div class="character">
+                <div class="character-icon">🐢</div>
+                <div class="character-speech">
+                    <p>Hello, I'm Turtle Elder! Mahjong is not just a game - it teaches patience, strategy, and memory skills. Many families play together during special holidays!</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Play Section -->
+        <section id="play-section" class="hidden">
+            <h2>Let's Play with Mahjong Tiles!</h2>
+            
+            <div class="character">
+                <div class="character-icon">🐼</div>
+                <div class="character-speech">
+                    <p>Time to play! Can you match the tiles that go together? Find all the pairs to win!</p>
+                </div>
+            </div>
+            
+            <div class="score-display">Score: <span id="score">0</span></div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            
+            <div class="game-controls">
+                <button id="start-game">Start New Game</button>
+                <button id="hint-button">Get a Hint</button>
+            </div>
+            
+            <div class="game-board" id="game-board"></div>
+            
+            <div id="game-message" class="hidden"></div>
+            
+            <div class="character">
+                <div class="character-icon">🐉</div>
+                <div class="character-speech">
+                    <p>Remember, in Mahjong, spotting patterns quickly is very important. Keep practicing and you'll become a Mahjong master!</p>
+                </div>
+            </div>
+            
+            <h3>Your Achievements</h3>
+            <div class="achievements">
+                <div class="badge" id="badge-first-win">
+                    🏆
+                    <div class="badge-tooltip">First Victory</div>
+                </div>
+                <div class="badge" id="badge-perfect">
+                    ⭐
+                    <div class="badge-tooltip">Perfect Match</div>
+                </div>
+                <div class="badge" id="badge-speed">
+                    ⚡
+                    <div class="badge-tooltip">Speed Champion</div>
+                </div>
+                <div class="badge" id="badge-master">
+                    🧠
+                    <div class="badge-tooltip">Memory Master</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quiz Section -->
+        <section id="quiz-section" class="hidden">
+            <h2>Test Your Mahjong Knowledge!</h2>
+            
+            <div class="character">
+                <div class="character-icon">🦉</div>
+                <div class="character-speech">
+                    <p>Let's see how much you've learned about Mahjong tiles! Answer these questions to earn wisdom points!</p>
+                </div>
+            </div>
+            
+            <div class="quiz-container">
+                <div id="quiz-progress">Question <span id="current-question">1</span> of <span id="total-questions">10</span></div>
+                
+                <div class="quiz-question" id="question-container">
+                    <h3 id="question-text">What are the three main suits in Mahjong?</h3>
+                    <div class="quiz-options" id="options-container">
+                        <!-- Options will be added here dynamically -->
+                    </div>
+                </div>
+                
+                <div class="quiz-result hidden" id="quiz-result"></div>
+                
+                <button id="next-question" class="hidden">Next Question</button>
+                <button id="finish-quiz" class="hidden">See Results</button>
+                
+                <div id="quiz-summary" class="hidden">
+                    <h3>Quiz Results</h3>
+                    <p>You got <span id="correct-answers">0</span> out of <span id="total-answers">10</span> questions right!</p>
+                    <div id="quiz-feedback"></div>
+                    <button id="retry-quiz">Try Again</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings-section" class="hidden">
+            <h2>Customize Your Learning Experience</h2>
+            
+            <div class="character">
+                <div class="character-icon">🐢</div>
+                <div class="character-speech">
+                    <p>Here you can change how you learn about Mahjong! What would you like to adjust today?</p>
+                </div>
+            </div>
+            
+            <div id="settings-panel">
+                <div class="setting-group">
+                    <div class="setting-label">Game Difficulty:</div>
+                    <div class="setting-options">
+                        <div class="setting-option selected" data-difficulty="easy">Easy</div>
+                        <div class="setting-option" data-difficulty="medium">Medium</div>
+                        <div class="setting-option" data-difficulty="hard">Hard</div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Which Tile Sets to Learn:</div>
+                    <div class="setting-options">
+                        <div class="setting-option selected" data-tileset="bamboo">Bamboo</div>
+                        <div class="setting-option selected" data-tileset="dots">Dots</div>
+                        <div class="setting-option selected" data-tileset="characters">Characters</div>
+                        <div class="setting-option selected" data-tileset="winds">Winds</div>
+                        <div class="setting-option selected" data-tileset="dragons">Dragons</div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Game Time Limit (seconds):</div>
+                    <div class="slider-control">
+                        <input type="range" min="30" max="180" value="60" class="slider" id="time-slider">
+                        <div id="time-value">60 seconds</div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Quiz Difficulty:</div>
+                    <div class="setting-options">
+                        <div class="setting-option selected" data-quiz-difficulty="easy">Easy</div>
+                        <div class="setting-option" data-quiz-difficulty="medium">Medium</div>
+                        <div class="setting-option" data-quiz-difficulty="hard">Hard</div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Learning Focus:</div>
+                    <div class="setting-options">
+                        <div class="setting-option selected" data-focus="fun">Fun & Play</div>
+                        <div class="setting-option" data-focus="memory">Memory Skills</div>
+                        <div class="setting-option" data-focus="strategy">Strategy</div>
+                        <div class="setting-option" data-focus="culture">Cultural Context</div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <div class="setting-label">Character Guide:</div>
+                    <div class="setting-options">
+                        <div class="setting-option selected" data-character="all">All Characters</div>
+                        <div class="setting-option" data-character="panda">Panda Master</div>
+                        <div class="setting-option" data-character="dragon">Dragon Sage</div>
+                        <div class="setting-option" data-character="owl">Owl Professor</div>
+                        <div class="setting-option" data-character="turtle">Turtle Elder</div>
+                    </div>
+                </div>
+                
+                <button id="save-settings">Save Settings</button>
+                <button id="reset-settings">Reset to Default</button>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Main Application Logic
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the application
+            initializeApp();
+            
+            // Setup the Three.js Tile Viewer
+            setupTileViewer();
+            
+            // Setup the Game
+            setupGame();
+            
+            // Setup the Quiz
+            setupQuiz();
+            
+            // Setup Settings
+            setupSettings();
+        });
+
+        // Application State
+        const appState = {
+            currentTile: 0,
+            score: 0,
+            matchedPairs: 0,
+            totalPairs: 0,
+            selectedTiles: [],
+            gameActive: false,
+            gameStartTime: null,
+            gameDifficulty: 'easy',
+            timeLimit: 60,
+            quizDifficulty: 'easy',
+            learningFocus: 'fun',
+            enabledTileSets: ['bamboo', 'dots', 'characters', 'winds', 'dragons'],
+            activeCharacters: ['all'],
+            currentQuestion: 0,
+            quizScore: 0,
+            tileData: {
+                bamboo: Array.from({length: 9}, (_, i) => ({
+                    id: `bamboo-${i+1}`,
+                    name: `Bamboo ${i+1}`,
+                    suit: 'bamboo',
+                    value: i+1,
+                    description: `The ${i+1} of Bamboo tile`
+                })),
+                dots: Array.from({length: 9}, (_, i) => ({
+                    id: `dots-${i+1}`,
+                    name: `Dots ${i+1}`,
+                    suit: 'dots',
+                    value: i+1,
+                    description: `The ${i+1} of Dots tile`
+                })),
+                characters: Array.from({length: 9}, (_, i) => ({
+                    id: `characters-${i+1}`,
+                    name: `Character ${i+1}`,
+                    suit: 'characters',
+                    value: i+1,
+                    description: `The ${i+1} of Characters tile`
+                })),
+                winds: [
+                    { id: 'wind-east', name: 'East Wind', suit: 'winds', value: 'east', description: 'The East Wind tile' },
+                    { id: 'wind-south', name: 'South Wind', suit: 'winds', value: 'south', description: 'The South Wind tile' },
+                    { id: 'wind-west', name: 'West Wind', suit: 'winds', value: 'west', description: 'The West Wind tile' },
+                    { id: 'wind-north', name: 'North Wind', suit: 'winds', value: 'north', description: 'The North Wind tile' }
+                ],
+                dragons: [
+                    { id: 'dragon-red', name: 'Red Dragon', suit: 'dragons', value: 'red', description: 'The Red Dragon tile' },
+                    { id: 'dragon-green', name: 'Green Dragon', suit: 'dragons', value: 'green', description: 'The Green Dragon tile' },
+                    { id: 'dragon-white', name: 'White Dragon', suit: 'dragons', value: 'white', description: 'The White Dragon tile' }
+                ]
+            },
+            tileColors: {
+                bamboo: '#4caf50',
+                dots: '#f44336',
+                characters: '#000000',
+                winds: '#5d4037',
+                dragons: {
+                    red: '#ff5722',
+                    green: '#4caf50',
+                    white: '#eeeeee'
+                }
+            },
+            windSymbols: {
+                east: '東',
+                south: '南',
+                west: '西',
+                north: '北'
+            },
+            achievements: {
+                firstWin: false,
+                perfectMatch: false,
+                speedChampion: false,
+                memoryMaster: false
+            },
+            quizQuestions: {
+                easy: [
+                    {
+                        question: "What are the three main suits in Mahjong?",
+                        options: [
+                            "Bamboo, Dots, and Characters",
+                            "Hearts, Diamonds, and Clubs",
+                            "Red, Blue, and Green",
+                            "Dragons, Winds, and Stars"
+                        ],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "How many tiles are in a complete Mahjong set?",
+                        options: [
+                            "100",
+                            "108",
+                            "136",
+                            "144"
+                        ],
+                        correctAnswer: 3
+                    },
+                    {
+                        question: "Which of these is NOT a Mahjong Dragon tile?",
+                        options: [
+                            "Red Dragon",
+                            "Green Dragon",
+                            "White Dragon",
+                            "Blue Dragon"
+                        ],
+                        correctAnswer: 3
+                    },
+                    {
+                        question: "What do we call the special tiles with winds?",
+                        options: [
+                            "Honor Tiles",
+                            "Weather Tiles",
+                            "Element Tiles",
+                            "Cardinal Tiles"
+                        ],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "Which country did Mahjong originate from?",
+                        options: [
+                            "Japan",
+                            "China",
+                            "Korea",
+                            "Thailand"
+                        ],
+                        correctAnswer: 1
+                    }
+                ],
+                medium: [
+                    {
+                        question: "How many tiles of each suit (Bamboo, Dots, Characters) are in a Mahjong set?",
+                        options: [
+                            "9 (one of each number)",
+                            "18 (two of each number)",
+                            "27 (three of each number)",
+                            "36 (four of each number)"
+                        ],
+                        correctAnswer: 3
+                    },
+                    {
+                        question: "What is a 'Pung' in Mahjong?",
+                        options: [
+                            "Three identical tiles",
+                            "Four identical tiles",
+                            "A sequence of three tiles",
+                            "A winning hand"
+                        ],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "Which of these is NOT one of the four Wind tiles?",
+                        options: [
+                            "East",
+                            "South",
+                            "Center",
+                            "North"
+                        ],
+                        correctAnswer: 2
+                    },
+                    {
+                        question: "What is the Chinese symbol on the Character 1 tile?",
+                        options: [
+                            "一",
+                            "二",
+                            "三",
+                            "四"
+                        ],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "How many Wind tiles are in a full Mahjong set?",
+                        options: [
+                            "4 (one of each)",
+                            "8 (two of each)",
+                            "12 (three of each)",
+                            "16 (four of each)"
+                        ],
+                        correctAnswer: 3
+                    }
+                ],
+                hard: [
+                    {
+                        question: "In traditional Mahjong, how many Flower tiles are there?",
+                        options: [
+                            "4",
+                            "8",
+                            "12",
+                            "16"
+                        ],
+                        correctAnswer: 1
+                    },
+                    {
+                        question: "What special rule is often applied to the White Dragon tile in some variants?",
+                        options: [
+                            "It can substitute for any tile",
+                            "It doubles the value of a hand",
+                            "It's sometimes represented as a blank tile",
+                            "It allows an extra turn"
+                        ],
+                        correctAnswer: 2
+                    },
+                    {
+                        question: "What is a 'Kong' in Mahjong?",
+                        options: [
+                            "Four identical tiles",
+                            "A sequence of four consecutive tiles",
+                            "A pair of identical tiles",
+                            "A mix of three different suit tiles with the same number"
+                        ],
+                        correctAnswer: 0
+                    },
+                    {
+                        question: "In the traditional game, how many tiles does each player start with?",
+                        options: [
+                            "11",
+                            "13",
+                            "16",
+                            "17"
+                        ],
+                        correctAnswer: 1
+                    },
+                    {
+                        question: "What is the name of the action when a player discards their winning tile and another player claims it to win?",
+                        options: [
+                            "Pong",
+                            "Chow",
+                            "Kong",
+                            "Ron"
+                        ],
+                        correctAnswer: 3
+                    }
+                ]
+            }
+        };
+
+        // Scene objects for Three.js
+        let scene, camera, renderer, tileMesh;
+        let rotationSpeed = 0.005;
+        let rotateAutomatic = true;
+
+        // Initialize the application
+        function initializeApp() {
+            // Set up navigation
+            document.getElementById('learn-btn').addEventListener('click', () => showSection('learn-section'));
+            document.getElementById('play-btn').addEventListener('click', () => showSection('play-section'));
+            document.getElementById('quiz-btn').addEventListener('click', () => showSection('quiz-section'));
+            document.getElementById('settings-btn').addEventListener('click', () => showSection('settings-section'));
+            
+            // Set the initial active section
+            document.getElementById('learn-btn').classList.add('active');
+            
+            // Initialize tile set info panels
+            document.querySelectorAll('.tile-set').forEach(tileSet => {
+                tileSet.addEventListener('click', () => {
+                    const setType = tileSet.getAttribute('data-set');
+                    showTileSetInfo(setType);
+                });
+            });
+        }
+
+        // Show the selected section and update navigation
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show the selected section
+            document.getElementById(sectionId).classList.remove('hidden');
+            
+            // Update the active navigation button
+            document.querySelectorAll('nav button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Set the corresponding nav button as active
+            const buttonId = sectionId.replace('-section', '-btn');
+            document.getElementById(buttonId).classList.add('active');
+        }
+
+        // Setup the Three.js Tile Viewer
+        function setupTileViewer() {
+            const tileViewerContainer = document.getElementById('tile-viewer');
+            
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f0f0);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, tileViewerContainer.clientWidth / tileViewerContainer.clientHeight, 0.1, 1000);
+            camera.position.z = 5;
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(tileViewerContainer.clientWidth, tileViewerContainer.clientHeight);
+            tileViewerContainer.appendChild(renderer.domElement);
+            
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // Create a Mahjong tile
+            createTileMesh(appState.tileData.bamboo[0]);
+            
+            // Add control event listeners
+            document.getElementById('rotate-left').addEventListener('click', () => {
+                rotateAutomatic = false;
+                tileMesh.rotation.y -= 0.3;
+            });
+            
+            document.getElementById('rotate-right').addEventListener('click', () => {
+                rotateAutomatic = false;
+                tileMesh.rotation.y += 0.3;
+            });
+            
+            document.getElementById('next-tile').addEventListener('click', () => {
+                rotateAutomatic = true;
+                showNextTile();
+            });
+            
+            // Start animation loop
+            animateTileViewer();
+        }
+
+        // Create a 3D Mahjong tile mesh
+        function createTileMesh(tileData) {
+            // Remove existing mesh if there is one
+            if (tileMesh) {
+                scene.remove(tileMesh);
+            }
+            
+            // Create tile geometry
+            const tileGeometry = new THREE.BoxGeometry(3, 4, 1);
+            
+            // Create materials for each face of the tile
+            const materials = [
+                new THREE.MeshStandardMaterial({ color: 0xd0d0d0 }), // right side
+                new THREE.MeshStandardMaterial({ color: 0xd0d0d0 }), // left side
+                new THREE.MeshStandardMaterial({ color: 0xd0d0d0 }), // top
+                new THREE.MeshStandardMaterial({ color: 0xd0d0d0 }), // bottom
+                new THREE.MeshStandardMaterial({ color: 0xfffbeb }), // front face (with symbol)
+                new THREE.MeshStandardMaterial({ color: 0xe0e0e0 })  // back face
+            ];
+            
+            // Create the tile mesh
+            tileMesh = new THREE.Mesh(tileGeometry, materials);
+            scene.add(tileMesh);
+            
+            // Reset rotation
+            tileMesh.rotation.y = 0;
+            
+            // Add the tile information to the scene (we'll fake this with rotation for simplicity)
+            const textureOffset = 0.5; // Offset to position the "symbol" on the tile
+            
+            // Based on the tile type, we would create different visuals
+            // For simplicity, we're just adjusting the color of the front face
+            if (tileData.suit === 'bamboo') {
+                materials[4].color.set(appState.tileColors.bamboo);
+            } else if (tileData.suit === 'dots') {
+                materials[4].color.set(appState.tileColors.dots);
+            } else if (tileData.suit === 'characters') {
+                materials[4].color.set(appState.tileColors.characters);
+            } else if (tileData.suit === 'winds') {
+                materials[4].color.set(appState.tileColors.winds);
+            } else if (tileData.suit === 'dragons') {
+                materials[4].color.set(appState.tileColors.dragons[tileData.value]);
+            }
+        }
+
+        // Show the next tile in the sequence
+        function showNextTile() {
+            // Get all tile types as a flat array
+            const allTiles = [
+                ...appState.tileData.bamboo,
+                ...appState.tileData.dots,
+                ...appState.tileData.characters,
+                ...appState.tileData.winds,
+                ...appState.tileData.dragons
+            ];
+            
+            // Increment the current tile index
+            appState.currentTile = (appState.currentTile + 1) % allTiles.length;
+            
+            // Create a new tile mesh for the current tile
+            createTileMesh(allTiles[appState.currentTile]);
+        }
+
+        // Animate the tile viewer
+        function animateTileViewer() {
+            requestAnimationFrame(animateTileViewer);
+            
+            // Rotate the tile if automatic rotation is enabled
+            if (rotateAutomatic && tileMesh) {
+                tileMesh.rotation.y += rotationSpeed;
+            }
+            
+            // Render the scene
+            renderer.render(scene, camera);
+        }
+
+        // Show information about a specific tile set
+        function showTileSetInfo(setType) {
+            // In a real implementation, we would display more detailed information
+            // about the selected tile set. For simplicity, we'll just update the 3D viewer.
+            
+            // Get the first tile of the selected set
+            const tile = appState.tileData[setType][0];
+            
+            // Update the 3D viewer with this tile
+            createTileMesh(tile);
+            
+            // Enable automatic rotation
+            rotateAutomatic = true;
+        }
+
+        // Setup the Game
+        function setupGame() {
+            // Add event listeners for game controls
+            document.getElementById('start-game').addEventListener('click', startGame);
+            document.getElementById('hint-button').addEventListener('click', giveHint);
+            
+            // Update the initial score display
+            updateScoreDisplay();
+        }
+
+        // Start a new game
+        function startGame() {
+            // Reset game state
+            appState.score = 0;
+            appState.matchedPairs = 0;
+            appState.selectedTiles = [];
+            appState.gameActive = true;
+            appState.gameStartTime = Date.now();
+            
+            // Update score display
+            updateScoreDisplay();
+            
+            // Clear the game board
+            const gameBoard = document.getElementById('game-board');
+            gameBoard.innerHTML = '';
+            
+            // Hide any previous game messages
+            document.getElementById('game-message').classList.add('hidden');
+            
+            // Create a set of tiles for the game based on difficulty
+            const tiles = createGameTiles();
+            appState.totalPairs = tiles.length / 2;
+            
+            // Shuffle the tiles
+            const shuffledTiles = shuffleArray([...tiles]);
+            
+            // Add tiles to the game board
+            shuffledTiles.forEach(tile => {
+                const tileElement = document.createElement('div');
+                tileElement.classList.add('tile');
+                tileElement.setAttribute('data-tile-id', tile.id);
+                tileElement.innerHTML = renderTileContent(tile, false); // Face down initially
+                
+                // Add click handler
+                tileElement.addEventListener('click', () => handleTileClick(tileElement, tile));
+                
+                // Add to game board
+                gameBoard.appendChild(tileElement);
+            });
+            
+            // Update the progress bar
+            updateProgressBar();
+            
+            // Start the game timer if there's a time limit
+            if (appState.timeLimit > 0) {
+                appState.gameTimer = setTimeout(() => {
+                    endGame(false, 'Time\'s up!');
+                }, appState.timeLimit * 1000);
+            }
+        }
+
+        // Create tiles for the game based on difficulty
+        function createGameTiles() {
+            let tiles = [];
+            let numPairs;
+            
+            // Determine number of pairs based on difficulty
+            switch(appState.gameDifficulty) {
+                case 'easy':
+                    numPairs = 6;
+                    break;
+                case 'medium':
+                    numPairs = 9;
+                    break;
+                case 'hard':
+                    numPairs = 12;
+                    break;
+                default:
+                    numPairs = 6;
+            }
+            
+            // Get tiles from enabled tile sets
+            let availableTiles = [];
+            appState.enabledTileSets.forEach(set => {
+                availableTiles = [...availableTiles, ...appState.tileData[set]];
+            });
+            
+            // If we don't have enough tiles, we can repeat some
+            if (availableTiles.length < numPairs) {
+                while (availableTiles.length < numPairs) {
+                    availableTiles = [...availableTiles, ...availableTiles];
+                }
+            }
+            
+            // Shuffle and select the required number of tiles
+            const selectedTiles = shuffleArray(availableTiles).slice(0, numPairs);
+            
+            // Add each tile twice to create pairs
+            selectedTiles.forEach(tile => {
+                // Create two instances of each tile for matching
+                const tileA = { ...tile, instanceId: `${tile.id}-a` };
+                const tileB = { ...tile, instanceId: `${tile.id}-b` };
+                tiles.push(tileA, tileB);
+            });
+            
+            return tiles;
+        }
+
+        // Shuffle an array
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Render the content of a tile
+        function renderTileContent(tile, faceUp) {
+            if (!faceUp) {
+                // Render back of tile
+                return `<div style="width: 100%; height: 100%; background-color: #e0e0e0; border-radius: 5px;"></div>`;
+            }
+            
+            // Render based on tile type
+            let content = '';
+            
+            switch(tile.suit) {
+                case 'bamboo':
+                    content = `<svg viewBox="0 0 100 100" width="80" height="80">
+                        <circle cx="50" cy="50" r="${10 + tile.value * 2}" fill="${appState.tileColors.bamboo}" />
+                        <rect x="48" y="20" width="4" height="60" fill="#8d6e63" />
+                    </svg>`;
+                    break;
+                case 'dots':
+                    // Create a pattern of dots based on the value
+                    content = `<svg viewBox="0 0 100 100" width="80" height="80">`;
+                    // Position dots in a grid pattern based on the value
+                    for (let i = 0; i < tile.value; i++) {
+                        const row = Math.floor(i / 3);
+                        const col = i % 3;
+                        const cx = 25 + col * 25;
+                        const cy = 25 + row * 25;
+                        content += `<circle cx="${cx}" cy="${cy}" r="8" fill="${appState.tileColors.dots}" />`;
+                    }
+                    content += `</svg>`;
+                    break;
+                case 'characters':
+                    // Chinese characters 1-9
+                    const characters = ['一', '二', '三', '四', '五', '六', '七', '八', '九'];
+                    content = `<svg viewBox="0 0 100 100" width="80" height="80">
+                        <text x="50" y="60" font-family="Arial" font-size="40" text-anchor="middle" fill="${appState.tileColors.characters}">${characters[tile.value - 1]}</text>
+                    </svg>`;
+                    break;
+                case 'winds':
+                    content = `<svg viewBox="0 0 100 100" width="80" height="80">
+                        <text x="50" y="60" font-family="Arial" font-size="40" text-anchor="middle" fill="${appState.tileColors.winds}">${appState.windSymbols[tile.value]}</text>
+                    </svg>`;
+                    break;
+                case 'dragons':
+                    // Different representation for each dragon
+                    if (tile.value === 'red') {
+                        content = `<svg viewBox="0 0 100 100" width="80" height="80">
+                            <circle cx="50" cy="50" r="25" fill="${appState.tileColors.dragons.red}" />
+                        </svg>`;
+                    } else if (tile.value === 'green') {
+                        content = `<svg viewBox="0 0 100 100" width="80" height="80">
+                            <rect x="25" y="25" width="50" height="50" fill="${appState.tileColors.dragons.green}" />
+                        </svg>`;
+                    } else { // white
+                        content = `<svg viewBox="0 0 100 100" width="80" height="80">
+                            <rect x="25" y="25" width="50" height="50" stroke="black" stroke-width="2" fill="${appState.tileColors.dragons.white}" />
+                        </svg>`;
+                    }
+                    break;
+                default:
+                    content = '?';
+            }
+            
+            return content;
+        }
+
+        // Handle tile click
+        function handleTileClick(tileElement, tile) {
+            // Ignore clicks if the game is not active or the tile is already matched or selected
+            if (!appState.gameActive || 
+                tileElement.classList.contains('matched') || 
+                tileElement.classList.contains('selected')) {
+                return;
+            }
+            
+            // Show the tile face
+            tileElement.innerHTML = renderTileContent(tile, true);
+            tileElement.classList.add('selected');
+            
+            // Add to selected tiles
+            appState.selectedTiles.push({ element: tileElement, tile: tile });
+            
+            // If we have two selected tiles, check for a match
+            if (appState.selectedTiles.length === 2) {
+                // Disable further clicks temporarily
+                appState.gameActive = false;
+                
+                // Check for match after a short delay (for visibility)
+                setTimeout(() => {
+                    checkForMatch();
+                    // Re-enable game
+                    appState.gameActive = true;
+                }, 1000);
+            }
+        }
+
+        // Check if the two selected tiles match
+        function checkForMatch() {
+            const [tileA, tileB] = appState.selectedTiles;
+            
+            // Check if the tiles are the same type (same suit and value)
+            const isMatch = tileA.tile.suit === tileB.tile.suit && tileA.tile.value === tileB.tile.value;
+            
+            if (isMatch) {
+                // Mark tiles as matched
+                tileA.element.classList.remove('selected');
+                tileB.element.classList.remove('selected');
+                tileA.element.classList.add('matched');
+                tileB.element.classList.add('matched');
+                
+                // Update score and matches
+                appState.score += 10;
+                appState.matchedPairs++;
+                
+                // Check if all pairs are matched
+                if (appState.matchedPairs === appState.totalPairs) {
+                    // Game complete!
+                    endGame(true);
+                }
+            } else {
+                // Not a match, flip tiles back
+                tileA.element.classList.remove('selected');
+                tileB.element.classList.remove('selected');
+                tileA.element.innerHTML = renderTileContent(tileA.tile, false);
+                tileB.element.innerHTML = renderTileContent(tileB.tile, false);
+                
+                // Penalty for wrong match
+                appState.score = Math.max(0, appState.score - 1);
+            }
+            
+            // Clear selected tiles
+            appState.selectedTiles = [];
+            
+            // Update score display
+            updateScoreDisplay();
+            
+            // Update progress bar
+            updateProgressBar();
+        }
+
+        // Update the score display
+        function updateScoreDisplay() {
+            document.getElementById('score').textContent = appState.score;
+        }
+
+        // Update the progress bar
+        function updateProgressBar() {
+            const progressPercentage = (appState.matchedPairs / appState.totalPairs) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
+        }
+
+        // Provide a hint by briefly revealing tiles
+        function giveHint() {
+            if (!appState.gameActive) return;
+            
+            // Penalty for using a hint
+            appState.score = Math.max(0, appState.score - 2);
+            updateScoreDisplay();
+            
+            // Find unmatched tiles
+            const unmatchedTiles = Array.from(document.querySelectorAll('.tile:not(.matched)'));
+            
+            // Show all tiles briefly
+            unmatchedTiles.forEach(tile => {
+                const tileId = tile.getAttribute('data-tile-id');
+                const tileData = findTileById(tileId);
+                
+                // Store original content
+                const originalContent = tile.innerHTML;
+                
+                // Show tile face
+                tile.innerHTML = renderTileContent(tileData, true);
+                
+                // Hide after a short delay
+                setTimeout(() => {
+                    tile.innerHTML = originalContent;
+                }, 1000);
+            });
+        }
+
+        // Find a tile by its ID
+        function findTileById(tileId) {
+            // Search through all tile sets
+            for (const setKey in appState.tileData) {
+                const matchingTile = appState.tileData[setKey].find(tile => 
+                    tile.id === tileId || tileId.startsWith(tile.id)
+                );
+                if (matchingTile) return matchingTile;
+            }
+            return null;
+        }
+
+        // End the game
+        function endGame(isVictory, message = null) {
+            // Stop the game timer
+            if (appState.gameTimer) {
+                clearTimeout(appState.gameTimer);
+            }
+            
+            // Set game as inactive
+            appState.gameActive = false;
+            
+            // Calculate final score
+            if (isVictory) {
+                // Bonus for completing the game
+                const timeBonus = Math.max(0, appState.timeLimit - Math.floor((Date.now() - appState.gameStartTime) / 1000));
+                appState.score += timeBonus;
+                
+                // Update achievements
+                updateAchievements(timeBonus);
+            }
+            
+            // Update score display
+            updateScoreDisplay();
+            
+            // Show game over message
+            const gameMessage = document.getElementById('game-message');
+            gameMessage.classList.remove('hidden');
+            
+            if (isVictory) {
+                gameMessage.textContent = `Congratulations! You matched all the tiles with a score of ${appState.score}!`;
+                gameMessage.style.color = 'green';
+            } else {
+                gameMessage.textContent = message || 'Game Over!';
+                gameMessage.style.color = 'red';
+            }
+        }
+
+        // Update player achievements
+        function updateAchievements(timeBonus) {
+            // First win
+            if (!appState.achievements.firstWin) {
+                appState.achievements.firstWin = true;
+                document.getElementById('badge-first-win').classList.add('unlocked');
+            }
+            
+            // Perfect match (no wrong selections)
+            if (appState.score >= appState.totalPairs * 10) {
+                appState.achievements.perfectMatch = true;
+                document.getElementById('badge-perfect').classList.add('unlocked');
+            }
+            
+            // Speed champion (significant time bonus)
+            if (timeBonus > appState.timeLimit / 2) {
+                appState.achievements.speedChampion = true;
+                document.getElementById('badge-speed').classList.add('unlocked');
+            }
+            
+            // Memory master (unlock all other achievements)
+            if (appState.achievements.firstWin && 
+                appState.achievements.perfectMatch && 
+                appState.achievements.speedChampion) {
+                appState.achievements.memoryMaster = true;
+                document.getElementById('badge-master').classList.add('unlocked');
+            }
+        }
+
+        // Setup the Quiz
+        function setupQuiz() {
+            // Add event listeners for quiz controls
+            document.getElementById('next-question').addEventListener('click', showNextQuestion);
+            document.getElementById('finish-quiz').addEventListener('click', showQuizResults);
+            document.getElementById('retry-quiz').addEventListener('click', startQuiz);
+            
+            // Set up initial quiz state
+            updateQuizView();
+        }
+
+        // Start the quiz
+        function startQuiz() {
+            // Reset quiz state
+            appState.currentQuestion = 0;
+            appState.quizScore = 0;
+            
+            // Show first question
+            showQuestion(appState.currentQuestion);
+            
+            // Update quiz view
+            updateQuizView();
+            
+            // Hide result section
+            document.getElementById('quiz-summary').classList.add('hidden');
+        }
+
+        // Update quiz view based on current state
+        function updateQuizView() {
+            // Update question counter
+            document.getElementById('current-question').textContent = appState.currentQuestion + 1;
+            document.getElementById('total-questions').textContent = appState.quizQuestions[appState.quizDifficulty].length;
+            
+            // Hide both navigation buttons initially
+            document.getElementById('next-question').classList.add('hidden');
+            document.getElementById('finish-quiz').classList.add('hidden');
+            
+            // Hide quiz result
+            document.getElementById('quiz-result').classList.add('hidden');
+        }
+
+        // Show a specific question
+        function showQuestion(questionIndex) {
+            const questions = appState.quizQuestions[appState.quizDifficulty];
+            const question = questions[questionIndex];
+            
+            // Set question text
+            document.getElementById('question-text').textContent = question.question;
+            
+            // Clear existing options
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            
+            // Add options
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.classList.add('quiz-option');
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', () => handleOptionClick(index, question.correctAnswer));
+                optionsContainer.appendChild(optionElement);
+            });
+        }
+
+        // Handle option click in quiz
+        function handleOptionClick(selectedIndex, correctIndex) {
+            // Get all options
+            const options = document.querySelectorAll('.quiz-option');
+            
+            // Prevent further clicks
+            options.forEach(option => {
+                option.style.pointerEvents = 'none';
+            });
+            
+            // Mark correct and incorrect options
+            options[correctIndex].classList.add('correct');
+            if (selectedIndex !== correctIndex) {
+                options[selectedIndex].classList.add('incorrect');
+            }
+            
+            // Show result message
+            const resultElement = document.getElementById('quiz-result');
+            resultElement.classList.remove('hidden');
+            
+            if (selectedIndex === correctIndex) {
+                resultElement.textContent = 'Correct! Well done!';
+                resultElement.classList.add('correct');
+                resultElement.classList.remove('incorrect');
+                appState.quizScore++;
+            } else {
+                resultElement.textContent = 'Not quite right. Try another one!';
+                resultElement.classList.add('incorrect');
+                resultElement.classList.remove('correct');
+            }
+            
+            // Show next button
+            const isLastQuestion = appState.currentQuestion === appState.quizQuestions[appState.quizDifficulty].length - 1;
+            if (isLastQuestion) {
+                document.getElementById('finish-quiz').classList.remove('hidden');
+            } else {
+                document.getElementById('next-question').classList.remove('hidden');
+            }
+        }
+
+        // Show the next question
+        function showNextQuestion() {
+            appState.currentQuestion++;
+            showQuestion(appState.currentQuestion);
+            updateQuizView();
+        }
+
+        // Show quiz results
+        function showQuizResults() {
+            // Hide question container
+            document.getElementById('question-container').classList.add('hidden');
+            document.getElementById('quiz-progress').classList.add('hidden');
+            document.getElementById('finish-quiz').classList.add('hidden');
+            document.getElementById('quiz-result').classList.add('hidden');
+            
+            // Show results summary
+            document.getElementById('quiz-summary').classList.remove('hidden');
+            
+            // Update results
+            const totalQuestions = appState.quizQuestions[appState.quizDifficulty].length;
+            document.getElementById('correct-answers').textContent = appState.quizScore;
+            document.getElementById('total-answers').textContent = totalQuestions;
+            
+            // Generate feedback based on score
+            const feedbackElement = document.getElementById('quiz-feedback');
+            const scorePercentage = (appState.quizScore / totalQuestions) * 100;
+            
+            if (scorePercentage >= 90) {
+                feedbackElement.textContent = 'Amazing! Youre a Mahjong master!';
+            } else if (scorePercentage >= 70) {
+                feedbackElement.textContent = 'Great job! You know a lot about Mahjong!';
+            } else if (scorePercentage >= 50) {
+                feedbackElement.textContent = 'Good effort! Keep learning about Mahjong!';
+            } else {
+                feedbackElement.textContent = 'Keep practicing! Mahjong has many things to learn!';
+            }
+        }
+
+        // Setup Settings
+        function setupSettings() {
+            // Add event listeners for settings controls
+            document.getElementById('save-settings').addEventListener('click', saveSettings);
+            document.getElementById('reset-settings').addEventListener('click', resetSettings);
+            
+            // Set up difficulty options
+            document.querySelectorAll('[data-difficulty]').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    // Deselect all options in this group
+                    document.querySelectorAll('[data-difficulty]').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Select clicked option
+                    e.target.classList.add('selected');
+                });
+            });
+            
+            // Set up tile set options
+            document.querySelectorAll('[data-tileset]').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    // Toggle selection
+                    e.target.classList.toggle('selected');
+                });
+            });
+            
+            // Set up quiz difficulty options
+            document.querySelectorAll('[data-quiz-difficulty]').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    // Deselect all options in this group
+                    document.querySelectorAll('[data-quiz-difficulty]').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Select clicked option
+                    e.target.classList.add('selected');
+                });
+            });
+            
+            // Set up learning focus options
+            document.querySelectorAll('[data-focus]').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    // Deselect all options in this group
+                    document.querySelectorAll('[data-focus]').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Select clicked option
+                    e.target.classList.add('selected');
+                });
+            });
+            
+            // Set up character guide options
+            document.querySelectorAll('[data-character]').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    // Deselect all options in this group
+                    document.querySelectorAll('[data-character]').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Select clicked option
+                    e.target.classList.add('selected');
+                });
+            });
+            
+            // Set up time slider
+            const timeSlider = document.getElementById('time-slider');
+            const timeValue = document.getElementById('time-value');
+            
+            timeSlider.addEventListener('input', function() {
+                timeValue.textContent = this.value + ' seconds';
+            });
+        }
+
+        // Save settings
+        function saveSettings() {
+            // Get game difficulty
+            const difficultyElement = document.querySelector('[data-difficulty].selected');
+            if (difficultyElement) {
+                appState.gameDifficulty = difficultyElement.getAttribute('data-difficulty');
+            }
+            
+            // Get enabled tile sets
+            appState.enabledTileSets = [];
+            document.querySelectorAll('[data-tileset].selected').forEach(element => {
+                appState.enabledTileSets.push(element.getAttribute('data-tileset'));
+            });
+            
+            // Ensure at least one tile set is enabled
+            if (appState.enabledTileSets.length === 0) {
+                appState.enabledTileSets = ['bamboo'];
+                document.querySelector('[data-tileset="bamboo"]').classList.add('selected');
+            }
+            
+            // Get time limit
+            appState.timeLimit = parseInt(document.getElementById('time-slider').value);
+            
+            // Get quiz difficulty
+            const quizDifficultyElement = document.querySelector('[data-quiz-difficulty].selected');
+            if (quizDifficultyElement) {
+                appState.quizDifficulty = quizDifficultyElement.getAttribute('data-quiz-difficulty');
+            }
+            
+            // Get learning focus
+            const focusElement = document.querySelector('[data-focus].selected');
+            if (focusElement) {
+                appState.learningFocus = focusElement.getAttribute('data-focus');
+            }
+            
+            // Get active characters
+            const characterElement = document.querySelector('[data-character].selected');
+            if (characterElement) {
+                appState.activeCharacters = [characterElement.getAttribute('data-character')];
+            }
+            
+            // Adjust game based on settings
+            adjustGameForSettings();
+            
+            // Show feedback to user
+            alert('Settings saved successfully!');
+        }
+
+        // Reset settings to default
+        function resetSettings() {
+            // Reset to default values
+            appState.gameDifficulty = 'easy';
+            appState.enabledTileSets = ['bamboo', 'dots', 'characters', 'winds', 'dragons'];
+            appState.timeLimit = 60;
+            appState.quizDifficulty = 'easy';
+            appState.learningFocus = 'fun';
+            appState.activeCharacters = ['all'];
+            
+            // Update UI to match default settings
+            document.querySelectorAll('[data-difficulty]').forEach(element => {
+                element.classList.toggle('selected', element.getAttribute('data-difficulty') === 'easy');
+            });
+            
+            document.querySelectorAll('[data-tileset]').forEach(element => {
+                element.classList.add('selected');
+            });
+            
+            document.getElementById('time-slider').value = 60;
+            document.getElementById('time-value').textContent = '60 seconds';
+            
+            document.querySelectorAll('[data-quiz-difficulty]').forEach(element => {
+                element.classList.toggle('selected', element.getAttribute('data-quiz-difficulty') === 'easy');
+            });
+            
+            document.querySelectorAll('[data-focus]').forEach(element => {
+                element.classList.toggle('selected', element.getAttribute('data-focus') === 'fun');
+            });
+            
+            document.querySelectorAll('[data-character]').forEach(element => {
+                element.classList.toggle('selected', element.getAttribute('data-character') === 'all');
+            });
+            
+            // Adjust game based on settings
+            adjustGameForSettings();
+            
+            // Show feedback to user
+            alert('Settings have been reset to default!');
+        }
+
+        // Adjust game based on settings
+        function adjustGameForSettings() {
+            // Adjust the game based on learning focus
+            switch(appState.learningFocus) {
+                case 'memory':
+                    rotationSpeed = 0.003; // Slower tile rotation for better memorization
+                    break;
+                case 'strategy':
+                    // Adjust some game parameters for strategy focus
+                    break;
+                case 'culture':
+                    // Show more cultural elements and less gameplay
+                    break;
+                case 'fun':
+                default:
+                    rotationSpeed = 0.005; // Default rotation speed
+            }
+            
+            // Adjust character visibility based on settings
+            const allCharacters = document.querySelectorAll('.character');
+            
+            if (appState.activeCharacters.includes('all')) {
+                // Show all characters
+                allCharacters.forEach(character => {
+                    character.classList.remove('hidden');
+                });
+            } else {
+                // Hide/show specific characters based on settings
+                allCharacters.forEach(character => {
+                    const characterIcon = character.querySelector('.character-icon').textContent;
+                    let characterType = '';
+                    
+                    // Map emoji to character type
+                    if (characterIcon === '🐼') characterType = 'panda';
+                    else if (characterIcon === '🐉') characterType = 'dragon';
+                    else if (characterIcon === '🦉') characterType = 'owl';
+                    else if (characterIcon === '🐢') characterType = 'turtle';
+                    
+                    // Show/hide based on selection
+                    if (appState.activeCharacters.includes(characterType)) {
+                        character.classList.remove('hidden');
+                    } else {
+                        character.classList.add('hidden');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>

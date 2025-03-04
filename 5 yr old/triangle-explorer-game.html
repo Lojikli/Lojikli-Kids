@@ -1,0 +1,1198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triangle Explorer: A Geometric Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            overflow: hidden;
+            touch-action: none;
+        }
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #gameCanvas {
+            flex-grow: 1;
+            position: relative;
+        }
+        #controls {
+            background-color: #ffd700;
+            padding: 10px;
+            border-top: 5px solid #ff6b6b;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+        }
+        .control-group {
+            margin: 0 10px;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 8px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .control-group h3 {
+            margin-top: 0;
+            color: #4a4a4a;
+            text-align: center;
+            font-size: 16px;
+        }
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+        .slider-container label {
+            width: 80px;
+            font-size: 14px;
+        }
+        button {
+            background-color: #4CAF50;
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: background-color 0.3s;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 20px;
+            text-align: center;
+            font-size: 16px;
+        }
+        #progressBar {
+            width: 100%;
+            background-color: #ddd;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            height: 15px;
+        }
+        #progressFill {
+            height: 15px;
+            background-color: #4CAF50;
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        .character-speech {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: white;
+            border: 3px solid #ff6b6b;
+            border-radius: 20px;
+            padding: 15px;
+            max-width: 40%;
+            min-width: 200px;
+            z-index: 50;
+            font-size: 14px;
+        }
+        .character-speech h3 {
+            margin-top: 0;
+            color: #ff6b6b;
+        }
+        .quiz-option {
+            background-color: #73b9ff;
+            margin: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .quiz-option:hover {
+            background-color: #5a94cc;
+        }
+        #infoButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff6b6b;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-size: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 50;
+        }
+        #infoModal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+        }
+        #infoContent {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .info-section {
+            margin-bottom: 20px;
+        }
+        .info-section h3 {
+            color: #ff6b6b;
+            border-bottom: 2px solid #ffd700;
+            padding-bottom: 5px;
+        }
+        @media (max-width: 768px) {
+            .character-speech {
+                max-width: 80%;
+                font-size: 12px;
+            }
+            .control-group {
+                margin: 5px;
+                padding: 5px;
+            }
+            button {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="progressBar">
+            <div id="progressFill"></div>
+        </div>
+        <div id="gameCanvas"></div>
+        <div id="controls">
+            <div class="control-group">
+                <h3>Triangle Controls</h3>
+                <div class="slider-container">
+                    <label for="angleA">Angle A:</label>
+                    <input type="range" id="angleA" min="5" max="170" value="60">
+                    <span id="angleAValue">60°</span>
+                </div>
+                <div class="slider-container">
+                    <label for="angleB">Angle B:</label>
+                    <input type="range" id="angleB" min="5" max="170" value="60">
+                    <span id="angleBValue">60°</span>
+                </div>
+                <div class="slider-container">
+                    <label for="size">Size:</label>
+                    <input type="range" id="size" min="50" max="200" value="120">
+                </div>
+            </div>
+            <div class="control-group">
+                <h3>Game Controls</h3>
+                <button id="toggleAngles">Show/Hide Angles</button>
+                <button id="toggleSum">Show/Hide Sum</button>
+                <button id="resetTriangle">Reset Triangle</button>
+                <button id="quizButton">Take a Quiz</button>
+            </div>
+            <div class="control-group">
+                <h3>Level</h3>
+                <button id="prevLevel">Previous</button>
+                <span id="levelDisplay">Level 1</span>
+                <button id="nextLevel">Next</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="character-speech" id="characterSpeech">
+        <h3 id="characterName">Trina the Triangle</h3>
+        <p id="speechText">Welcome to Triangle Explorer! I'm Trina the Triangle, and I'll be your guide. Let's explore the amazing world of triangles together!</p>
+    </div>
+    
+    <div id="infoButton">i</div>
+    
+    <div id="infoModal">
+        <div id="infoContent">
+            <h2>Triangle Explorer: Learning Guide</h2>
+            
+            <div class="info-section">
+                <h3>Basic Triangle Properties</h3>
+                <p>A triangle has 3 sides and 3 angles. The sum of all angles in a triangle is always 180°. This is true for ALL triangles!</p>
+                <p>You can drag the corners of the triangle to change its shape, or use the sliders to adjust the angles precisely.</p>
+            </div>
+            
+            <div class="info-section">
+                <h3>Types of Triangles by Angles</h3>
+                <ul>
+                    <li><strong>Acute Triangle:</strong> All angles are less than 90°</li>
+                    <li><strong>Right Triangle:</strong> One angle is exactly 90°</li>
+                    <li><strong>Obtuse Triangle:</strong> One angle is greater than 90°</li>
+                </ul>
+            </div>
+            
+            <div class="info-section">
+                <h3>Types of Triangles by Sides</h3>
+                <ul>
+                    <li><strong>Equilateral Triangle:</strong> All sides are equal (and all angles are 60°)</li>
+                    <li><strong>Isosceles Triangle:</strong> Two sides are equal (and two angles are equal)</li>
+                    <li><strong>Scalene Triangle:</strong> All sides are different lengths (and all angles are different)</li>
+                </ul>
+            </div>
+            
+            <div class="info-section">
+                <h3>Advanced Concepts</h3>
+                <p><strong>The Pythagorean Theorem:</strong> In a right triangle, the square of the longest side (hypotenuse) equals the sum of squares of the other two sides: a² + b² = c²</p>
+                <p><strong>Exterior Angle Theorem:</strong> An exterior angle of a triangle equals the sum of the two non-adjacent interior angles.</p>
+                <p><strong>Law of Sines:</strong> In any triangle, the ratio of the length of a side to the sine of the opposite angle is constant: a/sin(A) = b/sin(B) = c/sin(C)</p>
+            </div>
+            
+            <button onclick="document.getElementById('infoModal').style.display='none'">Close</button>
+        </div>
+    </div>
+    
+    <div id="quizModal" class="modal">
+        <div class="modal-content">
+            <h2>Triangle Quiz</h2>
+            <div id="quizQuestion"></div>
+            <div id="quizOptions"></div>
+            <div id="quizFeedback" style="margin-top: 15px; font-weight: bold;"></div>
+            <button id="nextQuestion" style="display: none;">Next Question</button>
+            <button id="closeQuiz">Close Quiz</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            level: 1,
+            showAngles: true,
+            showSum: true,
+            angleA: 60,
+            angleB: 60,
+            angleC: 60,
+            size: 120,
+            dragPoint: null,
+            dragPointIndex: -1,
+            canvasWidth: 0,
+            canvasHeight: 0,
+            points: [],
+            progress: 0,
+            character: {
+                x: 0,
+                y: 0,
+                expression: 'happy', // happy, thinking, excited
+                speaking: true,
+                currentMessage: ''
+            },
+            quizActive: false,
+            currentQuizIndex: 0,
+            quizScore: 0,
+            quizAnswered: false,
+            activeCharacter: 'trina'
+        };
+
+        // Characters
+        const characters = {
+            trina: {
+                name: "Trina the Triangle",
+                color: "#FF6B6B",
+                messages: {
+                    welcome: "Welcome to Triangle Explorer! I'm Trina the Triangle, and I'll be your guide. Let's explore the amazing world of triangles together!",
+                    angles: "Every triangle has 3 angles. Did you know that these angles always add up to 180 degrees? That's my special magic!",
+                    sum: "No matter how you change my shape, my angles always add up to 180°. Try moving my points around!",
+                    quiz: "Let's see how much you've learned about triangles! Ready for a fun quiz?",
+                    levelUp: "Great job! You're ready for the next level. We'll learn even more about triangles!",
+                    acute: "I'm an acute triangle! All my angles are less than 90 degrees. I'm sharp and pointy!",
+                    right: "Look! I'm a right triangle now! One of my angles is exactly 90 degrees - that's a right angle, like the corner of a book!",
+                    obtuse: "Now I'm an obtuse triangle! One of my angles is more than 90 degrees. I'm leaning over!",
+                    equilateral: "I'm an equilateral triangle! All my sides are the same length, and all my angles are equal - 60 degrees each!",
+                    isosceles: "I'm an isosceles triangle! Two of my sides are equal length, and the angles opposite those sides are equal too!",
+                    scalene: "I'm a scalene triangle! All my sides have different lengths, and all my angles are different too!"
+                }
+            },
+            professor: {
+                name: "Professor Polygon",
+                color: "#4682B4",
+                messages: {
+                    advanced: "The sum of angles in a triangle is 180° because of parallel lines and transversals. When we have parallel lines, the corresponding angles are equal!",
+                    pythagoras: "In a right triangle, the square of the longest side (hypotenuse) equals the sum of squares of the other two sides. That's the Pythagorean theorem!",
+                    triangleTypes: "Triangles can be classified by their angles (acute, right, obtuse) or by their sides (equilateral, isosceles, scalene).",
+                    proofs: "We can prove the angle sum is 180° using algebra, geometry, or even calculus! These proofs connect to larger mathematical concepts.",
+                    applications: "Triangles are used in construction, navigation, computer graphics, and even in measuring distances to stars!"
+                }
+            }
+        };
+
+        // Quiz questions for different levels
+        const quizzes = [
+            // Level 1 - Basic understanding
+            [
+                {
+                    question: "How many angles does a triangle have?",
+                    options: ["2", "3", "4", "5"],
+                    correct: 1,
+                    feedback: {
+                        correct: "That's right! Every triangle has exactly 3 angles.",
+                        incorrect: "Not quite. Count the corners of a triangle - there are exactly 3 angles."
+                    }
+                },
+                {
+                    question: "What do the angles in a triangle add up to?",
+                    options: ["90°", "180°", "270°", "360°"],
+                    correct: 1,
+                    feedback: {
+                        correct: "Perfect! The angles in a triangle always add up to 180°.",
+                        incorrect: "Not correct. The sum of angles in any triangle is always 180 degrees."
+                    }
+                },
+                {
+                    question: "If angle A is 45° and angle B is 45°, what is angle C?",
+                    options: ["45°", "90°", "180°", "Can't tell without more information"],
+                    correct: 1,
+                    feedback: {
+                        correct: "Great job! Since A + B + C = 180°, and A + B = 90°, C must be 90°.",
+                        incorrect: "Not quite. Remember that all three angles must add up to 180°. If two angles are 45° each, the third must be 90°."
+                    }
+                }
+            ],
+            // Level 2 - Triangle types
+            [
+                {
+                    question: "What kind of triangle has all angles less than 90°?",
+                    options: ["Right triangle", "Obtuse triangle", "Acute triangle", "Equilateral triangle"],
+                    correct: 2,
+                    feedback: {
+                        correct: "Correct! An acute triangle has all angles less than 90°.",
+                        incorrect: "Not quite. An acute triangle is one where all angles are less than 90 degrees."
+                    }
+                },
+                {
+                    question: "What kind of triangle has one angle equal to 90°?",
+                    options: ["Acute triangle", "Right triangle", "Obtuse triangle", "Isosceles triangle"],
+                    correct: 1,
+                    feedback: {
+                        correct: "That's right! A right triangle has one angle that's exactly 90°.",
+                        incorrect: "Not correct. A right triangle has one angle that's exactly 90 degrees."
+                    }
+                },
+                {
+                    question: "If a triangle has one angle greater than 90°, it is called:",
+                    options: ["Acute", "Right", "Obtuse", "Equilateral"],
+                    correct: 2,
+                    feedback: {
+                        correct: "Excellent! A triangle with one angle greater than 90° is an obtuse triangle.",
+                        incorrect: "Not quite. When a triangle has one angle greater than 90 degrees, it's called an obtuse triangle."
+                    }
+                }
+            ],
+            // Level 3 - Advanced concepts
+            [
+                {
+                    question: "In an equilateral triangle, all angles are equal to:",
+                    options: ["30°", "45°", "60°", "90°"],
+                    correct: 2,
+                    feedback: {
+                        correct: "Perfect! In an equilateral triangle, all three angles are 60°.",
+                        incorrect: "Not correct. In an equilateral triangle, all three angles are equal, and they sum to 180°. So each angle is 60°."
+                    }
+                },
+                {
+                    question: "If you extend one side of a triangle and measure the exterior angle, what does it equal?",
+                    options: ["The adjacent interior angle", "The opposite interior angle", "The sum of the two opposite interior angles", "180° minus the adjacent angle"],
+                    correct: 2,
+                    feedback: {
+                        correct: "That's right! The exterior angle equals the sum of the two opposite interior angles.",
+                        incorrect: "Not quite. The exterior angle of a triangle is equal to the sum of the two opposite interior angles."
+                    }
+                },
+                {
+                    question: "The Pythagorean theorem applies to which type of triangle?",
+                    options: ["All triangles", "Acute triangles only", "Right triangles only", "Obtuse triangles only"],
+                    correct: 2,
+                    feedback: {
+                        correct: "Correct! The Pythagorean theorem (a² + b² = c²) only applies to right triangles.",
+                        incorrect: "No, the Pythagorean theorem (a² + b² = c²) only applies to right triangles, where c is the hypotenuse."
+                    }
+                }
+            ]
+        ];
+
+        // Initialize p5.js canvas
+        let sketch = function(p) {
+            p.setup = function() {
+                // Create canvas that fills the available space
+                let canvas = p.createCanvas(
+                    document.getElementById('gameCanvas').offsetWidth,
+                    document.getElementById('gameCanvas').offsetHeight
+                );
+                canvas.parent('gameCanvas');
+                
+                gameState.canvasWidth = p.width;
+                gameState.canvasHeight = p.height;
+                
+                // Initialize triangle points
+                resetTriangle();
+                
+                // Set up event handlers
+                document.getElementById('angleA').addEventListener('input', updateAngleA);
+                document.getElementById('angleB').addEventListener('input', updateAngleB);
+                document.getElementById('size').addEventListener('input', updateSize);
+                document.getElementById('toggleAngles').addEventListener('click', toggleAngles);
+                document.getElementById('toggleSum').addEventListener('click', toggleSum);
+                document.getElementById('resetTriangle').addEventListener('click', resetTriangle);
+                document.getElementById('quizButton').addEventListener('click', startQuiz);
+                document.getElementById('closeQuiz').addEventListener('click', closeQuiz);
+                document.getElementById('nextQuestion').addEventListener('click', nextQuestion);
+                document.getElementById('prevLevel').addEventListener('click', prevLevel);
+                document.getElementById('nextLevel').addEventListener('click', nextLevel);
+                document.getElementById('infoButton').addEventListener('click', showInfo);
+                
+                // Set up character's initial message
+                speak('trina', 'welcome');
+                
+                // Resize handler
+                window.addEventListener('resize', windowResized);
+            };
+            
+            p.draw = function() {
+                p.background(240, 248, 255);
+                
+                // Draw grid
+                drawGrid();
+                
+                // Update angle C based on A and B to maintain 180° sum
+                gameState.angleC = 180 - gameState.angleA - gameState.angleB;
+                
+                // Calculate triangle points
+                updateTrianglePoints();
+                
+                // Draw triangle
+                drawTriangle();
+                
+                // Draw angles if enabled
+                if (gameState.showAngles) {
+                    drawAngles();
+                }
+                
+                // Draw sum if enabled
+                if (gameState.showSum) {
+                    drawSum();
+                }
+                
+                // Draw character
+                drawCharacter();
+                
+                // Check if we need to update UI elements
+                updateUI();
+            };
+            
+            p.mousePressed = function() {
+                // Check if mouse is over any vertex
+                for (let i = 0; i < gameState.points.length; i++) {
+                    let d = p.dist(p.mouseX, p.mouseY, gameState.points[i].x, gameState.points[i].y);
+                    if (d < 15) {
+                        gameState.dragPoint = gameState.points[i];
+                        gameState.dragPointIndex = i;
+                        return;
+                    }
+                }
+            };
+            
+            p.mouseDragged = function() {
+                if (gameState.dragPoint) {
+                    gameState.dragPoint.x = p.mouseX;
+                    gameState.dragPoint.y = p.mouseY;
+                    
+                    // Update angles based on the new points
+                    updateAnglesFromPoints();
+                }
+            };
+            
+            p.mouseReleased = function() {
+                gameState.dragPoint = null;
+                gameState.dragPointIndex = -1;
+            };
+            
+            // For touch devices
+            p.touchStarted = function() {
+                // Check if touch is over any vertex
+                for (let i = 0; i < gameState.points.length; i++) {
+                    let d = p.dist(p.touches[0]?.x || p.mouseX, p.touches[0]?.y || p.mouseY, gameState.points[i].x, gameState.points[i].y);
+                    if (d < 20) { // Larger hit area for touch
+                        gameState.dragPoint = gameState.points[i];
+                        gameState.dragPointIndex = i;
+                        return false; // Prevent default
+                    }
+                }
+            };
+            
+            p.touchMoved = function() {
+                if (gameState.dragPoint && p.touches[0]) {
+                    gameState.dragPoint.x = p.touches[0].x;
+                    gameState.dragPoint.y = p.touches[0].y;
+                    
+                    // Update angles based on the new points
+                    updateAnglesFromPoints();
+                    return false; // Prevent default
+                }
+            };
+            
+            p.touchEnded = function() {
+                gameState.dragPoint = null;
+                gameState.dragPointIndex = -1;
+            };
+            
+            function drawGrid() {
+                p.stroke(220);
+                p.strokeWeight(1);
+                
+                // Draw vertical lines
+                for (let x = 0; x < p.width; x += 50) {
+                    p.line(x, 0, x, p.height);
+                }
+                
+                // Draw horizontal lines
+                for (let y = 0; y < p.height; y += 50) {
+                    p.line(0, y, p.width, y);
+                }
+            }
+            
+            function drawTriangle() {
+                // Draw triangle faces
+                p.fill(255, 107, 107, 150);
+                p.strokeWeight(3);
+                p.stroke(255, 107, 107);
+                p.beginShape();
+                for (let point of gameState.points) {
+                    p.vertex(point.x, point.y);
+                }
+                p.endShape(p.CLOSE);
+                
+                // Draw vertices
+                p.strokeWeight(2);
+                p.stroke(0);
+                
+                p.fill(255, 0, 0);
+                p.ellipse(gameState.points[0].x, gameState.points[0].y, 20, 20);
+                p.fill(0, 255, 0);
+                p.ellipse(gameState.points[1].x, gameState.points[1].y, 20, 20);
+                p.fill(0, 0, 255);
+                p.ellipse(gameState.points[2].x, gameState.points[2].y, 20, 20);
+                
+                // Label vertices
+                p.fill(255);
+                p.noStroke();
+                p.textSize(16);
+                p.textAlign(p.CENTER, p.CENTER);
+                p.text("A", gameState.points[0].x, gameState.points[0].y);
+                p.text("B", gameState.points[1].x, gameState.points[1].y);
+                p.text("C", gameState.points[2].x, gameState.points[2].y);
+            }
+            
+            function drawAngles() {
+                const radius = 30;
+                p.strokeWeight(2);
+                p.textSize(14);
+                
+                // Draw angle A
+                p.stroke(255, 0, 0);
+                p.fill(255, 0, 0, 100);
+                drawAngle(gameState.points[0], gameState.points[2], gameState.points[1], radius, `${Math.round(gameState.angleA)}°`);
+                
+                // Draw angle B
+                p.stroke(0, 255, 0);
+                p.fill(0, 255, 0, 100);
+                drawAngle(gameState.points[1], gameState.points[0], gameState.points[2], radius, `${Math.round(gameState.angleB)}°`);
+                
+                // Draw angle C
+                p.stroke(0, 0, 255);
+                p.fill(0, 0, 255, 100);
+                drawAngle(gameState.points[2], gameState.points[1], gameState.points[0], radius, `${Math.round(gameState.angleC)}°`);
+            }
+            
+            function drawAngle(vertex, point1, point2, radius, label) {
+                // Calculate angles
+                let angle1 = Math.atan2(point1.y - vertex.y, point1.x - vertex.x);
+                let angle2 = Math.atan2(point2.y - vertex.y, point2.x - vertex.x);
+                
+                // Ensure correct arc drawing (always the inner angle)
+                let startAngle = angle1;
+                let endAngle = angle2;
+                
+                // Make sure we draw the smaller angle
+                if (Math.abs(endAngle - startAngle) > Math.PI) {
+                    if (startAngle < endAngle) {
+                        startAngle += 2 * Math.PI;
+                    } else {
+                        endAngle += 2 * Math.PI;
+                    }
+                }
+                
+                // Draw arc
+                p.arc(vertex.x, vertex.y, radius * 2, radius * 2, startAngle, endAngle);
+                
+                // Position for label
+                let midAngle = (startAngle + endAngle) / 2;
+                let labelX = vertex.x + radius * 1.5 * Math.cos(midAngle);
+                let labelY = vertex.y + radius * 1.5 * Math.sin(midAngle);
+                
+                // Draw label
+                p.noStroke();
+                p.fill(0);
+                p.text(label, labelX, labelY);
+            }
+            
+            function drawSum() {
+                p.fill(50);
+                p.noStroke();
+                p.textSize(20);
+                p.textAlign(p.CENTER);
+                
+                let sum = gameState.angleA + gameState.angleB + gameState.angleC;
+                let sumText = `${Math.round(gameState.angleA)}° + ${Math.round(gameState.angleB)}° + ${Math.round(gameState.angleC)}° = ${Math.round(sum)}°`;
+                
+                // Place sum text at bottom of screen
+                p.text(sumText, p.width / 2, p.height - 70);
+                
+                // Draw a visual representation of the sum
+                let barWidth = 300;
+                let barHeight = 20;
+                let barX = (p.width - barWidth) / 2;
+                let barY = p.height - 40;
+                
+                // Draw background bar
+                p.noStroke();
+                p.fill(200);
+                p.rect(barX, barY, barWidth, barHeight, 10);
+                
+                // Draw angle portions
+                let portionA = (gameState.angleA / 180) * barWidth;
+                let portionB = (gameState.angleB / 180) * barWidth;
+                let portionC = (gameState.angleC / 180) * barWidth;
+                
+                p.fill(255, 0, 0, 150);
+                p.rect(barX, barY, portionA, barHeight, 10, 0, 0, 10);
+                
+                p.fill(0, 255, 0, 150);
+                p.rect(barX + portionA, barY, portionB, barHeight);
+                
+                p.fill(0, 0, 255, 150);
+                p.rect(barX + portionA + portionB, barY, portionC, barHeight, 0, 10, 10, 0);
+                
+                // Draw 180° marker
+                p.stroke(50);
+                p.strokeWeight(2);
+                p.line(barX + barWidth, barY - 5, barX + barWidth, barY + barHeight + 5);
+                p.noStroke();
+                p.textSize(14);
+                p.text("180°", barX + barWidth + 20, barY + barHeight/2);
+            }
+            
+            function drawCharacter() {
+                // Character position based on level
+                let charSize = 80;
+                let charX = 80;
+                let charY = p.height - 100;
+                
+                gameState.character.x = charX;
+                gameState.character.y = charY;
+                
+                // Select active character
+                let characterColor = characters[gameState.activeCharacter].color;
+                
+                // Draw the character (simplified triangle with face)
+                p.fill(characterColor);
+                p.stroke(0);
+                p.strokeWeight(2);
+                
+                if (gameState.activeCharacter === 'trina') {
+                    // Draw Trina (triangle character)
+                    p.triangle(
+                        charX, charY - charSize/2,
+                        charX - charSize/2, charY + charSize/2,
+                        charX + charSize/2, charY + charSize/2
+                    );
+                } else {
+                    // Draw Professor (pentagon character)
+                    let pgonRadius = charSize/2;
+                    p.beginShape();
+                    for (let i = 0; i < 5; i++) {
+                        let angle = p.TWO_PI / 5 * i - p.HALF_PI;
+                        let vx = charX + pgonRadius * p.cos(angle);
+                        let vy = charY + pgonRadius * p.sin(angle);
+                        p.vertex(vx, vy);
+                    }
+                    p.endShape(p.CLOSE);
+                }
+                
+                // Draw face based on expression
+                p.fill(0);
+                p.noStroke();
+                
+                // Eyes
+                let eyeSize = 8;
+                let eyeOffsetX = 15;
+                let eyeOffsetY = 10;
+                
+                if (gameState.character.expression === 'happy') {
+                    // Happy eyes
+                    p.ellipse(charX - eyeOffsetX, charY + eyeOffsetY, eyeSize, eyeSize);
+                    p.ellipse(charX + eyeOffsetX, charY + eyeOffsetY, eyeSize, eyeSize);
+                    
+                    // Happy mouth
+                    p.noFill();
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    p.arc(charX, charY + 25, 30, 20, 0, p.PI);
+                } else if (gameState.character.expression === 'thinking') {
+                    // Thinking eyes
+                    p.ellipse(charX - eyeOffsetX, charY + eyeOffsetY, eyeSize, eyeSize);
+                    p.ellipse(charX + eyeOffsetX, charY + eyeOffsetY, eyeSize, eyeSize);
+                    
+                    // Thinking mouth
+                    p.noFill();
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    p.line(charX - 15, charY + 25, charX + 15, charY + 25);
+                    
+                    // Thinking bubble
+                    p.noFill();
+                    p.stroke(0);
+                    p.ellipse(charX + 40, charY - 20, 15, 10);
+                    p.ellipse(charX + 50, charY - 30, 20, 15);
+                    p.ellipse(charX + 65, charY - 45, 25, 20);
+                } else if (gameState.character.expression === 'excited') {
+                    // Excited eyes
+                    p.ellipse(charX - eyeOffsetX, charY + eyeOffsetY, eyeSize + 4, eyeSize + 4);
+                    p.ellipse(charX + eyeOffsetX, charY + eyeOffsetY, eyeSize + 4, eyeSize + 4);
+                    
+                    // Excited mouth
+                    p.noFill();
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    p.arc(charX, charY + 25, 30, 25, 0, p.PI);
+                    
+                    // Excitement stars
+                    drawStar(charX + 40, charY - 30, 10, 5, 5);
+                    drawStar(charX - 40, charY - 20, 8, 5, 5);
+                }
+            }
+            
+            function drawStar(x, y, radius1, radius2, npoints) {
+                p.fill(255, 255, 0);
+                p.stroke(255, 200, 0);
+                p.strokeWeight(1);
+                
+                let angle = p.TWO_PI / npoints;
+                let halfAngle = angle/2.0;
+                p.beginShape();
+                for (let a = 0; a < p.TWO_PI; a += angle) {
+                    let sx = x + p.cos(a) * radius2;
+                    let sy = y + p.sin(a) * radius2;
+                    p.vertex(sx, sy);
+                    sx = x + p.cos(a+halfAngle) * radius1;
+                    sy = y + p.sin(a+halfAngle) * radius1;
+                    p.vertex(sx, sy);
+                }
+                p.endShape(p.CLOSE);
+            }
+            
+            function updateTrianglePoints() {
+                // Calculate points based on angles and size
+                let centerX = p.width / 2;
+                let centerY = p.height / 2 - 50; // Move up slightly
+                
+                // We'll use the law of sines to calculate the points
+                let angleA_rad = p.radians(gameState.angleA);
+                let angleB_rad = p.radians(gameState.angleB);
+                let angleC_rad = p.radians(gameState.angleC);
+                
+                let sideA = gameState.size * Math.sin(angleA_rad) / Math.sin(angleC_rad);
+                let sideB = gameState.size * Math.sin(angleB_rad) / Math.sin(angleC_rad);
+                let sideC = gameState.size;
+                
+                // Adjust calculation if angles don't make a valid triangle
+                if (isNaN(sideA) || isNaN(sideB) || !isFinite(sideA) || !isFinite(sideB)) {
+                    // Reset to a valid triangle
+                    gameState.angleA = 60;
+                    gameState.angleB = 60;
+                    gameState.angleC = 60;
+                    angleA_rad = p.radians(gameState.angleA);
+                    angleB_rad = p.radians(gameState.angleB);
+                    angleC_rad = p.radians(gameState.angleC);
+                    
+                    sideA = gameState.size * Math.sin(angleA_rad) / Math.sin(angleC_rad);
+                    sideB = gameState.size * Math.sin(angleB_rad) / Math.sin(angleC_rad);
+                    sideC = gameState.size;
+                }
+                
+                // Only update if we're not dragging
+                if (gameState.dragPointIndex === -1) {
+                    // Place vertices
+                    gameState.points = [
+                        {x: centerX, y: centerY - sideA/2}, // A at top
+                        {x: centerX + sideC/2, y: centerY + sideB/2}, // B at bottom right
+                        {x: centerX - sideC/2, y: centerY + sideB/2}  // C at bottom left
+                    ];
+                }
+            }
+            
+            function updateAnglesFromPoints() {
+                if (gameState.points.length !== 3) return;
+                
+                // Calculate the angles from the current points
+                let A = gameState.points[0];
+                let B = gameState.points[1];
+                let C = gameState.points[2];
+                
+                // Calculate sides
+                let a = p.dist(B.x, B.y, C.x, C.y);
+                let b = p.dist(A.x, A.y, C.x, C.y);
+                let c = p.dist(A.x, A.y, B.x, B.y);
+                
+                // Calculate angles using the law of cosines
+                gameState.angleA = Math.acos((b*b + c*c - a*a) / (2*b*c)) * 180 / Math.PI;
+                gameState.angleB = Math.acos((a*a + c*c - b*b) / (2*a*c)) * 180 / Math.PI;
+                gameState.angleC = Math.acos((a*a + b*b - c*c) / (2*a*b)) * 180 / Math.PI;
+                
+                // Update sliders to reflect new angles
+                document.getElementById('angleA').value = gameState.angleA;
+                document.getElementById('angleB').value = gameState.angleB;
+                document.getElementById('angleAValue').textContent = Math.round(gameState.angleA) + '°';
+                document.getElementById('angleBValue').textContent = Math.round(gameState.angleB) + '°';
+                
+                // Update character messages based on triangle type
+                updateCharacterMessages();
+            }
+            
+            function updateUI() {
+                // Update progress bar
+                document.getElementById('progressFill').style.width = `${gameState.progress}%`;
+                
+                // Update level display
+                document.getElementById('levelDisplay').textContent = `Level ${gameState.level}`;
+                
+                // Enable/disable level buttons
+                document.getElementById('prevLevel').disabled = gameState.level === 1;
+                document.getElementById('nextLevel').disabled = gameState.level === 3;
+            }
+            
+            function windowResized() {
+                p.resizeCanvas(
+                    document.getElementById('gameCanvas').offsetWidth,
+                    document.getElementById('gameCanvas').offsetHeight
+                );
+                
+                gameState.canvasWidth = p.width;
+                gameState.canvasHeight = p.height;
+                
+                // Recalculate triangle positions
+                resetTriangle();
+            }
+        };
+        
+        // Utility functions and event handlers
+        function updateAngleA() {
+            gameState.angleA = parseInt(document.getElementById('angleA').value);
+            document.getElementById('angleAValue').textContent = gameState.angleA + '°';
+            
+            // Make sure angles are valid
+            if (gameState.angleA + gameState.angleB >= 180) {
+                gameState.angleB = 179 - gameState.angleA;
+                document.getElementById('angleB').value = gameState.angleB;
+                document.getElementById('angleBValue').textContent = gameState.angleB + '°';
+            }
+            
+            // Update character messages based on triangle type
+            updateCharacterMessages();
+        }
+        
+        function updateAngleB() {
+            gameState.angleB = parseInt(document.getElementById('angleB').value);
+            document.getElementById('angleBValue').textContent = gameState.angleB + '°';
+            
+            // Make sure angles are valid
+            if (gameState.angleA + gameState.angleB >= 180) {
+                gameState.angleA = 179 - gameState.angleB;
+                document.getElementById('angleA').value = gameState.angleA;
+                document.getElementById('angleAValue').textContent = gameState.angleA + '°';
+            }
+            
+            // Update character messages based on triangle type
+            updateCharacterMessages();
+        }
+        
+        function updateSize() {
+            gameState.size = parseInt(document.getElementById('size').value);
+        }
+        
+        function toggleAngles() {
+            gameState.showAngles = !gameState.showAngles;
+        }
+        
+        function toggleSum() {
+            gameState.showSum = !gameState.showSum;
+        }
+        
+        function resetTriangle() {
+            // Reset to equilateral triangle
+            gameState.angleA = 60;
+            gameState.angleB = 60;
+            gameState.angleC = 60;
+            gameState.size = 120;
+            
+            // Update UI
+            document.getElementById('angleA').value = gameState.angleA;
+            document.getElementById('angleB').value = gameState.angleB;
+            document.getElementById('size').value = gameState.size;
+            document.getElementById('angleAValue').textContent = gameState.angleA + '°';
+            document.getElementById('angleBValue').textContent = gameState.angleB + '°';
+            
+            // Reset points
+            gameState.points = [];
+            
+            // Speak about equilateral triangles
+            speak('trina', 'equilateral');
+        }
+        
+        function startQuiz() {
+            gameState.quizActive = true;
+            gameState.currentQuizIndex = 0;
+            gameState.quizScore = 0;
+            
+            // Show quiz modal
+            document.getElementById('quizModal').style.display = 'block';
+            
+            // Load first question
+            loadQuizQuestion();
+            
+            // Character speaks about quiz
+            speak('trina', 'quiz');
+            gameState.character.expression = 'excited';
+        }
+        
+        function loadQuizQuestion() {
+            // Get current quiz based on level
+            let currentLevelQuiz = quizzes[gameState.level - 1];
+            
+            // Check if we've reached the end of the quiz
+            if (gameState.currentQuizIndex >= currentLevelQuiz.length) {
+                // Show quiz result
+                document.getElementById('quizQuestion').innerHTML = `
+                    <h3>Quiz Complete!</h3>
+                    <p>You scored ${gameState.quizScore} out of ${currentLevelQuiz.length}!</p>
+                `;
+                document.getElementById('quizOptions').innerHTML = '';
+                document.getElementById('quizFeedback').textContent = '';
+                document.getElementById('nextQuestion').style.display = 'none';
+                
+                // Update progress
+                let newProgress = (gameState.quizScore / currentLevelQuiz.length) * 100;
+                gameState.progress = Math.max(gameState.progress, newProgress);
+                
+                // If score is good, allow moving to next level
+                if (gameState.quizScore / currentLevelQuiz.length >= 0.7 && gameState.level < 3) {
+                    speak('trina', 'levelUp');
+                }
+                
+                return;
+            }
+            
+            // Get current question
+            let currentQuestion = currentLevelQuiz[gameState.currentQuizIndex];
+            
+            // Update question text
+            document.getElementById('quizQuestion').textContent = currentQuestion.question;
+            
+            // Clear previous options and feedback
+            document.getElementById('quizOptions').innerHTML = '';
+            document.getElementById('quizFeedback').textContent = '';
+            document.getElementById('nextQuestion').style.display = 'none';
+            
+            // Create option elements
+            currentQuestion.options.forEach((option, index) => {
+                let optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.onclick = function() { checkAnswer(index); };
+                document.getElementById('quizOptions').appendChild(optionElement);
+            });
+            
+            // Reset quiz answered flag
+            gameState.quizAnswered = false;
+        }
+        
+        function checkAnswer(selectedIndex) {
+            // Only allow answering once
+            if (gameState.quizAnswered) return;
+            gameState.quizAnswered = true;
+            
+            // Get current quiz and question
+            let currentLevelQuiz = quizzes[gameState.level - 1];
+            let currentQuestion = currentLevelQuiz[gameState.currentQuizIndex];
+            
+            // Check if answer is correct
+            let isCorrect = selectedIndex === currentQuestion.correct;
+            
+            // Update quiz options to show correct/incorrect
+            let options = document.querySelectorAll('.quiz-option');
+            options.forEach((option, index) => {
+                if (index === currentQuestion.correct) {
+                    option.style.backgroundColor = '#4CAF50'; // Green for correct
+                } else {
+                    option.style.backgroundColor = '#ff6b6b'; // Red for incorrect
+                }
+            });
+            
+            // Show feedback
+            document.getElementById('quizFeedback').textContent = isCorrect ? 
+                currentQuestion.feedback.correct : 
+                currentQuestion.feedback.incorrect;
+            
+            // Update score if correct
+            if (isCorrect) {
+                gameState.quizScore++;
+            }
+            
+            // Show next question button
+            document.getElementById('nextQuestion').style.display = 'block';
+        }
+        
+        function nextQuestion() {
+            gameState.currentQuizIndex++;
+            loadQuizQuestion();
+        }
+        
+        function closeQuiz() {
+            document.getElementById('quizModal').style.display = 'none';
+            gameState.quizActive = false;
+        }
+        
+        function prevLevel() {
+            if (gameState.level > 1) {
+                gameState.level--;
+                updateLevel();
+            }
+        }
+        
+        function nextLevel() {
+            if (gameState.level < 3) {
+                gameState.level++;
+                updateLevel();
+            }
+        }
+        
+        function updateLevel() {
+            // Update UI for current level
+            document.getElementById('levelDisplay').textContent = `Level ${gameState.level}`;
+            
+            // Show appropriate content based on level
+            if (gameState.level === 1) {
+                gameState.activeCharacter = 'trina';
+                speak('trina', 'angles');
+            } else if (gameState.level === 2) {
+                gameState.activeCharacter = 'trina';
+                speak('trina', 'triangleTypes');
+            } else if (gameState.level === 3) {
+                gameState.activeCharacter = 'professor';
+                speak('professor', 'advanced');
+            }
+        }
+        
+        function speak(character, messageKey) {
+            // Update character speech bubble
+            let char = characters[character];
+            let message = char.messages[messageKey];
+            
+            document.getElementById('characterName').textContent = char.name;
+            document.getElementById('speechText').textContent = message;
+            document.getElementById('characterSpeech').style.borderColor = char.color;
+            
+            // Set character expression based on message
+            if (messageKey === 'quiz' || messageKey === 'levelUp') {
+                gameState.character.expression = 'excited';
+            } else if (messageKey.includes('triangle') || messageKey === 'advanced' || messageKey === 'pythagoras') {
+                gameState.character.expression = 'thinking';
+            } else {
+                gameState.character.expression = 'happy';
+            }
+            
+            // Update active character
+            gameState.activeCharacter = character;
+        }
+        
+        function updateCharacterMessages() {
+            // Determine triangle type based on angles
+            if (Math.abs(gameState.angleA - 60) < 2 && Math.abs(gameState.angleB - 60) < 2 && Math.abs(gameState.angleC - 60) < 2) {
+                speak('trina', 'equilateral');
+            } else if (Math.abs(gameState.angleA - 90) < 2 || Math.abs(gameState.angleB - 90) < 2 || Math.abs(gameState.angleC - 90) < 2) {
+                speak('trina', 'right');
+            } else if (gameState.angleA > 90 || gameState.angleB > 90 || gameState.angleC > 90) {
+                speak('trina', 'obtuse');
+            } else if (gameState.angleA < 90 && gameState.angleB < 90 && gameState.angleC < 90) {
+                speak('trina', 'acute');
+            } else if (Math.abs(gameState.angleA - gameState.angleB) < 2 || Math.abs(gameState.angleB - gameState.angleC) < 2 || Math.abs(gameState.angleC - gameState.angleA) < 2) {
+                speak('trina', 'isosceles');
+            } else {
+                speak('trina', 'scalene');
+            }
+        }
+        
+        function showInfo() {
+            document.getElementById('infoModal').style.display = 'block';
+        }
+        
+        // Initialize the p5.js sketch
+        new p5(sketch);
+        
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            let infoModal = document.getElementById('infoModal');
+            let quizModal = document.getElementById('quizModal');
+            
+            if (event.target === infoModal) {
+                infoModal.style.display = 'none';
+            }
+            
+            if (event.target === quizModal && !gameState.quizActive) {
+                quizModal.style.display = 'none';
+            }
+        };
+    </script>
+</body>
+</html>

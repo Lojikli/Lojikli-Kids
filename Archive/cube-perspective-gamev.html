@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Professor Cubey's 3D Perspective Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        body {
+            background-color: #f0f8ff;
+            overflow-x: hidden;
+            color: #333;
+        }
+
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        #header {
+            text-align: center;
+            margin-bottom: 20px;
+            animation: rainbow 5s infinite;
+        }
+
+        @keyframes rainbow {
+            0% {color: #ff0000;}
+            14% {color: #ff7f00;}
+            28% {color: #ffff00;}
+            42% {color: #00ff00;}
+            56% {color: #0000ff;}
+            70% {color: #4b0082;}
+            84% {color: #9400d3;}
+            100% {color: #ff0000;}
+        }
+
+        #game-screen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        #character {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        #character-speech {
+            background-color: #fff;
+            border: 3px solid #333;
+            border-radius: 20px;
+            padding: 15px;
+            max-width: 80%;
+            position: relative;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+
+        #character-speech:before {
+            content: "";
+            position: absolute;
+            left: 30px;
+            top: -15px;
+            border-width: 0 15px 15px;
+            border-style: solid;
+            border-color: #333 transparent;
+        }
+
+        #character-speech:after {
+            content: "";
+            position: absolute;
+            left: 33px;
+            top: -10px;
+            border-width: 0 12px 12px;
+            border-style: solid;
+            border-color: white transparent;
+        }
+
+        #main-content {
+            display: flex;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        #3d-container {
+            width: 50%;
+            height: 400px;
+            position: relative;
+        }
+
+        #options-container {
+            width: 50%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+
+        .option {
+            width: 45%;
+            height: 180px;
+            margin-bottom: 20px;
+            background-color: #eee;
+            border: 3px solid #ccc;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.3s, border 0.3s;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .option:hover {
+            transform: scale(1.05);
+            border-color: #9c9c9c;
+        }
+
+        .option.selected {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px #4CAF50;
+        }
+
+        .option.correct {
+            border-color: #4CAF50;
+            box-shadow: 0 0 15px #4CAF50;
+            animation: correct-pulse 1.5s;
+        }
+
+        .option.incorrect {
+            border-color: #f44336;
+            box-shadow: 0 0 15px #f44336;
+            animation: incorrect-shake 0.5s;
+        }
+
+        @keyframes correct-pulse {
+            0% {transform: scale(1);}
+            50% {transform: scale(1.1);}
+            100% {transform: scale(1);}
+        }
+
+        @keyframes incorrect-shake {
+            0% {transform: translateX(0);}
+            25% {transform: translateX(-10px);}
+            50% {transform: translateX(10px);}
+            75% {transform: translateX(-10px);}
+            100% {transform: translateX(0);}
+        }
+
+        .option canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .option-label {
+            position: absolute;
+            bottom: 5px;
+            left: 5px;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+
+        .btn:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #hint-btn {
+            background-color: #2196F3;
+        }
+
+        #hint-btn:hover {
+            background-color: #0b7dda;
+        }
+
+        #submit-btn {
+            background-color: #ff9800;
+        }
+
+        #submit-btn:hover {
+            background-color: #e68a00;
+        }
+
+        #progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background-color: #f1f1f1;
+            border-radius: 15px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        #progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            border-radius: 15px;
+            transition: width 0.5s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        #score-display {
+            font-size: 1.5em;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        #settings-panel {
+            width: 100%;
+            max-width: 1200px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .settings-group {
+            margin-bottom: 20px;
+        }
+
+        .settings-title {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+            color: #2196F3;
+        }
+
+        .settings-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+            width: 200px;
+        }
+
+        .setting-item label {
+            margin-bottom: 5px;
+        }
+
+        .setting-item select, .setting-item input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        #settings-toggle {
+            background-color: #9C27B0;
+            margin-bottom: 20px;
+        }
+
+        #settings-toggle:hover {
+            background-color: #7B1FA2;
+        }
+
+        #feedback-container {
+            width: 100%;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        #feedback-container.correct {
+            background-color: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+        }
+
+        #feedback-container.incorrect {
+            background-color: rgba(244, 67, 54, 0.2);
+            border: 2px solid #f44336;
+        }
+
+        #learning-resources {
+            width: 100%;
+            max-width: 1200px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .resources-title {
+            font-size: 1.5em;
+            margin-bottom: 15px;
+            color: #2196F3;
+        }
+
+        .resource-section {
+            margin-bottom: 20px;
+        }
+
+        .resource-subtitle {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            color: #FF9800;
+        }
+
+        #cubey-character {
+            width: 150px;
+            height: 150px;
+            position: relative;
+        }
+
+        #resources-toggle {
+            background-color: #FF5722;
+            margin-left: 10px;
+        }
+
+        #resources-toggle:hover {
+            background-color: #E64A19;
+        }
+
+        @media (max-width: 768px) {
+            #main-content {
+                flex-direction: column;
+            }
+
+            #3d-container, #options-container {
+                width: 100%;
+            }
+
+            #3d-container {
+                height: 300px;
+                margin-bottom: 20px;
+            }
+
+            .option {
+                width: 48%;
+                height: 150px;
+            }
+        }
+
+        /* Celebration effects */
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: fall linear forwards;
+            z-index: 1000;
+        }
+
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(360deg);
+            }
+        }
+
+        #level-complete {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            color: white;
+            display: none;
+        }
+
+        #level-complete h2 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        #level-complete p {
+            font-size: 1.5em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        #next-level-btn {
+            padding: 15px 30px;
+            font-size: 1.5em;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.3s;
+        }
+
+        #next-level-btn:hover {
+            background-color: #45a049;
+            transform: scale(1.1);
+        }
+
+        #hint-text {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(33, 150, 243, 0.1);
+            border: 2px solid #2196F3;
+            border-radius: 10px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="header">
+            <h1>Professor Cubey's 3D Perspective Adventure</h1>
+            <h2>Master Spatial Reasoning Like a Genius!</h2>
+        </div>
+
+        <button id="settings-toggle" class="btn">Show/Hide Learning Settings</button>
+
+        <div id="settings-panel">
+            <h2>Learning Settings</h2>
+            <div class="settings-group">
+                <div class="settings-title">Cube Configuration</div>
+                <div class="settings-controls">
+                    <div class="setting-item">
+                        <label for="grid-size">Grid Size:</label>
+                        <select id="grid-size">
+                            <option value="2">2×2×2 (Beginner)</option>
+                            <option value="3" selected>3×3×3 (Intermediate)</option>
+                            <option value="4">4×4×4 (Advanced)</option>
+                            <option value="5">5×5×5 (Expert)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="complexity">Structure Complexity:</label>
+                        <select id="complexity">
+                            <option value="low">Simple Shapes (Low)</option>
+                            <option value="medium" selected>Mixed Shapes (Medium)</option>
+                            <option value="high">Complex Shapes (High)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="rotation-type">Rotation Type:</label>
+                        <select id="rotation-type">
+                            <option value="basic">90° Rotations (Basic)</option>
+                            <option value="advanced" selected>Multiple Angles (Advanced)</option>
+                            <option value="expert">Any Angle (Expert)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-title">Learning Support</div>
+                <div class="settings-controls">
+                    <div class="setting-item">
+                        <label for="hint-level">Hint Detail:</label>
+                        <select id="hint-level">
+                            <option value="minimal">Minimal (Challenging)</option>
+                            <option value="moderate" selected>Moderate (Balanced)</option>
+                            <option value="detailed">Detailed (Supportive)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="explanation-depth">Explanation Depth:</label>
+                        <select id="explanation-depth">
+                            <option value="basic">Basic Concepts</option>
+                            <option value="intermediate" selected>Intermediate Understanding</option>
+                            <option value="advanced">Advanced Concepts</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="animation-speed">Animation Speed:</label>
+                        <input type="range" id="animation-speed" min="0.5" max="2" step="0.1" value="1">
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-group">
+                <div class="settings-title">Challenge Settings</div>
+                <div class="settings-controls">
+                    <div class="setting-item">
+                        <label for="time-limit">Time Limit (seconds):</label>
+                        <input type="number" id="time-limit" min="0" max="120" step="10" value="0">
+                        <small>(0 for no limit)</small>
+                    </div>
+                    <div class="setting-item">
+                        <label for="questions-per-level">Questions Per Level:</label>
+                        <select id="questions-per-level">
+                            <option value="5">5 Questions</option>
+                            <option value="10" selected>10 Questions</option>
+                            <option value="15">15 Questions</option>
+                            <option value="20">20 Questions</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <button id="apply-settings" class="btn">Apply Settings</button>
+        </div>
+
+        <div id="game-screen">
+            <div id="character">
+                <div id="cubey-character"></div>
+                <div id="character-speech">
+                    Welcome to my 3D Perspective Adventure! I'm Professor Cubey, and I'll help you understand how 3D objects look from different angles. This is an important skill for both spatial reasoning and IQ tests! Let's see if you can identify the correct view of our 3D structure from the options below.
+                </div>
+            </div>
+
+            <div id="progress-bar-container">
+                <div id="progress-bar" style="width: 0%;">0%</div>
+            </div>
+
+            <div id="score-display">Score: 0 / 0</div>
+
+            <div id="feedback-container"></div>
+
+            <div id="main-content">
+                <div id="3d-container"></div>
+                <div id="options-container">
+                    <div class="option" data-index="0">
+                        <div class="option-label">A</div>
+                    </div>
+                    <div class="option" data-index="1">
+                        <div class="option-label">B</div>
+                    </div>
+                    <div class="option" data-index="2">
+                        <div class="option-label">C</div>
+                    </div>
+                    <div class="option" data-index="3">
+                        <div class="option-label">D</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="hint-text"></div>
+
+            <div id="controls">
+                <button id="hint-btn" class="btn">Get Hint</button>
+                <button id="rotate-btn" class="btn">Rotate View</button>
+                <button id="submit-btn" class="btn" disabled>Submit Answer</button>
+                <button id="next-btn" class="btn" disabled>Next Question</button>
+                <button id="resources-toggle" class="btn">Learning Resources</button>
+            </div>
+        </div>
+
+        <div id="learning-resources">
+            <div class="resources-title">Understanding 3D Perspectives</div>
+            
+            <div class="resource-section">
+                <div class="resource-subtitle">How to Visualize 3D Objects</div>
+                <p>When looking at a 3D object, we can see it from different viewpoints or perspectives. Each perspective shows a different "face" or side of the object. To master spatial reasoning:</p>
+                <ul>
+                    <li><strong>Mental Rotation:</strong> Practice imagining how objects would look if rotated in different directions.</li>
+                    <li><strong>Identify Key Features:</strong> Look for distinctive patterns, shapes, or arrangements of cubes that stay constant regardless of rotation.</li>
+                    <li><strong>Use Coordinates:</strong> Imagine a 3D grid with x, y, and z axes to help track how pieces move during rotation.</li>
+                </ul>
+            </div>
+            
+            <div class="resource-section">
+                <div class="resource-subtitle">Rotation Principles</div>
+                <p>When a 3D object rotates:</p>
+                <ul>
+                    <li><strong>90° Rotations:</strong> A quarter turn around any axis creates a new view where what was on top might now be on the side.</li>
+                    <li><strong>180° Rotations:</strong> A half turn creates a mirror-like reversal of the original view.</li>
+                    <li><strong>Multiple Rotations:</strong> Complex perspectives come from rotating around multiple axes in sequence.</li>
+                </ul>
+            </div>
+            
+            <div class="resource-section">
+                <div class="resource-subtitle">IQ Test Strategies</div>
+                <p>In IQ tests with 3D reasoning questions:</p>
+                <ul>
+                    <li><strong>Process of Elimination:</strong> If you're unsure, try eliminating obviously wrong answers first.</li>
+                    <li><strong>Count Blocks:</strong> The total number of blocks must remain the same in all views.</li>
+                    <li><strong>Check Connections:</strong> How blocks connect to each other remains consistent regardless of viewpoint.</li>
+                    <li><strong>Find Unique Features:</strong> Look for distinctive arrangements that can only appear in a specific orientation.</li>
+                </ul>
+            </div>
+            
+            <div class="resource-section">
+                <div class="resource-subtitle">Advanced Concepts</div>
+                <p>For those ready to explore deeper spatial reasoning concepts:</p>
+                <ul>
+                    <li><strong>Isometric Projection:</strong> A method of visually representing 3D objects in 2D, preserving their scale.</li>
+                    <li><strong>Orthographic Projection:</strong> A way of representing a 3D object from different sides (front, top, side views).</li>
+                    <li><strong>Euler Rotations:</strong> The mathematical principle that any rotation in 3D space can be described by three angles.</li>
+                    <li><strong>Cross-Sections:</strong> Imagining what shape would result if you sliced through a 3D object.</li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="level-complete">
+            <h2>Level Complete!</h2>
+            <p>Amazing work! You're developing excellent spatial reasoning skills!</p>
+            <p id="level-stats"></p>
+            <button id="next-level-btn">Next Level</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state variables
+        let gameState = {
+            currentQuestion: 0,
+            totalQuestions: 10,
+            score: 0,
+            currentLevel: 1,
+            selectedOption: null,
+            answered: false,
+            questions: [],
+            settings: {
+                gridSize: 3,
+                complexity: 'medium',
+                rotationType: 'advanced',
+                hintLevel: 'moderate',
+                explanationDepth: 'intermediate',
+                animationSpeed: 1,
+                timeLimit: 0,
+                questionsPerLevel: 10
+            }
+        };
+
+        // DOM elements
+        const elements = {
+            mainContainer: document.getElementById('3d-container'),
+            optionsContainer: document.getElementById('options-container'),
+            options: document.querySelectorAll('.option'),
+            hintBtn: document.getElementById('hint-btn'),
+            rotateBtn: document.getElementById('rotate-btn'),
+            submitBtn: document.getElementById('submit-btn'),
+            nextBtn: document.getElementById('next-btn'),
+            progressBar: document.getElementById('progress-bar'),
+            scoreDisplay: document.getElementById('score-display'),
+            characterSpeech: document.getElementById('character-speech'),
+            feedbackContainer: document.getElementById('feedback-container'),
+            hintText: document.getElementById('hint-text'),
+            settingsToggle: document.getElementById('settings-toggle'),
+            settingsPanel: document.getElementById('settings-panel'),
+            applySettings: document.getElementById('apply-settings'),
+            resourcesToggle: document.getElementById('resources-toggle'),
+            learningResources: document.getElementById('learning-resources'),
+            levelComplete: document.getElementById('level-complete'),
+            levelStats: document.getElementById('level-stats'),
+            nextLevelBtn: document.getElementById('next-level-btn')
+        };
+
+        // Three.js variables
+        let mainScene, mainCamera, mainRenderer, mainControls;
+        let optionScenes = [], optionCameras = [], optionRenderers = [];
+        let cubeStructure = [];
+        let isRotating = false;
+        let cubeyCharacter;
+
+        // Initialize the game
+        function initGame() {
+            setupCharacter();
+            setupMainView();
+            setupOptionViews();
+            generateQuestions();
+            loadQuestion(0);
+            setupEventListeners();
+            updateProgressBar();
+        }
+
+        // Create Professor Cubey character using Three.js
+        function setupCharacter() {
+            const cubeyContainer = document.getElementById('cubey-character');
+            
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(150, 150);
+            cubeyContainer.appendChild(renderer.domElement);
+            
+            // Create Cubey's body (a colorful cube with a face)
+            const geometry = new THREE.BoxGeometry(1, 1, 1);
+            const material = new THREE.MeshBasicMaterial({ color: 0x4CAF50 });
+            const cubey = new THREE.Mesh(geometry, material);
+            scene.add(cubey);
+            
+            // Add eyes
+            const eyeGeometry = new THREE.SphereGeometry(0.1, 16, 16);
+            const eyeMaterial = new THREE.MeshBasicMaterial({ color: 0xFFFFFF });
+            
+            const leftEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            leftEye.position.set(-0.25, 0.25, 0.51);
+            cubey.add(leftEye);
+            
+            const rightEye = new THREE.Mesh(eyeGeometry, eyeMaterial);
+            rightEye.position.set(0.25, 0.25, 0.51);
+            cubey.add(rightEye);
+            
+            // Add pupils
+            const pupilGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+            const pupilMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            
+            const leftPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+            leftPupil.position.set(0, 0, 0.05);
+            leftEye.add(leftPupil);
+            
+            const rightPupil = new THREE.Mesh(pupilGeometry, pupilMaterial);
+            rightPupil.position.set(0, 0, 0.05);
+            rightEye.add(rightPupil);
+            
+            // Add smile
+            const smileGeometry = new THREE.TorusGeometry(0.3, 0.03, 16, 32, Math.PI);
+            const smileMaterial = new THREE.MeshBasicMaterial({ color: 0x000000 });
+            const smile = new THREE.Mesh(smileGeometry, smileMaterial);
+            smile.position.set(0, -0.1, 0.51);
+            smile.rotation.z = Math.PI;
+            cubey.add(smile);
+            
+            // Add graduation cap
+            const capGeometry = new THREE.BoxGeometry(0.8, 0.1, 0.8);
+            const capMaterial = new THREE.MeshBasicMaterial({ color: 0x000080 });
+            const cap = new THREE.Mesh(capGeometry, capMaterial);
+            cap.position.set(0, 0.55, 0);
+            cubey.add(cap);
+            
+            // Add tassel
+            const tasselGeometry = new THREE.BoxGeometry(0.05, 0.2, 0.05);
+            const tasselMaterial = new THREE.MeshBasicMaterial({ color: 0xFFD700 });
+            const tassel = new THREE.Mesh(tasselGeometry, tasselMaterial);
+            tassel.position.set(0.4, 0.45, 0.4);
+            cap.add(tassel);
+            
+            camera.position.z = 2.5;
+            
+            // Animated rotation
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                cubey.rotation.y += 0.01;
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            cubeyCharacter = cubey;
+        }
+
+        // Setting up the main 3D view
+        function setupMainView() {
+            const container = elements.mainContainer;
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // Create scene
+            mainScene = new THREE.Scene();
+            mainScene.background = new THREE.Color(0xf0f0f0);
+
+            // Create camera
+            mainCamera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
+            mainCamera.position.set(4, 4, 4);
+            mainCamera.lookAt(0, 0, 0);
+
+            // Create renderer
+            mainRenderer = new THREE.WebGLRenderer({ antialias: true });
+            mainRenderer.setSize(width, height);
+            container.appendChild(mainRenderer.domElement);
+
+            // Add ambient light
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            mainScene.add(ambientLight);
+
+            // Add directional light
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 7);
+            mainScene.add(directionalLight);
+
+            // Add grid helper
+            const gridHelper = new THREE.GridHelper(10, 10);
+            mainScene.add(gridHelper);
+
+            // Add axes helper
+            const axesHelper = new THREE.AxesHelper(5);
+            mainScene.add(axesHelper);
+
+            // Set up animation loop
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                // Rotate the main view if needed
+                if (isRotating) {
+                    const rotationSpeed = 0.01 * gameState.settings.animationSpeed;
+                    mainCamera.position.x = 4 * Math.cos(Date.now() * rotationSpeed);
+                    mainCamera.position.z = 4 * Math.sin(Date.now() * rotationSpeed);
+                    mainCamera.lookAt(0, 0, 0);
+                }
+                
+                mainRenderer.render(mainScene, mainCamera);
+            }
+
+            animate();
+        }
+
+        // Setting up the option views
+        function setupOptionViews() {
+            elements.options.forEach((option, index) => {
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xf0f0f0);
+
+                const camera = new THREE.PerspectiveCamera(75, 1, 0.1, 1000);
+                camera.position.set(4, 4, 4);
+                camera.lookAt(0, 0, 0);
+
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(option.clientWidth, option.clientHeight);
+                option.appendChild(renderer.domElement);
+
+                // Add ambient light
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+
+                // Add directional light
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 10, 7);
+                scene.add(directionalLight);
+
+                // Add grid helper
+                const gridHelper = new THREE.GridHelper(10, 10);
+                scene.add(gridHelper);
+
+                // Store references
+                optionScenes[index] = scene;
+                optionCameras[index] = camera;
+                optionRenderers[index] = renderer;
+
+                // Set up animation loop for each option
+                function animate() {
+                    requestAnimationFrame(animate);
+                    renderer.render(scene, camera);
+                }
+
+                animate();
+
+                // Set up click handler
+                option.addEventListener('click', () => {
+                    if (gameState.answered) return;
+                    
+                    // Clear previous selection
+                    elements.options.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Set new selection
+                    option.classList.add('selected');
+                    gameState.selectedOption = index;
+                    
+                    // Enable submit button
+                    elements.submitBtn.disabled = false;
+                });
+            });
+        }
+
+        // Generate cube structure based on settings
+        function generateCubeStructure(gridSize, complexity) {
+            // Clear previous structure
+            cubeStructure = [];
+            
+            // Remove previous cubes from the scene
+            while (mainScene.children.length > 0) {
+                const object = mainScene.children[0];
+                if (object.isLight || object.isHelper) {
+                    mainScene.children.shift();
+                } else {
+                    mainScene.remove(object);
+                }
+            }
+            
+            // Add grid and axes back
+            const gridHelper = new THREE.GridHelper(10, 10);
+            mainScene.add(gridHelper);
+            
+            const axesHelper = new THREE.AxesHelper(5);
+            mainScene.add(axesHelper);
+
+            // Set grid dimensions
+            const size = gridSize;
+            const offset = (size - 1) / 2;
+
+            // Generate pattern based on complexity
+            let fillProbability;
+            switch (complexity) {
+                case 'low':
+                    fillProbability = 0.3;
+                    break;
+                case 'medium':
+                    fillProbability = 0.5;
+                    break;
+                case 'high':
+                    fillProbability = 0.7;
+                    break;
+                default:
+                    fillProbability = 0.5;
+            }
+
+            // Generate a cube at the center for consistency
+            const centerCube = {
+                x: 0,
+                y: 0,
+                z: 0,
+                color: getRandomColor()
+            };
+            cubeStructure.push(centerCube);
+
+            // Generate random cubes based on complexity
+            for (let x = 0; x < size; x++) {
+                for (let y = 0; y < size; y++) {
+                    for (let z = 0; z < size; z++) {
+                        // Skip if it's the center cube (already added)
+                        if (x === Math.floor(size/2) && y === Math.floor(size/2) && z === Math.floor(size/2)) {
+                            continue;
+                        }
+                        
+                        // Add cube based on probability
+                        if (Math.random() < fillProbability) {
+                            const cube = {
+                                x: x - offset,
+                                y: y - offset,
+                                z: z - offset,
+                                color: getRandomColor()
+                            };
+                            cubeStructure.push(cube);
+                        }
+                    }
+                }
+            }
+
+            // Create 3D cubes
+            const geometry = new THREE.BoxGeometry(0.95, 0.95, 0.95);
+            
+            cubeStructure.forEach(cube => {
+                const material = new THREE.MeshLambertMaterial({ color: cube.color });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(cube.x, cube.y, cube.z);
+                mainScene.add(mesh);
+            });
+
+            return cubeStructure;
+        }
+
+        // Get random color for cubes
+        function getRandomColor() {
+            const colors = [
+                0xff5252, // Red
+                0x4caf50, // Green
+                0x2196f3, // Blue
+                0xffc107, // Yellow
+                0x9c27b0, // Purple
+                0xff9800, // Orange
+                0x00bcd4, // Cyan
+                0x795548  // Brown
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Generate random rotation matrices based on settings
+        function generateRandomRotation(type) {
+            let rotationMatrix = new THREE.Matrix4();
+            
+            switch (type) {
+                case 'basic':
+                    // Basic 90-degree rotations
+                    const axis = Math.floor(Math.random() * 3); // 0: X, 1: Y, 2: Z
+                    const angle = Math.PI / 2 * (Math.floor(Math.random() * 4) + 1); // 90, 180, 270, or 360 degrees
+                    
+                    if (axis === 0) {
+                        rotationMatrix.makeRotationX(angle);
+                    } else if (axis === 1) {
+                        rotationMatrix.makeRotationY(angle);
+                    } else {
+                        rotationMatrix.makeRotationZ(angle);
+                    }
+                    break;
+                    
+                case 'advanced':
+                    // Multiple random rotations across multiple axes
+                    const tmpMatrix = new THREE.Matrix4();
+                    
+                    // 1-3 rotations
+                    const numRotations = Math.floor(Math.random() * 3) + 1;
+                    
+                    for (let i = 0; i < numRotations; i++) {
+                        const axis = Math.floor(Math.random() * 3);
+                        const angle = Math.PI / 2 * (Math.floor(Math.random() * 4) + 1);
+                        
+                        if (axis === 0) {
+                            tmpMatrix.makeRotationX(angle);
+                        } else if (axis === 1) {
+                            tmpMatrix.makeRotationY(angle);
+                        } else {
+                            tmpMatrix.makeRotationZ(angle);
+                        }
+                        
+                        rotationMatrix.multiply(tmpMatrix);
+                    }
+                    break;
+                    
+                case 'expert':
+                    // Any arbitrary rotation
+                    const xAngle = Math.random() * Math.PI * 2;
+                    const yAngle = Math.random() * Math.PI * 2;
+                    const zAngle = Math.random() * Math.PI * 2;
+                    
+                    const euler = new THREE.Euler(xAngle, yAngle, zAngle);
+                    rotationMatrix.makeRotationFromEuler(euler);
+                    break;
+            }
+            
+            return rotationMatrix;
+        }
+
+        // Apply rotation to a copied structure
+        function applyRotation(structure, rotationMatrix) {
+            // Deep copy the structure
+            const rotatedStructure = JSON.parse(JSON.stringify(structure));
+            
+            // Apply rotation to each cube
+            rotatedStructure.forEach(cube => {
+                const vector = new THREE.Vector3(cube.x, cube.y, cube.z);
+                vector.applyMatrix4(rotationMatrix);
+                
+                // Round to fix floating point issues
+                cube.x = Math.round(vector.x * 100) / 100;
+                cube.y = Math.round(vector.y * 100) / 100;
+                cube.z = Math.round(vector.z * 100) / 100;
+            });
+            
+            return rotatedStructure;
+        }
+
+        // Generate a set of questions for the current level
+        function generateQuestions() {
+            gameState.questions = [];
+            
+            for (let i = 0; i < gameState.settings.questionsPerLevel; i++) {
+                // Generate a new cube structure
+                const structure = generateCubeStructure(
+                    gameState.settings.gridSize,
+                    gameState.settings.complexity
+                );
+                
+                // Generate the correct rotation
+                const correctRotation = generateRandomRotation(gameState.settings.rotationType);
+                const correctAnswer = applyRotation(structure, correctRotation);
+                
+                // Generate incorrect rotations for the other options
+                const incorrectOptions = [];
+                
+                for (let j = 0; j < 3; j++) {
+                    let uniqueRotation;
+                    let rotatedStructure;
+                    let isUnique = false;
+                    
+                    // Keep generating until we have a unique rotation
+                    while (!isUnique) {
+                        uniqueRotation = generateRandomRotation(gameState.settings.rotationType);
+                        rotatedStructure = applyRotation(structure, uniqueRotation);
+                        
+                        // Check if this rotation is different from the correct one and all existing incorrect ones
+                        isUnique = !structuresEqual(rotatedStructure, correctAnswer);
+                        
+                        for (let k = 0; k < incorrectOptions.length; k++) {
+                            if (structuresEqual(rotatedStructure, incorrectOptions[k])) {
+                                isUnique = false;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    incorrectOptions.push(rotatedStructure);
+                }
+                
+                // Randomly determine which option will be correct (0-3)
+                const correctOptionIndex = Math.floor(Math.random() * 4);
+                
+                // Prepare all four options
+                const options = [];
+                
+                for (let j = 0; j < 4; j++) {
+                    if (j === correctOptionIndex) {
+                        options.push(correctAnswer);
+                    } else {
+                        options.push(incorrectOptions.pop());
+                    }
+                }
+                
+                // Create question object
+                const question = {
+                    structure: structure,
+                    options: options,
+                    correctAnswer: correctOptionIndex
+                };
+                
+                gameState.questions.push(question);
+            }
+        }
+
+        // Check if two structures are equivalent (same cubes in same positions)
+        function structuresEqual(structure1, structure2) {
+            if (structure1.length !== structure2.length) {
+                return false;
+            }
+            
+            // Sort both structures by position for comparison
+            const sorted1 = [...structure1].sort((a, b) => {
+                if (a.x !== b.x) return a.x - b.x;
+                if (a.y !== b.y) return a.y - b.y;
+                return a.z - b.z;
+            });
+            
+            const sorted2 = [...structure2].sort((a, b) => {
+                if (a.x !== b.x) return a.x - b.x;
+                if (a.y !== b.y) return a.y - b.y;
+                return a.z - b.z;
+            });
+            
+            // Compare each cube
+            for (let i = 0; i < sorted1.length; i++) {
+                const cube1 = sorted1[i];
+                const cube2 = sorted2[i];
+                
+                if (
+                    Math.abs(cube1.x - cube2.x) > 0.1 ||
+                    Math.abs(cube1.y - cube2.y) > 0.1 ||
+                    Math.abs(cube1.z - cube2.z) > 0.1
+                ) {
+                    return false;
+                }
+            }
+            
+            return true;
+        }
+
+        // Load a specific question
+        function loadQuestion(questionIndex) {
+            // Reset state
+            gameState.selectedOption = null;
+            gameState.answered = false;
+            elements.submitBtn.disabled = true;
+            elements.nextBtn.disabled = true;
+            elements.options.forEach(option => {
+                option.classList.remove('selected', 'correct', 'incorrect');
+            });
+            elements.feedbackContainer.style.display = 'none';
+            elements.hintText.style.display = 'none';
+            
+            // Update current question
+            gameState.currentQuestion = questionIndex;
+            
+            // Get the question
+            const question = gameState.questions[questionIndex];
+            
+            // Clear the main scene and all option scenes
+            clearScenes();
+            
+            // Load the main structure
+            loadStructureToScene(question.structure, mainScene);
+            
+            // Load option structures
+            for (let i = 0; i < 4; i++) {
+                loadStructureToScene(question.options[i], optionScenes[i]);
+            }
+            
+            // Update the character message
+            updateCharacterMessage();
+            
+            // Update progress display
+            updateProgressBar();
+        }
+
+        // Clear all scenes
+        function clearScenes() {
+            // Clear main scene
+            while (mainScene.children.length > 0) {
+                const object = mainScene.children[0];
+                if (object.isLight || object.isHelper) {
+                    mainScene.children.shift();
+                } else {
+                    mainScene.remove(object);
+                }
+            }
+            
+            // Add grid and axes back to main scene
+            const gridHelper = new THREE.GridHelper(10, 10);
+            mainScene.add(gridHelper);
+            
+            const axesHelper = new THREE.AxesHelper(5);
+            mainScene.add(axesHelper);
+            
+            // Clear option scenes
+            for (let i = 0; i < optionScenes.length; i++) {
+                const scene = optionScenes[i];
+                
+                while (scene.children.length > 0) {
+                    const object = scene.children[0];
+                    if (object.isLight || object.isHelper) {
+                        scene.children.shift();
+                    } else {
+                        scene.remove(object);
+                    }
+                }
+                
+                // Add grid helper back
+                const optionGridHelper = new THREE.GridHelper(10, 10);
+                scene.add(optionGridHelper);
+            }
+        }
+
+        // Load a structure to a scene
+        function loadStructureToScene(structure, scene) {
+            const geometry = new THREE.BoxGeometry(0.95, 0.95, 0.95);
+            
+            structure.forEach(cube => {
+                const material = new THREE.MeshLambertMaterial({ color: cube.color });
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.position.set(cube.x, cube.y, cube.z);
+                scene.add(mesh);
+            });
+        }
+
+        // Update character message based on game state
+        function updateCharacterMessage() {
+            let message = "";
+            
+            if (gameState.currentQuestion === 0 && gameState.currentLevel === 1) {
+                message = "Welcome to our 3D adventure! Look at the structure on the left. Which of the four options (A, B, C, or D) shows the SAME structure but from a different angle? Click on your answer and then press Submit!";
+            } else if (gameState.answered) {
+                if (gameState.selectedOption === gameState.questions[gameState.currentQuestion].correctAnswer) {
+                    const messages = [
+                        "Excellent work! You found the correct view!",
+                        "Outstanding spatial reasoning! That's correct!",
+                        "Your 3D thinking skills are impressive! Correct!",
+                        "Brilliant! You've got the right perspective!"
+                    ];
+                    message = messages[Math.floor(Math.random() * messages.length)];
+                } else {
+                    message = "Not quite right. The correct answer was option " + 
+                              String.fromCharCode(65 + gameState.questions[gameState.currentQuestion].correctAnswer) + 
+                              ". Let's see if you can spot the difference!";
+                }
+            } else {
+                const messages = [
+                    "Which option shows our 3D structure from a different view?",
+                    "Find the matching perspective! Which option is correct?",
+                    "Use your spatial reasoning skills! Which view matches?",
+                    "Look carefully at all angles. Which option is the same structure?"
+                ];
+                message = messages[Math.floor(Math.random() * messages.length)];
+            }
+            
+            elements.characterSpeech.textContent = message;
+            
+            // Animate Cubey based on message
+            if (message.includes("Excellent") || message.includes("Outstanding") || message.includes("impressive") || message.includes("Brilliant")) {
+                // Happy rotation animation
+                cubeyCharacter.rotation.y = 0;
+                const happyAnimation = () => {
+                    cubeyCharacter.rotation.y += 0.2;
+                    if (cubeyCharacter.rotation.y < Math.PI * 4) {
+                        requestAnimationFrame(happyAnimation);
+                    }
+                };
+                happyAnimation();
+            } else if (message.includes("Not quite right")) {
+                // Sad shake animation
+                const originalY = cubeyCharacter.rotation.y;
+                const sadAnimation = () => {
+                    cubeyCharacter.rotation.y = originalY + Math.sin(Date.now() * 0.01) * 0.2;
+                    setTimeout(() => {
+                        cubeyCharacter.rotation.y = originalY;
+                    }, 1000);
+                };
+                sadAnimation();
+            }
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const progress = (gameState.currentQuestion / gameState.totalQuestions) * 100;
+            elements.progressBar.style.width = progress + "%";
+            elements.progressBar.textContent = Math.round(progress) + "%";
+            
+            elements.scoreDisplay.textContent = `Score: ${gameState.score} / ${gameState.currentQuestion}`;
+        }
+
+        // Show feedback after answering
+        function showFeedback(isCorrect) {
+            elements.feedbackContainer.style.display = 'block';
+            
+            if (isCorrect) {
+                elements.feedbackContainer.className = 'correct';
+                elements.feedbackContainer.innerHTML = '<h3>Correct! 🎉</h3>';
+                
+                // Add explanation based on settings
+                if (gameState.settings.explanationDepth !== 'basic') {
+                    let explanation = '<p>You correctly identified that option ' + 
+                                     String.fromCharCode(65 + gameState.questions[gameState.currentQuestion].correctAnswer) + 
+                                     ' shows the same structure from a different angle.</p>';
+                    
+                    if (gameState.settings.explanationDepth === 'advanced') {
+                        explanation += '<p>The key to identifying the correct view is understanding that the relative positions of cubes remain unchanged during rotation. The spatial relationships and connections between cubes are preserved, only the orientation changes.</p>';
+                    }
+                    
+                    elements.feedbackContainer.innerHTML += explanation;
+                }
+            } else {
+                elements.feedbackContainer.className = 'incorrect';
+                elements.feedbackContainer.innerHTML = '<h3>Not Quite Right</h3>';
+                
+                // Add explanation based on settings
+                let explanation = '<p>The correct answer was option ' + 
+                                 String.fromCharCode(65 + gameState.questions[gameState.currentQuestion].correctAnswer) + 
+                                 '.</p>';
+                
+                if (gameState.settings.explanationDepth !== 'basic') {
+                    explanation += '<p>When rotating a 3D structure, look for key features like the relative positions of cubes and their connections. These relationships stay the same regardless of viewing angle.</p>';
+                    
+                    if (gameState.settings.explanationDepth === 'advanced') {
+                        explanation += '<p>Try to identify a unique pattern or arrangement in the structure, then look for that same pattern in the options, accounting for rotation. Count the number of cubes and visualize how they connect in 3D space.</p>';
+                    }
+                }
+                
+                elements.feedbackContainer.innerHTML += explanation;
+            }
+        }
+
+        // Show a hint
+        function showHint() {
+            elements.hintText.style.display = 'block';
+            
+            const hintLevel = gameState.settings.hintLevel;
+            let hintMessage = "";
+            
+            switch (hintLevel) {
+                case 'minimal':
+                    hintMessage = "Look carefully at the number of cubes and their connections.";
+                    break;
+                case 'moderate':
+                    hintMessage = "Count the number of cubes in each direction (up/down, left/right, front/back). " +
+                                 "Look for unique patterns or arrangements that would still be visible after rotation.";
+                    break;
+                case 'detailed':
+                    hintMessage = "Find a distinctive feature in the main structure, like a specific arrangement or pattern of cubes. " +
+                                 "Then look for this same pattern in each option, keeping in mind it might be rotated. " +
+                                 "Count the total number of cubes to eliminate options with the wrong number. " +
+                                 "Check if the connections between cubes match what you see in the original structure.";
+                    break;
+            }
+            
+            elements.hintText.textContent = "Hint: " + hintMessage;
+        }
+
+        // Create a celebration effect
+        function createCelebration() {
+            // Create confetti
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = getRandomColor();
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 10 + 5 + 'px';
+                confetti.style.opacity = Math.random() + 0.5;
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                document.body.appendChild(confetti);
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    document.body.removeChild(confetti);
+                }, 5000);
+            }
+        }
+
+        // Show level completion screen
+        function showLevelComplete() {
+            elements.levelComplete.style.display = 'flex';
+            
+            // Update stats
+            const accuracy = Math.round((gameState.score / gameState.totalQuestions) * 100);
+            elements.levelStats.textContent = `Level ${gameState.currentLevel} completed with ${gameState.score} out of ${gameState.totalQuestions} correct (${accuracy}% accuracy)`;
+            
+            // Create celebration effects
+            createCelebration();
+        }
+
+        // Start a new level
+        function startNewLevel() {
+            gameState.currentLevel++;
+            gameState.currentQuestion = 0;
+            gameState.score = 0;
+            
+            // Increase difficulty if needed
+            if (gameState.currentLevel % 2 === 0 && gameState.settings.gridSize < 5) {
+                gameState.settings.gridSize++;
+            }
+            
+            if (gameState.currentLevel % 3 === 0 && gameState.settings.complexity === 'low') {
+                gameState.settings.complexity = 'medium';
+            } else if (gameState.currentLevel % 3 === 0 && gameState.settings.complexity === 'medium') {
+                gameState.settings.complexity = 'high';
+            }
+            
+            // Generate new questions
+            generateQuestions();
+            loadQuestion(0);
+            
+            // Hide level complete screen
+            elements.levelComplete.style.display = 'none';
+            
+            // Update character message
+            elements.characterSpeech.textContent = `Welcome to Level ${gameState.currentLevel}! The puzzles will get progressively more challenging. Use your spatial reasoning skills to find the matching perspectives!`;
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Submit button
+            elements.submitBtn.addEventListener('click', () => {
+                if (gameState.selectedOption === null || gameState.answered) return;
+                
+                gameState.answered = true;
+                
+                const correctAnswer = gameState.questions[gameState.currentQuestion].correctAnswer;
+                const isCorrect = gameState.selectedOption === correctAnswer;
+                
+                // Update score
+                if (isCorrect) {
+                    gameState.score++;
+                    elements.options[gameState.selectedOption].classList.add('correct');
+                    createCelebration();
+                } else {
+                    elements.options[gameState.selectedOption].classList.add('incorrect');
+                    elements.options[correctAnswer].classList.add('correct');
+                }
+                
+                // Show feedback
+                showFeedback(isCorrect);
+                
+                // Update character message
+                updateCharacterMessage();
+                
+                // Update score display
+                elements.scoreDisplay.textContent = `Score: ${gameState.score} / ${gameState.currentQuestion + 1}`;
+                
+                // Enable next button
+                elements.nextBtn.disabled = false;
+                elements.submitBtn.disabled = true;
+            });
+            
+            // Next button
+            elements.nextBtn.addEventListener('click', () => {
+                if (gameState.currentQuestion >= gameState.totalQuestions - 1) {
+                    // Level complete
+                    showLevelComplete();
+                } else {
+                    // Next question
+                    loadQuestion(gameState.currentQuestion + 1);
+                }
+            });
+            
+            // Hint button
+            elements.hintBtn.addEventListener('click', () => {
+                showHint();
+            });
+            
+            // Rotate button
+            elements.rotateBtn.addEventListener('click', () => {
+                isRotating = !isRotating;
+                elements.rotateBtn.textContent = isRotating ? "Stop Rotation" : "Rotate View";
+            });
+            
+            // Settings toggle
+            elements.settingsToggle.addEventListener('click', () => {
+                elements.settingsPanel.style.display = elements.settingsPanel.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // Resources toggle
+            elements.resourcesToggle.addEventListener('click', () => {
+                elements.learningResources.style.display = elements.learningResources.style.display === 'none' ? 'block' : 'none';
+            });
+            
+            // Apply settings
+            elements.applySettings.addEventListener('click', () => {
+                // Get settings from form
+                gameState.settings.gridSize = parseInt(document.getElementById('grid-size').value);
+                gameState.settings.complexity = document.getElementById('complexity').value;
+                gameState.settings.rotationType = document.getElementById('rotation-type').value;
+                gameState.settings.hintLevel = document.getElementById('hint-level').value;
+                gameState.settings.explanationDepth = document.getElementById('explanation-depth').value;
+                gameState.settings.animationSpeed = parseFloat(document.getElementById('animation-speed').value);
+                gameState.settings.timeLimit = parseInt(document.getElementById('time-limit').value);
+                gameState.settings.questionsPerLevel = parseInt(document.getElementById('questions-per-level').value);
+                
+                // Update game
+                gameState.totalQuestions = gameState.settings.questionsPerLevel;
+                gameState.currentQuestion = 0;
+                gameState.score = 0;
+                
+                // Generate new questions
+                generateQuestions();
+                loadQuestion(0);
+                
+                // Hide settings panel
+                elements.settingsPanel.style.display = 'none';
+                
+                // Update character message
+                elements.characterSpeech.textContent = "Settings applied! Let's continue our 3D adventure with your new preferences.";
+            });
+            
+            // Next level button
+            elements.nextLevelBtn.addEventListener('click', () => {
+                startNewLevel();
+            });
+            
+            // Window resize handler
+            window.addEventListener('resize', () => {
+                // Resize main renderer
+                const mainContainer = elements.mainContainer;
+                mainRenderer.setSize(mainContainer.clientWidth, mainContainer.clientHeight);
+                mainCamera.aspect = mainContainer.clientWidth / mainContainer.clientHeight;
+                mainCamera.updateProjectionMatrix();
+                
+                // Resize option renderers
+                elements.options.forEach((option, index) => {
+                    optionRenderers[index].setSize(option.clientWidth, option.clientHeight);
+                });
+            });
+        }
+
+        // Initialize the game
+        initGame();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number Galaxy: Scientific Notation Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+        
+        body {
+            background-color: #000;
+            overflow: hidden;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        
+        #gameContainer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            z-index: 1;
+        }
+        
+        #gameContent {
+            position: relative;
+            z-index: 2;
+            padding: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #menuBar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 20px;
+            background: rgba(0, 0, 32, 0.8);
+            border-bottom: 3px solid #5d42f5;
+            z-index: 3;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f5d742;
+            text-shadow: 0 0 10px #f5d742;
+        }
+        
+        .menu-buttons button {
+            background: #5d42f5;
+            border: none;
+            color: white;
+            padding: 8px 15px;
+            margin-left: 10px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        .menu-buttons button:hover {
+            background: #7a64ff;
+            transform: scale(1.05);
+        }
+        
+        #mainContent {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .screen {
+            background: rgba(0, 0, 64, 0.85);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 1000px;
+            width: 100%;
+            box-shadow: 0 0 30px #5d42f5;
+            text-align: center;
+            display: none;
+            margin: 0 auto;
+            overflow-y: auto;
+            max-height: 90vh;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        h1, h2, h3 {
+            color: #f5d742;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(245, 215, 66, 0.5);
+        }
+        
+        p {
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+        
+        .character {
+            width: 150px;
+            height: 150px;
+            margin: 20px auto;
+            position: relative;
+        }
+        
+        .character-professor {
+            background: radial-gradient(circle at 75px 75px, #68a0ff, #3248e8);
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .character-professor::before {
+            content: "";
+            position: absolute;
+            width: 60px;
+            height: 25px;
+            background: white;
+            bottom: 40px;
+            left: 45px;
+            border-radius: 10px;
+        }
+        
+        .character-professor::after {
+            content: "";
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: black;
+            border-radius: 50%;
+            top: 50px;
+            left: 50px;
+            box-shadow: 40px 0 0 0 black;
+        }
+        
+        .glasses {
+            position: absolute;
+            width: 70px;
+            height: 20px;
+            border: 3px solid #444;
+            border-radius: 10px;
+            top: 55px;
+            left: 40px;
+        }
+        
+        .glasses::before, .glasses::after {
+            content: "";
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            border: 3px solid #444;
+            border-radius: 50%;
+            top: -5px;
+        }
+        
+        .glasses::before {
+            left: -5px;
+        }
+        
+        .glasses::after {
+            right: -5px;
+        }
+        
+        .hair {
+            position: absolute;
+            top: 10px;
+            left: 25px;
+            width: 100px;
+            height: 40px;
+            background: white;
+            border-radius: 50% 50% 0 0;
+        }
+        
+        .character-zero {
+            background: radial-gradient(circle at 75px 75px, #ff9d68, #e83232);
+            border-radius: 50%;
+            position: relative;
+            font-size: 100px;
+            color: white;
+            line-height: 150px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .character-expo {
+            background: radial-gradient(circle at 75px 75px, #68ffc3, #32e89e);
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 40px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: #f5d742;
+            border: none;
+            color: #000032;
+            font-weight: bold;
+            padding: 12px 25px;
+            margin: 10px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            background: #ffea8c;
+            transform: scale(1.05);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        button:disabled {
+            background: #999;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        button.correct {
+            background: #5dff42;
+        }
+        
+        button.wrong {
+            background: #ff4242;
+        }
+        
+        .highlight {
+            background-color: rgba(245, 215, 66, 0.2);
+            padding: 5px;
+            border-radius: 5px;
+        }
+        
+        .examples {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .example-card {
+            background: rgba(93, 66, 245, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            width: 280px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+        }
+        
+        .example-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .example-card h3 {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        
+        .example-card p {
+            font-size: 20px;
+            margin-bottom: 0;
+        }
+        
+        .quiz-container {
+            background: rgba(93, 66, 245, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .quiz-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .quiz-options button {
+            padding: 15px;
+            font-size: 16px;
+            width: 100%;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #5d42f5, #f5d742);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .input-container {
+            margin: 20px 0;
+        }
+        
+        .input-container input {
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            margin: 0 10px;
+            width: 80px;
+            text-align: center;
+        }
+        
+        .input-container input:focus {
+            outline: 2px solid #f5d742;
+        }
+        
+        .animation-container {
+            width: 100%;
+            height: 200px;
+            position: relative;
+            margin: 20px 0;
+            overflow: hidden;
+            border-radius: 15px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .feedback {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            min-height: 36px;
+        }
+        
+        .positive {
+            color: #5dff42;
+        }
+        
+        .negative {
+            color: #ff4242;
+        }
+        
+        .parameter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        
+        .control-group {
+            background: rgba(93, 66, 245, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .control-group input[type="range"] {
+            width: 200px;
+        }
+        
+        .control-group .value-display {
+            margin-top: 10px;
+            font-size: 16px;
+            height: 24px;
+        }
+        
+        .dialog {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 64, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 90%;
+            width: 600px;
+            box-shadow: 0 0 30px #5d42f5;
+            text-align: center;
+            z-index: 100;
+            display: none;
+        }
+        
+        .dialog.active {
+            display: block;
+        }
+        
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 99;
+            display: none;
+        }
+        
+        .overlay.active {
+            display: block;
+        }
+        
+        .sandbox {
+            background: rgba(93, 66, 245, 0.2);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .sandbox-display {
+            font-size: 24px;
+            margin: 20px 0;
+            min-height: 40px;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 24px;
+            }
+            
+            h2 {
+                font-size: 20px;
+            }
+            
+            p {
+                font-size: 16px;
+            }
+            
+            .example-card {
+                width: 100%;
+            }
+            
+            .button-container {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+        
+        .speech-bubble {
+            position: relative;
+            background: #fff;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 80%;
+            color: #000;
+            font-size: 18px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: #fff transparent;
+        }
+        
+        .achievements {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .achievement {
+            background: rgba(93, 66, 245, 0.2);
+            border-radius: 15px;
+            padding: 15px;
+            width: 150px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        .achievement.unlocked {
+            background: rgba(245, 215, 66, 0.3);
+            box-shadow: 0 0 15px rgba(245, 215, 66, 0.5);
+        }
+        
+        .achievement-icon {
+            font-size: 40px;
+            margin-bottom: 10px;
+        }
+        
+        .achievement-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .achievement-description {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="menuBar">
+        <div class="logo">Number Galaxy</div>
+        <div class="menu-buttons">
+            <button id="homeButton">Home</button>
+            <button id="helpButton">Help</button>
+            <button id="settingsButton">Settings</button>
+        </div>
+    </div>
+    
+    <div id="gameContainer">
+        <div id="gameCanvas"></div>
+        <div id="gameContent">
+            <div id="mainContent">
+                <!-- Screens -->
+                <div id="homeScreen" class="screen active">
+                    <div class="character character-professor">
+                        <div class="hair"></div>
+                        <div class="glasses"></div>
+                    </div>
+                    <h1>Welcome to Number Galaxy!</h1>
+                    <div class="speech-bubble">
+                        Hi there, young explorer! I'm Professor Digit, and I'm going to show you the amazing world of Scientific Notation!
+                    </div>
+                    <p>Scientific Notation is a special way to write really BIG or really SMALL numbers easily.</p>
+                    <p>Join me on an amazing journey through the Number Galaxy, where you'll meet <span class="highlight">Zero Hero</span> and <span class="highlight">Exponent Explorer</span> who will help you become a scientific notation master!</p>
+                    
+                    <div class="button-container">
+                        <button id="startAdventureButton">Start Adventure</button>
+                        <button id="sandboxButton">Number Sandbox</button>
+                        <button id="achievementsButton">Achievements</button>
+                    </div>
+                </div>
+                
+                <div id="adventureScreen" class="screen">
+                    <h1>Scientific Notation Adventure</h1>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="adventureProgress"></div>
+                    </div>
+                    
+                    <!-- Level 1 -->
+                    <div id="level1" class="level active">
+                        <div class="character character-zero">0</div>
+                        <h2>Level 1: Meet Zero Hero!</h2>
+                        <div class="speech-bubble">
+                            Hi! I'm Zero Hero! I help make BIG numbers easier to write. Let's count how many zeros are in these big numbers!
+                        </div>
+                        
+                        <p>When numbers get really BIG, they have lots of zeros, like:</p>
+                        <p class="highlight">1,000 = 1 followed by 3 zeros</p>
+                        <p class="highlight">1,000,000 = 1 followed by 6 zeros</p>
+                        
+                        <h3>Let's practice counting zeros!</h3>
+                        <div class="quiz-container">
+                            <div id="zeroQuizQuestion">How many zeros are in the number 10,000?</div>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="3">3 zeros</button>
+                                <button class="quiz-option" data-value="4">4 zeros</button>
+                                <button class="quiz-option" data-value="5">5 zeros</button>
+                                <button class="quiz-option" data-value="6">6 zeros</button>
+                            </div>
+                            <div id="zeroQuizFeedback" class="feedback"></div>
+                        </div>
+                        
+                        <p>Excellent! Now let's see another way to write these big numbers!</p>
+                        <div class="button-container">
+                            <button id="nextToLevel2Button">Next: Powers of 10</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Level 2 -->
+                    <div id="level2" class="level">
+                        <div class="character character-expo">10<sup>n</sup></div>
+                        <h2>Level 2: Powers of 10</h2>
+                        <div class="speech-bubble">
+                            Hello! I'm Exponent Explorer! I help you use powers to write numbers in a shorter way!
+                        </div>
+                        
+                        <p>Instead of writing all those zeros, we can use a special shortcut called "powers of 10":</p>
+                        <div class="examples">
+                            <div class="example-card">
+                                <h3>10 = 10¹</h3>
+                                <p>1 zero</p>
+                            </div>
+                            <div class="example-card">
+                                <h3>100 = 10²</h3>
+                                <p>2 zeros</p>
+                            </div>
+                            <div class="example-card">
+                                <h3>1,000 = 10³</h3>
+                                <p>3 zeros</p>
+                            </div>
+                            <div class="example-card">
+                                <h3>10,000 = 10⁴</h3>
+                                <p>4 zeros</p>
+                            </div>
+                        </div>
+                        
+                        <p>The small number above the 10 (like ¹, ², ³) is called an <span class="highlight">exponent</span>. It tells us how many zeros to write!</p>
+                        
+                        <h3>Let's practice with powers of 10!</h3>
+                        <div class="quiz-container">
+                            <div id="powersQuizQuestion">What is 10 to the power of 5 (10⁵)?</div>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="10000">10,000</button>
+                                <button class="quiz-option" data-value="100000">100,000</button>
+                                <button class="quiz-option" data-value="1000000">1,000,000</button>
+                                <button class="quiz-option" data-value="10000000">10,000,000</button>
+                            </div>
+                            <div id="powersQuizFeedback" class="feedback"></div>
+                        </div>
+                        
+                        <div class="button-container">
+                            <button id="backToLevel1Button">Back</button>
+                            <button id="nextToLevel3Button">Next: Scientific Notation</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Level 3 -->
+                    <div id="level3" class="level">
+                        <div class="character character-professor">
+                            <div class="hair"></div>
+                            <div class="glasses"></div>
+                        </div>
+                        <h2>Level 3: Scientific Notation</h2>
+                        <div class="speech-bubble">
+                            Now we're ready to learn Scientific Notation! This is how scientists write very big and very small numbers!
+                        </div>
+                        
+                        <p>Scientific notation always looks like this:</p>
+                        <p class="highlight">a × 10ᵇ</p>
+                        <p>Where:</p>
+                        <ul style="text-align: left; margin-left: 30px; margin-bottom: 20px;">
+                            <li>a is a number between 1 and 10</li>
+                            <li>b is the exponent (power of 10)</li>
+                        </ul>
+                        
+                        <div class="examples">
+                            <div class="example-card">
+                                <h3>1,000 in scientific notation</h3>
+                                <p>1 × 10³</p>
+                            </div>
+                            <div class="example-card">
+                                <h3>5,000 in scientific notation</h3>
+                                <p>5 × 10³</p>
+                            </div>
+                            <div class="example-card">
+                                <h3>9,300,000 in scientific notation</h3>
+                                <p>9.3 × 10⁶</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Let's practice scientific notation!</h3>
+                        <div class="quiz-container">
+                            <div id="sciNotationQuizQuestion">What is 8,400,000 in scientific notation?</div>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="8.4x10^5">8.4 × 10⁵</button>
+                                <button class="quiz-option" data-value="8.4x10^6">8.4 × 10⁶</button>
+                                <button class="quiz-option" data-value="84x10^5">84 × 10⁵</button>
+                                <button class="quiz-option" data-value="0.84x10^7">0.84 × 10⁷</button>
+                            </div>
+                            <div id="sciNotationQuizFeedback" class="feedback"></div>
+                        </div>
+                        
+                        <div class="button-container">
+                            <button id="backToLevel2Button">Back</button>
+                            <button id="nextToLevel4Button">Next: Small Numbers</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Level 4 -->
+                    <div id="level4" class="level">
+                        <div class="character character-zero">0</div>
+                        <h2>Level 4: Very Small Numbers</h2>
+                        <div class="speech-bubble">
+                            Zero Hero here again! I can also help with very SMALL numbers that have zeros before them!
+                        </div>
+                        
+                        <p>Very small numbers often have zeros right after the decimal point:</p>
+                        <p class="highlight">0.1 = 1 tenth = 1/10</p>
+                        <p class="highlight">0.01 = 1 hundredth = 1/100</p>
+                        <p class="highlight">0.001 = 1 thousandth = 1/1000</p>
+                        
+                        <p>For small numbers, we use <span class="highlight">negative exponents</span> in scientific notation:</p>
+                        <div class="examples">
+                            <div class="example-card">
+                                <h3>0.1 in scientific notation</h3>
+                                <p>1 × 10⁻¹</p>
+                            </div>
+                            <div class="example-card">
+                                <h3>0.01 in scientific notation</h3>
+                                <p>1 × 10⁻²</p>
+                            </div>
+                            <div class="example-card">
+                                <h3>0.001 in scientific notation</h3>
+                                <p>1 × 10⁻³</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Let's practice with small numbers!</h3>
+                        <div class="quiz-container">
+                            <div id="smallNumQuizQuestion">What is 0.0025 in scientific notation?</div>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="2.5x10^-3">2.5 × 10⁻³</button>
+                                <button class="quiz-option" data-value="2.5x10^-4">2.5 × 10⁻⁴</button>
+                                <button class="quiz-option" data-value="25x10^-4">25 × 10⁻⁴</button>
+                                <button class="quiz-option" data-value="0.25x10^-2">0.25 × 10⁻²</button>
+                            </div>
+                            <div id="smallNumQuizFeedback" class="feedback"></div>
+                        </div>
+                        
+                        <div class="button-container">
+                            <button id="backToLevel3Button">Back</button>
+                            <button id="nextToLevel5Button">Next: Real World Examples</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Level 5 -->
+                    <div id="level5" class="level">
+                        <div class="character character-expo">10<sup>n</sup></div>
+                        <h2>Level 5: Real World Examples</h2>
+                        <div class="speech-bubble">
+                            Scientific notation is used everywhere in science! Let's look at some real examples!
+                        </div>
+                        
+                        <p>Scientists use scientific notation for things that are very big or very small:</p>
+                        <div class="examples">
+                            <div class="example-card">
+                                <h3>Distance from Earth to Sun</h3>
+                                <p>1.5 × 10⁸ kilometers</p>
+                            </div>
+                            <div class="example-card">
+                                <h3>Size of a bacteria</h3>
+                                <p>1 × 10⁻⁶ meters</p>
+                            </div>
+                            <div class="example-card">
+                                <h3>Speed of light</h3>
+                                <p>3 × 10⁸ meters/second</p>
+                            </div>
+                            <div class="example-card">
+                                <h3>Mass of an electron</h3>
+                                <p>9.1 × 10⁻³¹ kilograms</p>
+                            </div>
+                        </div>
+                        
+                        <h3>Let's test our knowledge!</h3>
+                        <div class="quiz-container">
+                            <div id="realWorldQuizQuestion">The mass of Earth is 5.97 × 10²⁴ kilograms. What does this mean?</div>
+                            <div class="quiz-options">
+                                <button class="quiz-option" data-value="a">5.97 with 24 zeros after it</button>
+                                <button class="quiz-option" data-value="b">5.97 divided by 24</button>
+                                <button class="quiz-option" data-value="c">5.97 multiplied by 24</button>
+                                <button class="quiz-option" data-value="d">5.97 with 24 decimal places</button>
+                            </div>
+                            <div id="realWorldQuizFeedback" class="feedback"></div>
+                        </div>
+                        
+                        <div class="button-container">
+                            <button id="backToLevel4Button">Back</button>
+                            <button id="completeAdventureButton">Complete Adventure!</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="sandboxScreen" class="screen">
+                    <h1>Number Sandbox</h1>
+                    <p>Experiment with numbers and see how they look in scientific notation!</p>
+                    
+                    <div class="parameter-controls">
+                        <div class="control-group">
+                            <label for="numberInput">Enter a number:</label>
+                            <input type="number" id="numberInput" step="any">
+                            <button id="convertNumberButton">Convert</button>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="scientificInput">Scientific Notation:</label>
+                            <input type="number" id="coefficientInput" step="any" placeholder="a" style="width: 80px"> × 10^
+                            <input type="number" id="exponentInput" placeholder="b" style="width: 60px">
+                            <button id="convertScientificButton">Convert</button>
+                        </div>
+                    </div>
+                    
+                    <div class="sandbox-display" id="sandboxDisplay">Enter a number above to see its scientific notation!</div>
+                    
+                    <div class="sandbox">
+                        <h2>Adjust the parameters to see big and small numbers</h2>
+                        <div class="parameter-controls">
+                            <div class="control-group">
+                                <label for="rangeExponent">Power of 10:</label>
+                                <input type="range" id="rangeExponent" min="-10" max="10" value="0">
+                                <div class="value-display" id="exponentDisplay">10⁰ = 1</div>
+                            </div>
+                            
+                            <div class="control-group">
+                                <label for="rangeCoefficient">Coefficient (1-9.9):</label>
+                                <input type="range" id="rangeCoefficient" min="1" max="9.9" step="0.1" value="1">
+                                <div class="value-display" id="coefficientDisplay">1</div>
+                            </div>
+                        </div>
+                        
+                        <div class="sandbox-display" id="parameterDisplay">1 × 10⁰ = 1</div>
+                        
+                        <h3>Real World Comparison</h3>
+                        <div id="comparisonDisplay" class="sandbox-display">This number is about the same as 1 regular apple.</div>
+                    </div>
+                    
+                    <div class="button-container">
+                        <button id="backToHomeFromSandboxButton">Back to Home</button>
+                    </div>
+                </div>
+                
+                <div id="achievementsScreen" class="screen">
+                    <h1>Your Achievements</h1>
+                    <p>Collect all the badges by completing challenges!</p>
+                    
+                    <div class="achievements">
+                        <div class="achievement" id="achievement1">
+                            <div class="achievement-icon">🔍</div>
+                            <div class="achievement-name">Zero Counter</div>
+                            <div class="achievement-description">Count zeros in 5 big numbers</div>
+                        </div>
+                        
+                        <div class="achievement" id="achievement2">
+                            <div class="achievement-icon">💪</div>
+                            <div class="achievement-name">Power Master</div>
+                            <div class="achievement-description">Use powers of 10 correctly</div>
+                        </div>
+                        
+                        <div class="achievement" id="achievement3">
+                            <div class="achievement-icon">🔬</div>
+                            <div class="achievement-name">Tiny Explorer</div>
+                            <div class="achievement-description">Work with very small numbers</div>
+                        </div>
+                        
+                        <div class="achievement" id="achievement4">
+                            <div class="achievement-icon">🚀</div>
+                            <div class="achievement-name">Galaxy Navigator</div>
+                            <div class="achievement-description">Complete all levels</div>
+                        </div>
+                        
+                        <div class="achievement" id="achievement5">
+                            <div class="achievement-icon">👨‍🔬</div>
+                            <div class="achievement-name">Junior Scientist</div>
+                            <div class="achievement-description">Convert 10 numbers correctly</div>
+                        </div>
+                        
+                        <div class="achievement" id="achievement6">
+                            <div class="achievement-icon">🌟</div>
+                            <div class="achievement-name">Number Genius</div>
+                            <div class="achievement-description">Master scientific notation</div>
+                        </div>
+                    </div>
+                    
+                    <div class="button-container">
+                        <button id="backToHomeFromAchievementsButton">Back to Home</button>
+                    </div>
+                </div>
+                
+                <div id="helpScreen" class="screen">
+                    <h1>Help & Tips</h1>
+                    <h2>What is Scientific Notation?</h2>
+                    <p>Scientific notation is a way of writing numbers that are too large or too small in a more manageable form. It's written as:</p>
+                    <p class="highlight">a × 10^b</p>
+                    <p>Where 'a' is a number between 1 and 10, and 'b' is an integer (positive or negative whole number).</p>
+                    
+                    <h2>How to Convert Numbers to Scientific Notation</h2>
+                    <ol style="text-align: left; margin-left: 20px; margin-bottom: 20px;">
+                        <li>Move the decimal point so that there is exactly one non-zero digit to the left of it</li>
+                        <li>Count how many places you moved the decimal point</li>
+                        <li>If you moved it to the left, the exponent is positive</li>
+                        <li>If you moved it to the right, the exponent is negative</li>
+                    </ol>
+                    
+                    <h2>Examples</h2>
+                    <div class="examples">
+                        <div class="example-card">
+                            <h3>5,280 → Scientific Notation</h3>
+                            <p>5.28 × 10³</p>
+                        </div>
+                        <div class="example-card">
+                            <h3>0.00078 → Scientific Notation</h3>
+                            <p>7.8 × 10⁻⁴</p>
+                        </div>
+                    </div>
+                    
+                    <div class="button-container">
+                        <button id="backToHomeFromHelpButton">Back to Home</button>
+                    </div>
+                </div>
+                
+                <div id="settingsScreen" class="screen">
+                    <h1>Settings</h1>
+                    
+                    <div class="parameter-controls">
+                        <div class="control-group">
+                            <label for="difficultyLevel">Difficulty Level:</label>
+                            <select id="difficultyLevel">
+                                <option value="easy">Easy - For Young Kids</option>
+                                <option value="medium" selected>Medium - Age Appropriate</option>
+                                <option value="hard">Hard - Challenge Mode</option>
+                                <option value="expert">Expert - PhD Level Concepts</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="animationSpeed">Animation Speed:</label>
+                            <input type="range" id="animationSpeed" min="0.5" max="2" step="0.1" value="1">
+                            <div class="value-display">Normal</div>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="soundEffects">Sound Effects:</label>
+                            <input type="checkbox" id="soundEffects" checked>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="colorTheme">Color Theme:</label>
+                            <select id="colorTheme">
+                                <option value="default" selected>Space Theme</option>
+                                <option value="ocean">Ocean Adventure</option>
+                                <option value="jungle">Jungle Safari</option>
+                                <option value="candy">Candy Land</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <h2>Advanced Settings</h2>
+                    <div class="parameter-controls">
+                        <div class="control-group">
+                            <label for="scientificFormat">Scientific Notation Format:</label>
+                            <select id="scientificFormat">
+                                <option value="standard" selected>Standard (a × 10^b)</option>
+                                <option value="e">E Notation (a E b)</option>
+                                <option value="engineering">Engineering Notation (a × 10^3n)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="control-group">
+                            <label for="decimalPlaces">Decimal Places:</label>
+                            <input type="number" id="decimalPlaces" min="0" max="10" value="2">
+                        </div>
+                    </div>
+                    
+                    <div class="button-container">
+                        <button id="saveSettingsButton">Save Settings</button>
+                        <button id="resetSettingsButton">Reset to Default</button>
+                        <button id="backToHomeFromSettingsButton">Back to Home</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Dialog boxes -->
+    <div class="overlay" id="mainOverlay"></div>
+    <div class="dialog" id="completionDialog">
+        <div class="character character-professor">
+            <div class="hair"></div>
+            <div class="glasses"></div>
+        </div>
+        <h1>Congratulations!</h1>
+        <p>You've completed the Scientific Notation Adventure!</p>
+        <p>You've learned how to:</p>
+        <ul style="text-align: left; margin-left: 20px; margin-bottom: 20px;">
+            <li>Understand big and small numbers</li>
+            <li>Use powers of 10</li>
+            <li>Write numbers in scientific notation</li>
+            <li>Convert between standard and scientific notation</li>
+        </ul>
+        <p>You're now a Scientific Notation Master!</p>
+        <div class="button-container">
+            <button id="backToHomeFromCompletionButton">Back to Home</button>
+        </div>
+    </div>
+    
+    <script>
+        // Game state
+        const gameState = {
+            currentScreen: 'homeScreen',
+            currentLevel: 'level1',
+            achievements: {
+                1: false, // Zero Counter
+                2: false, // Power Master
+                3: false, // Tiny Explorer
+                4: false, // Galaxy Navigator
+                5: false, // Junior Scientist
+                6: false  // Number Genius
+            },
+            settings: {
+                difficulty: 'medium',
+                animationSpeed: 1,
+                soundEffects: true,
+                colorTheme: 'default',
+                scientificFormat: 'standard',
+                decimalPlaces: 2
+            },
+            progress: {
+                numbersConverted: 0,
+                quizzesCompleted: 0,
+                levelsCompleted: 0
+            },
+            stars: 0
+        };
+        
+        // P5.js sketch for background
+        let sketch = function(p) {
+            let stars = [];
+            
+            p.setup = function() {
+                p.createCanvas(p.windowWidth, p.windowHeight);
+                for (let i = 0; i < 200; i++) {
+                    stars.push({
+                        x: p.random(p.width),
+                        y: p.random(p.height),
+                        size: p.random(1, 3),
+                        speed: p.random(0.1, 0.5),
+                        brightness: p.random(100, 255)
+                    });
+                }
+            };
+            
+            p.draw = function() {
+                p.background(0, 0, 32);
+                
+                // Draw stars
+                for (let i = 0; i < stars.length; i++) {
+                    let star = stars[i];
+                    p.fill(255, 255, 255, star.brightness);
+                    p.noStroke();
+                    p.ellipse(star.x, star.y, star.size);
+                    
+                    // Twinkle effect
+                    star.brightness = p.sin(p.frameCount * 0.01 + i) * 50 + 200;
+                    
+                    // Move stars slowly
+                    star.y += star.speed * gameState.settings.animationSpeed;
+                    
+                    // Reset if off screen
+                    if (star.y > p.height) {
+                        star.y = 0;
+                        star.x = p.random(p.width);
+                    }
+                }
+                
+                // Draw nebula-like effects
+                for (let i = 0; i < 3; i++) {
+                    p.fill(93, 66, 245, 5);
+                    p.noStroke();
+                    p.ellipse(
+                        p.width / 4 + p.sin(p.frameCount * 0.001 + i) * 100,
+                        p.height / 2 + p.cos(p.frameCount * 0.001 + i) * 100,
+                        300 + p.sin(p.frameCount * 0.002) * 50
+                    );
+                    
+                    p.fill(245, 66, 93, 5);
+                    p.ellipse(
+                        p.width * 3/4 + p.cos(p.frameCount * 0.001 + i) * 100,
+                        p.height / 3 + p.sin(p.frameCount * 0.001 + i) * 100,
+                        250 + p.sin(p.frameCount * 0.002) * 40
+                    );
+                }
+            };
+            
+            p.windowResized = function() {
+                p.resizeCanvas(p.windowWidth, p.windowHeight);
+            };
+        };
+        
+        new p5(sketch, 'gameCanvas');
+        
+        // Screen navigation functions
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            gameState.currentScreen = screenId;
+        }
+        
+        function showLevel(levelId) {
+            document.querySelectorAll('.level').forEach(level => {
+                level.classList.remove('active');
+            });
+            document.getElementById(levelId).classList.add('active');
+            gameState.currentLevel = levelId;
+            updateProgressBar();
+        }
+        
+        function showDialog(dialogId) {
+            document.getElementById('mainOverlay').classList.add('active');
+            document.getElementById(dialogId).classList.add('active');
+        }
+        
+        function hideDialog(dialogId) {
+            document.getElementById('mainOverlay').classList.remove('active');
+            document.getElementById(dialogId).classList.remove('active');
+        }
+        
+        function updateProgressBar() {
+            const levels = ['level1', 'level2', 'level3', 'level4', 'level5'];
+            const currentIndex = levels.indexOf(gameState.currentLevel);
+            const progressPercent = (currentIndex / (levels.length - 1)) * 100;
+            document.getElementById('adventureProgress').style.width = `${progressPercent}%`;
+        }
+        
+        // Quiz functions
+        function checkZeroQuizAnswer(selectedValue) {
+            const correctAnswer = '4';
+            const feedbackElement = document.getElementById('zeroQuizFeedback');
+            
+            if (selectedValue === correctAnswer) {
+                feedbackElement.textContent = "Correct! 10,000 has 4 zeros.";
+                feedbackElement.className = "feedback positive";
+                unlockAchievement(1);
+                gameState.progress.quizzesCompleted++;
+                document.getElementById('nextToLevel2Button').disabled = false;
+            } else {
+                feedbackElement.textContent = "Try again! Count how many zeros are in 10,000.";
+                feedbackElement.className = "feedback negative";
+            }
+        }
+        
+        function checkPowersQuizAnswer(selectedValue) {
+            const correctAnswer = '100000';
+            const feedbackElement = document.getElementById('powersQuizFeedback');
+            
+            if (selectedValue === correctAnswer) {
+                feedbackElement.textContent = "Correct! 10⁵ = 100,000 (1 with 5 zeros)";
+                feedbackElement.className = "feedback positive";
+                unlockAchievement(2);
+                gameState.progress.quizzesCompleted++;
+                document.getElementById('nextToLevel3Button').disabled = false;
+            } else {
+                feedbackElement.textContent = "Try again! 10⁵ means 1 followed by 5 zeros.";
+                feedbackElement.className = "feedback negative";
+            }
+        }
+        
+        function checkSciNotationQuizAnswer(selectedValue) {
+            const correctAnswer = '8.4x10^6';
+            const feedbackElement = document.getElementById('sciNotationQuizFeedback');
+            
+            if (selectedValue === correctAnswer) {
+                feedbackElement.textContent = "Correct! 8,400,000 = 8.4 × 10⁶";
+                feedbackElement.className = "feedback positive";
+                gameState.progress.quizzesCompleted++;
+                document.getElementById('nextToLevel4Button').disabled = false;
+            } else {
+                feedbackElement.textContent = "Try again! Move the decimal point to get one digit before it, then count how many places you moved.";
+                feedbackElement.className = "feedback negative";
+            }
+        }
+        
+        function checkSmallNumQuizAnswer(selectedValue) {
+            const correctAnswer = '2.5x10^-3';
+            const feedbackElement = document.getElementById('smallNumQuizFeedback');
+            
+            if (selectedValue === correctAnswer) {
+                feedbackElement.textContent = "Correct! 0.0025 = 2.5 × 10⁻³";
+                feedbackElement.className = "feedback positive";
+                unlockAchievement(3);
+                gameState.progress.quizzesCompleted++;
+                document.getElementById('nextToLevel5Button').disabled = false;
+            } else {
+                feedbackElement.textContent = "Try again! Move the decimal point to get 2.5, then count how many places you moved to the right.";
+                feedbackElement.className = "feedback negative";
+            }
+        }
+        
+        function checkRealWorldQuizAnswer(selectedValue) {
+            const correctAnswer = 'a';
+            const feedbackElement = document.getElementById('realWorldQuizFeedback');
+            
+            if (selectedValue === correctAnswer) {
+                feedbackElement.textContent = "Correct! The Earth weighs 5,970,000,000,000,000,000,000,000 kilograms!";
+                feedbackElement.className = "feedback positive";
+                gameState.progress.quizzesCompleted++;
+                document.getElementById('completeAdventureButton').disabled = false;
+            } else {
+                feedbackElement.textContent = "Try again! Think about what the exponent (power of 10) means.";
+                feedbackElement.className = "feedback negative";
+            }
+        }
+        
+        // Sandbox functions
+        function convertToScientificNotation(number) {
+            if (number === 0) return "0 = 0 × 10⁰";
+            
+            const sign = number < 0 ? -1 : 1;
+            number = Math.abs(number);
+            
+            let exponent = Math.floor(Math.log10(number));
+            let coefficient = number / Math.pow(10, exponent);
+            
+            // Ensure coefficient is between 1 and 10
+            if (coefficient < 1) {
+                coefficient *= 10;
+                exponent -= 1;
+            }
+            
+            coefficient = (sign * coefficient).toFixed(gameState.settings.decimalPlaces);
+            
+            // Remove trailing zeros after decimal point
+            coefficient = coefficient.replace(/\.?0+$/, "");
+            
+            // Format the exponent with superscript
+            const superscriptMap = {
+                '-': '⁻',
+                '0': '⁰',
+                '1': '¹',
+                '2': '²',
+                '3': '³',
+                '4': '⁴',
+                '5': '⁵',
+                '6': '⁶',
+                '7': '⁷',
+                '8': '⁸',
+                '9': '⁹'
+            };
+            
+            let formattedExponent = '';
+            const exponentStr = exponent.toString();
+            for (let i = 0; i < exponentStr.length; i++) {
+                formattedExponent += superscriptMap[exponentStr[i]] || exponentStr[i];
+            }
+            
+            // Different formats based on settings
+            let result;
+            switch (gameState.settings.scientificFormat) {
+                case 'e':
+                    result = `${number} = ${coefficient}E${exponent}`;
+                    break;
+                case 'engineering':
+                    const engExponent = Math.floor(exponent / 3) * 3;
+                    const engCoefficient = (number / Math.pow(10, engExponent)).toFixed(gameState.settings.decimalPlaces);
+                    const formattedEngExponent = engExponent.toString().split('').map(d => superscriptMap[d] || d).join('');
+                    result = `${number} = ${engCoefficient} × 10${formattedEngExponent}`;
+                    break;
+                default:
+                    result = `${number} = ${coefficient} × 10${formattedExponent}`;
+            }
+            
+            gameState.progress.numbersConverted++;
+            checkNumberConversionAchievement();
+            
+            return result;
+        }
+        
+        function convertFromScientificNotation(coefficient, exponent) {
+            const result = coefficient * Math.pow(10, exponent);
+            gameState.progress.numbersConverted++;
+            checkNumberConversionAchievement();
+            return `${coefficient} × 10^${exponent} = ${result}`;
+        }
+        
+        function updateRealWorldComparison(number) {
+            const comparisonElement = document.getElementById('comparisonDisplay');
+            let comparison;
+            
+            const absNumber = Math.abs(number);
+            
+            if (absNumber === 0) {
+                comparison = "This is exactly zero!";
+            } else if (absNumber < 1e-15) {
+                comparison = "This is smaller than the size of a quark (subatomic particle)!";
+            } else if (absNumber < 1e-10) {
+                comparison = "This is about the size of an atom!";
+            } else if (absNumber < 1e-6) {
+                comparison = "This is about the size of a bacteria!";
+            } else if (absNumber < 1e-3) {
+                comparison = "This is about the thickness of a human hair!";
+            } else if (absNumber < 1) {
+                comparison = "This is smaller than an apple!";
+            } else if (absNumber < 10) {
+                comparison = "This is about the size of a few apples!";
+            } else if (absNumber < 100) {
+                comparison = "This is about the height of a child!";
+            } else if (absNumber < 1e3) {
+                comparison = "This is about the height of a tall building!";
+            } else if (absNumber < 1e6) {
+                comparison = "This is about the population of a small city!";
+            } else if (absNumber < 1e9) {
+                comparison = "This is about the population of a large country!";
+            } else if (absNumber < 1e12) {
+                comparison = "This is about the number of stars in a galaxy!";
+            } else if (absNumber < 1e15) {
+                comparison = "This is about the distance to nearby stars in kilometers!";
+            } else {
+                comparison = "This is an incredibly huge number, bigger than most things in the universe!";
+            }
+            
+            comparisonElement.textContent = comparison;
+        }
+        
+        // Achievement functions
+        function unlockAchievement(id) {
+            if (!gameState.achievements[id]) {
+                gameState.achievements[id] = true;
+                const achievement = document.getElementById(`achievement${id}`);
+                if (achievement) {
+                    achievement.classList.add('unlocked');
+                }
+                
+                // Check if all achievements are unlocked
+                checkMasterAchievement();
+            }
+        }
+        
+        function checkNumberConversionAchievement() {
+            if (gameState.progress.numbersConverted >= 10) {
+                unlockAchievement(5);
+            }
+        }
+        
+        function checkCompletionAchievement() {
+            gameState.progress.levelsCompleted++;
+            if (gameState.progress.levelsCompleted >= 5) {
+                unlockAchievement(4);
+            }
+        }
+        
+        function checkMasterAchievement() {
+            const achievementCount = Object.values(gameState.achievements).filter(a => a).length;
+            if (achievementCount >= 5) {
+                unlockAchievement(6);
+            }
+        }
+        
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Home screen buttons
+            document.getElementById('startAdventureButton').addEventListener('click', function() {
+                showScreen('adventureScreen');
+                showLevel('level1');
+            });
+            
+            document.getElementById('sandboxButton').addEventListener('click', function() {
+                showScreen('sandboxScreen');
+            });
+            
+            document.getElementById('achievementsButton').addEventListener('click', function() {
+                showScreen('achievementsScreen');
+            });
+            
+            // Menu bar buttons
+            document.getElementById('homeButton').addEventListener('click', function() {
+                showScreen('homeScreen');
+            });
+            
+            document.getElementById('helpButton').addEventListener('click', function() {
+                showScreen('helpScreen');
+            });
+            
+            document.getElementById('settingsButton').addEventListener('click', function() {
+                showScreen('settingsScreen');
+            });
+            
+            // Level navigation buttons
+            document.getElementById('nextToLevel2Button').addEventListener('click', function() {
+                showLevel('level2');
+            });
+            
+            document.getElementById('backToLevel1Button').addEventListener('click', function() {
+                showLevel('level1');
+            });
+            
+            document.getElementById('nextToLevel3Button').addEventListener('click', function() {
+                showLevel('level3');
+            });
+            
+            document.getElementById('backToLevel2Button').addEventListener('click', function() {
+                showLevel('level2');
+            });
+            
+            document.getElementById('nextToLevel4Button').addEventListener('click', function() {
+                showLevel('level4');
+            });
+            
+            document.getElementById('backToLevel3Button').addEventListener('click', function() {
+                showLevel('level3');
+            });
+            
+            document.getElementById('nextToLevel5Button').addEventListener('click', function() {
+                showLevel('level5');
+            });
+            
+            document.getElementById('backToLevel4Button').addEventListener('click', function() {
+                showLevel('level4');
+            });
+            
+            document.getElementById('completeAdventureButton').addEventListener('click', function() {
+                checkCompletionAchievement();
+                showDialog('completionDialog');
+            });
+            
+            // Dialog buttons
+            document.getElementById('backToHomeFromCompletionButton').addEventListener('click', function() {
+                hideDialog('completionDialog');
+                showScreen('homeScreen');
+            });
+            
+            // Back buttons
+            document.getElementById('backToHomeFromSandboxButton').addEventListener('click', function() {
+                showScreen('homeScreen');
+            });
+            
+            document.getElementById('backToHomeFromAchievementsButton').addEventListener('click', function() {
+                showScreen('homeScreen');
+            });
+            
+            document.getElementById('backToHomeFromHelpButton').addEventListener('click', function() {
+                showScreen('homeScreen');
+            });
+            
+            document.getElementById('backToHomeFromSettingsButton').addEventListener('click', function() {
+                showScreen('homeScreen');
+            });
+            
+            // Quiz option buttons
+            document.querySelectorAll('#level1 .quiz-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    checkZeroQuizAnswer(this.dataset.value);
+                });
+            });
+            
+            document.querySelectorAll('#level2 .quiz-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    checkPowersQuizAnswer(this.dataset.value);
+                });
+            });
+            
+            document.querySelectorAll('#level3 .quiz-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    checkSciNotationQuizAnswer(this.dataset.value);
+                });
+            });
+            
+            document.querySelectorAll('#level4 .quiz-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    checkSmallNumQuizAnswer(this.dataset.value);
+                });
+            });
+            
+            document.querySelectorAll('#level5 .quiz-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    checkRealWorldQuizAnswer(this.dataset.value);
+                });
+            });
+            
+            // Sandbox controls
+            document.getElementById('convertNumberButton').addEventListener('click', function() {
+                const numberInput = document.getElementById('numberInput');
+                const number = parseFloat(numberInput.value);
+                
+                if (!isNaN(number)) {
+                    const result = convertToScientificNotation(number);
+                    document.getElementById('sandboxDisplay').textContent = result;
+                    updateRealWorldComparison(number);
+                } else {
+                    document.getElementById('sandboxDisplay').textContent = "Please enter a valid number!";
+                }
+            });
+            
+            document.getElementById('convertScientificButton').addEventListener('click', function() {
+                const coefficient = parseFloat(document.getElementById('coefficientInput').value);
+                const exponent = parseInt(document.getElementById('exponentInput').value);
+                
+                if (!isNaN(coefficient) && !isNaN(exponent)) {
+                    const result = convertFromScientificNotation(coefficient, exponent);
+                    document.getElementById('sandboxDisplay').textContent = result;
+                    updateRealWorldComparison(coefficient * Math.pow(10, exponent));
+                } else {
+                    document.getElementById('sandboxDisplay').textContent = "Please enter valid values for coefficient and exponent!";
+                }
+            });
+            
+            // Parameter slider controls
+            document.getElementById('rangeExponent').addEventListener('input', function() {
+                const exponent = parseInt(this.value);
+                
+                // Create superscript exponent
+                const superscriptMap = {
+                    '-': '⁻',
+                    '0': '⁰',
+                    '1': '¹',
+                    '2': '²',
+                    '3': '³',
+                    '4': '⁴',
+                    '5': '⁵',
+                    '6': '⁶',
+                    '7': '⁷',
+                    '8': '⁸',
+                    '9': '⁹'
+                };
+                
+                let formattedExponent = '';
+                const exponentStr = exponent.toString();
+                for (let i = 0; i < exponentStr.length; i++) {
+                    formattedExponent += superscriptMap[exponentStr[i]] || exponentStr[i];
+                }
+                
+                document.getElementById('exponentDisplay').textContent = `10${formattedExponent} = ${Math.pow(10, exponent)}`;
+                
+                updateParameterDisplay();
+            });
+            
+            document.getElementById('rangeCoefficient').addEventListener('input', function() {
+                const coefficient = parseFloat(this.value);
+                document.getElementById('coefficientDisplay').textContent = coefficient.toFixed(1);
+                updateParameterDisplay();
+            });
+            
+            function updateParameterDisplay() {
+                const coefficient = parseFloat(document.getElementById('rangeCoefficient').value);
+                const exponent = parseInt(document.getElementById('rangeExponent').value);
+                
+                // Create superscript exponent
+                const superscriptMap = {
+                    '-': '⁻',
+                    '0': '⁰',
+                    '1': '¹',
+                    '2': '²',
+                    '3': '³',
+                    '4': '⁴',
+                    '5': '⁵',
+                    '6': '⁶',
+                    '7': '⁷',
+                    '8': '⁸',
+                    '9': '⁹'
+                };
+                
+                let formattedExponent = '';
+                const exponentStr = exponent.toString();
+                for (let i = 0; i < exponentStr.length; i++) {
+                    formattedExponent += superscriptMap[exponentStr[i]] || exponentStr[i];
+                }
+                
+                const result = coefficient * Math.pow(10, exponent);
+                document.getElementById('parameterDisplay').textContent = `${coefficient.toFixed(1)} × 10${formattedExponent} = ${result}`;
+                
+                updateRealWorldComparison(result);
+            }
+            
+            // Settings controls
+            document.getElementById('saveSettingsButton').addEventListener('click', function() {
+                // Save difficulty level
+                gameState.settings.difficulty = document.getElementById('difficultyLevel').value;
+                
+                // Save animation speed
+                gameState.settings.animationSpeed = parseFloat(document.getElementById('animationSpeed').value);
+                
+                // Save sound effects setting
+                gameState.settings.soundEffects = document.getElementById('soundEffects').checked;
+                
+                // Save color theme
+                gameState.settings.colorTheme = document.getElementById('colorTheme').value;
+                
+                // Save scientific format
+                gameState.settings.scientificFormat = document.getElementById('scientificFormat').value;
+                
+                // Save decimal places
+                gameState.settings.decimalPlaces = parseInt(document.getElementById('decimalPlaces').value);
+                
+                // Show confirmation
+                alert('Settings saved!');
+            });
+            
+            document.getElementById('resetSettingsButton').addEventListener('click', function() {
+                // Reset to defaults
+                document.getElementById('difficultyLevel').value = 'medium';
+                document.getElementById('animationSpeed').value = 1;
+                document.getElementById('soundEffects').checked = true;
+                document.getElementById('colorTheme').value = 'default';
+                document.getElementById('scientificFormat').value = 'standard';
+                document.getElementById('decimalPlaces').value = 2;
+                
+                // Update game state
+                gameState.settings.difficulty = 'medium';
+                gameState.settings.animationSpeed = 1;
+                gameState.settings.soundEffects = true;
+                gameState.settings.colorTheme = 'default';
+                gameState.settings.scientificFormat = 'standard';
+                gameState.settings.decimalPlaces = 2;
+                
+                // Show confirmation
+                alert('Settings reset to default!');
+            });
+            
+            // Initialize game elements
+            document.getElementById('nextToLevel2Button').disabled = true;
+            document.getElementById('nextToLevel3Button').disabled = true;
+            document.getElementById('nextToLevel4Button').disabled = true;
+            document.getElementById('nextToLevel5Button').disabled = true;
+            document.getElementById('completeAdventureButton').disabled = true;
+            
+            // Set initial parameter display
+            updateParameterDisplay();
+        });
+    </script>
+</body>
+</html>

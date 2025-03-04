@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vector vs Scalar Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+        #game-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #ff6b6b;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        h2 {
+            color: #4ecdc4;
+            font-size: 1.8em;
+        }
+        p {
+            font-size: 1.2em;
+            line-height: 1.5;
+            color: #333;
+        }
+        .character {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .character-image {
+            width: 120px;
+            height: 120px;
+            border-radius: 60px;
+            margin-right: 20px;
+            background-color: #ffd166;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 3em;
+        }
+        .character-speech {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            position: relative;
+            flex: 1;
+        }
+        .character-speech:before {
+            content: "";
+            position: absolute;
+            left: -20px;
+            top: 30px;
+            border: 10px solid transparent;
+            border-right-color: #f8f9fa;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 15px;
+        }
+        .quiz-container {
+            background-color: #e0f7fa;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+        .quiz-question {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+        }
+        .quiz-option {
+            margin: 5px 0;
+            padding: 10px;
+            background-color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .quiz-option:hover {
+            background-color: #e3f2fd;
+        }
+        .quiz-option.correct {
+            background-color: #a5d6a7;
+        }
+        .quiz-option.incorrect {
+            background-color: #ef9a9a;
+        }
+        .quiz-feedback {
+            margin-top: 15px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px;
+            display: none;
+        }
+        .playground {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #fff8e1;
+            border-radius: 15px;
+            text-align: center;
+        }
+        .canvas-container {
+            margin: 20px auto;
+            position: relative;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .control {
+            background-color: white;
+            padding: 10px;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .control label {
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        button {
+            background-color: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3bafaa;
+        }
+        .tab-container {
+            margin: 20px 0;
+        }
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #ddd;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #f1f1f1;
+            border-radius: 10px 10px 0 0;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        .tab.active {
+            background-color: #4ecdc4;
+            color: white;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 0 0 10px 10px;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .progress-container {
+            width: 100%;
+            height: 30px;
+            background-color: #f1f1f1;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #4caf50;
+            border-radius: 15px;
+            transition: width 0.5s;
+        }
+        .achievement {
+            margin: 10px;
+            padding: 15px;
+            background-color: #fff3cd;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+        }
+        .achievement-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <h1>Vector vs Scalar Adventure</h1>
+        
+        <div class="character">
+            <div class="character-image">🦊</div>
+            <div class="character-speech">
+                <p>Hi there! I'm Vicky Vector! Today, my friend Sam Scalar and I will take you on an adventure to learn about different kinds of measurements!</p>
+            </div>
+        </div>
+        
+        <div class="character">
+            <div class="character-image">🐢</div>
+            <div class="character-speech">
+                <p>Hello! I'm Sam Scalar! Do you know that some things we measure just tell us "how much" while others tell us "how much AND which way"? Let's explore together!</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>What are Scalars?</h2>
+            <div class="character">
+                <div class="character-image">🐢</div>
+                <div class="character-speech">
+                    <p>Scalar measurements are simple! They just tell us "how much" of something we have.</p>
+                    <p>For example:</p>
+                    <ul>
+                        <li>How <strong>hot</strong> is it? 75 degrees! (Temperature)</li>
+                        <li>How <strong>fast</strong> are you going? 5 steps per second! (Speed)</li>
+                        <li>How <strong>heavy</strong> is your toy? 2 pounds! (Weight)</li>
+                        <li>How <strong>much time</strong> has passed? 10 minutes! (Time)</li>
+                    </ul>
+                    <p>These are all scalar measurements because they only tell us the amount!</p>
+                </div>
+            </div>
+            
+            <div class="playground">
+                <h3>Scalar Playground</h3>
+                <p>Move the sliders to see how scalar measurements work!</p>
+                <div class="canvas-container" id="scalar-canvas"></div>
+                <div class="controls">
+                    <div class="control">
+                        <label for="temperature">Temperature</label>
+                        <input type="range" id="temperature" min="0" max="100" value="50">
+                        <span id="temperature-value">50 degrees</span>
+                    </div>
+                    <div class="control">
+                        <label for="speed">Speed</label>
+                        <input type="range" id="speed" min="0" max="100" value="50">
+                        <span id="speed-value">50 mph</span>
+                    </div>
+                    <div class="control">
+                        <label for="weight">Weight</label>
+                        <input type="range" id="weight" min="0" max="100" value="50">
+                        <span id="weight-value">50 pounds</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>What are Vectors?</h2>
+            <div class="character">
+                <div class="character-image">🦊</div>
+                <div class="character-speech">
+                    <p>Vector measurements are super interesting! They tell us "how much" AND "which way"!</p>
+                    <p>For example:</p>
+                    <ul>
+                        <li>How <strong>fast</strong> AND <strong>which direction</strong> are you moving? 5 steps per second <strong>to the right</strong>! (Velocity)</li>
+                        <li><strong>How hard</strong> AND <strong>which way</strong> are you pushing? 10 pounds <strong>upward</strong>! (Force)</li>
+                        <li><strong>How far</strong> AND <strong>which direction</strong> did you travel? 20 meters <strong>north</strong>! (Displacement)</li>
+                    </ul>
+                    <p>These are all vector measurements because they tell us both the amount AND the direction!</p>
+                </div>
+            </div>
+            
+            <div class="playground">
+                <h3>Vector Playground</h3>
+                <p>Move the sliders and pick directions to see how vector measurements work!</p>
+                <div class="canvas-container" id="vector-canvas"></div>
+                <div class="controls">
+                    <div class="control">
+                        <label for="velocity-magnitude">Velocity (Magnitude)</label>
+                        <input type="range" id="velocity-magnitude" min="0" max="100" value="50">
+                        <span id="velocity-magnitude-value">50 mph</span>
+                    </div>
+                    <div class="control">
+                        <label for="velocity-direction">Velocity (Direction)</label>
+                        <input type="range" id="velocity-direction" min="0" max="360" value="0">
+                        <span id="velocity-direction-value">0 degrees</span>
+                    </div>
+                    <div class="control">
+                        <label for="force-magnitude">Force (Magnitude)</label>
+                        <input type="range" id="force-magnitude" min="0" max="100" value="50">
+                        <span id="force-magnitude-value">50 newtons</span>
+                    </div>
+                    <div class="control">
+                        <label for="force-direction">Force (Direction)</label>
+                        <input type="range" id="force-direction" min="0" max="360" value="90">
+                        <span id="force-direction-value">90 degrees</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Let's Compare Them!</h2>
+            <div class="playground">
+                <h3>Vector vs Scalar Comparison</h3>
+                <p>See the difference between vectors and scalars!</p>
+                <div class="tab-container">
+                    <div class="tabs">
+                        <div class="tab active" data-tab="speed-velocity">Speed vs Velocity</div>
+                        <div class="tab" data-tab="distance-displacement">Distance vs Displacement</div>
+                        <div class="tab" data-tab="mass-weight">Mass vs Weight</div>
+                    </div>
+                    
+                    <div class="tab-content active" id="speed-velocity">
+                        <div class="character">
+                            <div class="character-image">🐢</div>
+                            <div class="character-speech">
+                                <p><strong>Speed</strong> is a scalar. It tells us how fast something is moving, but not in which direction.</p>
+                                <p>Example: "The car is moving at 30 miles per hour."</p>
+                            </div>
+                        </div>
+                        <div class="character">
+                            <div class="character-image">🦊</div>
+                            <div class="character-speech">
+                                <p><strong>Velocity</strong> is a vector. It tells us how fast something is moving AND in which direction.</p>
+                                <p>Example: "The car is moving at 30 miles per hour <strong>to the north</strong>."</p>
+                            </div>
+                        </div>
+                        <div class="canvas-container" id="speed-velocity-canvas"></div>
+                        <div class="controls">
+                            <div class="control">
+                                <label for="comparison-speed">Speed</label>
+                                <input type="range" id="comparison-speed" min="0" max="100" value="50">
+                                <span id="comparison-speed-value">50 mph</span>
+                            </div>
+                            <div class="control">
+                                <label for="comparison-direction">Direction</label>
+                                <input type="range" id="comparison-direction" min="0" max="360" value="0">
+                                <span id="comparison-direction-value">0 degrees</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="tab-content" id="distance-displacement">
+                        <div class="character">
+                            <div class="character-image">🐢</div>
+                            <div class="character-speech">
+                                <p><strong>Distance</strong> is a scalar. It tells us the total length of the path traveled, but not the direction.</p>
+                                <p>Example: "I walked 2 miles today."</p>
+                            </div>
+                        </div>
+                        <div class="character">
+                            <div class="character-image">🦊</div>
+                            <div class="character-speech">
+                                <p><strong>Displacement</strong> is a vector. It tells us the straight-line distance from start to finish AND the direction.</p>
+                                <p>Example: "I ended up 1 mile <strong>east</strong> of where I started."</p>
+                            </div>
+                        </div>
+                        <div class="canvas-container" id="distance-displacement-canvas"></div>
+                        <button id="walk-button">Go for a Walk!</button>
+                    </div>
+                    
+                    <div class="tab-content" id="mass-weight">
+                        <div class="character">
+                            <div class="character-image">🐢</div>
+                            <div class="character-speech">
+                                <p><strong>Mass</strong> is a scalar. It tells us how much matter something has, no matter where it is.</p>
+                                <p>Example: "The toy has a mass of 1 kilogram."</p>
+                            </div>
+                        </div>
+                        <div class="character">
+                            <div class="character-image">🦊</div>
+                            <div class="character-speech">
+                                <p><strong>Weight</strong> is a vector. It's the force of gravity pulling on an object's mass AND it points toward the center of the Earth.</p>
+                                <p>Example: "The toy's weight is 9.8 newtons <strong>downward</strong>."</p>
+                            </div>
+                        </div>
+                        <div class="canvas-container" id="mass-weight-canvas"></div>
+                        <div class="controls">
+                            <div class="control">
+                                <label for="comparison-mass">Mass</label>
+                                <input type="range" id="comparison-mass" min="1" max="10" value="5">
+                                <span id="comparison-mass-value">5 kg</span>
+                            </div>
+                            <div class="control">
+                                <label for="comparison-planet">Planet</label>
+                                <select id="comparison-planet">
+                                    <option value="earth">Earth</option>
+                                    <option value="moon">Moon</option>
+                                    <option value="mars">Mars</option>
+                                    <option value="jupiter">Jupiter</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Quiz Time!</h2>
+            <div class="character">
+                <div class="character-image">🦊</div>
+                <div class="character-speech">
+                    <p>Let's see what you've learned! Take this quiz to test your knowledge about vectors and scalars!</p>
+                </div>
+            </div>
+            
+            <div class="quiz-container" id="quiz">
+                <div class="quiz-question" id="question"></div>
+                <div class="quiz-options" id="options"></div>
+                <div class="quiz-feedback" id="feedback"></div>
+                <button id="next-question" style="display:none;">Next Question</button>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="quiz-progress"></div>
+            </div>
+            
+            <div class="achievement" id="quiz-complete">
+                <div class="achievement-icon">🏆</div>
+                <h3>Quiz Master!</h3>
+                <p>You've completed the quiz and demonstrated your understanding of vectors and scalars! Great job!</p>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Advanced Playground</h2>
+            <div class="character">
+                <div class="character-image">🦊</div>
+                <div class="character-speech">
+                    <p>Now that you understand the basics, let's play with some more advanced concepts! You can adjust these parameters to see how vectors and scalars interact in the real world!</p>
+                </div>
+            </div>
+            
+            <div class="playground">
+                <h3>Vector Addition</h3>
+                <p>See what happens when we add two vectors together!</p>
+                <div class="canvas-container" id="vector-addition-canvas"></div>
+                <div class="controls">
+                    <div class="control">
+                        <label for="vector1-magnitude">Vector 1 Magnitude</label>
+                        <input type="range" id="vector1-magnitude" min="0" max="100" value="50">
+                        <span id="vector1-magnitude-value">50</span>
+                    </div>
+                    <div class="control">
+                        <label for="vector1-direction">Vector 1 Direction</label>
+                        <input type="range" id="vector1-direction" min="0" max="360" value="0">
+                        <span id="vector1-direction-value">0 degrees</span>
+                    </div>
+                    <div class="control">
+                        <label for="vector2-magnitude">Vector 2 Magnitude</label>
+                        <input type="range" id="vector2-magnitude" min="0" max="100" value="50">
+                        <span id="vector2-magnitude-value">50</span>
+                    </div>
+                    <div class="control">
+                        <label for="vector2-direction">Vector 2 Direction</label>
+                        <input type="range" id="vector2-direction" min="0" max="360" value="90">
+                        <span id="vector2-direction-value">90 degrees</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="playground">
+                <h3>Real World Example: The Boat Crossing a River</h3>
+                <p>Help the boat cross the river by adjusting its engine power and direction!</p>
+                <div class="canvas-container" id="boat-river-canvas"></div>
+                <div class="controls">
+                    <div class="control">
+                        <label for="river-speed">River Current Speed</label>
+                        <input type="range" id="river-speed" min="0" max="10" value="5">
+                        <span id="river-speed-value">5 mph</span>
+                    </div>
+                    <div class="control">
+                        <label for="boat-speed">Boat Engine Power</label>
+                        <input type="range" id="boat-speed" min="0" max="20" value="10">
+                        <span id="boat-speed-value">10 mph</span>
+                    </div>
+                    <div class="control">
+                        <label for="boat-direction">Boat Direction</label>
+                        <input type="range" id="boat-direction" min="0" max="360" value="0">
+                        <span id="boat-direction-value">0 degrees</span>
+                    </div>
+                </div>
+                <button id="start-boat">Start Boat</button>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Final Challenge!</h2>
+            <div class="character">
+                <div class="character-image">🐢</div>
+                <div class="character-speech">
+                    <p>Now for your final challenge! Help the space explorer navigate through space by using your knowledge of vectors and scalars!</p>
+                </div>
+            </div>
+            
+            <div class="playground">
+                <h3>Space Explorer Mission</h3>
+                <p>Guide the spaceship to the planet by setting the right velocity vector!</p>
+                <div class="canvas-container" id="space-explorer-canvas"></div>
+                <div class="controls">
+                    <div class="control">
+                        <label for="spaceship-speed">Spaceship Speed</label>
+                        <input type="range" id="spaceship-speed" min="0" max="20" value="10">
+                        <span id="spaceship-speed-value">10 units/s</span>
+                    </div>
+                    <div class="control">
+                        <label for="spaceship-direction">Spaceship Direction</label>
+                        <input type="range" id="spaceship-direction" min="0" max="360" value="0">
+                        <span id="spaceship-direction-value">0 degrees</span>
+                    </div>
+                </div>
+                <button id="launch-spaceship">Launch Spaceship</button>
+                <div class="achievement" id="mission-complete">
+                    <div class="achievement-icon">🚀</div>
+                    <h3>Mission Accomplished!</h3>
+                    <p>You've successfully navigated through space using vectors! You're a true vector master!</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2>Congratulations!</h2>
+            <div class="character">
+                <div class="character-image">🦊</div>
+                <div class="character-speech">
+                    <p>Wow! You've learned so much about vectors and scalars today! You now understand that:</p>
+                    <ul>
+                        <li>Scalars have only magnitude (how much)</li>
+                        <li>Vectors have both magnitude (how much) AND direction (which way)</li>
+                        <li>Some examples of scalars are: temperature, speed, distance, time, and mass</li>
+                        <li>Some examples of vectors are: velocity, force, displacement, and weight</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="character">
+                <div class="character-image">🐢</div>
+                <div class="character-speech">
+                    <p>You're now ready to recognize vectors and scalars in your everyday life! Remember:</p>
+                    <ul>
+                        <li>When something only tells you "how much" - it's a scalar!</li>
+                        <li>When something tells you "how much" AND "which way" - it's a vector!</li>
+                    </ul>
+                    <p>Keep exploring the world of mathematics and physics!</p>
+                </div>
+            </div>
+            
+            <div class="achievement" id="game-complete">
+                <div class="achievement-icon">🎓</div>
+                <h3>Vector & Scalar Expert!</h3>
+                <p>You've completed all the activities and are now a Vector and Scalar Expert! Great job!</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Quiz questions
+        const quizQuestions = [
+            {
+                question: "Which of these is a scalar measurement?",
+                options: ["Temperature", "Force", "Velocity", "Displacement"],
+                correctAnswer: 0,
+                feedback: "That's right! Temperature is a scalar because it only tells us how hot or cold something is, not the direction."
+            },
+            {
+                question: "Which of these is a vector measurement?",
+                options: ["Time", "Distance", "Speed", "Velocity"],
+                correctAnswer: 3,
+                feedback: "Correct! Velocity is a vector because it tells us both speed AND direction."
+            },
+            {
+                question: "If you walk 3 miles east and then 4 miles north, your total distance traveled is:",
+                options: ["7 miles", "5 miles", "1 mile", "0 miles"],
+                correctAnswer: 0,
+                feedback: "Great job! The total distance is 3 + 4 = 7 miles. This is a scalar measurement."
+            },
+            {
+                question: "In the scenario above, your displacement would be:",
+                options: ["7 miles", "5 miles northeast", "1 mile", "0 miles"],
+                correctAnswer: 1,
+                feedback: "Correct! Your displacement is 5 miles northeast (using the Pythagorean theorem: √(3² + 4²) = 5). This is a vector measurement."
+            },
+            {
+                question: "Which of these pairs contains ONLY scalar quantities?",
+                options: ["Speed and velocity", "Mass and weight", "Temperature and time", "Force and displacement"],
+                correctAnswer: 2,
+                feedback: "That's right! Both temperature and time are scalars - they only have magnitude, not direction."
+            }
+        ];
+
+        // Global variables
+        let currentQuestionIndex = 0;
+        let quizScore = 0;
+        let scalarSketch, vectorSketch, speedVelocitySketch, distanceDisplacementSketch;
+        let massWeightSketch, vectorAdditionSketch, boatRiverSketch, spaceExplorerSketch;
+        
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+        
+        // Quiz functionality
+        function loadQuestion() {
+            const questionEl = document.getElementById('question');
+            const optionsEl = document.getElementById('options');
+            const feedbackEl = document.getElementById('feedback');
+            const nextButton = document.getElementById('next-question');
+            
+            // Clear previous question
+            questionEl.textContent = '';
+            optionsEl.innerHTML = '';
+            feedbackEl.style.display = 'none';
+            feedbackEl.textContent = '';
+            nextButton.style.display = 'none';
+            
+            // Check if quiz is finished
+            if (currentQuestionIndex >= quizQuestions.length) {
+                document.getElementById('quiz').innerHTML = `
+                    <h3>Quiz Complete!</h3>
+                    <p>Your score: ${quizScore} out of ${quizQuestions.length}</p>
+                `;
+                document.getElementById('quiz-complete').style.display = 'block';
+                document.getElementById('quiz-progress').style.width = '100%';
+                return;
+            }
+            
+            // Update progress bar
+            const progressPercentage = (currentQuestionIndex / quizQuestions.length) * 100;
+            document.getElementById('quiz-progress').style.width = `${progressPercentage}%`;
+            
+            // Load current question
+            const currentQuestion = quizQuestions[currentQuestionIndex];
+            questionEl.textContent = currentQuestion.question;
+            
+            // Create option elements
+            currentQuestion.options.forEach((option, index) => {
+                const optionEl = document.createElement('div');
+                optionEl.classList.add('quiz-option');
+                optionEl.textContent = option;
+                optionEl.dataset.index = index;
+                optionEl.addEventListener('click', handleOptionClick);
+                optionsEl.appendChild(optionEl);
+            });
+        }
+        
+        function handleOptionClick(e) {
+            const selectedOptionIndex = parseInt(e.target.dataset.index);
+            const currentQuestion = quizQuestions[currentQuestionIndex];
+            const feedbackEl = document.getElementById('feedback');
+            const nextButton = document.getElementById('next-question');
+            
+            // Disable all options
+            document.querySelectorAll('.quiz-option').forEach(option => {
+                option.removeEventListener('click', handleOptionClick);
+            });
+            
+            // Check if answer is correct
+            if (selectedOptionIndex === currentQuestion.correctAnswer) {
+                e.target.classList.add('correct');
+                feedbackEl.textContent = currentQuestion.feedback;
+                feedbackEl.style.backgroundColor = '#e8f5e9';
+                quizScore++;
+            } else {
+                e.target.classList.add('incorrect');
+                document.querySelectorAll('.quiz-option')[currentQuestion.correctAnswer].classList.add('correct');
+                feedbackEl.textContent = "Not quite. " + currentQuestion.feedback;
+                feedbackEl.style.backgroundColor = '#ffebee';
+            }
+            
+            feedbackEl.style.display = 'block';
+            nextButton.style.display = 'block';
+        }
+        
+        document.getElementById('next-question').addEventListener('click', () => {
+            currentQuestionIndex++;
+            loadQuestion();
+        });
+        
+        // P5.js sketches
+        function setupP5Sketches() {
+            // Scalar Sketch
+            scalarSketch = new p5(function(p) {
+                let thermometer, speedometer, weightScale;
+                let temperature, speed, weight;
+                
+                p.setup = function() {
+                    const canvas = p.createCanvas(400, 300);
+                    canvas.parent('scalar-canvas');
+                    
+                    temperature = 50;
+                    speed = 50;
+                    weight = 50;
+                    
+                    // Create thermometer, speedometer, and weight scale objects
+                    thermometer = {
+                        x: 100,
+                        y: 150,
+                        width: 20,
+                        height: 200,
+                        draw: function() {
+                            // Thermometer base
+                            p.fill(200);
+                            p.stroke(0);
+                            p.rect(this.x - 10, this.y, this.width, this.height);
+                            
+                            // Thermometer liquid
+                            p.fill(255, 0, 0);
+                            p.noStroke();
+                            const liquidHeight = (temperature / 100) * this.height;
+                            p.rect(this.x - 10, this.y + this.height - liquidHeight, this.width, liquidHeight);
+                            
+                            // Thermometer bulb
+                            p.ellipse(this.x, this.y + this.height + 10, 30, 30);
+                            
+                            // Label
+                            p.fill(0);
+                            p.textAlign(p.CENTER);
+                            p.text("Temperature", this.x, this.y - 10);
+                            p.text(temperature + "°", this.x, this.y + this.height + 40);
+                        }
+                    };
+                    
+                    speedometer = {
+                        x: 200,
+                        y: 150,
+                        radius: 50,
+                        draw: function() {
+                            // Speedometer face
+                            p.fill(255);
+                            p.stroke(0);
+                            p.ellipse(this.x, this.y, this.radius * 2, this.radius * 2);
+                            
+                            // Speedometer needle
+                            p.push();
+                            p.translate(this.x, this.y);
+                            p.rotate(p.map(speed, 0, 100, -p.PI/4, p.PI/4));
+                            p.stroke(255, 0, 0);
+                            p.strokeWeight(2);
+                            p.line(0, 0, 0, -this.radius);
+                            p.pop();
+                            
+                            // Label
+                            p.fill(0);
+                            p.textAlign(p.CENTER);
+                            p.text("Speed", this.x, this.y - this.radius - 10);
+                            p.text(speed + " mph", this.x, this.y + this.radius + 20);
+                        }
+                    };
+                    
+                    weightScale = {
+                        x: 300,
+                        y: 150,
+                        width: 80,
+                        height: 20,
+                        draw: function() {
+                            // Scale platform
+                            p.fill(200);
+                            p.stroke(0);
+                            p.rect(this.x - this.width/2, this.y, this.width, this.height);
+                            
+                            // Weight object
+                            const objectSize = p.map(weight, 0, 100, 10, 50);
+                            p.fill(100, 100, 255);
+                            p.rect(this.x - objectSize/2, this.y - objectSize, objectSize, objectSize);
+                            
+                            // Scale base
+                            p.fill(100);
+                            p.rect(this.x - 10, this.y + this.height, 20, 30);
+                            
+                            // Label
+                            p.fill(0);
+                            p.textAlign(p.CENTER);
+                            p.text("Weight", this.x, this.y + 70);
+                            p.text(weight + " lbs", this.x, this.y + 90);
+                        }
+                    };
+                };
+                
+                p.draw = function() {
+                    p.background(240);
+                    thermometer.draw();
+                    speedometer.draw();
+                    weightScale.draw();
+                };
+                
+                p.updateValues = function(temp, spd, wgt) {
+                    temperature = temp;
+                    speed = spd;
+                    weight = wgt;
+                };
+            });
+            
+            // Vector Sketch
+            vectorSketch = new p5(function(p) {
+                let velocityVector, forceVector;
+                let velocityMagnitude, velocityDirection, forceMagnitude, forceDirection;
+                
+                p.setup = function() {
+                    const canvas = p.createCanvas(400, 300);
+                    canvas.parent('vector-canvas');
+                    
+                    velocityMagnitude = 50;
+                    velocityDirection = 0;
+                    forceMagnitude = 50;
+                    forceDirection = 90;
+                };
+                
+                p.draw = function() {
+                    p.background(240);
+                    
+                    // Draw grid
+                    p.stroke(200);
+                    for (let i = 0; i < p.width; i += 20) {
+                        p.line(i, 0, i, p.height);
+                    }
+                    for (let i = 0; i < p.height; i += 20) {
+                        p.line(0, i, p.width, i);
+                    }
+                    
+                    // Origin point
+                    const originX = p.width / 4;
+                    const originY = p.height / 2;
+                    
+                    // Draw velocity vector
+                    p.push();
+                    p.translate(originX, originY);
+                    p.stroke(255, 0, 0);
+                    p.strokeWeight(2);
+                    p.fill(255, 0, 0, 100);
+                    
+                    const velAngle = p.radians(velocityDirection);
+                    const velX = velocityMagnitude * p.cos(velAngle);
+                    const velY = velocityMagnitude * p.sin(velAngle);
+                    
+                    p.line(0, 0, velX, velY);
+                    
+                    // Arrow head
+                    p.push();
+                    p.translate(velX, velY);
+                    p.rotate(velAngle);
+                    p.triangle(0, 0, -10, -5, -10, 5);
+                    p.pop();
+                    
+                    // Label
+                    p.noStroke();
+                    p.fill(255, 0, 0);
+                    p.text("Velocity", velX/2, velY/2 - 10);
+                    p.text(velocityMagnitude + " mph, " + velocityDirection + "°", velX + 10, velY);
+                    p.pop();
+                    
+                    // Origin point for force
+                    const forceOriginX = 3 * p.width / 4;
+                    const forceOriginY = p.height / 2;
+                    
+                    // Draw force vector
+                    p.push();
+                    p.translate(forceOriginX, forceOriginY);
+                    p.stroke(0, 0, 255);
+                    p.strokeWeight(2);
+                    p.fill(0, 0, 255, 100);
+                    
+                    const forceAngle = p.radians(forceDirection);
+                    const forceX = forceMagnitude * p.cos(forceAngle);
+                    const forceY = forceMagnitude * p.sin(forceAngle);
+                    
+                    p.line(0, 0, forceX, forceY);
+                    
+                    // Arrow head
+                    p.push();
+                    p.translate(forceX, forceY);
+                    p.rotate(forceAngle);
+                    p.triangle(0, 0, -10, -5, -10, 5);
+                    p.pop();
+                    
+                    // Label
+                    p.noStroke();
+                    p.fill(0, 0, 255);
+                    p.text("Force", forceX/2, forceY/2 - 10);
+                    p.text(forceMagnitude + " N, " + forceDirection + "°", forceX + 10, forceY);
+                    p.pop();
+                };
+                
+                p.updateValues = function(velMag, velDir, forceMag, forceDir) {
+                    velocityMagnitude = velMag;
+                    velocityDirection = velDir;
+                    forceMagnitude = forceMag;
+                    forceDirection = forceDir;
+                };
+            });
+            
+            // Speed vs Velocity Sketch
+            speedVelocitySketch = new p5(function(p) {
+                let speed, direction;
+                let car = { x: 200, y: 150, size: 20 };
+                let trail = [];
+                let animating = true;
+                
+                p.setup = function() {
+                    const canvas = p.createCanvas(400, 300);
+                    canvas.parent('speed-velocity-canvas');
+                    
+                    speed = 50;
+                    direction = 0;
+                };
+                
+                p.draw = function() {
+                    p.background(240);
+                    
+                    // Draw grid
+                    p.stroke(200);
+                    for (let i = 0; i < p.width; i += 20) {
+                        p.line(i, 0, i, p.height);
+                    }
+                    for (let i = 0; i < p.height; i += 20) {
+                        p.line(0, i, p.width, i);
+                    }
+                    
+                    // Draw car trail
+                    p.noStroke();
+                    for (let i = 0; i < trail.length; i++) {
+                        const alpha = p.map(i, 0, trail.length, 50, 200);
+                        p.fill(255, 0, 0, alpha);
+                        p.ellipse(trail[i].x, trail[i].y, 5, 5);
+                    }
+                    
+                    // Update car position if animating
+                    if (animating) {
+                        const angle = p.radians(direction);
+                        const normalizedSpeed = speed / 10;
+                        car.x += normalizedSpeed * p.cos(angle);
+                        car.y += normalizedSpeed * p.sin(angle);
+                        
+                        // Wrap around edges
+                        if (car.x > p.width) car.x = 0;
+                        if (car.x < 0) car.x = p.width;
+                        if (car.y > p.height) car.y = 0;
+                        if (car.y < 0) car.y = p.height;
+                        
+                        // Add to trail
+                        trail.push({x: car.x, y: car.y});
+                        if (trail.length > 20) {
+                            trail.shift();
+                        }
+                    }
+                    
+                    // Draw car
+                    p.push();
+                    p.translate(car.x, car.y);
+                    p.rotate(p.radians(direction));
+                    p.fill(255, 0, 0);
+                    p.triangle(car.size, 0, -car.size/2, car.size/2, -car.size/2, -car.size/2);
+                    p.pop();
+                    
+                    // Draw speed info
+                    p.fill(0);
+                    p.textAlign(p.LEFT);
+                    p.text("Scalar: Speed = " + speed + " mph", 10, 30);
+                    p.text("Vector: Velocity = " + speed + " mph at " + direction + "°", 10, 50);
+                };
+                
+                p.updateValues = function(spd, dir) {
+                    speed = spd;
+                    direction = dir;
+                };
+            });
+            
+            // Distance vs Displacement Sketch
+            distanceDisplacementSketch = new p5(function(p) {
+                let walker = { x: 200, y: 150, size: 15 };
+                let startPoint = { x: 200, y: 150 };
+                let path = [];
+                let totalDistance = 0;
+                let displacement = 0;
+                let walking = false;
+                
+                p.setup = function() {
+                    const canvas = p.createCanvas(400, 300);
+                    canvas.parent('distance-displacement-canvas');
+                    path.push({x: walker.x, y: walker.y});
+                };
+                
+                p.draw = function() {
+                    p.background(240);
+                    
+                    // Draw grid
+                    p.stroke(200);
+                    for (let i = 0; i < p.width; i += 20) {
+                        p.line(i, 0, i, p.height);
+                    }
+                    for (let i = 0; i < p.height; i += 20) {
+                        p.line(0, i, p.width, i);
+                    }
+                    
+                    // Draw path
+                    p.stroke(100, 100, 255);
+                    p.strokeWeight(3);
+                    p.noFill();
+                    p.beginShape();
+                    for (let i = 0; i < path.length; i++) {
+                        p.vertex(path[i].x, path[i].y);
+                    }
+                    p.endShape();
+                    
+                    // Draw displacement vector
+                    p.stroke(255, 0, 0);
+                    p.strokeWeight(2);
+                    p.line(startPoint.x, startPoint.y, walker.x, walker.y);
+                    
+                    // Arrow head for displacement
+                    if (displacement > 0) {
+                        p.push();
+                        const angle = p.atan2(walker.y - startPoint.y, walker.x - startPoint.x);
+                        p.translate(walker.x, walker.y);
+                        p.rotate(angle);
+                        p.fill(255, 0, 0);
+                        p.triangle(0, 0, -10, -5, -10, 5);
+                        p.pop();
+                    }
+                    
+                    // Draw walker
+                    p.fill(0, 200, 0);
+                    p.noStroke();
+                    p.ellipse(walker.x, walker.y, walker.size * 2, walker.size * 2);
+                    
+                    // Draw start point
+                    p.fill(100, 100, 255);
+                    p.ellipse(startPoint.x, startPoint.y, 10, 10);
+                    
+                    // Display distance and displacement
+                    p.fill(0);
+                    p.textAlign(p.LEFT);
+                    p.text("Scalar: Total Distance = " + totalDistance.toFixed(1) + " units", 10, 30);
+                    p.text("Vector: Displacement = " + displacement.toFixed(1) + " units", 10, 50);
+                    
+                    // If walking, move randomly
+                    if (walking) {
+                        const angle = p.random(0, p.TWO_PI);
+                        const stepSize = 2;
+                        const lastX = walker.x;
+                        const lastY = walker.y;
+                        
+                        walker.x += stepSize * p.cos(angle);
+                        walker.y += stepSize * p.sin(angle);
+                        
+                        // Constrain to canvas
+                        walker.x = p.constrain(walker.x, 0, p.width);
+                        walker.y = p.constrain(walker.y, 0, p.height);
+                        
+                        // Calculate step distance
+                        const stepDistance = p.dist(lastX, lastY, walker.x, walker.y);
+                        totalDistance += stepDistance;
+                        
+                        // Calculate displacement
+                        displacement = p.dist(startPoint.x, startPoint.y, walker.x, walker.y);
+                        
+                        // Add to path
+                        path.push({x: walker.x, y: walker.y});
+                    }
+                };
+                
+                p.startWalking = function() {
+                    walking = true;
+                    setTimeout(() => {
+                        walking = false;
+                    }, 3000);
+                };
+                
+                p.resetWalk = function() {
+                    walker = { x: 200, y: 150, size: 15 };
+                    startPoint = { x: 200, y: 150 };
+                    path = [{x: walker.x, y: walker.y}];
+                    totalDistance = 0;
+                    displacement = 0;
+                    walking = false;
+                };
+            });
+            
+            // Mass vs Weight Sketch
+            massWeightSketch = new p5(function(p) {
+                let mass = 5;
+                let planet = "earth";
+                const gravityValues = {
+                    earth: 9.8,
+                    moon: 1.62,
+                    mars: 3.72,
+                    jupiter: 24.79
+                };
+                
+                p.setup = function() {
+                    const canvas = p.createCanvas(400, 300);
+                    canvas.parent('mass-weight-canvas');
+                };
+                
+                p.draw = function() {
+                    p.background(240);
+                    
+                    // Planets
+                    const centerX = p.width / 2;
+                    const planetY = p.height - 50;
+                    
+                    // Current gravity
+                    const gravity = gravityValues[planet];
+                    const weight = mass * gravity;
+                    
+                    // Draw planet
+                    p.noStroke();
+                    if (planet === "earth") {
+                        p.fill(70, 170, 255);
+                    } else if (planet === "moon") {
+                        p.fill(200);
+                    } else if (planet === "mars") {
+                        p.fill(255, 100, 50);
+                    } else if (planet === "jupiter") {
+                        p.fill(255, 200, 100);
+                    }
+                    p.ellipse(centerX, planetY, 180, 180);
+                    
+                    // Draw object
+                    const objectSize = p.map(mass, 1, 10, 20, 50);
+                    const objectY = 100;
+                    p.fill(100, 100, 255);
+                    p.ellipse(centerX, objectY, objectSize, objectSize);
+                    
+                    // Draw weight vector (force of gravity)
+                    p.stroke(255, 0, 0);
+                    p.strokeWeight(p.map(weight, 0, 250, 1, 8));
+                    
+                    // Arrow line
+                    const arrowLength = p.map(weight, 0, 250, 20, 80);
+                    p.line(centerX, objectY + objectSize/2, centerX, objectY + objectSize/2 + arrowLength);
+                    
+                    // Arrow head
+                    p.fill(255, 0, 0);
+                    p.noStroke();
+                    p.triangle(
+                        centerX, objectY + objectSize/2 + arrowLength,
+                        centerX - 10, objectY + objectSize/2 + arrowLength - 15,
+                        centerX + 10, objectY + objectSize/2 + arrowLength - 15
+                    );
+                    
+                    // Labels
+                    p.fill(0);
+                    p.textAlign(p.CENTER);
+                    p.text(planet.charAt(0).toUpperCase() + planet.slice(1), centerX, planetY);
+                    
+                    p.textAlign(p.LEFT);
+                    p.text("Scalar: Mass = " + mass + " kg", 10, 30);
+                    p.text("Vector: Weight = " + weight.toFixed(1) + " N (downward)", 10, 50);
+                    p.text("Gravity on " + planet + " = " + gravity + " m/s²", 10, 70);
+                };
+                
+                p.updateValues = function(m, p) {
+                    mass = m;
+                    planet = p;
+                };
+            });
+            
+            // Vector Addition Sketch
+            vectorAdditionSketch = new p5(function(p) {
+                let vector1Magnitude = 50;
+                let vector1Direction = 0;
+                let vector2Magnitude = 50;
+                let vector2Direction = 90;
+                
+                p.setup = function() {
+                    const canvas = p.createCanvas(400, 300);
+                    canvas.parent('vector-addition-canvas');
+                };
+                
+                p.draw = function() {
+                    p.background(240);
+                    
+                    // Draw grid
+                    p.stroke(200);
+                    for (let i = 0; i < p.width; i += 20) {
+                        p.line(i, 0, i, p.height);
+                    }
+                    for (let i = 0; i < p.height; i += 20) {
+                        p.line(0, i, p.width, i);
+                    }
+                    
+                    // Origin point
+                    const originX = p.width / 2;
+                    const originY = p.height / 2;
+                    
+                    // Calculate vector components
+                    const v1Angle = p.radians(vector1Direction);
+                    const v1X = vector1Magnitude * p.cos(v1Angle);
+                    const v1Y = vector1Magnitude * p.sin(v1Angle);
+                    
+                    const v2Angle = p.radians(vector2Direction);
+                    const v2X = vector2Magnitude * p.cos(v2Angle);
+                    const v2Y = vector2Magnitude * p.sin(v2Angle);
+                    
+                    // Calculate resultant vector
+                    const resultX = v1X + v2X;
+                    const resultY = v1Y + v2Y;
+                    const resultMagnitude = p.sqrt(resultX * resultX + resultY * resultY);
+                    const resultDirection = p.degrees(p.atan2(resultY, resultX));
+                    
+                    // Draw vector 1
+                    p.stroke(255, 0, 0);
+                    p.strokeWeight(2);
+                    p.line(originX, originY, originX + v1X, originY + v1Y);
+                    
+                    // Arrow head for vector 1
+                    p.push();
+                    p.translate(originX + v1X, originY + v1Y);
+                    p.rotate(v1Angle);
+                    p.fill(255, 0, 0);
+                    p.triangle(0, 0, -10, -5, -10, 5);
+                    p.pop();
+                    
+                    // Draw vector 2 (from tip of vector 1)
+                    p.stroke(0, 255, 0);
+                    p.strokeWeight(2);
+                    p.line(originX + v1X, originY + v1Y, originX + v1X + v2X, originY + v1Y + v2Y);
+                    
+                    // Arrow head for vector 2
+                    p.push();
+                    p.translate(originX + v1X + v2X, originY + v1Y + v2Y);
+                    p.rotate(v2Angle);
+                    p.fill(0, 255, 0);
+                    p.triangle(0, 0, -10, -5, -10, 5);
+                    p.pop();
+                    
+                    // Draw resultant vector
+                    p.stroke(0, 0, 255);
+                    p.strokeWeight(3);
+                    p.line(originX, originY, originX + resultX, originY + resultY);
+                    
+                    // Arrow head for resultant
+                    const resultAngle = p.atan2(resultY, resultX);
+                    p.push();
+                    p.translate(originX + resultX, originY + resultY);
+                    p.rotate(resultAngle);
+                    p.fill(0, 0, 255);
+                    p.triangle(0, 0, -15, -7, -15, 7);
+                    p.pop();
+                    
+                    // Labels
+                    p.fill(255, 0, 0);
+                    p.noStroke();
+                    p.textAlign(p.LEFT);
+                    p.text("Vector 1: " + vector1Magnitude + " units at " + vector1Direction + "°", 10, 30);
+                    
+                    p.fill(0, 255, 0);
+                    p.text("Vector 2: " + vector2Magnitude + " units at " + vector2Direction + "°", 10, 50);
+                    
+                    p.fill(0, 0, 255);
+                    p.text("Resultant: " + resultMagnitude.toFixed(1) + " units at " + resultDirection.toFixed(1) + "°", 10, 70);
+                };
+                
+                p.updateValues = function(v1Mag, v1Dir, v2Mag, v2Dir) {
+                    vector1Magnitude = v1Mag;
+                    vector1Direction = v1Dir;
+                    vector2Magnitude = v2Mag;
+                    vector2Direction = v2Dir;
+                };
+            });
+            
+            // Boat River Sketch
+            boatRiverSketch = new p5(function(p) {
+                let riverSpeed = 5;
+                let boatSpeed = 10;
+                let boatDirection = 0;
+                let boat = { x: 50, y: 150, size: 15 };
+                let boatPath = [];
+                let targetX = 350;
+                let targetY = 150;
+                let targetSize = 20;
+                let isAnimating = false;
+                
+                p.setup = function() {
+                    const canvas = p.createCanvas(400, 300);
+                    canvas.parent('boat-river-canvas');
+                };
+                
+                p.draw = function() {
+                    p.background(240);
+                    
+                    // Draw river
+                    p.fill(100, 150, 255, 100);
+                    p.noStroke();
+                    p.rect(0, 0, p.width, p.height);
+                    
+                    // Draw current arrows
+                    p.fill(100, 150, 255);
+                    for (let y = 20; y < p.height; y += 60) {
+                        for (let x = 50; x < p.width; x += 100) {
+                            p.push();
+                            p.translate(x, y);
+                            const arrowSize = p.map(riverSpeed, 0, 10, 5, 20);
+                            p.triangle(0, 0, -arrowSize, -arrowSize/2, -arrowSize, arrowSize/2);
+                            p.pop();
+                        }
+                    }
+                    
+                    // Draw target (opposite shore)
+                    p.fill(255, 200, 100);
+                    p.stroke(200, 150, 50);
+                    p.strokeWeight(2);
+                    p.ellipse(targetX, targetY, targetSize * 2, targetSize * 2);
+                    
+                    // Draw starting shore
+                    p.fill(100, 200, 100);
+                    p.noStroke();
+                    p.rect(0, 0, 20, p.height);
+                    
+                    // Draw boat path
+                    if (boatPath.length > 1) {
+                        p.stroke(255, 100, 100);
+                        p.strokeWeight(2);
+                        p.noFill();
+                        p.beginShape();
+                        for (let i = 0; i < boatPath.length; i++) {
+                            p.vertex(boatPath[i].x, boatPath[i].y);
+                        }
+                        p.endShape();
+                    }
+                    
+                    // Draw boat
+                    p.fill(255);
+                    p.stroke(100);
+                    p.push();
+                    p.translate(boat.x, boat.y);
+                    p.rotate(p.radians(boatDirection));
+                    p.triangle(boat.size, 0, -boat.size, boat.size/2, -boat.size, -boat.size/2);
+                    p.pop();
+                    
+                    // Draw velocity vectors if animating
+                    if (isAnimating) {
+                        // River velocity vector (blue)
+                        p.stroke(0, 0, 255);
+                        p.strokeWeight(2);
+                        p.line(boat.x, boat.y, boat.x + riverSpeed * 3, boat.y);
+                        
+                        // Arrow head
+                        p.push();
+                        p.translate(boat.x + riverSpeed * 3, boat.y);
+                        p.fill(0, 0, 255);
+                        p.triangle(0, 0, -10, -5, -10, 5);
+                        p.pop();
+                        
+                        // Boat velocity vector (red)
+                        const boatAngle = p.radians(boatDirection);
+                        const boatVx = boatSpeed * p.cos(boatAngle) * 3;
+                        const boatVy = boatSpeed * p.sin(boatAngle) * 3;
+                        
+                        p.stroke(255, 0, 0);
+                        p.strokeWeight(2);
+                        p.line(boat.x, boat.y, boat.x + boatVx, boat.y + boatVy);
+                        
+                        // Arrow head
+                        p.push();
+                        p.translate(boat.x + boatVx, boat.y + boatVy);
+                        p.rotate(boatAngle);
+                        p.fill(255, 0, 0);
+                        p.triangle(0, 0, -10, -5, -10, 5);
+                        p.pop();
+                        
+                        // Resultant velocity vector (green)
+                        p.stroke(0, 255, 0);
+                        p.strokeWeight(3);
+                        p.line(boat.x, boat.y, boat.x + boatVx + riverSpeed * 3, boat.y + boatVy);
+                        
+                        // Arrow head
+                        const resultAngle = p.atan2(boatVy, boatVx + riverSpeed * 3);
+                        p.push();
+                        p.translate(boat.x + boatVx + riverSpeed * 3, boat.y + boatVy);
+                        p.rotate(resultAngle);
+                        p.fill(0, 255, 0);
+                        p.triangle(0, 0, -15, -7, -15, 7);
+                        p.pop();
+                        
+                        // Update boat position
+                        const boatVelocityX = boatSpeed * p.cos(boatAngle);
+                        const boatVelocityY = boatSpeed * p.sin(boatAngle);
+                        const resultantVelocityX = boatVelocityX + riverSpeed;
+                        const resultantVelocityY = boatVelocityY;
+                        
+                        boat.x += resultantVelocityX * 0.1;
+                        boat.y += resultantVelocityY * 0.1;
+                        
+                        // Add to path
+                        boatPath.push({x: boat.x, y: boat.y});
+                        
+                        // Check if reached target or out of bounds
+                        const distToTarget = p.dist(boat.x, boat.y, targetX, targetY);
+                        if (distToTarget < targetSize || boat.x > p.width || boat.y < 0 || boat.y > p.height) {
+                            isAnimating = false;
+                            
+                            if (distToTarget < targetSize) {
+                                // Show success message if reached target
+                                document.getElementById('mission-complete').style.display = 'block';
+                            }
+                        }
+                    }
+                    
+                    // Display vectors info
+                    p.fill(0);
+                    p.noStroke();
+                    p.textAlign(p.LEFT);
+                    p.text("River Current: " + riverSpeed + " mph →", 10, 30);
+                    p.text("Boat Engine: " + boatSpeed + " mph at " + boatDirection + "°", 10, 50);
+                };
+                
+                p.updateValues = function(rSpeed, bSpeed, bDir) {
+                    riverSpeed = rSpeed;
+                    boatSpeed = bSpeed;
+                    boatDirection = bDir;
+                };
+                
+                p.startBoat = function() {
+                    boat = { x: 50, y: 150, size: 15 };
+                    boatPath = [{x: boat.x, y: boat.y}];
+                    isAnimating = true;
+                    document.getElementById('mission-complete').style.display = 'none';
+                };
+            });
+            
+            // Space Explorer Sketch
+            spaceExplorerSketch = new p5(function(p) {
+                let spaceshipSpeed = 10;
+                let spaceshipDirection = 0;
+                let spaceship = { x: 50, y: 150, size: 15 };
+                let planet = { x: 350, y: 150, size: 25 };
+                let stars = [];
+                let path = [];
+                let isLaunched = false;
+                
+                p.setup = function() {
+                    const canvas = p.createCanvas(400, 300);
+                    canvas.parent('space-explorer-canvas');
+                    
+                    // Generate stars
+                    for (let i = 0; i < 50; i++) {
+                        stars.push({
+                            x: p.random(0, p.width),
+                            y: p.random(0, p.height),
+                            size: p.random(1, 3)
+                        });
+                    }
+                };
+                
+                p.draw = function() {
+                    p.background(20, 20, 50);
+                    
+                    // Draw stars
+                    p.fill(255);
+                    p.noStroke();
+                    for (let star of stars) {
+                        p.ellipse(star.x, star.y, star.size, star.size);
+                    }
+                    
+                    // Draw planet
+                    p.fill(100, 200, 100);
+                    p.stroke(80, 150, 80);
+                    p.strokeWeight(2);
+                    p.ellipse(planet.x, planet.y, planet.size * 2, planet.size * 2);
+                    
+                    // Draw spaceship path
+                    if (path.length > 1) {
+                        p.stroke(255, 100, 100, 150);
+                        p.strokeWeight(1);
+                        p.noFill();
+                        p.beginShape();
+                        for (let i = 0; i < path.length; i++) {
+                            p.vertex(path[i].x, path[i].y);
+                        }
+                        p.endShape();
+                    }
+                    
+                    // Draw velocity vector
+                    if (!isLaunched) {
+                        const angle = p.radians(spaceshipDirection);
+                        const velocityX = spaceshipSpeed * p.cos(angle) * 3;
+                        const velocityY = spaceshipSpeed * p.sin(angle) * 3;
+                        
+                        p.stroke(255, 0, 0);
+                        p.strokeWeight(2);
+                        p.line(spaceship.x, spaceship.y, spaceship.x + velocityX, spaceship.y + velocityY);
+                        
+                        // Arrow head
+                        p.push();
+                        p.translate(spaceship.x + velocityX, spaceship.y + velocityY);
+                        p.rotate(angle);
+                        p.fill(255, 0, 0);
+                        p.triangle(0, 0, -10, -5, -10, 5);
+                        p.pop();
+                    }
+                    
+                    // Draw spaceship
+                    p.fill(200, 200, 255);
+                    p.stroke(100, 100, 200);
+                    p.push();
+                    p.translate(spaceship.x, spaceship.y);
+                    p.rotate(p.radians(spaceshipDirection));
+                    p.triangle(spaceship.size, 0, -spaceship.size, spaceship.size/2, -spaceship.size, -spaceship.size/2);
+                    p.pop();
+                    
+                    // Update spaceship position if launched
+                    if (isLaunched) {
+                        const angle = p.radians(spaceshipDirection);
+                        spaceship.x += spaceshipSpeed * p.cos(angle) * 0.1;
+                        spaceship.y += spaceshipSpeed * p.sin(angle) * 0.1;
+                        
+                        // Add to path
+                        path.push({x: spaceship.x, y: spaceship.y});
+                        
+                        // Check if reached planet or out of bounds
+                        const distToPlanet = p.dist(spaceship.x, spaceship.y, planet.x, planet.y);
+                        if (distToPlanet < planet.size || spaceship.x < 0 || spaceship.x > p.width || 
+                            spaceship.y < 0 || spaceship.y > p.height) {
+                            isLaunched = false;
+                            
+                            if (distToPlanet < planet.size) {
+                                // Show success message if reached planet
+                                document.getElementById('mission-complete').style.display = 'block';
+                            }
+                        }
+                    }
+                    
+                    // Display vector info
+                    p.fill(255);
+                    p.noStroke();
+                    p.textAlign(p.LEFT);
+                    p.text("Velocity Vector: " + spaceshipSpeed + " units/s at " + spaceshipDirection + "°", 10, 30);
+                };
+                
+                p.updateValues = function(speed, direction) {
+                    spaceshipSpeed = speed;
+                    spaceshipDirection = direction;
+                };
+                
+                p.launchSpaceship = function() {
+                    spaceship = { x: 50, y: 150, size: 15 };
+                    path = [{x: spaceship.x, y: spaceship.y}];
+                    isLaunched = true;
+                    document.getElementById('mission-complete').style.display = 'none';
+                };
+                
+                p.resetSpaceship = function() {
+                    spaceship = { x: 50, y: 150, size: 15 };
+                    path = [];
+                    isLaunched = false;
+                };
+            });
+            
+        }
+        
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load first quiz question
+            loadQuestion();
+            
+            // Initialize p5 sketches
+            setupP5Sketches();
+            
+            // Add event listeners for sliders
+            document.getElementById('temperature').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('temperature-value').textContent = value + " degrees";
+                scalarSketch.updateValues(value, document.getElementById('speed').value, document.getElementById('weight').value);
+            });
+            
+            document.getElementById('speed').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('speed-value').textContent = value + " mph";
+                scalarSketch.updateValues(document.getElementById('temperature').value, value, document.getElementById('weight').value);
+            });
+            
+            document.getElementById('weight').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('weight-value').textContent = value + " pounds";
+                scalarSketch.updateValues(document.getElementById('temperature').value, document.getElementById('speed').value, value);
+            });
+            
+            document.getElementById('velocity-magnitude').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('velocity-magnitude-value').textContent = value + " mph";
+                vectorSketch.updateValues(
+                    value, 
+                    document.getElementById('velocity-direction').value,
+                    document.getElementById('force-magnitude').value,
+                    document.getElementById('force-direction').value
+                );
+            });
+            
+            document.getElementById('velocity-direction').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('velocity-direction-value').textContent = value + " degrees";
+                vectorSketch.updateValues(
+                    document.getElementById('velocity-magnitude').value, 
+                    value,
+                    document.getElementById('force-magnitude').value,
+                    document.getElementById('force-direction').value
+                );
+            });
+            
+            document.getElementById('force-magnitude').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('force-magnitude-value').textContent = value + " newtons";
+                vectorSketch.updateValues(
+                    document.getElementById('velocity-magnitude').value, 
+                    document.getElementById('velocity-direction').value,
+                    value,
+                    document.getElementById('force-direction').value
+                );
+            });
+            
+            document.getElementById('force-direction').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('force-direction-value').textContent = value + " degrees";
+                vectorSketch.updateValues(
+                    document.getElementById('velocity-magnitude').value, 
+                    document.getElementById('velocity-direction').value,
+                    document.getElementById('force-magnitude').value,
+                    value
+                );
+            });
+            
+            document.getElementById('comparison-speed').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('comparison-speed-value').textContent = value + " mph";
+                speedVelocitySketch.updateValues(
+                    value,
+                    document.getElementById('comparison-direction').value
+                );
+            });
+            
+            document.getElementById('comparison-direction').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('comparison-direction-value').textContent = value + " degrees";
+                speedVelocitySketch.updateValues(
+                    document.getElementById('comparison-speed').value,
+                    value
+                );
+            });
+            
+            document.getElementById('walk-button').addEventListener('click', function() {
+                distanceDisplacementSketch.startWalking();
+            });
+            
+            document.getElementById('comparison-mass').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('comparison-mass-value').textContent = value + " kg";
+                massWeightSketch.updateValues(
+                    value,
+                    document.getElementById('comparison-planet').value
+                );
+            });
+            
+            document.getElementById('comparison-planet').addEventListener('change', function() {
+                const value = this.value;
+                massWeightSketch.updateValues(
+                    document.getElementById('comparison-mass').value,
+                    value
+                );
+            });
+            
+            document.getElementById('vector1-magnitude').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('vector1-magnitude-value').textContent = value;
+                vectorAdditionSketch.updateValues(
+                    value,
+                    document.getElementById('vector1-direction').value,
+                    document.getElementById('vector2-magnitude').value,
+                    document.getElementById('vector2-direction').value
+                );
+            });
+            
+            document.getElementById('vector1-direction').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('vector1-direction-value').textContent = value + " degrees";
+                vectorAdditionSketch.updateValues(
+                    document.getElementById('vector1-magnitude').value,
+                    value,
+                    document.getElementById('vector2-magnitude').value,
+                    document.getElementById('vector2-direction').value
+                );
+            });
+            
+            document.getElementById('vector2-magnitude').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('vector2-magnitude-value').textContent = value;
+                vectorAdditionSketch.updateValues(
+                    document.getElementById('vector1-magnitude').value,
+                    document.getElementById('vector1-direction').value,
+                    value,
+                    document.getElementById('vector2-direction').value
+                );
+            });
+            
+            document.getElementById('vector2-direction').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('vector2-direction-value').textContent = value + " degrees";
+                vectorAdditionSketch.updateValues(
+                    document.getElementById('vector1-magnitude').value,
+                    document.getElementById('vector1-direction').value,
+                    document.getElementById('vector2-magnitude').value,
+                    value
+                );
+            });
+            
+            document.getElementById('river-speed').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('river-speed-value').textContent = value + " mph";
+                boatRiverSketch.updateValues(
+                    value,
+                    document.getElementById('boat-speed').value,
+                    document.getElementById('boat-direction').value
+                );
+            });
+            
+            document.getElementById('boat-speed').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('boat-speed-value').textContent = value + " mph";
+                boatRiverSketch.updateValues(
+                    document.getElementById('river-speed').value,
+                    value,
+                    document.getElementById('boat-direction').value
+                );
+            });
+            
+            document.getElementById('boat-direction').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('boat-direction-value').textContent = value + " degrees";
+                boatRiverSketch.updateValues(
+                    document.getElementById('river-speed').value,
+                    document.getElementById('boat-speed').value,
+                    value
+                );
+            });
+            
+            document.getElementById('start-boat').addEventListener('click', function() {
+                boatRiverSketch.startBoat();
+            });
+            
+            document.getElementById('spaceship-speed').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('spaceship-speed-value').textContent = value + " units/s";
+                spaceExplorerSketch.updateValues(
+                    value,
+                    document.getElementById('spaceship-direction').value
+                );
+            });
+            
+            document.getElementById('spaceship-direction').addEventListener('input', function() {
+                const value = this.value;
+                document.getElementById('spaceship-direction-value').textContent = value + " degrees";
+                spaceExplorerSketch.updateValues(
+                    document.getElementById('spaceship-speed').value,
+                    value
+                );
+            });
+            
+            document.getElementById('launch-spaceship').addEventListener('click', function() {
+                spaceExplorerSketch.launchSpaceship();
+            });
+            
+            // Show game complete achievement when reaching bottom of page
+            window.addEventListener('scroll', function() {
+                if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 200) {
+                    document.getElementById('game-complete').style.display = 'block';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

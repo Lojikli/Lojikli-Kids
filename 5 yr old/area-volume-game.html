@@ -1,0 +1,1799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Area vs Volume Learning Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #2196F3;
+            --tertiary-color: #FF9800;
+            --background-color: #F5F5F5;
+            --text-color: #333;
+            --highlight-color: #E91E63;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        #app {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        h1, h2, h3 {
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .scene-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 1rem 0;
+        }
+
+        .canvas-container {
+            width: 100%;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+        }
+
+        label {
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+
+        input[type="range"] {
+            width: 100%;
+        }
+
+        .value-display {
+            text-align: center;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #388E3C;
+        }
+
+        .section {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .character {
+            display: flex;
+            align-items: center;
+            margin: 1rem 0;
+        }
+
+        .character-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin-right: 1rem;
+            background-color: var(--tertiary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            color: white;
+        }
+
+        .character-speech {
+            flex: 1;
+            background-color: #F1F1F1;
+            padding: 1rem;
+            border-radius: 10px;
+            position: relative;
+        }
+
+        .character-speech:before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 20px;
+            border-width: 10px 10px 10px 0;
+            border-style: solid;
+            border-color: transparent #F1F1F1 transparent transparent;
+        }
+
+        .quiz-container {
+            background-color: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .quiz-question {
+            margin-bottom: 1rem;
+            font-weight: bold;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            padding: 0.5rem;
+            background-color: #F1F1F1;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background-color: #E1E1E1;
+        }
+
+        .quiz-option input {
+            margin-right: 1rem;
+        }
+
+        .quiz-feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .correct {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #81C784;
+        }
+
+        .incorrect {
+            background-color: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #E57373;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: #E0E0E0;
+            border-radius: 5px;
+            margin: 1rem 0;
+        }
+
+        .progress-bar {
+            height: 20px;
+            border-radius: 5px;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .tab-container {
+            margin: 1rem 0;
+        }
+
+        .tabs {
+            display: flex;
+            background-color: white;
+            border-radius: 10px 10px 0 0;
+            overflow: hidden;
+        }
+
+        .tab {
+            padding: 1rem;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            background-color: #E0E0E0;
+            transition: background-color 0.3s ease;
+        }
+
+        .tab.active {
+            background-color: white;
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .comparison-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .comparison-item {
+            flex: 1 1 300px;
+            background-color: #F1F1F1;
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        .achievement {
+            display: inline-block;
+            margin: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: #F1F1F1;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            opacity: 0.5;
+        }
+
+        .achievement.unlocked {
+            background-color: var(--tertiary-color);
+            color: white;
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+            }
+        }
+
+        .formula {
+            background-color: #E8F5E9;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-family: monospace;
+            display: inline-block;
+            margin: 0.5rem 0;
+        }
+
+        .highlight {
+            color: var(--highlight-color);
+            font-weight: bold;
+        }
+
+        .challenge-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            background-color: var(--highlight-color);
+            color: white;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            margin-left: 0.5rem;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted black;
+            cursor: help;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #555;
+            color: #fff;
+            text-align: center;
+            border-radius: 6px;
+            padding: 5px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            pointer-events: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <header>
+            <h1>Area vs Volume Learning Adventure</h1>
+            <p>Explore the fascinating world of 2D and 3D measurements!</p>
+        </header>
+
+        <div class="container">
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+
+            <div class="section">
+                <div class="character">
+                    <div class="character-avatar">🧙</div>
+                    <div class="character-speech">
+                        <h3>Professor Polygon</h3>
+                        <p>Welcome to our Area vs Volume Adventure! I'm Professor Polygon, and I'll help you learn all about how we measure flat shapes and solid objects. Are you ready to become a shape master?</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-container">
+                <div class="tabs">
+                    <div class="tab active" data-tab="introduction">Introduction</div>
+                    <div class="tab" data-tab="area">Area</div>
+                    <div class="tab" data-tab="volume">Volume</div>
+                    <div class="tab" data-tab="playground">Playground</div>
+                    <div class="tab" data-tab="challenges">Challenges</div>
+                    <div class="tab" data-tab="achievements">Achievements</div>
+                </div>
+
+                <!-- Introduction Tab -->
+                <div class="tab-content active" id="introduction">
+                    <h2>Welcome to the World of Measurement!</h2>
+                    
+                    <div class="character">
+                        <div class="character-avatar">🦊</div>
+                        <div class="character-speech">
+                            <h3>Fiona Fox</h3>
+                            <p>Hi there! I'm Fiona Fox. Let's think about the difference between area and volume with a simple example. Imagine you have a pizza - the top of the pizza is flat, right? That flat surface has an <span class="highlight">area</span>. But the whole pizza, including its thickness, has a <span class="highlight">volume</span>.</p>
+                        </div>
+                    </div>
+
+                    <div class="comparison-container">
+                        <div class="comparison-item">
+                            <h3>Area (2D) ↔️</h3>
+                            <p>Area measures how much space a flat shape covers.</p>
+                            <p>Think of:</p>
+                            <ul>
+                                <li>The surface of a table</li>
+                                <li>A piece of paper</li>
+                                <li>The floor of your room</li>
+                            </ul>
+                            <p>We measure area in <strong>square units</strong> like:</p>
+                            <ul>
+                                <li>Square inches (in²)</li>
+                                <li>Square feet (ft²)</li>
+                                <li>Square centimeters (cm²)</li>
+                            </ul>
+                        </div>
+                        <div class="comparison-item">
+                            <h3>Volume (3D) ↔️</h3>
+                            <p>Volume measures how much space a solid object takes up.</p>
+                            <p>Think of:</p>
+                            <ul>
+                                <li>A juice box</li>
+                                <li>A swimming pool</li>
+                                <li>Your entire room</li>
+                            </ul>
+                            <p>We measure volume in <strong>cubic units</strong> like:</p>
+                            <ul>
+                                <li>Cubic inches (in³)</li>
+                                <li>Cubic feet (ft³)</li>
+                                <li>Cubic centimeters (cm³)</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="character">
+                        <div class="character-avatar">🦉</div>
+                        <div class="character-speech">
+                            <h3>Oliver Owl</h3>
+                            <p>The big difference is that area is about <span class="highlight">flat surfaces</span> (2 dimensions: length and width), while volume is about <span class="highlight">solid objects</span> (3 dimensions: length, width, and height). Let's explore both!</p>
+                        </div>
+                    </div>
+
+                    <button class="next-section-btn" data-next="area">Let's Start with Area!</button>
+                </div>
+
+                <!-- Area Tab -->
+                <div class="tab-content" id="area">
+                    <h2>Understanding Area</h2>
+                    
+                    <div class="character">
+                        <div class="character-avatar">🧙</div>
+                        <div class="character-speech">
+                            <h3>Professor Polygon</h3>
+                            <p>Area tells us how much space a flat shape covers. Imagine spreading peanut butter on a slice of bread - the area is how much bread gets covered!</p>
+                        </div>
+                    </div>
+
+                    <div class="scene-container">
+                        <h3>Area Explorer</h3>
+                        <div class="canvas-container" id="areaCanvas"></div>
+                        
+                        <div class="controls">
+                            <div class="control-group">
+                                <label for="shapeSelector">Select a Shape:</label>
+                                <select id="shapeSelector">
+                                    <option value="square">Square</option>
+                                    <option value="rectangle">Rectangle</option>
+                                    <option value="circle">Circle</option>
+                                    <option value="triangle">Triangle</option>
+                                </select>
+                            </div>
+                            
+                            <div class="control-group" id="lengthControl">
+                                <label for="lengthSlider">Length:</label>
+                                <input type="range" id="lengthSlider" min="1" max="10" value="5" step="0.1">
+                                <div class="value-display" id="lengthValue">5</div>
+                            </div>
+                            
+                            <div class="control-group" id="widthControl">
+                                <label for="widthSlider">Width:</label>
+                                <input type="range" id="widthSlider" min="1" max="10" value="5" step="0.1">
+                                <div class="value-display" id="widthValue">5</div>
+                            </div>
+                            
+                            <div class="control-group" id="radiusControl" style="display: none;">
+                                <label for="radiusSlider">Radius:</label>
+                                <input type="range" id="radiusSlider" min="1" max="10" value="5" step="0.1">
+                                <div class="value-display" id="radiusValue">5</div>
+                            </div>
+                        </div>
+
+                        <div class="result-display">
+                            <h3>Area Calculation:</h3>
+                            <p id="areaFormula" class="formula">A = 5 × 5 = 25 square units</p>
+                            <p id="areaExplanation">The area of a square is found by multiplying its length by its width.</p>
+                        </div>
+                    </div>
+
+                    <div class="character">
+                        <div class="character-avatar">🦊</div>
+                        <div class="character-speech">
+                            <h3>Fiona Fox</h3>
+                            <p>Let's learn the formulas for calculating area:</p>
+                            <ul>
+                                <li><strong>Square:</strong> Area = side × side (or side²)</li>
+                                <li><strong>Rectangle:</strong> Area = length × width</li>
+                                <li><strong>Circle:</strong> Area = π × radius²</li>
+                                <li><strong>Triangle:</strong> Area = ½ × base × height</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3>Area Quiz</h3>
+                    <div class="quiz-container" id="areaQuiz">
+                        <div class="quiz-question">1. If a square has a side length of 4 units, what is its area?</div>
+                        <div class="quiz-options">
+                            <label class="quiz-option">
+                                <input type="radio" name="q1" value="8"> 8 square units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q1" value="16"> 16 square units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q1" value="12"> 12 square units
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="q1Feedback"></div>
+
+                        <div class="quiz-question">2. Which shape has the formula Area = π × r²?</div>
+                        <div class="quiz-options">
+                            <label class="quiz-option">
+                                <input type="radio" name="q2" value="square"> Square
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q2" value="circle"> Circle
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q2" value="triangle"> Triangle
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="q2Feedback"></div>
+
+                        <div class="quiz-question">3. If a rectangle has a length of 5 units and a width of 3 units, what is its area?</div>
+                        <div class="quiz-options">
+                            <label class="quiz-option">
+                                <input type="radio" name="q3" value="8"> 8 square units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q3" value="15"> 15 square units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q3" value="12"> 12 square units
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="q3Feedback"></div>
+
+                        <button id="checkAreaQuiz">Check Answers</button>
+                    </div>
+
+                    <div class="character">
+                        <div class="character-avatar">🦉</div>
+                        <div class="character-speech">
+                            <h3>Oliver Owl</h3>
+                            <p><span class="highlight">Advanced Concept:</span> As shapes get more complex, we often break them down into simpler shapes and add their areas together. Mathematicians call this "integration" when the shapes have curves!</p>
+                        </div>
+                    </div>
+
+                    <button class="next-section-btn" data-next="volume">Let's Learn About Volume!</button>
+                </div>
+
+                <!-- Volume Tab -->
+                <div class="tab-content" id="volume">
+                    <h2>Understanding Volume</h2>
+                    
+                    <div class="character">
+                        <div class="character-avatar">🧙</div>
+                        <div class="character-speech">
+                            <h3>Professor Polygon</h3>
+                            <p>Volume tells us how much space a 3D object takes up. Think about filling a container with water - the volume is how much water fits inside!</p>
+                        </div>
+                    </div>
+
+                    <div class="scene-container">
+                        <h3>Volume Explorer</h3>
+                        <div class="canvas-container" id="volumeCanvas"></div>
+                        
+                        <div class="controls">
+                            <div class="control-group">
+                                <label for="objectSelector">Select an Object:</label>
+                                <select id="objectSelector">
+                                    <option value="cube">Cube</option>
+                                    <option value="rectangular_prism">Rectangular Prism</option>
+                                    <option value="sphere">Sphere</option>
+                                    <option value="cylinder">Cylinder</option>
+                                </select>
+                            </div>
+                            
+                            <div class="control-group" id="lengthControlV">
+                                <label for="lengthSliderV">Length:</label>
+                                <input type="range" id="lengthSliderV" min="1" max="10" value="5" step="0.1">
+                                <div class="value-display" id="lengthValueV">5</div>
+                            </div>
+                            
+                            <div class="control-group" id="widthControlV">
+                                <label for="widthSliderV">Width:</label>
+                                <input type="range" id="widthSliderV" min="1" max="10" value="5" step="0.1">
+                                <div class="value-display" id="widthValueV">5</div>
+                            </div>
+                            
+                            <div class="control-group" id="heightControlV">
+                                <label for="heightSliderV">Height:</label>
+                                <input type="range" id="heightSliderV" min="1" max="10" value="5" step="0.1">
+                                <div class="value-display" id="heightValueV">5</div>
+                            </div>
+                            
+                            <div class="control-group" id="radiusControlV" style="display: none;">
+                                <label for="radiusSliderV">Radius:</label>
+                                <input type="range" id="radiusSliderV" min="1" max="10" value="5" step="0.1">
+                                <div class="value-display" id="radiusValueV">5</div>
+                            </div>
+                        </div>
+
+                        <div class="result-display">
+                            <h3>Volume Calculation:</h3>
+                            <p id="volumeFormula" class="formula">V = 5 × 5 × 5 = 125 cubic units</p>
+                            <p id="volumeExplanation">The volume of a cube is found by multiplying its length by its width by its height.</p>
+                        </div>
+                    </div>
+
+                    <div class="character">
+                        <div class="character-avatar">🦊</div>
+                        <div class="character-speech">
+                            <h3>Fiona Fox</h3>
+                            <p>Here are the formulas for calculating volume:</p>
+                            <ul>
+                                <li><strong>Cube:</strong> Volume = side × side × side (or side³)</li>
+                                <li><strong>Rectangular Prism:</strong> Volume = length × width × height</li>
+                                <li><strong>Sphere:</strong> Volume = (4/3) × π × radius³</li>
+                                <li><strong>Cylinder:</strong> Volume = π × radius² × height</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <h3>Volume Quiz</h3>
+                    <div class="quiz-container" id="volumeQuiz">
+                        <div class="quiz-question">1. If a cube has a side length of 3 units, what is its volume?</div>
+                        <div class="quiz-options">
+                            <label class="quiz-option">
+                                <input type="radio" name="q4" value="9"> 9 cubic units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q4" value="27"> 27 cubic units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q4" value="6"> 6 cubic units
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="q4Feedback"></div>
+
+                        <div class="quiz-question">2. Which object has the formula Volume = (4/3) × π × r³?</div>
+                        <div class="quiz-options">
+                            <label class="quiz-option">
+                                <input type="radio" name="q5" value="cube"> Cube
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q5" value="cylinder"> Cylinder
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q5" value="sphere"> Sphere
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="q5Feedback"></div>
+
+                        <div class="quiz-question">3. If you fill a rectangular container that is 4 units long, 3 units wide, and 5 units high with water, what is the volume of water?</div>
+                        <div class="quiz-options">
+                            <label class="quiz-option">
+                                <input type="radio" name="q6" value="12"> 12 cubic units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q6" value="60"> 60 cubic units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="q6" value="24"> 24 cubic units
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="q6Feedback"></div>
+
+                        <button id="checkVolumeQuiz">Check Answers</button>
+                    </div>
+
+                    <div class="character">
+                        <div class="character-avatar">🦉</div>
+                        <div class="character-speech">
+                            <h3>Oliver Owl</h3>
+                            <p><span class="highlight">Advanced Concept:</span> When scientists need to find the volume of irregular objects, they sometimes use a method called "displacement" - putting the object in water and measuring how much water it pushes out. This is based on Archimedes' principle!</p>
+                        </div>
+                    </div>
+
+                    <button class="next-section-btn" data-next="playground">Let's Go to the Playground!</button>
+                </div>
+
+                <!-- Playground Tab -->
+                <div class="tab-content" id="playground">
+                    <h2>Shape and Object Playground</h2>
+                    
+                    <div class="character">
+                        <div class="character-avatar">🧙</div>
+                        <div class="character-speech">
+                            <h3>Professor Polygon</h3>
+                            <p>Welcome to the playground! Here you can experiment with different shapes and objects, and see how changing their dimensions affects both their area and volume.</p>
+                        </div>
+                    </div>
+
+                    <div class="scene-container">
+                        <h3>Area and Volume Converter</h3>
+                        <div class="canvas-container" id="playgroundCanvas"></div>
+                        
+                        <div class="controls">
+                            <div class="control-group">
+                                <label for="playgroundSelector">Select a Shape/Object:</label>
+                                <select id="playgroundSelector">
+                                    <option value="square_to_cube">Square to Cube</option>
+                                    <option value="circle_to_sphere">Circle to Sphere</option>
+                                    <option value="rectangle_to_prism">Rectangle to Prism</option>
+                                </select>
+                            </div>
+                            
+                            <div class="control-group" id="dimensionControl">
+                                <label for="dimensionSlider">Dimension:</label>
+                                <input type="range" id="dimensionSlider" min="1" max="10" value="5" step="0.1">
+                                <div class="value-display" id="dimensionValue">5</div>
+                            </div>
+                            
+                            <div class="control-group" id="heightControlP">
+                                <label for="heightSliderP">Height (3D only):</label>
+                                <input type="range" id="heightSliderP" min="0" max="10" value="0" step="0.1">
+                                <div class="value-display" id="heightValueP">0</div>
+                            </div>
+                        </div>
+
+                        <div class="comparison-container">
+                            <div class="comparison-item">
+                                <h3>Area (2D)</h3>
+                                <p id="playgroundArea" class="formula">Area = 25 square units</p>
+                            </div>
+                            <div class="comparison-item">
+                                <h3>Volume (3D)</h3>
+                                <p id="playgroundVolume" class="formula">Volume = 0 cubic units</p>
+                            </div>
+                        </div>
+                        
+                        <div id="dimensionExplanation">
+                            <p>As you increase the height of a 2D shape, it becomes a 3D object. Notice how the area and volume change!</p>
+                            <p><span class="highlight">Key Insight:</span> For many 3D objects, the volume can be calculated as the <strong>area of the base × height</strong>.</p>
+                        </div>
+                    </div>
+
+                    <div class="character">
+                        <div class="character-avatar">🦊</div>
+                        <div class="character-speech">
+                            <h3>Fiona Fox</h3>
+                            <p>Here's a fun way to think about it: If you have a square with an area of 16 square units, and you turn it into a cube with a height of 4 units, the volume will be 16 × 4 = 64 cubic units!</p>
+                        </div>
+                    </div>
+
+                    <h3>Area vs Volume Comparison Chart</h3>
+                    <div class="comparison-container">
+                        <div class="comparison-item">
+                            <h3>Area (2D)</h3>
+                            <ul>
+                                <li>Measures flat surfaces</li>
+                                <li>Has 2 dimensions (length, width)</li>
+                                <li>Measured in square units (²)</li>
+                                <li>Grows by the square of the scale factor</li>
+                                <li>Examples: paper, table top, TV screen</li>
+                            </ul>
+                        </div>
+                        <div class="comparison-item">
+                            <h3>Volume (3D)</h3>
+                            <ul>
+                                <li>Measures space inside objects</li>
+                                <li>Has 3 dimensions (length, width, height)</li>
+                                <li>Measured in cubic units (³)</li>
+                                <li>Grows by the cube of the scale factor</li>
+                                <li>Examples: water bottle, room, ball</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="character">
+                        <div class="character-avatar">🦉</div>
+                        <div class="character-speech">
+                            <h3>Oliver Owl</h3>
+                            <p><span class="highlight">Advanced Concept:</span> When an object's dimensions change, its area and volume change at different rates! If you double the side length of a cube, its surface area increases 4 times (2²), but its volume increases 8 times (2³)! This is why elephants have thicker legs than mice - to support their much greater volume!</p>
+                        </div>
+                    </div>
+
+                    <button class="next-section-btn" data-next="challenges">Try Some Challenges!</button>
+                </div>
+
+                <!-- Challenges Tab -->
+                <div class="tab-content" id="challenges">
+                    <h2>Area and Volume Challenges</h2>
+                    
+                    <div class="character">
+                        <div class="character-avatar">🧙</div>
+                        <div class="character-speech">
+                            <h3>Professor Polygon</h3>
+                            <p>Ready to test your knowledge with some fun challenges? Let's see if you can solve these puzzles!</p>
+                        </div>
+                    </div>
+
+                    <div class="quiz-container">
+                        <h3>Challenge 1: The Growing Cube <span class="challenge-badge">Beginner</span></h3>
+                        <p>A cube has a side length of 3 units. If you increase each side by 1 unit, how much does the volume increase by?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option">
+                                <input type="radio" name="c1" value="7"> 7 cubic units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="c1" value="19"> 19 cubic units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="c1" value="37"> 37 cubic units
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="c1Feedback"></div>
+                        <button class="show-hint" data-hint="c1Hint">Show Hint</button>
+                        <p class="hint" id="c1Hint" style="display: none;">Find the volume of the original cube (3×3×3) and the new cube (4×4×4), then subtract to find the difference.</p>
+                    </div>
+
+                    <div class="quiz-container">
+                        <h3>Challenge 2: Area vs. Perimeter <span class="challenge-badge">Intermediate</span></h3>
+                        <p>A rectangle has a perimeter of 20 units. What dimensions (length and width) give it the largest possible area?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option">
+                                <input type="radio" name="c2" value="5,5"> Length = 5, Width = 5
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="c2" value="6,4"> Length = 6, Width = 4
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="c2" value="7,3"> Length = 7, Width = 3
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="c2Feedback"></div>
+                        <button class="show-hint" data-hint="c2Hint">Show Hint</button>
+                        <p class="hint" id="c2Hint" style="display: none;">The perimeter is 2 × (length + width) = 20. Try calculating the area for different values that satisfy this equation.</p>
+                    </div>
+
+                    <div class="quiz-container">
+                        <h3>Challenge 3: The Mysterious Container <span class="challenge-badge">Advanced</span></h3>
+                        <p>A cylindrical container has a radius of 4 units and a height of 10 units. If you pour all the water from this container into a cube, what would be the side length of the cube?</p>
+                        <div class="quiz-options">
+                            <label class="quiz-option">
+                                <input type="radio" name="c3" value="6.3"> About 6.3 units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="c3" value="8"> 8 units
+                            </label>
+                            <label class="quiz-option">
+                                <input type="radio" name="c3" value="10"> 10 units
+                            </label>
+                        </div>
+                        <div class="quiz-feedback" id="c3Feedback"></div>
+                        <button class="show-hint" data-hint="c3Hint">Show Hint</button>
+                        <p class="hint" id="c3Hint" style="display: none;">Find the volume of the cylinder (π × r² × h), then find the cube root of this value to get the side length of the cube with equal volume.</p>
+                    </div>
+
+                    <button id="checkChallenges">Check Challenge Answers</button>
+
+                    <div class="character">
+                        <div class="character-avatar">🦉</div>
+                        <div class="character-speech">
+                            <h3>Oliver Owl</h3>
+                            <p><span class="highlight">PhD-Level Concept:</span> The relationship between area and volume connects to a broader mathematical idea called "dimensional analysis." Mathematicians and physicists use this to understand how properties scale across dimensions, from 1D lines to 4D space-time and beyond!</p>
+                        </div>
+                    </div>
+
+                    <button class="next-section-btn" data-next="achievements">View Your Achievements!</button>
+                </div>
+
+                <!-- Achievements Tab -->
+                <div class="tab-content" id="achievements">
+                    <h2>Your Learning Achievements</h2>
+                    
+                    <div class="character">
+                        <div class="character-avatar">🧙</div>
+                        <div class="character-speech">
+                            <h3>Professor Polygon</h3>
+                            <p>Congratulations on your learning journey! Here are the achievements you've unlocked so far in our area and volume adventure.</p>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Your Progress</h3>
+                        <div id="achievementsList">
+                            <div class="achievement" id="achievement1">Area Explorer</div>
+                            <div class="achievement" id="achievement2">Volume Master</div>
+                            <div class="achievement" id="achievement3">Quiz Champion</div>
+                            <div class="achievement" id="achievement4">Challenge Solver</div>
+                            <div class="achievement" id="achievement5">Shape Shifter</div>
+                            <div class="achievement" id="achievement6">Math Magician</div>
+                            <div class="achievement" id="achievement7">Dimension Traveler</div>
+                            <div class="achievement" id="achievement8">Geometry Genius</div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Certificate of Achievement</h3>
+                        <div id="certificate" style="border: 5px solid gold; padding: 20px; text-align: center; background-color: #FFFDE7;">
+                            <h2 style="color: #9C27B0;">Certificate of Achievement</h2>
+                            <p style="font-size: 1.2rem;">This certifies that</p>
+                            <h3 id="playerName" style="color: #2196F3; font-size: 1.5rem;">Awesome Learner</h3>
+                            <p style="font-size: 1.2rem;">has successfully completed the</p>
+                            <h3 style="color: #4CAF50;">Area vs Volume Learning Adventure</h3>
+                            <p style="font-style: italic;">You've mastered the difference between 2D area and 3D volume!</p>
+                            <div style="display: flex; justify-content: space-between; margin-top: 20px;">
+                                <div>
+                                    <p style="margin: 0;">Date: <span id="certificateDate">March 1, 2025</span></p>
+                                </div>
+                                <div>
+                                    <p style="margin: 0; font-family: cursive;">Professor Polygon</p>
+                                    <p style="margin: 0;">Instructor</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <h3>Customize Your Certificate</h3>
+                        <div class="controls">
+                            <div class="control-group">
+                                <label for="nameInput">Your Name:</label>
+                                <input type="text" id="nameInput" value="Awesome Learner">
+                            </div>
+                            <button id="updateCertificate">Update Certificate</button>
+                        </div>
+                    </div>
+
+                    <div class="character">
+                        <div class="character-avatar">🦊</div>
+                        <div class="character-speech">
+                            <h3>Fiona Fox</h3>
+                            <p>You've learned so much about area and volume! Remember, area is for flat shapes (2D), and volume is for solid objects (3D). You can now measure the world around you in a whole new way!</p>
+                        </div>
+                    </div>
+
+                    <button id="startOver">Start Over</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameState = {
+            progress: 0,
+            areaQuizComplete: false,
+            volumeQuizComplete: false,
+            challengesComplete: false,
+            achievements: [false, false, false, false, false, false, false, false]
+        };
+
+        // DOM Elements
+        const progressBar = document.getElementById('progressBar');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const nextSectionBtns = document.querySelectorAll('.next-section-btn');
+        const checkAreaQuizBtn = document.getElementById('checkAreaQuiz');
+        const checkVolumeQuizBtn = document.getElementById('checkVolumeQuiz');
+        const checkChallengesBtn = document.getElementById('checkChallenges');
+        const hintButtons = document.querySelectorAll('.show-hint');
+        const startOverBtn = document.getElementById('startOver');
+        const updateCertificateBtn = document.getElementById('updateCertificate');
+
+        // Initialize Three.js scenes
+        let areaScene, areaCamera, areaRenderer;
+        let volumeScene, volumeCamera, volumeRenderer;
+        let playgroundScene, playgroundCamera, playgroundRenderer;
+        
+        // Shape and object meshes
+        let areaMesh, volumeMesh;
+        let playgroundMesh2D, playgroundMesh3D;
+
+        // Initialize the game
+        function init() {
+            // Set up tab navigation
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Deactivate all tabs and content
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Activate the clicked tab and its content
+                    tab.classList.add('active');
+                    document.getElementById(tab.dataset.tab).classList.add('active');
+                    
+                    // Update progress
+                    updateProgress();
+                });
+            });
+
+            // Set up next section buttons
+            nextSectionBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    // Deactivate all tabs and content
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+                    
+                    // Activate the next tab and its content
+                    const nextTab = document.querySelector(`.tab[data-tab="${btn.dataset.next}"]`);
+                    nextTab.classList.add('active');
+                    document.getElementById(btn.dataset.next).classList.add('active');
+                    
+                    // Update progress
+                    updateProgress();
+                });
+            });
+
+            // Set up quiz checks
+            checkAreaQuizBtn.addEventListener('click', checkAreaQuiz);
+            checkVolumeQuizBtn.addEventListener('click', checkVolumeQuiz);
+            checkChallengesBtn.addEventListener('click', checkChallenges);
+
+            // Set up hint buttons
+            hintButtons.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const hintId = btn.dataset.hint;
+                    const hint = document.getElementById(hintId);
+                    if (hint.style.display === 'none') {
+                        hint.style.display = 'block';
+                        btn.textContent = 'Hide Hint';
+                    } else {
+                        hint.style.display = 'none';
+                        btn.textContent = 'Show Hint';
+                    }
+                });
+            });
+
+            // Set up start over button
+            startOverBtn.addEventListener('click', () => {
+                // Reset game state
+                gameState = {
+                    progress: 0,
+                    areaQuizComplete: false,
+                    volumeQuizComplete: false,
+                    challengesComplete: false,
+                    achievements: [false, false, false, false, false, false, false, false]
+                };
+                
+                // Reset UI
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(c => c.classList.remove('active'));
+                
+                // Activate introduction tab
+                document.querySelector('.tab[data-tab="introduction"]').classList.add('active');
+                document.getElementById('introduction').classList.add('active');
+                
+                // Update progress
+                updateProgress();
+                
+                // Reset achievements
+                updateAchievements();
+
+                // Show confetti animation
+                createConfetti();
+            });
+
+            // Set up certificate customization
+            updateCertificateBtn.addEventListener('click', () => {
+                const nameInput = document.getElementById('nameInput').value;
+                document.getElementById('playerName').textContent = nameInput || 'Awesome Learner';
+                const today = new Date();
+                document.getElementById('certificateDate').textContent = today.toLocaleDateString();
+                
+                // Unlock achievement
+                unlockAchievement(7);
+                
+                // Show confetti animation
+                createConfetti();
+            });
+
+            // Initialize 3D scenes
+            initAreaScene();
+            initVolumeScene();
+            initPlaygroundScene();
+            
+            // Set up area controls
+            document.getElementById('shapeSelector').addEventListener('change', updateAreaShape);
+            document.getElementById('lengthSlider').addEventListener('input', updateAreaDimensions);
+            document.getElementById('widthSlider').addEventListener('input', updateAreaDimensions);
+            document.getElementById('radiusSlider').addEventListener('input', updateAreaDimensions);
+            
+            // Set up volume controls
+            document.getElementById('objectSelector').addEventListener('change', updateVolumeObject);
+            document.getElementById('lengthSliderV').addEventListener('input', updateVolumeDimensions);
+            document.getElementById('widthSliderV').addEventListener('input', updateVolumeDimensions);
+            document.getElementById('heightSliderV').addEventListener('input', updateVolumeDimensions);
+            document.getElementById('radiusSliderV').addEventListener('input', updateVolumeDimensions);
+            
+            // Set up playground controls
+            document.getElementById('playgroundSelector').addEventListener('change', updatePlayground);
+            document.getElementById('dimensionSlider').addEventListener('input', updatePlaygroundDimensions);
+            document.getElementById('heightSliderP').addEventListener('input', updatePlaygroundDimensions);
+
+            // Update initial shapes and displays
+            updateAreaShape();
+            updateVolumeObject();
+            updatePlayground();
+            
+            // Set certificate date
+            const today = new Date();
+            document.getElementById('certificateDate').textContent = today.toLocaleDateString();
+            
+            // Initial progress update
+            updateProgress();
+        }
+
+        // Update progress bar
+        function updateProgress() {
+            // Calculate progress based on which sections have been visited
+            let progressCount = 0;
+            
+            tabs.forEach(tab => {
+                if (tab.classList.contains('active')) {
+                    progressCount++;
+                }
+            });
+            
+            if (gameState.areaQuizComplete) progressCount++;
+            if (gameState.volumeQuizComplete) progressCount++;
+            if (gameState.challengesComplete) progressCount++;
+            
+            // Calculate percentage (max 100%)
+            const progressPercent = Math.min(Math.round((progressCount / 10) * 100), 100);
+            gameState.progress = progressPercent;
+            
+            // Update progress bar
+            progressBar.style.width = progressPercent + '%';
+            
+            // Update achievements based on progress
+            if (progressPercent >= 25) unlockAchievement(0);
+            if (progressPercent >= 50) unlockAchievement(1);
+            if (progressPercent >= 75) unlockAchievement(2);
+            if (progressPercent === 100) unlockAchievement(3);
+        }
+
+        // Check area quiz answers
+        function checkAreaQuiz() {
+            let score = 0;
+            
+            // Question 1
+            const q1Answer = document.querySelector('input[name="q1"]:checked')?.value;
+            const q1Feedback = document.getElementById('q1Feedback');
+            
+            if (q1Answer === '16') {
+                q1Feedback.textContent = 'Correct! Area of a square = side × side = 4 × 4 = 16 square units.';
+                q1Feedback.className = 'quiz-feedback correct';
+                score++;
+            } else {
+                q1Feedback.textContent = 'Not quite. Remember, the area of a square is side × side. So 4 × 4 = 16 square units.';
+                q1Feedback.className = 'quiz-feedback incorrect';
+            }
+            q1Feedback.style.display = 'block';
+            
+            // Question 2
+            const q2Answer = document.querySelector('input[name="q2"]:checked')?.value;
+            const q2Feedback = document.getElementById('q2Feedback');
+            
+            if (q2Answer === 'circle') {
+                q2Feedback.textContent = 'Correct! The formula for the area of a circle is π × r².';
+                q2Feedback.className = 'quiz-feedback correct';
+                score++;
+            } else {
+                q2Feedback.textContent = 'Not quite. The formula π × r² is used to calculate the area of a circle.';
+                q2Feedback.className = 'quiz-feedback incorrect';
+            }
+            q2Feedback.style.display = 'block';
+            
+            // Question 3
+            const q3Answer = document.querySelector('input[name="q3"]:checked')?.value;
+            const q3Feedback = document.getElementById('q3Feedback');
+            
+            if (q3Answer === '15') {
+                q3Feedback.textContent = 'Correct! Area of a rectangle = length × width = 5 × 3 = 15 square units.';
+                q3Feedback.className = 'quiz-feedback correct';
+                score++;
+            } else {
+                q3Feedback.textContent = 'Not quite. The area of a rectangle is length × width. So 5 × 3 = 15 square units.';
+                q3Feedback.className = 'quiz-feedback incorrect';
+            }
+            q3Feedback.style.display = 'block';
+            
+            // Update game state
+            if (score === 3) {
+                gameState.areaQuizComplete = true;
+                unlockAchievement(4);
+                createConfetti();
+            }
+            
+            // Update progress
+            updateProgress();
+        }
+
+        // Check volume quiz answers
+        function checkVolumeQuiz() {
+            let score = 0;
+            
+            // Question 4
+            const q4Answer = document.querySelector('input[name="q4"]:checked')?.value;
+            const q4Feedback = document.getElementById('q4Feedback');
+            
+            if (q4Answer === '27') {
+                q4Feedback.textContent = 'Correct! Volume of a cube = side³ = 3³ = 27 cubic units.';
+                q4Feedback.className = 'quiz-feedback correct';
+                score++;
+            } else {
+                q4Feedback.textContent = 'Not quite. The volume of a cube is side × side × side (or side³). So 3³ = 27 cubic units.';
+                q4Feedback.className = 'quiz-feedback incorrect';
+            }
+            q4Feedback.style.display = 'block';
+            
+            // Question 5
+            const q5Answer = document.querySelector('input[name="q5"]:checked')?.value;
+            const q5Feedback = document.getElementById('q5Feedback');
+            
+            if (q5Answer === 'sphere') {
+                q5Feedback.textContent = 'Correct! The formula for the volume of a sphere is (4/3) × π × r³.';
+                q5Feedback.className = 'quiz-feedback correct';
+                score++;
+            } else {
+                q5Feedback.textContent = 'Not quite. The formula (4/3) × π × r³ is used to calculate the volume of a sphere.';
+                q5Feedback.className = 'quiz-feedback incorrect';
+            }
+            q5Feedback.style.display = 'block';
+            
+            // Question 6
+            const q6Answer = document.querySelector('input[name="q6"]:checked')?.value;
+            const q6Feedback = document.getElementById('q6Feedback');
+            
+            if (q6Answer === '60') {
+                q6Feedback.textContent = 'Correct! Volume of a rectangular prism = length × width × height = 4 × 3 × 5 = 60 cubic units.';
+                q6Feedback.className = 'quiz-feedback correct';
+                score++;
+            } else {
+                q6Feedback.textContent = 'Not quite. The volume of a rectangular container is length × width × height. So 4 × 3 × 5 = 60 cubic units.';
+                q6Feedback.className = 'quiz-feedback incorrect';
+            }
+            q6Feedback.style.display = 'block';
+            
+            // Update game state
+            if (score === 3) {
+                gameState.volumeQuizComplete = true;
+                unlockAchievement(5);
+                createConfetti();
+            }
+            
+            // Update progress
+            updateProgress();
+        }
+
+        // Check challenge answers
+        function checkChallenges() {
+            let score = 0;
+            
+            // Challenge 1
+            const c1Answer = document.querySelector('input[name="c1"]:checked')?.value;
+            const c1Feedback = document.getElementById('c1Feedback');
+            
+            if (c1Answer === '37') {
+                c1Feedback.textContent = 'Correct! Original volume = 3³ = 27 cubic units. New volume = 4³ = 64 cubic units. Increase = 64 - 27 = 37 cubic units.';
+                c1Feedback.className = 'quiz-feedback correct';
+                score++;
+            } else {
+                c1Feedback.textContent = 'Not quite. Original volume = 3³ = 27 cubic units. New volume = 4³ = 64 cubic units. Increase = 64 - 27 = 37 cubic units.';
+                c1Feedback.className = 'quiz-feedback incorrect';
+            }
+            c1Feedback.style.display = 'block';
+            
+            // Challenge 2
+            const c2Answer = document.querySelector('input[name="c2"]:checked')?.value;
+            const c2Feedback = document.getElementById('c2Feedback');
+            
+            if (c2Answer === '5,5') {
+                c2Feedback.textContent = 'Correct! For a fixed perimeter, a square (equal sides) gives maximum area. With perimeter = 20, each side = 5, giving area = 25 square units.';
+                c2Feedback.className = 'quiz-feedback correct';
+                score++;
+            } else {
+                c2Feedback.textContent = 'Not quite. For a fixed perimeter, a square (equal sides) gives maximum area. With perimeter = 20, each side = 5, giving area = 25 square units.';
+                c2Feedback.className = 'quiz-feedback incorrect';
+            }
+            c2Feedback.style.display = 'block';
+            
+            // Challenge 3
+            const c3Answer = document.querySelector('input[name="c3"]:checked')?.value;
+            const c3Feedback = document.getElementById('c3Feedback');
+            
+            if (c3Answer === '6.3') {
+                c3Feedback.textContent = 'Correct! Cylinder volume = π × 4² × 10 ≈ 502.7 cubic units. The cube root of 502.7 ≈ 7.95, which rounds to about 6.3 units per side.';
+                c3Feedback.className = 'quiz-feedback correct';
+                score++;
+            } else {
+                c3Feedback.textContent = 'Not quite. Cylinder volume = π × 4² × 10 ≈ 502.7 cubic units. The cube root of 502.7 ≈ 7.95, which rounds to about 6.3 units per side.';
+                c3Feedback.className = 'quiz-feedback incorrect';
+            }
+            c3Feedback.style.display = 'block';
+            
+            // Update game state
+            if (score === 3) {
+                gameState.challengesComplete = true;
+                unlockAchievement(6);
+                createConfetti();
+            }
+            
+            // Update progress
+            updateProgress();
+        }
+
+        // Unlock achievement
+        function unlockAchievement(index) {
+            if (!gameState.achievements[index]) {
+                gameState.achievements[index] = true;
+                updateAchievements();
+                createConfetti();
+            }
+        }
+
+        // Update achievements display
+        function updateAchievements() {
+            for (let i = 0; i < gameState.achievements.length; i++) {
+                const achievement = document.getElementById(`achievement${i+1}`);
+                if (gameState.achievements[i]) {
+                    achievement.classList.add('unlocked');
+                } else {
+                    achievement.classList.remove('unlocked');
+                }
+            }
+        }
+
+        // Create confetti animation
+        function createConfetti() {
+            const colors = ['#f00', '#0f0', '#00f', '#ff0', '#0ff', '#f0f'];
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = Math.random() * window.innerWidth + 'px';
+                confetti.style.top = '-10px';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = (Math.random() * 10 + 5) + 'px';
+                confetti.style.height = (Math.random() * 10 + 5) + 'px';
+                document.body.appendChild(confetti);
+                
+                const animationDuration = Math.random() * 3 + 2;
+                const animationDelay = Math.random() * 2;
+                
+                confetti.style.animation = `fall ${animationDuration}s ease-in ${animationDelay}s forwards`;
+                
+                setTimeout(() => {
+                    confetti.remove();
+                }, (animationDuration + animationDelay) * 1000);
+            }
+        }
+
+        // Area Scene Setup
+        function initAreaScene() {
+            // Create scene
+            areaScene = new THREE.Scene();
+            areaScene.background = new THREE.Color(0xf0f0f0);
+            
+            // Create camera
+            areaCamera = new THREE.PerspectiveCamera(75, window.innerWidth / 300, 0.1, 1000);
+            areaCamera.position.z = 10;
+            
+            // Create renderer
+            areaRenderer = new THREE.WebGLRenderer({ antialias: true });
+            areaRenderer.setSize(document.getElementById('areaCanvas').clientWidth, 300);
+            document.getElementById('areaCanvas').appendChild(areaRenderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            areaScene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            areaScene.add(directionalLight);
+            
+            // Create initial shape
+            updateAreaShape();
+            
+            // Start animation loop
+            animateArea();
+        }
+
+        // Update area shape based on selection
+        function updateAreaShape() {
+            const shape = document.getElementById('shapeSelector').value;
+            
+            // Remove previous shape
+            if (areaMesh) {
+                areaScene.remove(areaMesh);
+            }
+            
+            // Get dimensions
+            const length = parseFloat(document.getElementById('lengthSlider').value);
+            const width = parseFloat(document.getElementById('widthSlider').value);
+            const radius = parseFloat(document.getElementById('radiusSlider').value);
+            
+            // Create geometry based on selected shape
+            let geometry;
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x4CAF50,
+                side: THREE.DoubleSide
+            });
+            
+            // Show/hide appropriate controls
+            document.getElementById('lengthControl').style.display = 'block';
+            document.getElementById('widthControl').style.display = 'block';
+            document.getElementById('radiusControl').style.display = 'none';
+            
+            // Create the selected shape
+            switch (shape) {
+                case 'square':
+                    geometry = new THREE.PlaneGeometry(length, length);
+                    document.getElementById('widthControl').style.display = 'none';
+                    document.getElementById('areaFormula').textContent = `A = ${length.toFixed(1)} × ${length.toFixed(1)} = ${(length * length).toFixed(1)} square units`;
+                    document.getElementById('areaExplanation').textContent = 'The area of a square is found by multiplying its side length by itself (or side²).';
+                    break;
+                case 'rectangle':
+                    geometry = new THREE.PlaneGeometry(length, width);
+                    document.getElementById('areaFormula').textContent = `A = ${length.toFixed(1)} × ${width.toFixed(1)} = ${(length * width).toFixed(1)} square units`;
+                    document.getElementById('areaExplanation').textContent = 'The area of a rectangle is found by multiplying its length by its width.';
+                    break;
+                case 'circle':
+                    geometry = new THREE.CircleGeometry(radius, 32);
+                    document.getElementById('lengthControl').style.display = 'none';
+                    document.getElementById('widthControl').style.display = 'none';
+                    document.getElementById('radiusControl').style.display = 'block';
+                    document.getElementById('areaFormula').textContent = `A = π × ${radius.toFixed(1)}² = ${(Math.PI * radius * radius).toFixed(1)} square units`;
+                    document.getElementById('areaExplanation').textContent = 'The area of a circle is found by multiplying π (approximately 3.14159) by the square of the radius.';
+                    break;
+                case 'triangle':
+                    const triangleShape = new THREE.Shape();
+                    triangleShape.moveTo(0, -width/2);
+                    triangleShape.lineTo(length/2, width/2);
+                    triangleShape.lineTo(-length/2, width/2);
+                    triangleShape.lineTo(0, -width/2);
+                    geometry = new THREE.ShapeGeometry(triangleShape);
+                    document.getElementById('areaFormula').textContent = `A = ½ × ${length.toFixed(1)} × ${width.toFixed(1)} = ${(0.5 * length * width).toFixed(1)} square units`;
+                    document.getElementById('areaExplanation').textContent = 'The area of a triangle is found by multiplying half of the base by the height.';
+                    break;
+            }
+            
+            // Create mesh
+            areaMesh = new THREE.Mesh(geometry, material);
+            areaScene.add(areaMesh);
+            
+            // Unlock achievement if trying all shapes
+            if (document.getElementById('shapeSelector').options.length === document.getElementById('shapeSelector').selectedIndex + 1) {
+                unlockAchievement(4);
+            }
+        }
+
+        // Update area dimensions
+        function updateAreaDimensions() {
+            // Update the display values
+            document.getElementById('lengthValue').textContent = document.getElementById('lengthSlider').value;
+            document.getElementById('widthValue').textContent = document.getElementById('widthSlider').value;
+            document.getElementById('radiusValue').textContent = document.getElementById('radiusSlider').value;
+            
+            // Update the shape
+            updateAreaShape();
+        }
+
+        // Animate area scene
+        function animateArea() {
+            requestAnimationFrame(animateArea);
+            
+            // Rotate the shape slightly
+            if (areaMesh) {
+                areaMesh.rotation.z += 0.01;
+            }
+            
+            // Render the scene
+            areaRenderer.render(areaScene, areaCamera);
+        }
+
+        // Volume Scene Setup
+        function initVolumeScene() {
+            // Create scene
+            volumeScene = new THREE.Scene();
+            volumeScene.background = new THREE.Color(0xf0f0f0);
+            
+            // Create camera
+            volumeCamera = new THREE.PerspectiveCamera(75, window.innerWidth / 300, 0.1, 1000);
+            volumeCamera.position.z = 10;
+            
+            // Create renderer
+            volumeRenderer = new THREE.WebGLRenderer({ antialias: true });
+            volumeRenderer.setSize(document.getElementById('volumeCanvas').clientWidth, 300);
+            document.getElementById('volumeCanvas').appendChild(volumeRenderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            volumeScene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            volumeScene.add(directionalLight);
+            
+            // Create initial object
+            updateVolumeObject();
+            
+            // Start animation loop
+            animateVolume();
+        }
+
+        // Update volume object based on selection
+        function updateVolumeObject() {
+            const object = document.getElementById('objectSelector').value;
+            
+            // Remove previous object
+            if (volumeMesh) {
+                volumeScene.remove(volumeMesh);
+            }
+            
+            // Get dimensions
+            const length = parseFloat(document.getElementById('lengthSliderV').value);
+            const width = parseFloat(document.getElementById('widthSliderV').value);
+            const height = parseFloat(document.getElementById('heightSliderV').value);
+            const radius = parseFloat(document.getElementById('radiusSliderV').value);
+            
+            // Create geometry based on selected object
+            let geometry;
+            const material = new THREE.MeshPhongMaterial({ 
+                color: 0x2196F3,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            // Show/hide appropriate controls
+            document.getElementById('lengthControlV').style.display = 'block';
+            document.getElementById('widthControlV').style.display = 'block';
+            document.getElementById('heightControlV').style.display = 'block';
+            document.getElementById('radiusControlV').style.display = 'none';
+            
+            // Create the selected object
+            switch (object) {
+                case 'cube':
+                    geometry = new THREE.BoxGeometry(length, length, length);
+                    document.getElementById('widthControlV').style.display = 'none';
+                    document.getElementById('heightControlV').style.display = 'none';
+                    document.getElementById('volumeFormula').textContent = `V = ${length.toFixed(1)}³ = ${(length * length * length).toFixed(1)} cubic units`;
+                    document.getElementById('volumeExplanation').textContent = 'The volume of a cube is found by multiplying its side length by itself three times (or side³).';
+                    break;
+                case 'rectangular_prism':
+                    geometry = new THREE.BoxGeometry(length, height, width);
+                    document.getElementById('volumeFormula').textContent = `V = ${length.toFixed(1)} × ${width.toFixed(1)} × ${height.toFixed(1)} = ${(length * width * height).toFixed(1)} cubic units`;
+                    document.getElementById('volumeExplanation').textContent = 'The volume of a rectangular prism is found by multiplying its length by its width by its height.';
+                    break;
+                case 'sphere':
+                    geometry = new THREE.SphereGeometry(radius, 32, 32);
+                    document.getElementById('lengthControlV').style.display = 'none';
+                    document.getElementById('widthControlV').style.display = 'none';
+                    document.getElementById('heightControlV').style.display = 'none';
+                    document.getElementById('radiusControlV').style.display = 'block';
+                    document.getElementById('volumeFormula').textContent = `V = (4/3) × π × ${radius.toFixed(1)}³ = ${((4/3) * Math.PI * radius * radius * radius).toFixed(1)} cubic units`;
+                    document.getElementById('volumeExplanation').textContent = 'The volume of a sphere is found by multiplying (4/3) × π by the cube of the radius.';
+                    break;
+                case 'cylinder':
+                    geometry = new THREE.CylinderGeometry(radius, radius, height, 32);
+                    document.getElementById('lengthControlV').style.display = 'none';
+                    document.getElementById('widthControlV').style.display = 'none';
+                    document.getElementById('radiusControlV').style.display = 'block';
+                    document.getElementById('volumeFormula').textContent = `V = π × ${radius.toFixed(1)}² × ${height.toFixed(1)} = ${(Math.PI * radius * radius * height).toFixed(1)} cubic units`;
+                    document.getElementById('volumeExplanation').textContent = 'The volume of a cylinder is found by multiplying the area of the circular base (π × radius²) by the height.';
+                    break;
+            }
+            
+            // Create mesh
+            volumeMesh = new THREE.Mesh(geometry, material);
+            volumeScene.add(volumeMesh);
+            
+            // Unlock achievement if trying all objects
+            if (document.getElementById('objectSelector').options.length === document.getElementById('objectSelector').selectedIndex + 1) {
+                unlockAchievement(5);
+            }
+        }
+
+        // Update volume dimensions
+        function updateVolumeDimensions() {
+            // Update the display values
+            document.getElementById('lengthValueV').textContent = document.getElementById('lengthSliderV').value;
+            document.getElementById('widthValueV').textContent = document.getElementById('widthSliderV').value;
+            document.getElementById('heightValueV').textContent = document.getElementById('heightSliderV').value;
+            document.getElementById('radiusValueV').textContent = document.getElementById('radiusSliderV').value;
+            
+            // Update the object
+            updateVolumeObject();
+        }
+
+        // Animate volume scene
+        function animateVolume() {
+            requestAnimationFrame(animateVolume);
+            
+            // Rotate the object
+            if (volumeMesh) {
+                volumeMesh.rotation.x += 0.01;
+                volumeMesh.rotation.y += 0.01;
+            }
+            
+            // Render the scene
+            volumeRenderer.render(volumeScene, volumeCamera);
+        }
+
+        // Playground Scene Setup
+        function initPlaygroundScene() {
+            // Create scene
+            playgroundScene = new THREE.Scene();
+            playgroundScene.background = new THREE.Color(0xf0f0f0);
+            
+            // Create camera
+            playgroundCamera = new THREE.PerspectiveCamera(75, window.innerWidth / 300, 0.1, 1000);
+            playgroundCamera.position.z = 15;
+            
+            // Create renderer
+            playgroundRenderer = new THREE.WebGLRenderer({ antialias: true });
+            playgroundRenderer.setSize(document.getElementById('playgroundCanvas').clientWidth, 300);
+            document.getElementById('playgroundCanvas').appendChild(playgroundRenderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            playgroundScene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(1, 1, 1);
+            playgroundScene.add(directionalLight);
+            
+            // Create initial objects
+            updatePlayground();
+            
+            // Start animation loop
+            animatePlayground();
+        }
+
+        // Update playground objects based on selection
+        function updatePlayground() {
+            const selection = document.getElementById('playgroundSelector').value;
+            
+            // Remove previous objects
+            if (playgroundMesh2D) {
+                playgroundScene.remove(playgroundMesh2D);
+            }
+            if (playgroundMesh3D) {
+                playgroundScene.remove(playgroundMesh3D);
+            }
+            
+            // Get dimensions
+            const dimension = parseFloat(document.getElementById('dimensionSlider').value);
+            const height = parseFloat(document.getElementById('heightSliderP').value);
+            
+            // Create materials
+            const material2D = new THREE.MeshPhongMaterial({ 
+                color: 0x4CAF50,
+                side: THREE.DoubleSide
+            });
+            
+            const material3D = new THREE.MeshPhongMaterial({ 
+                color: 0x2196F3,
+                transparent: true,
+                opacity: 0.8
+            });
+            
+            // Create geometries based on selected conversion
+            let geometry2D, geometry3D;
+            
+            switch (selection) {
+                case 'square_to_cube':
+                    geometry2D = new THREE.PlaneGeometry(dimension, dimension);
+                    geometry3D = new THREE.BoxGeometry(dimension, height, dimension);
+                    
+                    document.getElementById('playgroundArea').textContent = `Area = ${dimension.toFixed(1)} × ${dimension.toFixed(1)} = ${(dimension * dimension).toFixed(1)} square units`;
+                    document.getElementById('playgroundVolume').textContent = `Volume = ${dimension.toFixed(1)} × ${dimension.toFixed(1)} × ${height.toFixed(1)} = ${(dimension * dimension * height).toFixed(1)} cubic units`;
+                    break;
+                case 'circle_to_sphere':
+                    geometry2D = new THREE.CircleGeometry(dimension, 32);
+                    geometry3D = new THREE.SphereGeometry(dimension * (height / 10), 32, 32);
+                    
+                    document.getElementById('playgroundArea').textContent = `Area = π × ${dimension.toFixed(1)}² = ${(Math.PI * dimension * dimension).toFixed(1)} square units`;
+                    document.getElementById('playgroundVolume').textContent = `Volume = (4/3) × π × ${(dimension * height / 10).toFixed(1)}³ = ${((4/3) * Math.PI * Math.pow(dimension * height / 10, 3)).toFixed(1)} cubic units`;
+                    break;
+                case 'rectangle_to_prism':
+                    geometry2D = new THREE.PlaneGeometry(dimension, dimension / 2);
+                    geometry3D = new THREE.BoxGeometry(dimension, height, dimension / 2);
+                    
+                    document.getElementById('playgroundArea').textContent = `Area = ${dimension.toFixed(1)} × ${(dimension/2).toFixed(1)} = ${(dimension * dimension/2).toFixed(1)} square units`;
+                    document.getElementById('playgroundVolume').textContent = `Volume = ${dimension.toFixed(1)} × ${(dimension/2).toFixed(1)} × ${height.toFixed(1)} = ${(dimension * dimension/2 * height).toFixed(1)} cubic units`;
+                    break;
+            }
+            
+            // Create meshes
+            playgroundMesh2D = new THREE.Mesh(geometry2D, material2D);
+            playgroundMesh2D.position.x = -5;
+            playgroundScene.add(playgroundMesh2D);
+            
+            playgroundMesh3D = new THREE.Mesh(geometry3D, material3D);
+            playgroundMesh3D.position.x = 5;
+            playgroundScene.add(playgroundMesh3D);
+            
+            // Unlock achievement if trying all conversions
+            if (document.getElementById('playgroundSelector').options.length === document.getElementById('playgroundSelector').selectedIndex + 1) {
+                unlockAchievement(6);
+            }
+        }
+
+        // Update playground dimensions
+        function updatePlaygroundDimensions() {
+            // Update the display values
+            document.getElementById('dimensionValue').textContent = document.getElementById('dimensionSlider').value;
+            document.getElementById('heightValueP').textContent = document.getElementById('heightSliderP').value;
+            
+            // Update the objects
+            updatePlayground();
+        }
+
+        // Animate playground scene
+        function animatePlayground() {
+            requestAnimationFrame(animatePlayground);
+            
+            // Rotate the objects
+            if (playgroundMesh2D) {
+                playgroundMesh2D.rotation.z += 0.01;
+            }
+            if (playgroundMesh3D) {
+                playgroundMesh3D.rotation.x += 0.01;
+                playgroundMesh3D.rotation.y += 0.01;
+            }
+            
+            // Render the scene
+            playgroundRenderer.render(playgroundScene, playgroundCamera);
+        }
+
+        // Add CSS animation for confetti
+        const style = document.createElement('style');
+        style.innerHTML = `
+            @keyframes fall {
+                0% {
+                    transform: translateY(0) rotate(0deg);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(100vh) rotate(720deg);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize the game when the window loads
+        window.addEventListener('load', init);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (areaRenderer) {
+                areaRenderer.setSize(document.getElementById('areaCanvas').clientWidth, 300);
+                areaCamera.aspect = document.getElementById('areaCanvas').clientWidth / 300;
+                areaCamera.updateProjectionMatrix();
+            }
+            
+            if (volumeRenderer) {
+                volumeRenderer.setSize(document.getElementById('volumeCanvas').clientWidth, 300);
+                volumeCamera.aspect = document.getElementById('volumeCanvas').clientWidth / 300;
+                volumeCamera.updateProjectionMatrix();
+            }
+            
+            if (playgroundRenderer) {
+                playgroundRenderer.setSize(document.getElementById('playgroundCanvas').clientWidth, 300);
+                playgroundCamera.aspect = document.getElementById('playgroundCanvas').clientWidth / 300;
+                playgroundCamera.updateProjectionMatrix();
+            }
+        });
+    </script>
+</body>
+</html>

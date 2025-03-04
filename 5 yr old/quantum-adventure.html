@@ -1,0 +1,1914 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Quest: Adventures in the Tiny Universe</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #5b21b6;
+            --primary-light: #7c3aed;
+            --primary-dark: #4c1d95;
+            --secondary-color: #ea580c;
+            --secondary-light: #f97316;
+            --secondary-dark: #c2410c;
+            --tertiary-color: #0891b2;
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --panel-color: #ffffff;
+            --panel-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #3b82f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: linear-gradient(120deg, #a1c4fd 0%, #c2e9fb 100%);
+            background-attachment: fixed;
+            color: var(--text-color);
+            min-height: 100vh;
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 2rem;
+            background: linear-gradient(to right, #7c3aed, #3b82f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            padding: 5px;
+            display: inline-block;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .panel {
+            background-color: var(--panel-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: var(--panel-shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .panel h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 0.5rem;
+        }
+
+        .panel p {
+            margin-bottom: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            margin: 0.5rem;
+        }
+
+        button:hover {
+            background-color: var(--primary-light);
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button.secondary {
+            background-color: var(--secondary-color);
+        }
+
+        button.secondary:hover {
+            background-color: var(--secondary-light);
+        }
+
+        button.tertiary {
+            background-color: var(--tertiary-color);
+        }
+
+        button.tertiary:hover {
+            background-color: #0da2c8;
+        }
+
+        .flex-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: space-between;
+        }
+
+        .canvas-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            margin: 1rem 0;
+            background: #111;
+        }
+
+        .quiz-container {
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        .quiz-option {
+            background-color: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quiz-option:hover {
+            border-color: var(--primary-color);
+            background-color: rgba(123, 58, 237, 0.1);
+        }
+
+        .quiz-option.selected {
+            border-color: var(--primary-color);
+            background-color: rgba(123, 58, 237, 0.1);
+        }
+
+        .quiz-option.correct {
+            border-color: var(--success-color);
+            background-color: rgba(34, 197, 94, 0.1);
+        }
+
+        .quiz-option.incorrect {
+            border-color: var(--error-color);
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: #e2e8f0;
+            border-radius: 10px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary-light), var(--tertiary-color));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: -400px;
+            width: 400px;
+            height: 100vh;
+            background-color: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            padding: 2rem;
+            overflow-y: auto;
+            transition: right 0.3s ease;
+        }
+
+        .settings-panel.open {
+            right: 0;
+        }
+
+        .settings-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 1001;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s;
+        }
+
+        .settings-toggle:hover {
+            transform: rotate(30deg);
+        }
+
+        .slider-container {
+            margin: 1.5rem 0;
+        }
+
+        .slider-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+            color: var(--primary-dark);
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #e2e8f0;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--primary-light);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .slider::-moz-range-thumb:hover {
+            transform: scale(1.2);
+            background: var(--primary-light);
+        }
+
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .star-rating {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+        }
+
+        .star {
+            font-size: 2rem;
+            color: #d1d5db;
+            margin: 0 0.2rem;
+            transition: color 0.3s;
+        }
+
+        .star.filled {
+            color: #fbbf24;
+        }
+
+        .character {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            transition: transform 0.3s, filter 0.3s;
+            cursor: pointer;
+            z-index: 5;
+        }
+
+        .character:hover {
+            transform: scale(1.1);
+            filter: drop-shadow(0 0 10px rgba(123, 58, 237, 0.5));
+        }
+
+        .speech-bubble {
+            position: absolute;
+            background: white;
+            border-radius: 15px;
+            padding: 1rem;
+            max-width: 300px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+        }
+
+        .speech-bubble.top:after {
+            border-top-color: white;
+            top: 100%;
+            left: 50%;
+            margin-left: -15px;
+        }
+
+        .speech-bubble.bottom:after {
+            border-bottom-color: white;
+            bottom: 100%;
+            left: 50%;
+            margin-left: -15px;
+        }
+
+        .speech-bubble.left:after {
+            border-left-color: white;
+            left: 100%;
+            top: 50%;
+            margin-top: -15px;
+        }
+
+        .speech-bubble.right:after {
+            border-right-color: white;
+            right: 100%;
+            top: 50%;
+            margin-top: -15px;
+        }
+
+        /* Animation classes */
+        .fade-in {
+            animation: fadeIn 1s forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.5s forwards;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(50px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .bounce {
+            animation: bounce 0.5s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Particle effects */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: float 3s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            25% { transform: translateY(-10px) translateX(5px); }
+            50% { transform: translateY(0) translateX(10px); }
+            75% { transform: translateY(10px) translateX(5px); }
+        }
+
+        /* Modal styles */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .modal.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+
+        .modal.open .modal-content {
+            transform: scale(1);
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+
+        .info-button {
+            background-color: var(--info-color);
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .flex-container {
+                flex-direction: column;
+            }
+            
+            .settings-panel {
+                width: 100%;
+                right: -100%;
+            }
+            
+            .character {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .speech-bubble {
+                max-width: 200px;
+            }
+        }
+
+        /* Card styles */
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s;
+            margin: 1rem 0;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem;
+        }
+
+        .card-body {
+            padding: 1rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Confetti animation */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            opacity: 0.8;
+            pointer-events: none;
+            animation: fall 4s ease-out forwards;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(1000px) rotate(720deg) scale(0);
+                opacity: 0;
+            }
+        }
+
+        /* Character SVG styles */
+        .quasar-girl {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            z-index: 10;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .quasar-girl:hover {
+            transform: scale(1.1);
+        }
+
+        .electron-boy {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 150px;
+            height: 150px;
+            z-index: 10;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .electron-boy:hover {
+            transform: scale(1.1);
+        }
+
+        .wave-particle {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 120px;
+            z-index: 10;
+            cursor: pointer;
+            transition: transform 0.3s;
+        }
+
+        .wave-particle:hover {
+            transform: translateX(-50%) scale(1.1);
+        }
+
+        /* Experiment station styles */
+        .experiment-station {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: var(--panel-shadow);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin: 0 10px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .switch-slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .switch-slider:before {
+            transform: translateX(26px);
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+            height: 0;
+            overflow: hidden;
+            border-radius: 12px;
+            margin: 1rem 0;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Tab navigation */
+        .tab-container {
+            margin: 1rem 0;
+        }
+
+        .tab-nav {
+            display: flex;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 1rem;
+        }
+
+        .tab-button {
+            padding: 0.5rem 1rem;
+            background: none;
+            border: none;
+            margin: 0;
+            color: var(--text-color);
+            font-weight: bold;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-button.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s forwards;
+        }
+
+        /* Certificate style */
+        .certificate {
+            background-color: #fff;
+            border: 10px solid var(--primary-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            position: relative;
+            margin: 20px auto;
+            max-width: 600px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .certificate:before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border: 2px solid var(--secondary-color);
+            border-radius: 5px;
+            pointer-events: none;
+        }
+
+        .certificate h2 {
+            font-size: 28px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .certificate h3 {
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        .certificate p {
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .certificate .seal {
+            width: 80px;
+            height: 80px;
+            margin: 15px auto;
+            background: var(--primary-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            transform: rotate(-15deg);
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Quantum Quest: Adventures in the Tiny Universe</h1>
+    </header>
+
+    <div class="settings-toggle">⚙️</div>
+    <div class="settings-panel">
+        <h2>Learning Settings</h2>
+        <p>Adjust these settings to customize your quantum adventure!</p>
+        
+        <div class="slider-container">
+            <label for="difficultySlider">Difficulty Level: <span id="difficultyValue">1</span></label>
+            <input type="range" min="1" max="5" value="1" class="slider" id="difficultySlider">
+            <p class="setting-description">Adjust how challenging the activities and quizzes will be.</p>
+        </div>
+        
+        <div class="slider-container">
+            <label for="complexitySlider">Concept Complexity: <span id="complexityValue">1</span></label>
+            <input type="range" min="1" max="5" value="1" class="slider" id="complexitySlider">
+            <p class="setting-description">Control how deep we dive into quantum concepts.</p>
+        </div>
+        
+        <div class="slider-container">
+            <label for="visualsSlider">Visual Effects: <span id="visualsValue">3</span></label>
+            <input type="range" min="1" max="5" value="3" class="slider" id="visualsSlider">
+            <p class="setting-description">Adjust the amount of visual effects and animations.</p>
+        </div>
+        
+        <div class="slider-container">
+            <label for="explainDepthSlider">Explanation Depth: <span id="explainDepthValue">1</span></label>
+            <input type="range" min="1" max="5" value="1" class="slider" id="explainDepthSlider">
+            <p class="setting-description">How detailed should explanations be?</p>
+        </div>
+
+        <div class="slider-container">
+            <label for="quizFrequencySlider">Quiz Frequency: <span id="quizFrequencyValue">3</span></label>
+            <input type="range" min="1" max="5" value="3" class="slider" id="quizFrequencySlider">
+            <p class="setting-description">How often should we test knowledge with quizzes?</p>
+        </div>
+
+        <h3>Advanced Settings</h3>
+        
+        <div class="slider-container">
+            <label for="physicsModeSlider">Physics Mode: <span id="physicsModeValue">1</span></label>
+            <input type="range" min="1" max="10" value="1" class="slider" id="physicsModeSlider">
+            <p class="setting-description">At higher levels, we'll include more detailed physics concepts that approach PhD-level understanding in child-friendly ways.</p>
+        </div>
+        
+        <button id="applySettings" class="secondary">Apply Settings</button>
+        <button id="resetSettings">Reset to Default</button>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <!-- Content will be dynamically loaded here -->
+    </div>
+
+    <!-- Character SVGs -->
+    <div class="quasar-girl">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Head -->
+            <circle cx="100" cy="70" r="40" fill="#FFD3E0" />
+            <!-- Hair -->
+            <path d="M60 70 Q 70 30, 100 40 Q 130 30, 140 70 Q 140 80, 150 60 Q 160 90, 140 90 Q 120 110, 80 110 Q 60 90, 40 90 Q 30 90, 40 60 Q 50 80, 60 70" fill="#9C27B0" />
+            <!-- Eyes -->
+            <circle cx="85" cy="65" r="5" fill="white" />
+            <circle cx="115" cy="65" r="5" fill="white" />
+            <circle cx="85" cy="65" r="2.5" fill="#333" />
+            <circle cx="115" cy="65" r="2.5" fill="#333" />
+            <!-- Mouth -->
+            <path d="M90 85 Q 100 95, 110 85" fill="none" stroke="#333" stroke-width="2" />
+            <!-- Quantum goggles -->
+            <rect x="75" y="55" width="50" height="15" rx="5" fill="none" stroke="#FFD700" stroke-width="2" />
+            <circle cx="85" cy="65" r="7" fill="none" stroke="#FFD700" stroke-width="2" />
+            <circle cx="115" cy="65" r="7" fill="none" stroke="#FFD700" stroke-width="2" />
+            <line x1="100" y1="55" x2="100" y2="70" stroke="#FFD700" stroke-width="2" />
+            <!-- Body -->
+            <path d="M70 110 L60 170 L80 170 L95 110 L105 110 L120 170 L140 170 L130 110 Q 110 125, 90 125 Q 70 125, 70 110" fill="#E040FB" />
+            <!-- Arms -->
+            <path d="M70 110 L50 150 L60 155 L80 120" fill="#FFD3E0" />
+            <path d="M130 110 L150 150 L140 155 L120 120" fill="#FFD3E0" />
+            <!-- Energy aura -->
+            <circle cx="100" cy="100" r="60" fill="none" stroke="#E040FB" stroke-width="2" opacity="0.5">
+                <animate attributeName="r" from="60" to="65" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.5" to="0.2" dur="2s" repeatCount="indefinite" />
+            </circle>
+            <circle cx="100" cy="100" r="70" fill="none" stroke="#E040FB" stroke-width="1" opacity="0.3">
+                <animate attributeName="r" from="70" to="75" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.3" to="0.1" dur="2s" repeatCount="indefinite" />
+            </circle>
+        </svg>
+    </div>
+
+    <div class="electron-boy">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Head -->
+            <circle cx="100" cy="70" r="40" fill="#AEC6CF" />
+            <!-- Hair -->
+            <path d="M60 60 Q 80 30, 100 40 Q 120 30, 140 60 L 130 70 L 140 75 L 130 85 Q 120 90, 120 70 L 80 70 Q 80 90, 70 85 L 60 75 L 70 70 L 60 60" fill="#3F51B5" />
+            <!-- Eyes -->
+            <circle cx="85" cy="65" r="5" fill="white" />
+            <circle cx="115" cy="65" r="5" fill="white" />
+            <circle cx="85" cy="65" r="2.5" fill="#333" />
+            <circle cx="115" cy="65" r="2.5" fill="#333" />
+            <!-- Mouth -->
+            <path d="M90 80 Q 100 90, 110 80" fill="none" stroke="#333" stroke-width="2" />
+            <!-- Electron helmet -->
+            <circle cx="100" cy="45" r="10" fill="#29B6F6" />
+            <circle cx="100" cy="45" r="5" fill="#0288D1" />
+            <circle cx="100" cy="45" r="15" fill="none" stroke="#29B6F6" stroke-width="2" opacity="0.5">
+                <animate attributeName="r" from="15" to="18" dur="1.5s" repeatCount="indefinite" />
+                <animate attributeName="opacity" from="0.5" to="0.2" dur="1.5s" repeatCount="indefinite" />
+            </circle>
+            <!-- Body -->
+            <path d="M70 110 L60 170 L80 170 L95 110 L105 110 L120 170 L140 170 L130 110 Q 110 125, 90 125 Q 70 125, 70 110" fill="#3F51B5" />
+            <!-- Arms -->
+            <path d="M70 110 L50 150 L60 155 L80 120" fill="#AEC6CF" />
+            <path d="M130 110 L150 150 L140 155 L120 120" fill="#AEC6CF" />
+            <!-- Electron orbit -->
+            <ellipse cx="100" cy="100" rx="65" ry="40" fill="none" stroke="#29B6F6" stroke-width="2" opacity="0.5" transform="rotate(0, 100, 100)">
+                <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="5s" repeatCount="indefinite" />
+            </ellipse>
+            <circle cx="165" cy="100" r="5" fill="#29B6F6" opacity="0.8">
+                <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="5s" repeatCount="indefinite" />
+            </circle>
+        </svg>
+    </div>
+
+    <div class="wave-particle">
+        <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+            <!-- Wave-Particle Character -->
+            <g>
+                <!-- Wave part -->
+                <path d="M30 100 Q 50 70, 70 100 Q 90 130, 110 100 Q 130 70, 150 100 Q 170 130, 190 100" fill="none" stroke="#FF9800" stroke-width="5" stroke-linecap="round">
+                    <animate attributeName="d" 
+                     values="M30 100 Q 50 70, 70 100 Q 90 130, 110 100 Q 130 70, 150 100 Q 170 130, 190 100;
+                             M30 100 Q 50 130, 70 100 Q 90 70, 110 100 Q 130 130, 150 100 Q 170 70, 190 100;
+                             M30 100 Q 50 70, 70 100 Q 90 130, 110 100 Q 130 70, 150 100 Q 170 130, 190 100" 
+                     dur="4s" repeatCount="indefinite" />
+                </path>
+                
+                <!-- Particle part -->
+                <circle cx="110" cy="100" r="20" fill="#FFCC80">
+                    <animate attributeName="r" values="20;22;20;18;20" dur="2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.8;1;0.8" dur="2s" repeatCount="indefinite" />
+                </circle>
+                
+                <!-- Face -->
+                <circle cx="103" cy="95" r="3" fill="#333" />
+                <circle cx="117" cy="95" r="3" fill="#333" />
+                <path d="M105 110 Q 110 115, 115 110" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" />
+                
+                <!-- Aura -->
+                <circle cx="110" cy="100" r="30" fill="none" stroke="#FFA726" stroke-width="2" opacity="0.5">
+                    <animate attributeName="r" values="30;35;30" dur="3s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.5;0.2;0.5" dur="3s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="110" cy="100" r="40" fill="none" stroke="#FFA726" stroke-width="1" opacity="0.3">
+                    <animate attributeName="r" values="40;45;40" dur="3s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.3;0.1;0.3" dur="3s" repeatCount="indefinite" />
+                </circle>
+            </g>
+        </svg>
+    </div>
+
+    <script>
+        // Game state and configuration
+        const gameState = {
+            // Core game state
+            currentModule: 'intro',
+            progress: 0,
+            stars: 0,
+            maxStars: 25,
+            currentQuizScore: 0,
+            completedModules: {},
+            
+            // Settings
+            difficulty: 1,
+            complexity: 1,
+            visuals: 3,
+            explainDepth: 1,
+            quizFrequency: 3,
+            physicsMode: 1,
+            
+            // Characters
+            characterDialogue: {
+                quasarGirl: [
+                    "Hi! I'm Quasar Girl! I'm here to help you explore the quantum world!",
+                    "Quantum physics is all about the tiniest particles and how they behave!",
+                    "Sometimes particles act like waves, and sometimes waves act like particles!",
+                    "Energy comes in tiny packets called 'quanta'!",
+                    "The quantum world is super weird and amazing!"
+                ],
+                electronBoy: [
+                    "Hello! I'm Electron Boy! I zoom around atoms at super high speeds!",
+                    "Did you know electrons can be in two places at once? It's called superposition!",
+                    "Electrons are like tiny magnets with a property called 'spin'!",
+                    "Without electrons, we wouldn't have electricity or computers!",
+                    "I'm so small you can't see me, but I'm inside all matter!"
+                ],
+                waveParticle: [
+                    "Greetings! I'm Wavy! I represent the wave-particle duality!",
+                    "Light can behave like both a wave AND a particle!",
+                    "When you're not looking at me, I exist as many possibilities at once!",
+                    "Quantum particles don't have exact positions until you measure them!",
+                    "My wave function describes all my possible states!"
+                ]
+            },
+            
+            // Module content
+            moduleContent: {
+                intro: {
+                    title: "Welcome to the Quantum Universe!",
+                    description: "Get ready to explore the amazing world of quantum physics where the tiniest things follow strange and wonderful rules!",
+                    activities: ["Meet your quantum guides", "Learn what quantum physics is", "Start your quantum adventure!"]
+                },
+                particles: {
+                    title: "Tiny Particles",
+                    description: "Let's learn about the building blocks of everything: atoms, electrons, and even smaller particles!",
+                    activities: ["Discover atoms and their parts", "Learn about electrons", "See how small things can be"]
+                },
+                waves: {
+                    title: "Waves and Particles",
+                    description: "In the quantum world, things can behave like both waves and particles! Let's see how this works.",
+                    activities: ["Explore wave properties", "Discover particle properties", "Understand wave-particle duality"]
+                },
+                uncertainty: {
+                    title: "The Uncertainty Principle",
+                    description: "Quantum particles are tricky! The more precisely we know where they are, the less we know about how fast they're moving!",
+                    activities: ["Learn about measurement", "Explore uncertainty", "Play with probability"]
+                },
+                superposition: {
+                    title: "Superposition",
+                    description: "Quantum objects can exist in multiple states at the same time until we look at them!",
+                    activities: ["Understand possibilities", "Explore multiple states", "Learn about quantum cats"]
+                },
+                entanglement: {
+                    title: "Quantum Entanglement",
+                    description: "Some particles are connected in a special way, even when they're far apart!",
+                    activities: ["Connect quantum pairs", "Explore spooky action", "See instant connections"]
+                },
+                applications: {
+                    title: "Quantum Technology",
+                    description: "Quantum physics helps us make amazing technology like computers, lasers, and special microscopes!",
+                    activities: ["Discover quantum computers", "Learn about lasers", "Explore quantum technologies"]
+                },
+                finale: {
+                    title: "Quantum Master",
+                    description: "Congratulations! You've explored the quantum universe and learned amazing things about the tiniest objects!",
+                    activities: ["Review quantum concepts", "Get your Quantum Explorer certificate", "Plan future explorations"]
+                }
+            },
+            
+            // Explanations with varying complexity levels
+            explanations: {
+                level1: {
+                    quantum: "Quantum physics studies very tiny things like atoms and the particles inside them.",
+                    particles: "Particles are tiny bits of matter, like the pieces that make up atoms.",
+                    waves: "Waves are patterns of energy that move, like ripples in water or sound traveling through air.",
+                    duality: "In the quantum world, things can behave like both particles and waves.",
+                    uncertainty: "It's impossible to know exactly where a quantum particle is and how fast it's moving at the same time.",
+                    superposition: "Quantum particles can be in many places or states at the same time until we look at them.",
+                    entanglement: "Some quantum particles are connected in a special way, even when they're far apart."
+                },
+                level3: {
+                    quantum: "Quantum physics is the study of matter and energy at the smallest scales, where regular physics rules don't apply. It describes how atoms and subatomic particles behave.",
+                    particles: "Particles are discrete units of matter or energy, like electrons, protons, or photons (light particles). They have properties like mass, charge, and spin.",
+                    waves: "Waves are disturbances that transfer energy through space and time. They have properties like wavelength, frequency, amplitude, and can interfere with each other.",
+                    duality: "Wave-particle duality means that quantum objects like electrons and photons show properties of both particles and waves, depending on how we observe them.",
+                    uncertainty: "Heisenberg's Uncertainty Principle states that we can't simultaneously know both the exact position and momentum of a quantum particle. The more precisely we measure one, the less precisely we can know the other.",
+                    superposition: "Superposition is when quantum particles exist in multiple states simultaneously, with each state having a certain probability, until a measurement causes the particle to assume just one of those states.",
+                    entanglement: "Quantum entanglement happens when pairs or groups of particles interact in ways that the quantum state of each particle cannot be described independently, even when separated by large distances."
+                },
+                level5: {
+                    quantum: "Quantum mechanics is a fundamental theory in physics that provides a mathematical description of the wave-like and particle-like behavior of matter and energy. It departs from classical physics at the atomic and subatomic scales, where quantization of energy, momentum, and other quantities becomes significant.",
+                    particles: "Quantum particles are discrete units characterized by quantized properties, described by quantum numbers, and governed by quantum statistics. These include fermions (like electrons) that follow the Pauli Exclusion Principle and bosons (like photons) that can occupy the same quantum state.",
+                    waves: "In quantum mechanics, wave functions mathematically describe the wavelike behavior of particles. These complex-valued probability amplitude functions, when squared, yield probability distributions for the possible outcomes of measuring a particle's position, momentum, or other observable properties.",
+                    duality: "Wave-particle duality, demonstrated in experiments like the double-slit experiment, shows that quantum entities exhibit both wave-like interference patterns and particle-like localized interactions. This complementarity is a fundamental aspect of quantum mechanics, where the nature of the observation determines which behavior manifests.",
+                    uncertainty: "Heisenberg's Uncertainty Principle is expressed mathematically as ΔxΔp ≥ ħ/2, where Δx represents position uncertainty, Δp represents momentum uncertainty, and ħ is the reduced Planck constant. It's a fundamental limit to precision that arises from the wave-like nature of all quantum objects.",
+                    superposition: "Quantum superposition occurs when a quantum system exists in multiple quantum states simultaneously. Mathematically, it's represented as a linear combination of basis states with complex coefficients. Upon measurement, the system 'collapses' to one of these basis states with a probability determined by the squared magnitude of the corresponding coefficient.",
+                    entanglement: "Quantum entanglement represents non-local correlations between quantum systems, where the quantum state of each particle cannot be described independently of the others. This phenomenon, which Einstein called 'spooky action at a distance,' has been experimentally verified and is used in quantum computing and quantum cryptography."
+                }
+            },
+            
+            // Quizzes for each module
+            quizzes: {
+                particles: [
+                    {
+                        question: "What is inside an atom?",
+                        options: [
+                            "Just empty space",
+                            "Electrons, protons, and neutrons",
+                            "Only electrons",
+                            "Little solar systems"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "Atoms contain electrons that move around a nucleus made of protons and neutrons."
+                    },
+                    {
+                        question: "Which particle has a negative charge?",
+                        options: [
+                            "Proton",
+                            "Neutron",
+                            "Electron",
+                            "Atom"
+                        ],
+                        correctAnswer: 2,
+                        explanation: "Electrons have a negative charge, protons have a positive charge, and neutrons have no charge."
+                    }
+                ],
+                waves: [
+                    {
+                        question: "What is wave-particle duality?",
+                        options: [
+                            "When particles disappear",
+                            "When waves cancel each other out",
+                            "When things can behave like both waves and particles",
+                            "When particles crash into each other"
+                        ],
+                        correctAnswer: 2,
+                        explanation: "Wave-particle duality means that quantum objects can show properties of both waves (like interference) and particles (like having a specific location) depending on how we observe them."
+                    },
+                    {
+                        question: "What happens when waves meet?",
+                        options: [
+                            "They always cancel out",
+                            "They can interfere, making bigger or smaller waves",
+                            "They turn into particles",
+                            "Nothing happens"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "When waves meet, they can interfere with each other, either constructively (making bigger waves) or destructively (making smaller waves or canceling out)."
+                    }
+                ],
+                uncertainty: [
+                    {
+                        question: "According to the Uncertainty Principle, what can't we know precisely at the same time?",
+                        options: [
+                            "A particle's color and size",
+                            "A particle's age and weight",
+                            "A particle's position and speed",
+                            "A particle's name and address"
+                        ],
+                        correctAnswer: 2,
+                        explanation: "Heisenberg's Uncertainty Principle tells us that we can't know both exactly where a particle is (its position) and exactly how fast it's moving (its momentum or speed) at the same time."
+                    },
+                    {
+                        question: "Why is it hard to study quantum particles?",
+                        options: [
+                            "They're invisible to all instruments",
+                            "They change when we try to measure them",
+                            "They only exist in our imagination",
+                            "They move too quickly to see"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "Quantum particles are affected by the act of measurement itself. When we try to observe them, we inevitably change their behavior or state."
+                    }
+                ],
+                superposition: [
+                    {
+                        question: "What is superposition?",
+                        options: [
+                            "When particles are stacked on top of each other",
+                            "When particles exist in multiple states at once",
+                            "When particles disappear completely",
+                            "When particles change color"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "Superposition is when quantum particles exist in multiple possible states at the same time, until we measure them and they 'collapse' into just one state."
+                    },
+                    {
+                        question: "What happens when we measure a quantum particle in superposition?",
+                        options: [
+                            "It stays in superposition",
+                            "It disappears",
+                            "It collapses into just one state",
+                            "It splits into two particles"
+                        ],
+                        correctAnswer: 2,
+                        explanation: "When we measure a quantum particle that's in superposition, it 'collapses' into just one of its possible states, and we can only observe that one state."
+                    }
+                ],
+                entanglement: [
+                    {
+                        question: "What happens when quantum particles become entangled?",
+                        options: [
+                            "They cannot be separated anymore",
+                            "They change color",
+                            "Their properties become connected, even at a distance",
+                            "They stop moving"
+                        ],
+                        correctAnswer: 2,
+                        explanation: "When quantum particles are entangled, their properties are connected in such a way that the state of one particle instantly affects the state of its entangled partner, even if they're far apart."
+                    },
+                    {
+                        question: "Einstein called quantum entanglement 'spooky action at a distance' because:",
+                        options: [
+                            "It only happens at night",
+                            "It seems to allow instant communication across any distance",
+                            "It makes weird sounds",
+                            "It only works with ghost particles"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "Einstein was troubled by entanglement because it seemed to allow instantaneous effects between particles separated by large distances, which appeared to conflict with his theory of relativity, which states that nothing can travel faster than light."
+                    }
+                ],
+                applications: [
+                    {
+                        question: "What is a quantum computer?",
+                        options: [
+                            "A very small computer that fits in your pocket",
+                            "A computer that uses quantum properties like superposition and entanglement",
+                            "A computer that only works at night",
+                            "A computer made by aliens"
+                        ],
+                        correctAnswer: 1,
+                        explanation: "A quantum computer uses quantum properties like superposition and entanglement to perform calculations in ways that regular computers cannot, potentially solving certain problems much faster."
+                    },
+                    {
+                        question: "Which of these technologies uses quantum physics?",
+                        options: [
+                            "Paper and pencil",
+                            "Bicycles",
+                            "Lasers",
+                            "Traditional thermometers"
+                        ],
+                        correctAnswer: 2,
+                        explanation: "Lasers work using stimulated emission, a quantum process where electrons jump between energy levels in atoms, releasing photons (light particles) of specific wavelengths."
+                    }
+                ]
+            }
+        };
+
+        // DOM Elements
+        const mainContainer = document.getElementById('mainContainer');
+        const settingsToggle = document.querySelector('.settings-toggle');
+        const settingsPanel = document.querySelector('.settings-panel');
+        const applySettingsButton = document.getElementById('applySettings');
+        const resetSettingsButton = document.getElementById('resetSettings');
+
+        // Particle effects
+        function createParticles() {
+            const particleCount = gameState.visuals * 5;
+            
+            // Remove existing particles
+            document.querySelectorAll('.particle').forEach(p => p.remove());
+            
+            // Create new particles if visual effects are enabled
+            if (gameState.visuals > 1) {
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    
+                    // Random properties
+                    const size = 2 + Math.random() * 8;
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    const color = getRandomColor();
+                    const animDuration = 3 + Math.random() * 7;
+                    const animDelay = Math.random() * 5;
+                    
+                    // Apply styles
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.left = `${x}px`;
+                    particle.style.top = `${y}px`;
+                    particle.style.backgroundColor = color;
+                    particle.style.animationDuration = `${animDuration}s`;
+                    particle.style.animationDelay = `${animDelay}s`;
+                    
+                    document.body.appendChild(particle);
+                }
+            }
+        }
+
+        // Get random color
+        function getRandomColor() {
+            const colors = [
+                '#7c3aed', '#6366f1', '#3b82f6', '#06b6d4', 
+                '#10b981', '#84cc16', '#eab308', '#f97316', 
+                '#ef4444', '#ec4899'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Create confetti celebration
+        function createConfetti(count = 50) {
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                // Random properties
+                const size = 5 + Math.random() * 10;
+                const x = Math.random() * window.innerWidth;
+                const y = -20 - Math.random() * 100;
+                const color = getRandomColor();
+                const duration = 2 + Math.random() * 4;
+                const delay = Math.random() * 2;
+                
+                // Apply styles
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.left = `${x}px`;
+                confetti.style.top = `${y}px`;
+                confetti.style.backgroundColor = color;
+                confetti.style.animationDuration = `${duration}s`;
+                confetti.style.animationDelay = `${delay}s`;
+                
+                document.body.appendChild(confetti);
+                
+                // Remove after animation completes
+                setTimeout(() => {
+                    confetti.remove();
+                }, (duration + delay) * 1000);
+            }
+        }
+
+        // Show speech bubble for character
+        function showSpeechBubble(character, text, position = 'top') {
+            // Remove any existing bubbles
+            document.querySelectorAll('.speech-bubble').forEach(b => b.remove());
+            
+            // Create new bubble
+            const bubble = document.createElement('div');
+            bubble.className = `speech-bubble ${position}`;
+            bubble.textContent = text;
+            
+            // Position bubble relative to character
+            const charRect = character.getBoundingClientRect();
+            
+            if (position === 'top') {
+                bubble.style.bottom = `${window.innerHeight - charRect.top + 10}px`;
+                bubble.style.left = `${charRect.left + charRect.width / 2 - 150}px`;
+            } else if (position === 'left') {
+                bubble.style.top = `${charRect.top + charRect.height / 2 - 50}px`;
+                bubble.style.right = `${window.innerWidth - charRect.left + 10}px`;
+            } else if (position === 'right') {
+                bubble.style.top = `${charRect.top + charRect.height / 2 - 50}px`;
+                bubble.style.left = `${charRect.right + 10}px`;
+            } else { // bottom
+                bubble.style.top = `${charRect.bottom + 10}px`;
+                bubble.style.left = `${charRect.left + charRect.width / 2 - 150}px`;
+            }
+            
+            document.body.appendChild(bubble);
+            
+            // Show bubble
+            setTimeout(() => {
+                bubble.style.opacity = '1';
+            }, 10);
+            
+            // Hide bubble after delay
+            setTimeout(() => {
+                bubble.style.opacity = '0';
+                setTimeout(() => {
+                    bubble.remove();
+                }, 300);
+            }, 5000);
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            // Settings panel toggle
+            settingsToggle.addEventListener('click', () => {
+                settingsPanel.classList.toggle('open');
+            });
+            
+            // Apply settings button
+            applySettingsButton.addEventListener('click', applySettings);
+            
+            // Reset settings button
+            resetSettingsButton.addEventListener('click', resetSettings);
+            
+            // Update slider value displays as they change
+            document.querySelectorAll('.slider').forEach(slider => {
+                const valueDisplay = document.getElementById(slider.id.replace('Slider', 'Value'));
+                slider.addEventListener('input', function() {
+                    valueDisplay.textContent = this.value;
+                });
+            });
+            
+            // Character interactions
+            document.querySelector('.quasar-girl').addEventListener('click', function() {
+                const dialogues = gameState.characterDialogue.quasarGirl;
+                const randomDialogue = dialogues[Math.floor(Math.random() * dialogues.length)];
+                showSpeechBubble(this, randomDialogue, 'top');
+            });
+            
+            document.querySelector('.electron-boy').addEventListener('click', function() {
+                const dialogues = gameState.characterDialogue.electronBoy;
+                const randomDialogue = dialogues[Math.floor(Math.random() * dialogues.length)];
+                showSpeechBubble(this, randomDialogue, 'top');
+            });
+            
+            document.querySelector('.wave-particle').addEventListener('click', function() {
+                const dialogues = gameState.characterDialogue.waveParticle;
+                const randomDialogue = dialogues[Math.floor(Math.random() * dialogues.length)];
+                showSpeechBubble(this, randomDialogue, 'bottom');
+            });
+        }
+
+        // Apply settings from panel
+        function applySettings() {
+            gameState.difficulty = parseInt(document.getElementById('difficultySlider').value);
+            gameState.complexity = parseInt(document.getElementById('complexitySlider').value);
+            gameState.visuals = parseInt(document.getElementById('visualsSlider').value);
+            gameState.explainDepth = parseInt(document.getElementById('explainDepthSlider').value);
+            gameState.quizFrequency = parseInt(document.getElementById('quizFrequencySlider').value);
+            gameState.physicsMode = parseInt(document.getElementById('physicsModeSlider').value);
+            
+            // Update visual effects
+            createParticles();
+            
+            // Update current module content
+            renderModule(gameState.currentModule);
+            
+            // Close settings panel
+            settingsPanel.classList.remove('open');
+        }
+
+        // Reset settings to defaults
+        function resetSettings() {
+            document.getElementById('difficultySlider').value = 1;
+            document.getElementById('difficultyValue').textContent = 1;
+            
+            document.getElementById('complexitySlider').value = 1;
+            document.getElementById('complexityValue').textContent = 1;
+            
+            document.getElementById('visualsSlider').value = 3;
+            document.getElementById('visualsValue').textContent = 3;
+            
+            document.getElementById('explainDepthSlider').value = 1;
+            document.getElementById('explainDepthValue').textContent = 1;
+            
+            document.getElementById('quizFrequencySlider').value = 3;
+            document.getElementById('quizFrequencyValue').textContent = 3;
+            
+            document.getElementById('physicsModeSlider').value = 1;
+            document.getElementById('physicsModeValue').textContent = 1;
+            
+            // Apply reset settings
+            applySettings();
+        }
+
+        // Get explanation based on current complexity and physics mode
+        function getExplanation(concept) {
+            let level = 'level1'; // Default level
+            
+            if (gameState.explainDepth >= 4 || gameState.physicsMode >= 8) {
+                level = 'level5';
+            } else if (gameState.explainDepth >= 2 || gameState.physicsMode >= 4) {
+                level = 'level3';
+            }
+            
+            return gameState.explanations[level][concept];
+        }
+
+        // Main function to render a module
+        function renderModule(moduleName) {
+            const module = gameState.moduleContent[moduleName];
+            
+            // Clear main container
+            mainContainer.innerHTML = '';
+            
+            // Update current module
+            gameState.currentModule = moduleName;
+            
+            // Create header panel
+            const headerPanel = document.createElement('div');
+            headerPanel.className = 'panel fade-in';
+            headerPanel.innerHTML = `
+                <h2>${module.title}</h2>
+                <p>${module.description}</p>
+                <div class="progress-container">
+                    <div class="progress-bar" style="width: ${gameState.progress}%"></div>
+                </div>
+                <div class="star-rating">
+                    ${Array(5).fill().map((_, i) => `<span class="star ${i < Math.min(gameState.stars / 5, 5) ? 'filled' : ''}">★</span>`).join('')}
+                </div>
+            `;
+            mainContainer.appendChild(headerPanel);
+            
+            // Render specific module content
+            switch(moduleName) {
+                case 'intro':
+                    renderIntroModule();
+                    break;
+                case 'particles':
+                    renderParticlesModule();
+                    break;
+                case 'waves':
+                    renderWavesModule();
+                    break;
+                case 'uncertainty':
+                    renderUncertaintyModule();
+                    break;
+                case 'superposition':
+                    renderSuperpositionModule();
+                    break;
+                case 'entanglement':
+                    renderEntanglementModule();
+                    break;
+                case 'applications':
+                    renderApplicationsModule();
+                    break;
+                case 'finale':
+                    renderFinaleModule();
+                    break;
+                default:
+                    renderIntroModule();
+            }
+            
+            // Mark module as completed
+            gameState.completedModules[moduleName] = true;
+            
+            // Update particles
+            createParticles();
+        }
+
+        // Render the intro module
+        function renderIntroModule() {
+            // Welcome panel
+            const welcomePanel = document.createElement('div');
+            welcomePanel.className = 'panel slide-in-right';
+            welcomePanel.innerHTML = `
+                <h2>Hello, Young Quantum Explorer!</h2>
+                <p>Welcome to the amazing world of quantum physics! This is the science of very, very tiny things like atoms and the particles inside them.</p>
+                <p>In the quantum world, things behave differently than in our everyday world. Particles can be in two places at once, act like waves, and do other incredible things!</p>
+                <p>Are you ready to shrink down and explore this tiny universe with us?</p>
+                <h3>Meet Your Quantum Guides</h3>
+            `;
+            mainContainer.appendChild(welcomePanel);
+            
+            // Characters introduction
+            const charactersPanel = document.createElement('div');
+            charactersPanel.className = 'panel';
+            charactersPanel.innerHTML = `
+                <div class="flex-container">
+                    <div class="card" style="flex: 1; min-width: 250px;">
+                        <div class="card-header">
+                            <h3>Quasar Girl</h3>
+                        </div>
+                        <div class="card-body" style="text-align: center;">
+                            <div style="width: 100px; height: 100px; margin: 0 auto;">
+                                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Head -->
+                                    <circle cx="100" cy="70" r="40" fill="#FFD3E0" />
+                                    <!-- Hair -->
+                                    <path d="M60 70 Q 70 30, 100 40 Q 130 30, 140 70 Q 140 80, 150 60 Q 160 90, 140 90 Q 120 110, 80 110 Q 60 90, 40 90 Q 30 90, 40 60 Q 50 80, 60 70" fill="#9C27B0" />
+                                    <!-- Eyes -->
+                                    <circle cx="85" cy="65" r="5" fill="white" />
+                                    <circle cx="115" cy="65" r="5" fill="white" />
+                                    <circle cx="85" cy="65" r="2.5" fill="#333" />
+                                    <circle cx="115" cy="65" r="2.5" fill="#333" />
+                                    <!-- Mouth -->
+                                    <path d="M90 85 Q 100 95, 110 85" fill="none" stroke="#333" stroke-width="2" />
+                                    <!-- Quantum goggles -->
+                                    <rect x="75" y="55" width="50" height="15" rx="5" fill="none" stroke="#FFD700" stroke-width="2" />
+                                    <circle cx="85" cy="65" r="7" fill="none" stroke="#FFD700" stroke-width="2" />
+                                    <circle cx="115" cy="65" r="7" fill="none" stroke="#FFD700" stroke-width="2" />
+                                    <line x1="100" y1="55" x2="100" y2="70" stroke="#FFD700" stroke-width="2" />
+                                </svg>
+                            </div>
+                            <p>Quasar Girl will guide you through the quantum universe. She knows all about energy, photons, and quantum fields!</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="flex: 1; min-width: 250px;">
+                        <div class="card-header">
+                            <h3>Electron Boy</h3>
+                        </div>
+                        <div class="card-body" style="text-align: center;">
+                            <div style="width: 100px; height: 100px; margin: 0 auto;">
+                                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Head -->
+                                    <circle cx="100" cy="70" r="40" fill="#AEC6CF" />
+                                    <!-- Hair -->
+                                    <path d="M60 60 Q 80 30, 100 40 Q 120 30, 140 60 L 130 70 L 140 75 L 130 85 Q 120 90, 120 70 L 80 70 Q 80 90, 70 85 L 60 75 L 70 70 L 60 60" fill="#3F51B5" />
+                                    <!-- Eyes -->
+                                    <circle cx="85" cy="65" r="5" fill="white" />
+                                    <circle cx="115" cy="65" r="5" fill="white" />
+                                    <circle cx="85" cy="65" r="2.5" fill="#333" />
+                                    <circle cx="115" cy="65" r="2.5" fill="#333" />
+                                    <!-- Mouth -->
+                                    <path d="M90 80 Q 100 90, 110 80" fill="none" stroke="#333" stroke-width="2" />
+                                    <!-- Electron helmet -->
+                                    <circle cx="100" cy="45" r="10" fill="#29B6F6" />
+                                    <circle cx="100" cy="45" r="5" fill="#0288D1" />
+                                </svg>
+                            </div>
+                            <p>Electron Boy is an expert on particles and atoms. He'll show you how electrons behave in the quantum world!</p>
+                        </div>
+                    </div>
+                    
+                    <div class="card" style="flex: 1; min-width: 250px;">
+                        <div class="card-header">
+                            <h3>Wavy</h3>
+                        </div>
+                        <div class="card-body" style="text-align: center;">
+                            <div style="width: 100px; height: 100px; margin: 0 auto;">
+                                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                                    <!-- Wave part -->
+                                    <path d="M30 100 Q 50 70, 70 100 Q 90 130, 110 100 Q 130 70, 150 100 Q 170 130, 190 100" fill="none" stroke="#FF9800" stroke-width="5" stroke-linecap="round" />
+                                    
+                                    <!-- Particle part -->
+                                    <circle cx="110" cy="100" r="20" fill="#FFCC80" />
+                                    
+                                    <!-- Face -->
+                                    <circle cx="103" cy="95" r="3" fill="#333" />
+                                    <circle cx="117" cy="95" r="3" fill="#333" />
+                                    <path d="M105 110 Q 110 115, 115 110" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round" />
+                                </svg>
+                            </div>
+                            <p>Wavy represents wave-particle duality. They'll help you understand how things can be both waves and particles at the same time!</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            mainContainer.appendChild(charactersPanel);
+            
+            // What is quantum physics panel
+            const quantumPanel = document.createElement('div');
+            quantumPanel.className = 'panel slide-in-right';
+            quantumPanel.innerHTML = `
+                <h2>What is Quantum Physics?</h2>
+                <p id="quantum-explanation">${getExplanation('quantum')}</p>
+                <p>Throughout our adventure, you'll explore:</p>
+                <ul>
+                    <li>Tiny particles that make up everything</li>
+                    <li>How things can be both waves and particles</li>
+                    <li>Superposition - being in multiple places at once</li>
+                    <li>Entanglement - spooky connections between particles</li>
+                    <li>Uncertainty - why we can't know everything about quantum particles</li>
+                    <li>Amazing technologies that use quantum physics</li>
+                </ul>
+            `;
+            mainContainer.appendChild(quantumPanel);
+            
+            // Canvas for quantum visualization
+            const canvasPanel = document.createElement('div');
+            canvasPanel.className = 'panel';
+            canvasPanel.innerHTML = `
+                <h2>Quantum Particles Playground</h2>
+                <p>Click and drag to interact with the quantum particles!</p>
+                <div class="canvas-container" id="quantum-canvas"></div>
+            `;
+            mainContainer.appendChild(canvasPanel);
+            
+            // Start adventure button
+            const startPanel = document.createElement('div');
+            startPanel.className = 'panel';
+            startPanel.innerHTML = `
+                <h2>Ready to Begin?</h2>
+                <p>Your quantum adventure awaits! Click the button below to start exploring the tiny universe!</p>
+                <button id="start-adventure" class="secondary">Start Quantum Adventure!</button>
+            `;
+            mainContainer.appendChild(startPanel);
+            
+            // Setup quantum canvas
+            setTimeout(() => {
+                setupQuantumCanvas();
+                
+                // Add start button event listener
+                document.getElementById('start-adventure').addEventListener('click', () => {
+                    gameState.progress = 12.5; // 8 modules, each worth 12.5%
+                    gameState.stars += 2;
+                    renderModule('particles');
+                    createConfetti(30);
+                });
+            }, 100);
+        }
+
+        // Setup the quantum canvas with p5.js
+        function setupQuantumCanvas() {
+            const canvasContainer = document.getElementById('quantum-canvas');
+            if (!canvasContainer) return;
+            
+            new p5(sketch => {
+                const particles = [];
+                const particleCount = 20 + gameState.visuals * 5;
+                
+                sketch.setup = function() {
+                    const canvas = sketch.createCanvas(canvasContainer.offsetWidth, canvasContainer.offsetHeight);
+                    canvas.parent('quantum-canvas');
+                    
+                    // Create particles
+                    for (let i = 0; i < particleCount; i++) {
+                        particles.push({
+                            x: sketch.random(sketch.width),
+                            y: sketch.random(sketch.height),
+                            size: sketch.random(5, 15),
+                            color: sketch.color(
+                                sketch.random(100, 255),
+                                sketch.random(100, 255),
+                                sketch.random(100, 255),
+                                sketch.random(150, 200)
+                            ),
+                            speedX: sketch.random(-1, 1),
+                            speedY: sketch.random(-1, 1),
+                            wavePhase: sketch.random(sketch.TWO_PI),
+                            waveFreq: sketch.random(0.02, 0.1)
+                        });
+                    }
+                };
+                
+                sketch.draw = function() {
+                    sketch.background(17, 24, 39, 200);
+                    
+                    // Draw connections between particles
+                    sketch.stroke(123, 58, 237, 50);
+                    for (let i = 0; i < particles.length; i++) {
+                        for (let j = i + 1; j < particles.length; j++) {
+                            const p1 = particles[i];
+                            const p2 = particles[j];
+                            const d = sketch.dist(p1.x, p1.y, p2.x, p2.y);
+                            if (d < 100) {
+                                sketch.strokeWeight(sketch.map(d, 0, 100, 2, 0.1));
+                                sketch.line(p1.x, p1.y, p2.x, p2.y);
+                            }
+                        }
+                    }
+                    
+                    // Update and draw particles
+                    for (let i = 0; i < particles.length; i++) {
+                        const p = particles[i];
+                        
+                        // Wave-like movement
+                        p.x += p.speedX;
+                        p.y += p.speedY + sketch.sin(sketch.frameCount * p.waveFreq + p.wavePhase) * 0.5;
+                        
+                        // Wrap around edges
+                        if (p.x < 0) p.x = sketch.width;
+                        if (p.x > sketch.width) p.x = 0;
+                        if (p.y < 0) p.y = sketch.height;
+                        if (p.y > sketch.height) p.y = 0;
+                        
+                        // Draw particle
+                        sketch.noStroke();
+                        sketch.fill(p.color);
+                        sketch.ellipse(p.x, p.y, p.size);
+                        
+                        // Draw wave-like aura
+                        sketch.noFill();
+                        sketch.stroke(p.color);
+                        sketch.strokeWeight(1);
+                        const auraSize = p.size + 5 + sketch.sin(sketch.frameCount * 0.05 + i) * 3;
+                        sketch.ellipse(p.x, p.y, auraSize);
+                    }
+                    
+                    // Handle mouse interaction
+                    if (sketch.mouseIsPressed && sketch.mouseX > 0 && sketch.mouseX < sketch.width && sketch.mouseY > 0 && sketch.mouseY < sketch.height) {
+                        for (let i = 0; i < particles.length; i++) {
+                            const p = particles[i];
+                            const d = sketch.dist(p.x, p.y, sketch.mouseX, sketch.mouseY);
+                            if (d < 100) {
+                                const angle = sketch.atan2(p.y - sketch.mouseY, p.x - sketch.mouseX);
+                                const force = sketch.map(d, 0, 100, 2, 0.1);
+                                p.x += sketch.cos(angle) * force;
+                                p.y += sketch.sin(angle) * force;
+                                
+                                // Create ripple effect
+                                if (sketch.frameCount % 5 === 0) {
+                                    sketch.noFill();
+                                    sketch.stroke(255, 150);
+                                    sketch.strokeWeight(1);
+                                    sketch.ellipse(sketch.mouseX, sketch.mouseY, d * 2);
+                                }
+                            }
+                        }
+                    }
+                };
+                
+                sketch.windowResized = function() {
+                    sketch.resizeCanvas(canvasContainer.offsetWidth, canvasContainer.offsetHeight);
+                };
+            });
+        }
+
+        // Render the particles module
+        function renderParticlesModule() {
+            // Particles explanation panel
+            const explanationPanel = document.createElement('div');
+            explanationPanel.className = 'panel slide-in-right';
+            explanationPanel.innerHTML = `
+                <h2>The Tiny Building Blocks of Everything</h2>
+                <p id="particles-explanation">${getExplanation('particles')}</p>
+                <div class="flex-container">
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3>What Are Atoms?</h3>
+                        <p>Atoms are like tiny building blocks that make up everything around us - your toys, your food, even you!</p>
+                        <p>Each atom has a center called a nucleus, which contains protons and neutrons. Electrons orbit around the nucleus.</p>
+                        <ul>
+                            <li><strong>Protons</strong> have a positive charge</li>
+                            <li><strong>Neutrons</strong> have no charge</li>
+                            <li><strong>Electrons</strong> have a negative charge</li>
+                        </ul>
+                    </div>
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3>How Small Are Atoms?</h3>
+                        <p>Atoms are incredibly tiny - so small that millions of them could fit on the head of a pin!</p>
+                        <p>If an atom were the size of a sports stadium, the nucleus would be like a small marble in the center, and the electrons would be like tiny bugs flying around the outer seats!</p>
+                    </div>
+                </div>
+            `;
+            mainContainer.appendChild(explanationPanel);
+            
+            // Interactive atom model
+            const atomPanel = document.createElement('div');
+            atomPanel.className = 'panel';
+            atomPanel.innerHTML = `
+                <h2>Build Your Own Atom!</h2>
+                <p>Drag and drop particles to build an atom. Try to create a balanced atom with equal numbers of protons and electrons.</p>
+                <div class="canvas-container" id="atom-canvas"></div>
+                <div style="display: flex; justify-content: space-around; margin-top: 1rem;">
+                    <div>
+                        <button id="add-proton" class="secondary">Add Proton (+)</button>
+                        <span id="proton-count">0</span>
+                    </div>
+                    <div>
+                        <button id="add-neutron">Add Neutron</button>
+                        <span id="neutron-count">0</span>
+                    </div>
+                    <div>
+                        <button id="add-electron" class="tertiary">Add Electron (-)</button>
+                        <span id="electron-count">0</span>
+                    </div>
+                    <div>
+                        <button id="reset-atom">Reset Atom</button>
+                    </div>
+                </div>
+                <div id="atom-message" style="text-align: center; margin-top: 1rem; font-weight: bold;"></div>
+            `;
+            mainContainer.appendChild(atomPanel);
+            
+            // Size comparison panel
+            const sizePanel = document.createElement('div');
+            sizePanel.className = 'panel';
+            sizePanel.innerHTML = `
+                <h2>How Small is the Quantum World?</h2>
+                <div class="tab-container">
+                    <div class="tab-nav">
+                        <button class="tab-button active" data-tab="size-comparison">Size Comparison</button>
+                        <button class="tab-button" data-tab="fun-facts">Fun Facts</button>
+                        <button class="tab-button" data-tab="scale-activity">Scale Activity</button>
+                    </div>
+                    
+                    <div id="size-comparison" class="tab-content active">
+                        <p>Let's explore just how small quantum particles are:</p>
+                        <ul>
+                            <li>If an atom were the size of the Earth, the nucleus would be the size of a football stadium</li>
+                            <li>A proton is about 100,000 times smaller than an atom</li>
+                            <li>If you were to line up 10 million hydrogen atoms, they would stretch about 1 millimeter (about the thickness of a paper clip)</li>
+                            <li>Electrons are so small that scientists aren't even sure of their exact size!</li>
+                        </ul>
+                        <div class="canvas-container" id="size-canvas" style="height: 200px;"></div>
+                    </div>
+                    
+                    <div id="fun-facts" class="tab-content">
+                        <p>Amazing facts about quantum particles:</p>
+                        <ul>
+                            <li>There are more atoms in a single grain of sand than there are grains of sand on all the beaches of Earth!</li>
+                            <li>The space between the nucleus and electrons is mostly empty - atoms are 99.9999999% empty space!</li>
+                            <li>Your body replaces almost all of its atoms every 7-10 years</li>
+                            <li>The atoms in your body were created inside stars billions of years ago</li>
+                            <li>Electrons can "tunnel" through barriers that should be impossible to pass through</li>
+                            <li>Quantum particles can appear and disappear spontaneously in empty space</li>
+                        </ul>
+                    </div>
+                    
+                    <div id="scale-activity" class="tab-content">
+                        <p>Drag the slider to zoom from everyday objects down to quantum particles:</p>
+                        <div class="slider-container">
+                            <input type="range" min="1" max="10" value="1" class="slider" id="scaleSlider">
+                            <div id="scale-display" style="text-align: center; margin-top: 1rem; font-weight: bold;">Human (1.7 meters)</div>
+                        </div>
+                        <div id="scale-visualization" style="height: 150px; position: relative; text-align: center; margin-top: 1rem;">
+                            <div id="scale-object" style="width: 100px; height: 100px; background-color: #3b82f6; border-radius: 50%; margin: 0 auto; transition: transform 0.5s, background-color 0.5s;"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            mainContainer.appendChild(sizePanel);
+            
+            // Quiz panel
+            if (gameState.quizFrequency >= 3) {
+                const quizPanel = document.createElement('div');
+                quizPanel.className = 'panel';
+                quizPanel.innerHTML = `
+                    <h2>Quantum Particles Quiz</h2>
+                    <p>Let's test what you've learned about particles!</p>
+                    <div class="quiz-container" id="particles-quiz"></div>
+                    <button id="check-quiz" class="secondary">Check Answers</button>
+                    <div id="quiz-result"></div>
+                `;
+                mainContainer.appendChild(quizPanel);
+                
+                // Populate quiz
+                populateQuiz('particles-quiz', 'particles');
+            }
+            
+            // Continue button
+            const continuePanel = document.createElement('div');
+            continuePanel.className = 'panel';
+            continuePanel.innerHTML = `
+                <h2>Ready to Continue?</h2>
+                <p>Now that you've learned about quantum particles, let's explore how they can also behave like waves!</p>
+                <button id="continue-button" class="secondary">Continue to Waves</button>
+            `;
+            mainContainer.appendChild(continuePanel);
+            
+            // Setup atom canvas
+            setTimeout(() => {
+                setupAtomCanvas();
+                setupSizeComparison();
+                setupScaleActivity();
+                
+                // Setup tab navigation
+                document.querySelectorAll('.tab-button').forEach(button => {
+                    button.addEventListener('click', function() {
+                        // Deactivate all tabs
+                        document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                        
+                        // Activate selected tab
+                        this

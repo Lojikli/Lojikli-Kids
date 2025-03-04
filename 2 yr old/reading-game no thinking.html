@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Wizards: Reading Adventure for Young Geniuses</title>
+    <style>
+        :root {
+            --primary-color: #4a6ea9;
+            --secondary-color: #6ebfb5;
+            --accent-color: #ff9e6d;
+            --correct-color: #7ed957;
+            --incorrect-color: #ff6b6b;
+            --background-color: #f7f9fc;
+            --text-color: #333;
+            --card-bg: white;
+            --font-main: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+        }
+
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .scene {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 320px;
+            perspective: 1000px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            font-size: 5rem;
+            font-weight: bold;
+            text-align: center;
+            background-color: var(--card-bg);
+            overflow: hidden;
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        .image-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .word-display {
+            font-size: 5rem;
+            color: var(--primary-color);
+            text-align: center;
+            text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.1);
+            margin: 0;
+            z-index: 10;
+        }
+
+        .options-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .option-button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 15px 25px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            flex-grow: 1;
+            text-align: center;
+            min-width: 120px;
+            max-width: 200px;
+            font-family: var(--font-main);
+        }
+
+        .option-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .option-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+
+        .control-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 12px 20px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-family: var(--font-main);
+        }
+
+        .control-button:hover {
+            background-color: #3d5a8c;
+            transform: translateY(-2px);
+        }
+
+        .control-button:active {
+            transform: translateY(1px);
+        }
+
+        .control-button:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .settings-panel {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .settings-title {
+            font-size: 1.5rem;
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .settings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+        }
+
+        .setting-item {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            border: 2px solid #ddd;
+            font-family: var(--font-main);
+            font-size: 1rem;
+        }
+
+        .progress-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-title {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+        }
+
+        .progress-bar {
+            height: 20px;
+            background-color: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: var(--correct-color);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .character {
+            position: absolute;
+            bottom: 10px;
+            right: 20px;
+            font-size: 6rem;
+            z-index: 1;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .feedback {
+            font-size: 2rem;
+            text-align: center;
+            margin: 15px 0;
+            min-height: 60px;
+        }
+
+        .fireworks {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+            opacity: 0;
+        }
+
+        .streak-counter {
+            background-color: var(--accent-color);
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            z-index: 20;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-title {
+            color: var(--primary-color);
+            margin-top: 0;
+        }
+
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            font-size: 3rem;
+        }
+
+        .modal-button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 15px;
+            padding: 12px 25px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: var(--font-main);
+        }
+
+        .stats-item {
+            margin: 10px 0;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .card-face {
+                font-size: 3.5rem;
+            }
+            
+            .word-display {
+                font-size: 3.5rem;
+            }
+            
+            .option-button {
+                font-size: 1.2rem;
+                padding: 12px 20px;
+            }
+            
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+                align-items: center;
+            }
+            
+            .control-button {
+                width: 100%;
+                margin: 5px 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .option-button {
+                min-width: 100px;
+                max-width: 150px;
+                font-size: 1rem;
+                padding: 10px 15px;
+            }
+            
+            .scene {
+                height: 250px;
+            }
+            
+            .card-face {
+                font-size: 3rem;
+            }
+            
+            .word-display {
+                font-size: 3rem;
+            }
+            
+            .character {
+                font-size: 4rem;
+            }
+        }
+
+        /* Animation for character responses */
+        .character-jump {
+            animation: jump 0.5s ease;
+        }
+
+        @keyframes jump {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-30px) scale(1.2); }
+        }
+
+        /* Confetti animation */
+        @keyframes confetti-fall {
+            0% { transform: translateY(-100vh) rotate(0deg); }
+            100% { transform: translateY(100vh) rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>🌟 Word Wizards 🌟</h1>
+    </header>
+
+    <div class="container">
+        <div class="game-area">
+            <div class="progress-container">
+                <h3 class="progress-title">Level Progress: <span id="level-display">1</span></h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="scene">
+                <div class="card" id="flashcard">
+                    <div class="card-face card-front">
+                        <div class="image-container">
+                            <div class="character" id="character">🦊</div>
+                            <h2 class="word-display" id="word-display">Cat</h2>
+                        </div>
+                        <div class="streak-counter" id="streak-counter">0</div>
+                    </div>
+                    <div class="card-face card-back">
+                        <div class="image-container">
+                            <div id="word-image" class="word-display">🐱</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="feedback" id="feedback"></div>
+
+            <div class="options-container" id="options-container">
+                <!-- Options will be dynamically generated here -->
+            </div>
+
+            <div class="controls">
+                <button class="control-button" id="previous-btn">← Previous</button>
+                <button class="control-button" id="flip-btn">Flip Card</button>
+                <button class="control-button" id="next-btn">Next →</button>
+            </div>
+
+            <div class="settings-panel">
+                <h3 class="settings-title">Game Settings</h3>
+                <div class="settings-grid">
+                    <div class="setting-item">
+                        <label for="difficulty">Word Difficulty:</label>
+                        <select id="difficulty">
+                            <option value="0">Level 1 (2-3 Letters)</option>
+                            <option value="1">Level 2 (3-4 Letters)</option>
+                            <option value="2">Level 3 (4-5 Letters)</option>
+                            <option value="3">Level 4 (5-6 Letters)</option>
+                            <option value="4">Level 5 (6+ Letters)</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="character-select">Learning Buddy:</label>
+                        <select id="character-select">
+                            <option value="🦊">Fox</option>
+                            <option value="🐰">Bunny</option>
+                            <option value="🐼">Panda</option>
+                            <option value="🦉">Owl</option>
+                            <option value="🐢">Turtle</option>
+                            <option value="🦁">Lion</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="card-speed">Card Flip Speed:</label>
+                        <select id="card-speed">
+                            <option value="0.3">Fast</option>
+                            <option value="0.6" selected>Medium</option>
+                            <option value="1">Slow</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <label for="quiz-mode">Quiz Mode:</label>
+                        <select id="quiz-mode">
+                            <option value="multiple">Multiple Choice</option>
+                            <option value="typing">Typing Practice</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="level-up-modal">
+        <div class="modal-content">
+            <h2 class="modal-title">Level Up!</h2>
+            <p>Amazing job! You've mastered this level!</p>
+            <div class="stars-container">
+                <span>⭐</span><span>⭐</span><span>⭐</span>
+            </div>
+            <div id="level-stats">
+                <div class="stats-item">Words learned: <span id="words-learned">0</span></div>
+                <div class="stats-item">Correct answers: <span id="correct-answers">0</span></div>
+                <div class="stats-item">Longest streak: <span id="longest-streak">0</span></div>
+            </div>
+            <button class="modal-button" id="next-level-btn">Next Level</button>
+        </div>
+    </div>
+
+    <div class="fireworks" id="fireworks"></div>
+
+    <script>
+        // Game data and state
+        const gameState = {
+            currentWordIndex: 0,
+            currentLevel: 0,
+            streak: 0,
+            longestStreak: 0,
+            correctAnswers: 0,
+            progress: 0,
+            wordsPerLevel: 10,
+            quizMode: 'multiple',
+            characterType: '🦊',
+            cardSpeed: 0.6,
+            wordsLearned: new Set(),
+            currentOptions: [],
+            wordsCompleted: 0
+        };
+
+        // Character reactions
+        const characterReactions = {
+            correct: ['🎉', '👏', '😄', '🥳', '✨'],
+            incorrect: ['🤔', '😮', '🙁', '🧐', '❓'],
+            levelUp: ['🚀', '🏆', '👑', '💪', '🌈']
+        };
+
+        // Word sets by difficulty level
+        const wordSets = [
+            // Level 1: 2-3 letter words
+            [
+                {word: "at", emoji: "📍"},
+                {word: "cat", emoji: "🐱"},
+                {word: "dog", emoji: "🐶"},
+                {word: "sun", emoji: "☀️"},
+                {word: "hat", emoji: "🧢"},
+                {word: "bat", emoji: "🦇"},
+                {word: "red", emoji: "🔴"},
+                {word: "box", emoji: "📦"},
+                {word: "top", emoji: "🔝"},
+                {word: "big", emoji: "📏"},
+                {word: "run", emoji: "🏃"},
+                {word: "map", emoji: "🗺️"},
+                {word: "mom", emoji: "👩"},
+                {word: "dad", emoji: "👨"},
+                {word: "toy", emoji: "🧸"}
+            ],
+            // Level 2: 3-4 letter words
+            [
+                {word: "ball", emoji: "⚽"},
+                {word: "cake", emoji: "🍰"},
+                {word: "duck", emoji: "🦆"},
+                {word: "fish", emoji: "🐠"},
+                {word: "jump", emoji: "⬆️"},
+                {word: "rain", emoji: "🌧️"},
+                {word: "star", emoji: "⭐"},
+                {word: "tree", emoji: "🌳"},
+                {word: "frog", emoji: "🐸"},
+                {word: "milk", emoji: "🥛"},
+                {word: "book", emoji: "📚"},
+                {word: "ship", emoji: "🚢"},
+                {word: "bear", emoji: "🐻"},
+                {word: "hand", emoji: "✋"},
+                {word: "shoe", emoji: "👞"}
+            ],
+            // Level 3: 4-5 letter words
+            [
+                {word: "apple", emoji: "🍎"},
+                {word: "house", emoji: "🏠"},
+                {word: "smile", emoji: "😊"},
+                {word: "train", emoji: "🚂"},
+                {word: "tiger", emoji: "🐯"},
+                {word: "water", emoji: "💧"},
+                {word: "heart", emoji: "❤️"},
+                {word: "clock", emoji: "🕰️"},
+                {word: "bread", emoji: "🍞"},
+                {word: "queen", emoji: "👸"},
+                {word: "robot", emoji: "🤖"},
+                {word: "piano", emoji: "🎹"},
+                {word: "cloud", emoji: "☁️"},
+                {word: "sheep", emoji: "🐑"},
+                {word: "snake", emoji: "🐍"}
+            ],
+            // Level 4: 5-6 letter words
+            [
+                {word: "banana", emoji: "🍌"},
+                {word: "rocket", emoji: "🚀"},
+                {word: "monkey", emoji: "🐒"},
+                {word: "planet", emoji: "🪐"},
+                {word: "school", emoji: "🏫"},
+                {word: "garden", emoji: "🌻"},
+                {word: "candle", emoji: "🕯️"},
+                {word: "pencil", emoji: "✏️"},
+                {word: "dinner", emoji: "🍽️"},
+                {word: "castle", emoji: "🏰"},
+                {word: "dragon", emoji: "🐉"},
+                {word: "rainbow", emoji: "🌈"},
+                {word: "turtle", emoji: "🐢"},
+                {word: "winter", emoji: "❄️"},
+                {word: "soccer", emoji: "⚽"}
+            ],
+            // Level 5: 6+ letter words
+            [
+                {word: "elephant", emoji: "🐘"},
+                {word: "dinosaur", emoji: "🦕"},
+                {word: "butterfly", emoji: "🦋"},
+                {word: "computer", emoji: "💻"},
+                {word: "birthday", emoji: "🎂"},
+                {word: "sandwich", emoji: "🥪"},
+                {word: "airplane", emoji: "✈️"},
+                {word: "bicycle", emoji: "🚲"},
+                {word: "sunshine", emoji: "☀️"},
+                {word: "pineapple", emoji: "🍍"},
+                {word: "snowflake", emoji: "❄️"},
+                {word: "umbrella", emoji: "☂️"},
+                {word: "strawberry", emoji: "🍓"},
+                {word: "watermelon", emoji: "🍉"},
+                {word: "chocolate", emoji: "🍫"}
+            ]
+        ];
+
+        // DOM Elements
+        const flashcard = document.getElementById('flashcard');
+        const wordDisplay = document.getElementById('word-display');
+        const wordImage = document.getElementById('word-image');
+        const optionsContainer = document.getElementById('options-container');
+        const previousBtn = document.getElementById('previous-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const flipBtn = document.getElementById('flip-btn');
+        const difficultySelect = document.getElementById('difficulty');
+        const characterSelect = document.getElementById('character-select');
+        const cardSpeedSelect = document.getElementById('card-speed');
+        const quizModeSelect = document.getElementById('quiz-mode');
+        const feedbackEl = document.getElementById('feedback');
+        const progressFill = document.getElementById('progress-fill');
+        const levelDisplay = document.getElementById('level-display');
+        const character = document.getElementById('character');
+        const streakCounter = document.getElementById('streak-counter');
+        const levelUpModal = document.getElementById('level-up-modal');
+        const nextLevelBtn = document.getElementById('next-level-btn');
+        const wordsLearnedEl = document.getElementById('words-learned');
+        const correctAnswersEl = document.getElementById('correct-answers');
+        const longestStreakEl = document.getElementById('longest-streak');
+        const fireworksEl = document.getElementById('fireworks');
+
+        // Initialize the game
+        function initGame() {
+            gameState.currentWordIndex = 0;
+            gameState.streak = 0;
+            gameState.progress = 0;
+            gameState.correctAnswers = 0;
+            gameState.wordsCompleted = 0;
+            
+            updateStreak();
+            updateProgress();
+            loadCurrentWord();
+            updateControls();
+
+            // Set up event listeners
+            flashcard.addEventListener('click', flipCard);
+            flipBtn.addEventListener('click', flipCard);
+            previousBtn.addEventListener('click', previousWord);
+            nextBtn.addEventListener('click', nextWord);
+            difficultySelect.addEventListener('change', changeLevel);
+            characterSelect.addEventListener('change', changeCharacter);
+            cardSpeedSelect.addEventListener('change', changeCardSpeed);
+            quizModeSelect.addEventListener('change', changeQuizMode);
+            nextLevelBtn.addEventListener('click', startNextLevel);
+        }
+
+        // Load the current word
+        function loadCurrentWord() {
+            const currentLevelWords = wordSets[gameState.currentLevel];
+            const currentWord = currentLevelWords[gameState.currentWordIndex];
+            
+            wordDisplay.textContent = currentWord.word;
+            wordImage.textContent = currentWord.emoji;
+            
+            // Reset card to front face
+            flashcard.classList.remove('flipped');
+            
+            // Generate options if in multiple choice mode
+            if (gameState.quizMode === 'multiple') {
+                generateOptions(currentWord);
+            } else {
+                optionsContainer.innerHTML = `
+                    <div style="width: 100%; display: flex; justify-content: center;">
+                        <input type="text" id="word-input" placeholder="Type the word" 
+                               style="width: 80%; padding: 15px; font-size: 1.5rem; border-radius: 15px; 
+                                      border: 2px solid #ddd; text-align: center;">
+                    </div>
+                    <button class="option-button" style="background-color: var(--accent-color); margin-top: 10px;" id="check-answer">
+                        Check ✓
+                    </button>
+                `;
+                
+                document.getElementById('check-answer').addEventListener('click', checkTypedAnswer);
+                const wordInput = document.getElementById('word-input');
+                wordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        checkTypedAnswer();
+                    }
+                });
+                
+                // Auto focus on the input
+                setTimeout(() => {
+                    wordInput.focus();
+                }, 100);
+            }
+            
+            updateControls();
+        }
+
+        // Generate multiple choice options
+        function generateOptions(currentWord) {
+            const currentLevelWords = wordSets[gameState.currentLevel];
+            const options = [currentWord];
+            
+            // Add random options from the same level
+            while (options.length < 4) {
+                const randomIndex = Math.floor(Math.random() * currentLevelWords.length);
+                const randomWord = currentLevelWords[randomIndex];
+                
+                if (!options.includes(randomWord)) {
+                    options.push(randomWord);
+                }
+            }
+            
+            // Shuffle options
+            const shuffledOptions = options.sort(() => Math.random() - 0.5);
+            gameState.currentOptions = shuffledOptions;
+            
+            // Create option buttons
+            optionsContainer.innerHTML = '';
+            shuffledOptions.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-button';
+                button.textContent = option.word;
+                button.dataset.index = index;
+                button.addEventListener('click', checkAnswer);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        // Check the answer for multiple choice
+        function checkAnswer(e) {
+            const selectedIndex = parseInt(e.target.dataset.index);
+            const selectedOption = gameState.currentOptions[selectedIndex];
+            const currentLevelWords = wordSets[gameState.currentLevel];
+            const currentWord = currentLevelWords[gameState.currentWordIndex];
+            
+            if (selectedOption.word === currentWord.word) {
+                handleCorrectAnswer();
+            } else {
+                handleWrongAnswer();
+            }
+        }
+
+        // Check the typed answer
+        function checkTypedAnswer() {
+            const wordInput = document.getElementById('word-input');
+            const currentLevelWords = wordSets[gameState.currentLevel];
+            const currentWord = currentLevelWords[gameState.currentWordIndex];
+            
+            if (wordInput.value.trim().toLowerCase() === currentWord.word.toLowerCase()) {
+                handleCorrectAnswer();
+            } else {
+                handleWrongAnswer();
+            }
+        }
+
+        // Handle correct answer
+        function handleCorrectAnswer() {
+            gameState.streak++;
+            gameState.longestStreak = Math.max(gameState.streak, gameState.longestStreak);
+            gameState.correctAnswers++;
+            gameState.wordsLearned.add(wordSets[gameState.currentLevel][gameState.currentWordIndex].word);
+            gameState.wordsCompleted++;
+            
+            updateStreak();
+            updateFeedback(true);
+            updateProgress();
+            
+            // Animate character
+            character.classList.add('character-jump');
+            setTimeout(() => {
+                character.classList.remove('character-jump');
+            }, 500);
+            
+            // Auto-advance to next word after a short delay
+            setTimeout(() => {
+                if (gameState.wordsCompleted >= gameState.wordsPerLevel) {
+                    showLevelUpModal();
+                } else {
+                    nextWord();
+                }
+            }, 1500);
+        }
+
+        // Handle wrong answer
+        function handleWrongAnswer() {
+            gameState.streak = 0;
+            updateStreak();
+            updateFeedback(false);
+            
+            // Show the correct answer by flipping the card
+            if (!flashcard.classList.contains('flipped')) {
+                flipCard();
+            }
+        }
+
+        // Update the feedback message
+        function updateFeedback(isCorrect) {
+            if (isCorrect) {
+                const randomIndex = Math.floor(Math.random() * characterReactions.correct.length);
+                const reaction = characterReactions.correct[randomIndex];
+                feedbackEl.innerHTML = `<span style="color: var(--correct-color);">Correct! ${reaction}</span>`;
+                feedbackEl.style.animation = 'none';
+                setTimeout(() => {
+                    feedbackEl.style.animation = 'bounce 1s';
+                }, 10);
+            } else {
+                const randomIndex = Math.floor(Math.random() * characterReactions.incorrect.length);
+                const reaction = characterReactions.incorrect[randomIndex];
+                feedbackEl.innerHTML = `<span style="color: var(--incorrect-color);">Try again ${reaction}</span>`;
+                feedbackEl.style.animation = 'none';
+                setTimeout(() => {
+                    feedbackEl.style.animation = 'bounce 1s';
+                }, 10);
+            }
+        }
+
+        // Update the streak counter
+        function updateStreak() {
+            streakCounter.textContent = gameState.streak;
+            if (gameState.streak > 0) {
+                streakCounter.style.display = 'flex';
+            } else {
+                streakCounter.style.display = 'none';
+            }
+        }
+
+        // Update the progress bar
+        function updateProgress() {
+            const progressPercentage = (gameState.wordsCompleted / gameState.wordsPerLevel) * 100;
+            progressFill.style.width = `${progressPercentage}%`;
+        }
+
+        // Update the navigation controls
+        function updateControls() {
+            const currentLevelWords = wordSets[gameState.currentLevel];
+            previousBtn.disabled = gameState.currentWordIndex === 0;
+            nextBtn.disabled = gameState.currentWordIndex === currentLevelWords.length - 1;
+        }
+
+        // Flip the card
+        function flipCard() {
+            flashcard.classList.toggle('flipped');
+        }
+
+        // Navigate to the previous word
+        function previousWord() {
+            if (gameState.currentWordIndex > 0) {
+                gameState.currentWordIndex--;
+                loadCurrentWord();
+                clearFeedback();
+            }
+        }
+
+        // Navigate to the next word
+        function nextWord() {
+            const currentLevelWords = wordSets[gameState.currentLevel];
+            if (gameState.currentWordIndex < currentLevelWords.length - 1) {
+                gameState.currentWordIndex++;
+                loadCurrentWord();
+                clearFeedback();
+            }
+        }
+
+        // Clear the feedback
+        function clearFeedback() {
+            feedbackEl.textContent = '';
+        }
+
+        // Change the difficulty level
+        function changeLevel() {
+            gameState.currentLevel = parseInt(difficultySelect.value);
+            gameState.currentWordIndex = 0;
+            gameState.wordsCompleted = 0;
+            gameState.streak = 0;
+            updateProgress();
+            updateStreak();
+            loadCurrentWord();
+            levelDisplay.textContent = gameState.currentLevel + 1;
+        }
+
+        // Change the character
+        function changeCharacter() {
+            gameState.characterType = characterSelect.value;
+            character.textContent = gameState.characterType;
+        }
+
+        // Change the card flip speed
+        function changeCardSpeed() {
+            gameState.cardSpeed = parseFloat(cardSpeedSelect.value);
+            document.documentElement.style.setProperty('--card-speed', `${gameState.cardSpeed}s`);
+        }
+
+        // Change the quiz mode
+        function changeQuizMode() {
+            gameState.quizMode = quizModeSelect.value;
+            loadCurrentWord();
+        }
+
+        // Show the level up modal
+        function showLevelUpModal() {
+            wordsLearnedEl.textContent = gameState.wordsLearned.size;
+            correctAnswersEl.textContent = gameState.correctAnswers;
+            longestStreakEl.textContent = gameState.longestStreak;
+            
+            levelUpModal.style.display = 'flex';
+            
+            // Show fireworks
+            createFireworks();
+            
+            // Play a random character reaction for level up
+            const randomIndex = Math.floor(Math.random() * characterReactions.levelUp.length);
+            character.textContent = characterReactions.levelUp[randomIndex];
+            
+            // Return to the original character after a delay
+            setTimeout(() => {
+                character.textContent = gameState.characterType;
+            }, 3000);
+        }
+
+        // Start the next level
+        function startNextLevel() {
+            if (gameState.currentLevel < wordSets.length - 1) {
+                gameState.currentLevel++;
+                difficultySelect.value = gameState.currentLevel;
+            }
+            
+            gameState.currentWordIndex = 0;
+            gameState.wordsCompleted = 0;
+            gameState.streak = 0;
+            
+            levelUpModal.style.display = 'none';
+            levelDisplay.textContent = gameState.currentLevel + 1;
+            
+            updateProgress();
+            updateStreak();
+            loadCurrentWord();
+        }
+
+        // Create fireworks animation
+        function createFireworks() {
+            fireworksEl.style.opacity = 1;
+            fireworksEl.innerHTML = '';
+            
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.width = '8px';
+                particle.style.height = '8px';
+                particle.style.borderRadius = '50%';
+                particle.style.backgroundColor = getRandomColor();
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = '0';
+                particle.style.animation = `confetti-fall ${2 + Math.random() * 3}s linear forwards`;
+                particle.style.opacity = Math.random() + 0.5;
+                
+                fireworksEl.appendChild(particle);
+            }
+            
+            setTimeout(() => {
+                fireworksEl.style.opacity = 0;
+            }, 3000);
+        }
+
+        // Get a random color
+        function getRandomColor() {
+            const colors = ['#ff4d4d', '#4dff4d', '#4d4dff', '#ffff4d', '#ff4dff', '#4dffff'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Start the game when the page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

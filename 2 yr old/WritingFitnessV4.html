@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Letter Tracing Game</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            touch-action: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            margin: 0;
+            padding: 10px;
+            background-color: #FFE5F1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            touch-action: none;
+        }
+
+        h1 {
+            color: #FF69B4;
+            font-size: min(24px, 6vw);
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+        }
+
+        #gameCanvas {
+            width: 100%;
+            max-width: 500px;
+            height: auto;
+            aspect-ratio: 1;
+            border: 4px solid #FF69B4;
+            border-radius: 15px;
+            background-color: white;
+            touch-action: none;
+        }
+
+        .controls {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background-color: #FF69B4;
+            border: none;
+            color: white;
+            padding: 15px 25px;
+            font-size: min(20px, 5vw);
+            border-radius: 12px;
+            font-family: inherit;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+            touch-action: manipulation;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        #progressBar {
+            width: 100%;
+            height: 15px;
+            background-color: #FFB6C1;
+            border-radius: 8px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        #progress {
+            width: 0%;
+            height: 100%;
+            background-color: #FF1493;
+            transition: width 0.3s ease;
+        }
+
+        .star {
+            position: fixed;
+            pointer-events: none;
+            animation: sparkle 1s linear forwards;
+            font-size: min(20px, 5vw);
+        }
+
+        @keyframes sparkle {
+            0% { transform: scale(0) rotate(0deg); opacity: 1; }
+            100% { transform: scale(1.5) rotate(180deg); opacity: 0; }
+        }
+
+        /* Current letter display */
+        #currentLetter {
+            font-size: min(28px, 7vw);
+            color: #FF1493;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        /* Instructions tooltip */
+        #instructions {
+            background-color: rgba(255, 105, 180, 0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+            font-size: min(16px, 4vw);
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1>Let's Write Together! 🎨</h1>
+        <div id="currentLetter">Current: A</div>
+        <div id="progressBar"><div id="progress"></div></div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="instructions">Trace the letter with your finger</div>
+        <div class="controls">
+            <button onclick="clearCanvas()">Try Again 🔄</button>
+            <button onclick="nextLetter()">Next Letter ⭐</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const letters = [
+            'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
+            'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+            '0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '.', '?', '!', '@', '#', '$', '%', '&', '*'
+        ];
+        let currentLetterIndex = 0;
+        let isDrawing = false;
+        let letterPixels = new Set();
+        let lastX, lastY;
+
+        // Set canvas size based on container width
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const size = Math.min(500, container.clientWidth - 20);
+            canvas.width = size;
+            canvas.height = size;
+            clearCanvas();
+        }
+
+        // Initialize
+        function init() {
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            showInstructions();
+            
+            // Touch events
+            canvas.addEventListener('touchstart', handleStart, false);
+            canvas.addEventListener('touchmove', handleMove, false);
+            canvas.addEventListener('touchend', handleEnd, false);
+            
+            // Mouse events (for testing on desktop)
+            canvas.addEventListener('mousedown', handleStart, false);
+            canvas.addEventListener('mousemove', handleMove, false);
+            canvas.addEventListener('mouseup', handleEnd, false);
+            canvas.addEventListener('mouseout', handleEnd, false);
+        }
+
+        function showInstructions() {
+            const instructions = document.getElementById('instructions');
+            instructions.style.display = 'block';
+            setTimeout(() => {
+                instructions.style.display = 'none';
+            }, 3000);
+        }
+
+        function handleStart(e) {
+            e.preventDefault();
+            isDrawing = true;
+            const point = getPoint(e);
+            lastX = point.x;
+            lastY = point.y;
+            
+            if (isPointInLetter(point.x, point.y)) {
+                ctx.beginPath();
+                ctx.strokeStyle = '#FF1493';
+                ctx.lineWidth = canvas.width * 0.04; // Responsive line width
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.moveTo(point.x, point.y);
+                createStar(e);
+            }
+        }
+
+        function handleMove(e) {
+            e.preventDefault();
+            if (!isDrawing) return;
+            
+            const point = getPoint(e);
+            if (isPointInLetter(point.x, point.y)) {
+                ctx.beginPath();
+                ctx.moveTo(lastX, lastY);
+                ctx.lineTo(point.x, point.y);
+                ctx.stroke();
+                
+                if (Math.random() < 0.2) createStar(e);
+            }
+            lastX = point.x;
+            lastY = point.y;
+        }
+
+        function handleEnd(e) {
+            e.preventDefault();
+            isDrawing = false;
+        }
+
+        function getPoint(e) {
+            const rect = canvas.getBoundingClientRect();
+            const point = e.touches ? e.touches[0] : e;
+            return {
+                x: ((point.clientX - rect.left) / rect.width) * canvas.width,
+                y: ((point.clientY - rect.top) / rect.height) * canvas.height
+            };
+        }
+
+        function createStar(e) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.innerHTML = '⭐';
+            const point = e.touches ? e.touches[0] : e;
+            star.style.left = point.clientX - 10 + 'px';
+            star.style.top = point.clientY - 10 + 'px';
+            document.body.appendChild(star);
+            setTimeout(() => star.remove(), 1000);
+        }
+
+        function drawGuideLetter() {
+            const character = letters[currentLetterIndex];
+            document.getElementById('currentLetter').textContent = `Current: ${character}`;
+            
+            let fontSize = canvas.width * 0.7;
+            if (['W', 'M'].includes(character)) fontSize *= 0.85;
+            if (['@', '#', '$', '%', '&', '*'].includes(character)) fontSize *= 0.8;
+            
+            ctx.font = `${fontSize}px Arial`;
+            ctx.fillStyle = '#FFB6C1';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(character, canvas.width/2, canvas.height/2);
+            
+            createLetterPixels();
+        }
+
+        function createLetterPixels() {
+            letterPixels.clear();
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                if (data[i] === 255 && data[i + 1] === 182 && data[i + 2] === 193) {
+                    const x = (i / 4) % canvas.width;
+                    const y = Math.floor((i / 4) / canvas.width);
+                    letterPixels.add(`${x},${y}`);
+                }
+            }
+        }
+
+        function isPointInLetter(x, y) {
+            const tolerance = canvas.width * 0.03;
+            for (let dx = -tolerance; dx <= tolerance; dx++) {
+                for (let dy = -tolerance; dy <= tolerance; dy++) {
+                    if (letterPixels.has(`${Math.floor(x + dx)},${Math.floor(y + dy)}`)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            drawGuideLetter();
+        }
+
+        function nextLetter() {
+            currentLetterIndex = (currentLetterIndex + 1) % letters.length;
+            clearCanvas();
+            updateProgressBar();
+            
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.innerHTML = '⭐';
+                    star.style.left = Math.random() * window.innerWidth + 'px';
+                    star.style.top = Math.random() * window.innerHeight + 'px';
+                    document.body.appendChild(star);
+                    setTimeout(() => star.remove(), 1000);
+                }, i * 100);
+            }
+        }
+
+        function updateProgressBar() {
+            const progress = (currentLetterIndex / letters.length) * 100;
+            document.getElementById('progress').style.width = `${progress}%`;
+        }
+
+        // Start the game
+        init();
+    </script>
+</body>
+</html>

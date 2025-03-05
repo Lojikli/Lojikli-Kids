@@ -1,0 +1,1564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeniusKids: Interactive Learning Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+        
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        
+        #app-container {
+            width: 100%;
+            max-width: 1000px;
+            height: 90vh;
+            background-color: white;
+            border-radius: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #main-menu, .activity-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+        }
+        
+        .activity-screen {
+            transform: translateX(100%);
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .active-screen {
+            transform: translateX(0) !important;
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: #FF6B6B;
+            text-align: center;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h2 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+            color: #4D96FF;
+            text-align: center;
+        }
+        
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            width: 90%;
+            max-width: 600px;
+            margin-top: 30px;
+        }
+        
+        .menu-item {
+            background-color: #FFD166;
+            border-radius: 15px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .menu-item h3 {
+            font-size: 1.8rem;
+            color: #333;
+            text-align: center;
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        .menu-icon {
+            font-size: 3.5rem;
+            margin-bottom: 10px;
+            color: #333;
+            z-index: 2;
+            pointer-events: none;
+        }
+        
+        .back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #FF6B6B;
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            transition: transform 0.2s;
+        }
+        
+        .back-button:hover {
+            transform: scale(1.1);
+        }
+        
+        .character {
+            position: absolute;
+            bottom: 0;
+            transition: transform 0.5s ease-in-out;
+            width: 120px;
+            height: 150px;
+        }
+        
+        #character1 {
+            left: 5%;
+        }
+        
+        #character2 {
+            right: 5%;
+        }
+        
+        /* Activity specific styles */
+        .activity-container {
+            width: 90%;
+            height: 70%;
+            background-color: #F9F9F9;
+            border-radius: 20px;
+            padding: 20px;
+            margin-top: 20px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        
+        .game-objects {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .game-object {
+            width: 100px;
+            height: 100px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            user-select: none;
+        }
+        
+        .game-object:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .feedback-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            color: #4CAF50;
+            opacity: 0;
+            text-align: center;
+            transition: opacity 0.3s;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+        }
+        
+        .activity-instructions {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: #555;
+        }
+        
+        /* Colors activity */
+        .color-object {
+            width: 120px;
+            height: 120px;
+            border-radius: 20px;
+            margin: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .color-object:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Patterns activity */
+        .pattern-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .pattern-item {
+            width: 80px;
+            height: 80px;
+            margin: 10px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .pattern-options {
+            display: flex;
+            margin-top: 30px;
+        }
+        
+        .pattern-option {
+            width: 80px;
+            height: 80px;
+            margin: 0 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .pattern-option:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Shapes activity */
+        .shapes-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .shape-item {
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .shape-item:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Counting activity */
+        .counting-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .counting-objects {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .counting-object {
+            width: 70px;
+            height: 70px;
+            background-color: #FFD166;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .number-options {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .number-option {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .number-option:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Emotions activity */
+        .emotion-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        
+        .emotion-face {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background-color: #FFDB58;
+            position: relative;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .emotion-options {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .emotion-option {
+            width: 100px;
+            height: 100px;
+            background-color: white;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .emotion-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .emotion-name {
+            font-size: 1.2rem;
+            margin-top: 5px;
+        }
+        
+        /* Canvas for drawing */
+        canvas {
+            border-radius: 15px;
+            background-color: white;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Animation classes */
+        .bounce {
+            animation: bounce 0.5s ease infinite alternate;
+        }
+        
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+        
+        .rotate {
+            animation: rotate 1s linear infinite;
+        }
+        
+        .pop {
+            animation: pop 0.3s ease-in-out;
+        }
+        
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-10px); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-10px); }
+            40%, 80% { transform: translateX(10px); }
+        }
+        
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        /* Preload fonts */
+        @font-face {
+            font-family: 'Comic Sans MS';
+            size-adjust: 100%;
+            src: local('Comic Sans MS');
+            font-display: swap;
+        }
+        
+        /* Progress bar */
+        .progress-container {
+            width: 90%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            width: 0;
+            transition: width 0.3s ease-in-out;
+        }
+        
+        /* Stars */
+        .stars-container {
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            display: flex;
+        }
+        
+        .star {
+            font-size: 2rem;
+            color: #FFD700;
+            margin-left: 5px;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Audio control */
+        .audio-control {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        
+        /* Media queries for responsive design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            h2 {
+                font-size: 1.8rem;
+            }
+            
+            .menu-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-object {
+                width: 80px;
+                height: 80px;
+            }
+            
+            .color-object {
+                width: 90px;
+                height: 90px;
+            }
+            
+            .pattern-item, .pattern-option {
+                width: 60px;
+                height: 60px;
+            }
+            
+            .shape-item {
+                width: 90px;
+                height: 90px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <!-- Main Menu -->
+        <div id="main-menu" class="active-screen">
+            <h1>Genius Kids</h1>
+            <h2>Learn and Play!</h2>
+            
+            <div class="menu-grid">
+                <div class="menu-item" id="colors-menu">
+                    <div class="menu-icon">🎨</div>
+                    <h3>Colors</h3>
+                </div>
+                <div class="menu-item" id="shapes-menu">
+                    <div class="menu-icon">◯ △ □</div>
+                    <h3>Shapes</h3>
+                </div>
+                <div class="menu-item" id="counting-menu">
+                    <div class="menu-icon">1️⃣2️⃣3️⃣</div>
+                    <h3>Counting</h3>
+                </div>
+                <div class="menu-item" id="patterns-menu">
+                    <div class="menu-icon">🔄</div>
+                    <h3>Patterns</h3>
+                </div>
+                <div class="menu-item" id="emotions-menu">
+                    <div class="menu-icon">😊</div>
+                    <h3>Emotions</h3>
+                </div>
+                <div class="menu-item" id="drawing-menu">
+                    <div class="menu-icon">✏️</div>
+                    <h3>Drawing</h3>
+                </div>
+            </div>
+            
+            <!-- Characters -->
+            <div id="character1" class="character">
+                <svg width="120" height="150" viewBox="0 0 120 150">
+                    <!-- Character 1: Elephant -->
+                    <ellipse cx="60" cy="130" rx="40" ry="20" fill="#A0A0A0" />
+                    <ellipse cx="60" cy="70" rx="35" ry="35" fill="#A0A0A0" />
+                    <ellipse cx="60" cy="65" rx="8" ry="8" fill="white" />
+                    <circle cx="60" cy="65" r="3" fill="black" />
+                    <ellipse cx="38" cy="49" rx="15" ry="10" fill="#A0A0A0" />
+                    <ellipse cx="82" cy="49" rx="15" ry="10" fill="#A0A0A0" />
+                    <path d="M60 80 C60 100, 40 110, 40 125" stroke="#A0A0A0" stroke-width="10" fill="none" />
+                    <path d="M60 80 C60 100, 80 110, 80 125" stroke="#A0A0A0" stroke-width="10" fill="none" />
+                    <path d="M60 80 C50 95, 70 95, 60 110" stroke="#A0A0A0" stroke-width="10" fill="none" />
+                    <path d="M70 70 C100 65, 100 40, 80 40" stroke="#A0A0A0" stroke-width="8" fill="none" />
+                </svg>
+            </div>
+            
+            <div id="character2" class="character">
+                <svg width="120" height="150" viewBox="0 0 120 150">
+                    <!-- Character 2: Lion -->
+                    <circle cx="60" cy="60" r="30" fill="#F9A825" />
+                    <path d="M30 60 Q60 85, 90 60" fill="#F9A825" />
+                    <circle cx="50" cy="50" r="5" fill="white" />
+                    <circle cx="70" cy="50" r="5" fill="white" />
+                    <circle cx="50" cy="50" r="2" fill="black" />
+                    <circle cx="70" cy="50" r="2" fill="black" />
+                    <path d="M50 65 Q60 75, 70 65" stroke="black" stroke-width="2" fill="none" />
+                    <path d="M20 30 Q35 25, 40 40" stroke="#F9A825" stroke-width="4" fill="none" />
+                    <path d="M100 30 Q85 25, 80 40" stroke="#F9A825" stroke-width="4" fill="none" />
+                    <path d="M30 20 Q40 35, 50 20" stroke="#F9A825" stroke-width="4" fill="none" />
+                    <path d="M90 20 Q80 35, 70 20" stroke="#F9A825" stroke-width="4" fill="none" />
+                    <path d="M60 20 Q60 30, 70 20" stroke="#F9A825" stroke-width="4" fill="none" />
+                    <path d="M60 20 Q60 30, 50 20" stroke="#F9A825" stroke-width="4" fill="none" />
+                    <path d="M60 90 L60 130" stroke="#F9A825" stroke-width="10" fill="none" />
+                    <path d="M60 100 L40 120" stroke="#F9A825" stroke-width="6" fill="none" />
+                    <path d="M60 100 L80 120" stroke="#F9A825" stroke-width="6" fill="none" />
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Colors Activity -->
+        <div id="colors-screen" class="activity-screen">
+            <div class="back-button">←</div>
+            <h2>Fun with Colors!</h2>
+            <div class="activity-instructions">Tap the color when you hear its name!</div>
+            
+            <div class="activity-container">
+                <div class="game-objects" id="colors-container">
+                    <!-- Color objects will be added here -->
+                </div>
+                <div class="feedback-message" id="colors-feedback"></div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="colors-progress"></div>
+            </div>
+        </div>
+        
+        <!-- Shapes Activity -->
+        <div id="shapes-screen" class="activity-screen">
+            <div class="back-button">←</div>
+            <h2>Amazing Shapes!</h2>
+            <div class="activity-instructions">Find the shape I'm looking for!</div>
+            
+            <div class="activity-container">
+                <div class="shapes-container" id="shapes-container">
+                    <!-- Shapes will be added here -->
+                </div>
+                <div class="feedback-message" id="shapes-feedback"></div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="shapes-progress"></div>
+            </div>
+        </div>
+        
+        <!-- Counting Activity -->
+        <div id="counting-screen" class="activity-screen">
+            <div class="back-button">←</div>
+            <h2>Counting Fun!</h2>
+            <div class="activity-instructions">How many objects do you see?</div>
+            
+            <div class="activity-container">
+                <div class="counting-container">
+                    <div class="counting-objects" id="counting-objects">
+                        <!-- Objects will be added here -->
+                    </div>
+                    
+                    <div class="number-options" id="number-options">
+                        <!-- Number options will be added here -->
+                    </div>
+                </div>
+                <div class="feedback-message" id="counting-feedback"></div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="counting-progress"></div>
+            </div>
+        </div>
+        
+        <!-- Patterns Activity -->
+        <div id="patterns-screen" class="activity-screen">
+            <div class="back-button">←</div>
+            <h2>Pattern Power!</h2>
+            <div class="activity-instructions">What comes next in the pattern?</div>
+            
+            <div class="activity-container">
+                <div class="pattern-container" id="pattern-display">
+                    <!-- Pattern items will be added here -->
+                </div>
+                
+                <div class="pattern-options" id="pattern-options">
+                    <!-- Pattern options will be added here -->
+                </div>
+                <div class="feedback-message" id="patterns-feedback"></div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="patterns-progress"></div>
+            </div>
+        </div>
+        
+        <!-- Emotions Activity -->
+        <div id="emotions-screen" class="activity-screen">
+            <div class="back-button">←</div>
+            <h2>Feeling Friends!</h2>
+            <div class="activity-instructions">How is our friend feeling?</div>
+            
+            <div class="activity-container">
+                <div class="emotion-container">
+                    <div class="emotion-face" id="emotion-face">
+                        <!-- Face features will be added dynamically -->
+                    </div>
+                    
+                    <div class="emotion-options" id="emotion-options">
+                        <!-- Emotion options will be added here -->
+                    </div>
+                </div>
+                <div class="feedback-message" id="emotions-feedback"></div>
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="emotions-progress"></div>
+            </div>
+        </div>
+        
+        <!-- Drawing Activity -->
+        <div id="drawing-screen" class="activity-screen">
+            <div class="back-button">←</div>
+            <h2>Creative Drawing!</h2>
+            <div class="activity-instructions">Draw anything you imagine!</div>
+            
+            <div class="activity-container">
+                <canvas id="drawing-canvas" width="600" height="400"></canvas>
+            </div>
+            
+            <div class="color-palette" id="color-palette">
+                <!-- Color options will be added here -->
+            </div>
+        </div>
+        
+        <div class="audio-control" id="audio-control">🔊</div>
+    </div>
+
+    <script>
+        // Main application functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Audio Context for sound effects
+            let audioContext;
+            let isMuted = false;
+            
+            // Try to create AudioContext only after user interaction
+            function initAudio() {
+                if (!audioContext) {
+                    try {
+                        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    } catch (e) {
+                        console.log('Web Audio API not supported.');
+                    }
+                }
+            }
+            
+            // Sound effects generators
+            function playTone(freq, duration, type = 'sine') {
+                if (!audioContext || isMuted) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = type;
+                oscillator.frequency.value = freq;
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.02);
+                gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + duration);
+            }
+            
+            function playSuccessSound() {
+                if (!audioContext || isMuted) return;
+                
+                playTone(523.25, 0.1); // C5
+                setTimeout(() => playTone(659.25, 0.1), 100); // E5
+                setTimeout(() => playTone(783.99, 0.3), 200); // G5
+            }
+            
+            function playErrorSound() {
+                if (!audioContext || isMuted) return;
+                
+                playTone(311.13, 0.2, 'sawtooth'); // E♭4
+                setTimeout(() => playTone(277.18, 0.3, 'sawtooth'), 200); // C#4
+            }
+            
+            function playClickSound() {
+                if (!audioContext || isMuted) return;
+                
+                playTone(440, 0.05); // A4
+            }
+            
+            function speakText(text) {
+                if (isMuted) return;
+                
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.2;
+                    speechSynthesis.speak(utterance);
+                }
+            }
+            
+            // Screen navigation
+            const screens = {
+                'main-menu': document.getElementById('main-menu'),
+                'colors-screen': document.getElementById('colors-screen'),
+                'shapes-screen': document.getElementById('shapes-screen'),
+                'counting-screen': document.getElementById('counting-screen'),
+                'patterns-screen': document.getElementById('patterns-screen'),
+                'emotions-screen': document.getElementById('emotions-screen'),
+                'drawing-screen': document.getElementById('drawing-screen')
+            };
+            
+            let currentScreen = 'main-menu';
+            
+            function navigateToScreen(screenId) {
+                initAudio();
+                playClickSound();
+                
+                screens[currentScreen].classList.remove('active-screen');
+                screens[screenId].classList.add('active-screen');
+                currentScreen = screenId;
+                
+                // Initialize the activity if needed
+                if (screenId === 'colors-screen') {
+                    if (!colorsInitialized) initColorsActivity();
+                } else if (screenId === 'shapes-screen') {
+                    if (!shapesInitialized) initShapesActivity();
+                } else if (screenId === 'counting-screen') {
+                    if (!countingInitialized) initCountingActivity();
+                } else if (screenId === 'patterns-screen') {
+                    if (!patternsInitialized) initPatternsActivity();
+                } else if (screenId === 'emotions-screen') {
+                    if (!emotionsInitialized) initEmotionsActivity();
+                } else if (screenId === 'drawing-screen') {
+                    if (!drawingInitialized) initDrawingActivity();
+                }
+            }
+            
+            // Menu item click handlers
+            document.getElementById('colors-menu').addEventListener('click', () => {
+                navigateToScreen('colors-screen');
+                speakText("Let's learn about colors!");
+            });
+            
+            document.getElementById('shapes-menu').addEventListener('click', () => {
+                navigateToScreen('shapes-screen');
+                speakText("Shape time! Can you find these shapes?");
+            });
+            
+            document.getElementById('counting-menu').addEventListener('click', () => {
+                navigateToScreen('counting-screen');
+                speakText("Let's count together!");
+            });
+            
+            document.getElementById('patterns-menu').addEventListener('click', () => {
+                navigateToScreen('patterns-screen');
+                speakText("Pattern power! What comes next?");
+            });
+            
+            document.getElementById('emotions-menu').addEventListener('click', () => {
+                navigateToScreen('emotions-screen');
+                speakText("How are you feeling today?");
+            });
+            
+            document.getElementById('drawing-menu').addEventListener('click', () => {
+                navigateToScreen('drawing-screen');
+                speakText("Time to draw and create!");
+            });
+            
+            // Back button handlers
+            document.querySelectorAll('.back-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    navigateToScreen('main-menu');
+                    speakText("Back to the menu!");
+                });
+            });
+            
+            // Audio control
+            const audioControl = document.getElementById('audio-control');
+            audioControl.addEventListener('click', () => {
+                isMuted = !isMuted;
+                audioControl.textContent = isMuted ? '🔇' : '🔊';
+                playClickSound(); // This won't play if already muted
+            });
+            
+            // Character animations
+            const character1 = document.getElementById('character1');
+            const character2 = document.getElementById('character2');
+            
+            function animateCharacters() {
+                const animations = ['bounce', 'shake', 'rotate', 'pop'];
+                
+                // Randomly animate the characters
+                setInterval(() => {
+                    if (currentScreen === 'main-menu' && Math.random() > 0.7) {
+                        const character = Math.random() > 0.5 ? character1 : character2;
+                        const animation = animations[Math.floor(Math.random() * animations.length)];
+                        
+                        character.classList.add(animation);
+                        setTimeout(() => {
+                            character.classList.remove(animation);
+                        }, 1000);
+                    }
+                }, 3000);
+            }
+            
+            animateCharacters();
+            
+            // Feedback message handler
+            function showFeedback(element, message, isSuccess) {
+                element.textContent = message;
+                element.style.color = isSuccess ? '#4CAF50' : '#F44336';
+                element.style.opacity = 1;
+                
+                setTimeout(() => {
+                    element.style.opacity = 0;
+                }, 1500);
+                
+                if (isSuccess) {
+                    playSuccessSound();
+                } else {
+                    playErrorSound();
+                }
+            }
+            
+            // Progress bar update
+            function updateProgress(progressBar, percentage) {
+                progressBar.style.width = `${percentage}%`;
+            }
+            
+            // Colors Activity
+            let colorsInitialized = false;
+            let colorProgress = 0;
+            
+            function initColorsActivity() {
+                colorsInitialized = true;
+                const colorsContainer = document.getElementById('colors-container');
+                const colorsFeedback = document.getElementById('colors-feedback');
+                const colorsProgressBar = document.getElementById('colors-progress');
+                
+                colorsContainer.innerHTML = '';
+                
+                const colors = [
+                    { name: 'Red', hex: '#FF5252' },
+                    { name: 'Blue', hex: '#536DFE' },
+                    { name: 'Green', hex: '#4CAF50' },
+                    { name: 'Yellow', hex: '#FFEB3B' },
+                    { name: 'Purple', hex: '#9C27B0' },
+                    { name: 'Orange', hex: '#FF9800' }
+                ];
+                
+                colors.forEach(color => {
+                    const colorBox = document.createElement('div');
+                    colorBox.className = 'color-object';
+                    colorBox.style.backgroundColor = color.hex;
+                    
+                    colorBox.addEventListener('click', () => {
+                        if (color.name.toLowerCase() === currentColorTarget.toLowerCase()) {
+                            showFeedback(colorsFeedback, 'Correct!', true);
+                            speakText(`Yes! That's ${color.name}!`);
+                            colorProgress += 20;
+                            if (colorProgress > 100) colorProgress = 100;
+                            updateProgress(colorsProgressBar, colorProgress);
+                            
+                            setTimeout(() => {
+                                askForRandomColor();
+                            }, 1500);
+                        } else {
+                            showFeedback(colorsFeedback, 'Try again!', false);
+                            speakText(`That's ${color.name}. Let's try again!`);
+                        }
+                    });
+                    
+                    colorsContainer.appendChild(colorBox);
+                });
+                
+                let currentColorTarget = '';
+                
+                function askForRandomColor() {
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    currentColorTarget = randomColor.name;
+                    
+                    setTimeout(() => {
+                        speakText(`Find the ${randomColor.name} color!`);
+                    }, 500);
+                }
+                
+                // Start the activity
+                setTimeout(() => {
+                    askForRandomColor();
+                }, 1000);
+            }
+            
+            // Shapes Activity
+            let shapesInitialized = false;
+            let shapesProgress = 0;
+            
+            function initShapesActivity() {
+                shapesInitialized = true;
+                const shapesContainer = document.getElementById('shapes-container');
+                const shapesFeedback = document.getElementById('shapes-feedback');
+                const shapesProgressBar = document.getElementById('shapes-progress');
+                
+                shapesContainer.innerHTML = '';
+                
+                const shapes = [
+                    { 
+                        name: 'Circle', 
+                        svg: '<svg width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="#4CAF50" /></svg>' 
+                    },
+                    { 
+                        name: 'Square', 
+                        svg: '<svg width="100" height="100" viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" fill="#2196F3" /></svg>' 
+                    },
+                    { 
+                        name: 'Triangle', 
+                        svg: '<svg width="100" height="100" viewBox="0 0 100 100"><polygon points="50,10 90,90 10,90" fill="#FF5722" /></svg>' 
+                    },
+                    { 
+                        name: 'Star', 
+                        svg: '<svg width="100" height="100" viewBox="0 0 100 100"><polygon points="50,10 61,35 90,35 65,55 75,80 50,65 25,80 35,55 10,35 39,35" fill="#FFC107" /></svg>' 
+                    },
+                    { 
+                        name: 'Heart', 
+                        svg: '<svg width="100" height="100" viewBox="0 0 100 100"><path d="M50,80 C35,65 10,50 10,30 C10,15 20,10 30,10 C40,10 50,20 50,20 C50,20 60,10 70,10 C80,10 90,15 90,30 C90,50 65,65 50,80 Z" fill="#F44336" /></svg>' 
+                    },
+                    { 
+                        name: 'Diamond', 
+                        svg: '<svg width="100" height="100" viewBox="0 0 100 100"><polygon points="50,10 90,50 50,90 10,50" fill="#9C27B0" /></svg>' 
+                    }
+                ];
+                
+                shapes.forEach(shape => {
+                    const shapeItem = document.createElement('div');
+                    shapeItem.className = 'shape-item';
+                    shapeItem.innerHTML = shape.svg;
+                    shapeItem.dataset.name = shape.name;
+                    
+                    shapeItem.addEventListener('click', () => {
+                        if (shape.name.toLowerCase() === currentShapeTarget.toLowerCase()) {
+                            showFeedback(shapesFeedback, 'Great job!', true);
+                            speakText(`Yes! That's a ${shape.name}!`);
+                            shapesProgress += 20;
+                            if (shapesProgress > 100) shapesProgress = 100;
+                            updateProgress(shapesProgressBar, shapesProgress);
+                            
+                            setTimeout(() => {
+                                askForRandomShape();
+                            }, 1500);
+                        } else {
+                            showFeedback(shapesFeedback, 'Try again!', false);
+                            speakText(`That's a ${shape.name}. Let's try again!`);
+                        }
+                    });
+                    
+                    shapesContainer.appendChild(shapeItem);
+                });
+                
+                let currentShapeTarget = '';
+                
+                function askForRandomShape() {
+                    const randomShape = shapes[Math.floor(Math.random() * shapes.length)];
+                    currentShapeTarget = randomShape.name;
+                    
+                    setTimeout(() => {
+                        speakText(`Can you find the ${randomShape.name}?`);
+                    }, 500);
+                }
+                
+                // Start the activity
+                setTimeout(() => {
+                    askForRandomShape();
+                }, 1000);
+            }
+            
+            // Counting Activity
+            let countingInitialized = false;
+            let countingProgress = 0;
+            
+            function initCountingActivity() {
+                countingInitialized = true;
+                const countingObjects = document.getElementById('counting-objects');
+                const numberOptions = document.getElementById('number-options');
+                const countingFeedback = document.getElementById('counting-feedback');
+                const countingProgressBar = document.getElementById('counting-progress');
+                
+                countingObjects.innerHTML = '';
+                numberOptions.innerHTML = '';
+                
+                const emojis = ['🍎', '🍌', '🍓', '🍊', '🥦', '🍕', '🍦', '🎈', '🎁', '🚂'];
+                let currentCount = 0;
+                
+                function createCountingChallenge() {
+                    countingObjects.innerHTML = '';
+                    numberOptions.innerHTML = '';
+                    
+                    // For 2-year-olds, keep the counts small
+                    currentCount = Math.floor(Math.random() * 4) + 1; // 1 to 5 objects
+                    
+                    const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+                    
+                    // Create the objects to count
+                    for (let i = 0; i < currentCount; i++) {
+                        const object = document.createElement('div');
+                        object.className = 'counting-object';
+                        object.textContent = randomEmoji;
+                        countingObjects.appendChild(object);
+                    }
+                    
+                    // Create number options (including the correct answer and some decoys)
+                    const possibleAnswers = [1, 2, 3, 4, 5].filter(n => n !== currentCount);
+                    const options = [currentCount];
+                    
+                    // Add 2 more random options
+                    for (let i = 0; i < 2; i++) {
+                        const randomIndex = Math.floor(Math.random() * possibleAnswers.length);
+                        options.push(possibleAnswers[randomIndex]);
+                        possibleAnswers.splice(randomIndex, 1);
+                    }
+                    
+                    // Shuffle the options
+                    options.sort(() => Math.random() - 0.5);
+                    
+                    options.forEach(number => {
+                        const option = document.createElement('div');
+                        option.className = 'number-option';
+                        option.textContent = number;
+                        
+                        option.addEventListener('click', () => {
+                            if (number === currentCount) {
+                                showFeedback(countingFeedback, 'Correct!', true);
+                                speakText(`Yes! There are ${currentCount} ${currentCount === 1 ? 'item' : 'items'}!`);
+                                countingProgress += 20;
+                                if (countingProgress > 100) countingProgress = 100;
+                                updateProgress(countingProgressBar, countingProgress);
+                                
+                                setTimeout(() => {
+                                    createCountingChallenge();
+                                }, 1500);
+                            } else {
+                                showFeedback(countingFeedback, 'Try again!', false);
+                                speakText(`That's ${number}. Let's count again!`);
+                            }
+                        });
+                        
+                        numberOptions.appendChild(option);
+                    });
+                    
+                    // Ask the question
+                    setTimeout(() => {
+                        speakText("How many do you see? Count with me!");
+                    }, 500);
+                }
+                
+                // Start the activity
+                setTimeout(() => {
+                    createCountingChallenge();
+                }, 1000);
+            }
+            
+            // Patterns Activity
+            let patternsInitialized = false;
+            let patternsProgress = 0;
+            
+            function initPatternsActivity() {
+                patternsInitialized = true;
+                const patternDisplay = document.getElementById('pattern-display');
+                const patternOptions = document.getElementById('pattern-options');
+                const patternsFeedback = document.getElementById('patterns-feedback');
+                const patternsProgressBar = document.getElementById('patterns-progress');
+                
+                patternDisplay.innerHTML = '';
+                patternOptions.innerHTML = '';
+                
+                // Simple patterns for 2-year-olds
+                const patterns = [
+                    {
+                        sequence: ['🔴', '🔵', '🔴', '🔵'],
+                        answer: '🔴',
+                        options: ['🔴', '🔵', '🟢']
+                    },
+                    {
+                        sequence: ['🐶', '🐱', '🐶', '🐱'],
+                        answer: '🐶',
+                        options: ['🐶', '🐱', '🐰']
+                    },
+                    {
+                        sequence: ['⭐', '❤️', '⭐', '❤️'],
+                        answer: '⭐',
+                        options: ['⭐', '❤️', '🔶']
+                    },
+                    {
+                        sequence: ['🔶', '🔷', '🔶', '🔷'],
+                        answer: '🔶',
+                        options: ['🔶', '🔷', '🔴']
+                    }
+                ];
+                
+                let currentPattern;
+                
+                function createPatternChallenge() {
+                    patternDisplay.innerHTML = '';
+                    patternOptions.innerHTML = '';
+                    
+                    currentPattern = patterns[Math.floor(Math.random() * patterns.length)];
+                    
+                    // Display the pattern
+                    currentPattern.sequence.forEach(item => {
+                        const patternItem = document.createElement('div');
+                        patternItem.className = 'pattern-item';
+                        patternItem.textContent = item;
+                        patternDisplay.appendChild(patternItem);
+                    });
+                    
+                    // Add a question mark for the next item
+                    const questionMark = document.createElement('div');
+                    questionMark.className = 'pattern-item';
+                    questionMark.textContent = '?';
+                    patternDisplay.appendChild(questionMark);
+                    
+                    // Shuffle and display the options
+                    const shuffledOptions = [...currentPattern.options].sort(() => Math.random() - 0.5);
+                    
+                    shuffledOptions.forEach(option => {
+                        const optionElement = document.createElement('div');
+                        optionElement.className = 'pattern-option';
+                        optionElement.textContent = option;
+                        
+                        optionElement.addEventListener('click', () => {
+                            if (option === currentPattern.answer) {
+                                showFeedback(patternsFeedback, 'Great pattern matching!', true);
+                                speakText("That's right! You found the pattern!");
+                                patternsProgress += 25;
+                                if (patternsProgress > 100) patternsProgress = 100;
+                                updateProgress(patternsProgressBar, patternsProgress);
+                                
+                                setTimeout(() => {
+                                    createPatternChallenge();
+                                }, 1500);
+                            } else {
+                                showFeedback(patternsFeedback, 'Try again!', false);
+                                speakText("Let's look at the pattern again!");
+                            }
+                        });
+                        
+                        patternOptions.appendChild(optionElement);
+                    });
+                    
+                    // Ask the question
+                    setTimeout(() => {
+                        speakText("What comes next in the pattern?");
+                    }, 500);
+                }
+                
+                // Start the activity
+                setTimeout(() => {
+                    createPatternChallenge();
+                }, 1000);
+            }
+            
+            // Emotions Activity
+            let emotionsInitialized = false;
+            let emotionsProgress = 0;
+            
+            function initEmotionsActivity() {
+                emotionsInitialized = true;
+                const emotionFace = document.getElementById('emotion-face');
+                const emotionOptions = document.getElementById('emotion-options');
+                const emotionsFeedback = document.getElementById('emotions-feedback');
+                const emotionsProgressBar = document.getElementById('emotions-progress');
+                
+                emotionFace.innerHTML = '';
+                emotionOptions.innerHTML = '';
+                
+                const emotions = [
+                    {
+                        name: 'Happy',
+                        face: `
+                            <div style="position: absolute; left: 65px; top: 60px; width: 70px; height: 40px; border-bottom: 8px solid black; border-radius: 0 0 90px 90px;"></div>
+                            <div style="position: absolute; left: 50px; top: 40px; width: 20px; height: 20px; background-color: black; border-radius: 50%;"></div>
+                            <div style="position: absolute; left: 130px; top: 40px; width: 20px; height: 20px; background-color: black; border-radius: 50%;"></div>
+                        `
+                    },
+                    {
+                        name: 'Sad',
+                        face: `
+                            <div style="position: absolute; left: 65px; top: 100px; width: 70px; height: 40px; border-top: 8px solid black; border-radius: 90px 90px 0 0;"></div>
+                            <div style="position: absolute; left: 50px; top: 40px; width: 20px; height: 20px; background-color: black; border-radius: 50%;"></div>
+                            <div style="position: absolute; left: 130px; top: 40px; width: 20px; height: 20px; background-color: black; border-radius: 50%;"></div>
+                        `
+                    },
+                    {
+                        name: 'Surprised',
+                        face: `
+                            <div style="position: absolute; left: 85px; top: 80px; width: 30px; height: 30px; background-color: black; border-radius: 50%;"></div>
+                            <div style="position: absolute; left: 50px; top: 40px; width: 20px; height: 20px; background-color: black; border-radius: 50%;"></div>
+                            <div style="position: absolute; left: 130px; top: 40px; width: 20px; height: 20px; background-color: black; border-radius: 50%;"></div>
+                        `
+                    },
+                    {
+                        name: 'Angry',
+                        face: `
+                            <div style="position: absolute; left: 65px; top: 100px; width: 70px; height: 20px; border-top: 8px solid black; border-radius: 0 0 0 0;"></div>
+                            <div style="position: absolute; left: 50px; top: 40px; width: 20px; height: 20px; background-color: black; border-radius: 50%;"></div>
+                            <div style="position: absolute; left: 130px; top: 40px; width: 20px; height: 20px; background-color: black; border-radius: 50%;"></div>
+                            <div style="position: absolute; left: 40px; top: 30px; width: 40px; height: 10px; background-color: black; transform: rotate(30deg);"></div>
+                            <div style="position: absolute; left: 120px; top: 30px; width: 40px; height: 10px; background-color: black; transform: rotate(-30deg);"></div>
+                        `
+                    }
+                ];
+                
+                let currentEmotion;
+                
+                function createEmotionChallenge() {
+                    emotionFace.innerHTML = '';
+                    emotionOptions.innerHTML = '';
+                    
+                    currentEmotion = emotions[Math.floor(Math.random() * emotions.length)];
+                    
+                    // Display the emotion face
+                    emotionFace.innerHTML = currentEmotion.face;
+                    
+                    // Create emotion options
+                    const shuffledEmotions = [...emotions].sort(() => Math.random() - 0.5);
+                    
+                    shuffledEmotions.forEach(emotion => {
+                        const option = document.createElement('div');
+                        option.className = 'emotion-option';
+                        
+                        // Simple emoji for the emotion
+                        let emoji = '😊';
+                        if (emotion.name === 'Sad') emoji = '😢';
+                        if (emotion.name === 'Surprised') emoji = '😮';
+                        if (emotion.name === 'Angry') emoji = '😠';
+                        
+                        option.innerHTML = `
+                            <div style="font-size: 2.5rem;">${emoji}</div>
+                            <div class="emotion-name">${emotion.name}</div>
+                        `;
+                        
+                        option.addEventListener('click', () => {
+                            if (emotion.name === currentEmotion.name) {
+                                showFeedback(emotionsFeedback, 'Great job!', true);
+                                speakText(`Yes! Our friend is feeling ${emotion.name}!`);
+                                emotionsProgress += 25;
+                                if (emotionsProgress > 100) emotionsProgress = 100;
+                                updateProgress(emotionsProgressBar, emotionsProgress);
+                                
+                                setTimeout(() => {
+                                    createEmotionChallenge();
+                                }, 1500);
+                            } else {
+                                showFeedback(emotionsFeedback, 'Try again!', false);
+                                speakText(`That's ${emotion.name}. Let's look again!`);
+                            }
+                        });
+                        
+                        emotionOptions.appendChild(option);
+                    });
+                    
+                    // Ask the question
+                    setTimeout(() => {
+                        speakText("How is our friend feeling?");
+                    }, 500);
+                }
+                
+                // Start the activity
+                setTimeout(() => {
+                    createEmotionChallenge();
+                }, 1000);
+            }
+            
+            // Drawing Activity
+            let drawingInitialized = false;
+            
+            function initDrawingActivity() {
+                drawingInitialized = true;
+                const canvas = document.getElementById('drawing-canvas');
+                const ctx = canvas.getContext('2d');
+                
+                // Set canvas dimensions
+                function resizeCanvas() {
+                    const container = document.querySelector('.activity-container');
+                    const containerWidth = container.offsetWidth;
+                    const containerHeight = container.offsetHeight;
+                    
+                    canvas.width = containerWidth * 0.9;
+                    canvas.height = containerHeight * 0.8;
+                    
+                    // Clear and set background
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                }
+                
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+                
+                // Drawing variables
+                let isDrawing = false;
+                let lastX = 0;
+                let lastY = 0;
+                let currentColor = '#000000';
+                let brushSize = 10;
+                
+                // Drawing functions
+                function startDrawing(e) {
+                    isDrawing = true;
+                    const pos = getMousePos(canvas, e);
+                    [lastX, lastY] = [pos.x, pos.y];
+                }
+                
+                function draw(e) {
+                    if (!isDrawing) return;
+                    const pos = getMousePos(canvas, e);
+                    
+                    ctx.lineJoin = 'round';
+                    ctx.lineCap = 'round';
+                    ctx.lineWidth = brushSize;
+                    ctx.strokeStyle = currentColor;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(lastX, lastY);
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                    
+                    [lastX, lastY] = [pos.x, pos.y];
+                }
+                
+                function stopDrawing() {
+                    isDrawing = false;
+                }
+                
+                function getMousePos(canvas, evt) {
+                    const rect = canvas.getBoundingClientRect();
+                    return {
+                        x: (evt.clientX - rect.left) / (rect.right - rect.left) * canvas.width,
+                        y: (evt.clientY - rect.top) / (rect.bottom - rect.top) * canvas.height
+                    };
+                }
+                
+                // Event listeners for mouse
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('mouseout', stopDrawing);
+                
+                // Event listeners for touch
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    startDrawing(e.touches[0]);
+                });
+                
+                canvas.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    draw(e.touches[0]);
+                });
+                
+                canvas.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    stopDrawing();
+                });
+                
+                // Add color palette
+                const colorPalette = document.getElementById('color-palette');
+                const colors = [
+                    '#000000', // Black
+                    '#FF5252', // Red
+                    '#4CAF50', // Green
+                    '#2196F3', // Blue
+                    '#FFEB3B', // Yellow
+                    '#9C27B0', // Purple
+                    '#FF9800', // Orange
+                    '#795548', // Brown
+                    '#FFFFFF'  // White (eraser)
+                ];
+                
+                colors.forEach(color => {
+                    const colorOption = document.createElement('div');
+                    colorOption.className = 'color-object';
+                    colorOption.style.backgroundColor = color;
+                    colorOption.style.width = '40px';
+                    colorOption.style.height = '40px';
+                    colorOption.style.display = 'inline-block';
+                    colorOption.style.margin = '5px';
+                    colorOption.style.border = '2px solid #ddd';
+                    
+                    colorOption.addEventListener('click', () => {
+                        currentColor = color;
+                        // Update active color indicator
+                        document.querySelectorAll('.color-object').forEach(el => {
+                            el.style.border = '2px solid #ddd';
+                        });
+                        colorOption.style.border = '2px solid #333';
+                        
+                        playClickSound();
+                    });
+                    
+                    colorPalette.appendChild(colorOption);
+                });
+                
+                // Set initial active color
+                document.querySelector('.color-object').style.border = '2px solid #333';
+                
+                // Add clear button
+                const clearButton = document.createElement('div');
+                clearButton.textContent = 'Clear';
+                clearButton.className = 'menu-item';
+                clearButton.style.padding = '10px 20px';
+                clearButton.style.margin = '5px';
+                clearButton.style.backgroundColor = '#FF5252';
+                clearButton.style.color = 'white';
+                clearButton.style.borderRadius = '5px';
+                clearButton.style.cursor = 'pointer';
+                clearButton.style.display = 'inline-block';
+                
+                clearButton.addEventListener('click', () => {
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    playClickSound();
+                });
+                
+                colorPalette.appendChild(clearButton);
+                
+                // Welcome message
+                speakText("Draw anything you can imagine! Use the colors below.");
+            }
+            
+            // Preload by triggering first interaction
+            document.addEventListener('click', function initialClick() {
+                initAudio();
+                document.removeEventListener('click', initialClick);
+                
+                // Play welcome sound and message
+                setTimeout(() => {
+                    playSuccessSound();
+                    speakText("Welcome to Genius Kids! Let's learn and play!");
+                }, 500);
+            }, { once: true });
+        });
+    </script>
+</body>
+</html>

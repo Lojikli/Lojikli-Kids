@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Geography Quiz Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            padding: 20px;
+            color: #333;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 25px;
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            font-size: 1.2em;
+            color: #2c3e50;
+        }
+
+        .map-container {
+            position: relative;
+            width: 100%;
+            height: 600px;
+            background-color: #001830;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.2);
+        }
+
+        .country {
+            fill: #d4d4d4;
+            stroke: rgba(255,255,255,0.3);
+            stroke-width: 0.5;
+            transition: all 0.3s ease;
+            vector-effect: non-scaling-stroke;
+        }
+
+        .country:hover {
+            fill: #a0a0a0;
+            cursor: pointer;
+            stroke-width: 1;
+            stroke: #fff;
+        }
+
+        .country.correct {
+            fill: #48c774;
+            animation: pulse 1s;
+        }
+
+        .country.wrong {
+            fill: #ff3860;
+            animation: shake 0.5s;
+        }
+
+        @keyframes pulse {
+            0% { fill: #48c774; }
+            50% { fill: #00c853; }
+            100% { fill: #48c774; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .graticule {
+            fill: none;
+            stroke: rgba(255,255,255,0.1);
+            stroke-width: 0.5;
+            vector-effect: non-scaling-stroke;
+        }
+
+        .sphere {
+            fill: #001830;
+        }
+
+        .feedback {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .feedback.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .feedback.correct {
+            background-color: #48c77422;
+            color: #257942;
+            border: 1px solid #48c77444;
+        }
+
+        .feedback.incorrect {
+            background-color: #ff386022;
+            color: #cc0f35;
+            border: 1px solid #ff386044;
+        }
+
+        .hint-container {
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .hint-button {
+            padding: 10px 20px;
+            background: linear-gradient(145deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.2s ease;
+        }
+
+        .hint-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .hint-content {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .hint-content.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .game-over {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+
+        .game-over.show {
+            display: flex;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .game-over h2 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        .restart-button {
+            margin-top: 20px;
+            padding: 15px 30px;
+            background: linear-gradient(145deg, #28a745, #218838);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.2s ease;
+        }
+
+        .restart-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>Geography Quiz Game</h1>
+            <p id="current-country" style="font-size: 1.5em; color: #2c3e50;">Find: <span></span></p>
+        </div>
+
+        <div class="score-container">
+            <div>Score: <span id="score">0</span>/<span id="attempts">0</span></div>
+            <div>Attempts remaining: <span id="remaining-attempts">10</span></div>
+        </div>
+
+        <div class="map-container">
+            <!-- Map will be rendered here -->
+            <div class="game-over">
+                <h2>Game Over!</h2>
+                <p style="font-size: 1.5em;">Final Score: <span id="final-score">0</span></p>
+                <button class="restart-button" onclick="resetGame()">Play Again</button>
+            </div>
+        </div>
+
+        <div id="feedback" class="feedback"></div>
+
+        <div class="hint-container">
+            <button class="hint-button" onclick="toggleHint()">Show Hint</button>
+            <div id="hint" class="hint-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let state = {
+            score: 0,
+            attempts: 0,
+            maxAttempts: 10,
+            currentCountry: null,
+            worldData: null,
+            showHint: false
+        };
+
+        // Countries data with additional information
+        const countryInfo = {
+            "840": { // USA
+                name: "United States",
+                capital: "Washington, D.C.",
+                continent: "North America",
+                funFact: "Has 50 states and is the world's largest economy"
+            },
+            "643": { // RUS
+                name: "Russia",
+                capital: "Moscow",
+                continent: "Asia/Europe",
+                funFact: "Largest country by land area, spanning 11 time zones"
+            },
+            "156": { // CHN
+                name: "China",
+                capital: "Beijing",
+                continent: "Asia",
+                funFact: "Home to the Great Wall"
+            },
+            "276": { // DEU
+                name: "Germany",
+                capital: "Berlin",
+                continent: "Europe",
+                funFact: "Has over 20,000 castles"
+            },
+            "724": { // ESP
+                name: "Spain",
+                capital: "Madrid",
+                continent: "Europe",
+                funFact: "Second-highest number of UNESCO World Heritage Sites"
+            },
+            "250": { // FRA
+                name: "France",
+                capital: "Paris",
+                continent: "Europe",
+                funFact: "Most visited country in the world"
+            },
+            "380": { // ITA
+                name: "Italy",
+                capital: "Rome",
+                continent: "Europe",
+                funFact: "Has the most UNESCO World Heritage Sites"
+            },
+            "826": { // GBR
+                name: "United Kingdom",
+                capital: "London",
+                continent: "Europe",
+                funFact: "An island nation consisting of four countries"
+            },
+            "392": { // JPN
+                name: "Japan",
+                capital: "Tokyo",
+                continent: "Asia",
+                funFact: "Has the world's oldest company, founded in 578 AD"
+            },
+            "356": { // IND
+                name: "India",
+                capital: "New Delhi",
+                continent: "Asia",
+                funFact: "World's largest democracy"
+            }
+        };
+
+        async function initGame() {
+            // Set up the map
+            const width = document.querySelector('.map-container').offsetWidth;
+            const height = document.querySelector('.map-container').offsetHeight;
+            
+            const svg = d3.select('.map-container').append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            // Create a proper map projection
+            const projection = d3.geoEqualEarth()
+                .scale((width) / (2 * Math.PI))
+                .translate([width / 2, height / 2]);
+
+            const path = d3.geoPath().projection(projection);
+
+            // Add sphere and graticules for better visual appeal
+            svg.append('path')
+                .datum({type: 'Sphere'})
+                .attr('class', 'sphere')
+                .attr('d', path);
+
+            const graticule = d3.geoGraticule();
+            svg.append('path')
+                .datum(graticule)
+                .attr('class', 'graticule')
+                .attr('d', path);
+
+            try {
+                // Load world map data
+                const response = await fetch('https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json');
+                const worldData = await response.json();
+                state.worldData = worldData;
+
+                // Draw countries
+                const countries = topojson.feature(worldData, worldData.objects.countries);
+                svg.selectAll('path.country')
+                    .data(countries.features)
+                    .enter()
+                    .append('path')
+                    .attr('class', 'country')
+                    .attr('d', path)
+                    .attr('data-id', d => d.id)
+                    .on('click', handleCountryClick);
+
+                // Initialize the game
+                resetGame();
+            } catch (error) {
+                console.error('Error loading map data:', error);
+            }
+        }
+
+        function selectNewCountry() {
+            // Get list of available countries (excluding current if possible)
+            const countries = Object.keys(countryInfo).filter(code => 
+                !state.currentCountry || code !== state.currentCountry.code
+            );
+            const randomCountry = countries[Math.floor(Math.random() * countries.length)];
+            
+            // Store the country code and info
+            state.currentCountry = {
+                ...countryInfo[randomCountry],
+                code: randomCountry
+            };
+            
+            console.log('Selected new country:', state.currentCountry);
+            
+            document.querySelector("#current-country span").textContent = state.currentCountry.name;
+            updateHint();
+        }
+
+        function handleCountryClick(event, d) {
+            if (state.attempts >= state.maxAttempts) return;
+
+            const feedback = document.querySelector("#feedback");
+            state.attempts++;
+            
+            // Convert numeric ID to string for comparison
+            const clickedId = String(d.id);
+            const isCorrect = clickedId === state.currentCountry.code;
+            
+            console.log('Clicked country:', clickedId, 'Current country:', state.currentCountry.code);
+            
+            if (isCorrect) {
+                state.score++;
+                showFeedback(`Correct! That's ${state.currentCountry.name}`, 'correct');
+                d3.select(event.target).classed('correct', true);
+                setTimeout(() => {
+                    d3.select(event.target).classed('correct', false);
+                    selectNewCountry();
+                }, 1500);
+            } else {
+                showFeedback(`Wrong! Try again to find ${state.currentCountry.name}`, 'incorrect');
+                d3.select(event.target).classed('wrong', true);
+                setTimeout(() => {
+                    d3.select(event.target).classed('wrong', false);
+                }, 500);
+            }
+
+            updateScores();
+
+            if (state.attempts >= state.maxAttempts) {
+                showGameOver();
+            }
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.querySelector("#feedback");
+            feedback.textContent = message;
+            feedback.className = `feedback ${type} show`;
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateScores() {
+            document.querySelector("#score").textContent = state.score;
+            document.querySelector("#attempts").textContent = state.attempts;
+            document.querySelector("#remaining-attempts").textContent = 
+                state.maxAttempts - state.attempts;
+        }
+
+        function toggleHint() {
+            const hint = document.querySelector("#hint");
+            state.showHint = !state.showHint;
+            hint.classList.toggle('show');
+        }
+
+        function updateHint() {
+            document.querySelector("#hint").innerHTML = `
+                <p><strong>Capital:</strong> ${state.currentCountry.capital}</p>
+                <p><strong>Continent:</strong> ${state.currentCountry.continent}</p>
+                <p><strong>Fun fact:</strong> ${state.currentCountry.funFact}</p>
+            `;
+        }
+
+        function showGameOver() {
+            document.querySelector(".game-over").classList.add("show");
+            document.querySelector("#final-score").textContent = 
+                `${state.score}/${state.maxAttempts}`;
+        }
+
+        function resetGame() {
+            state.score = 0;
+            state.attempts = 0;
+            state.showHint = false;
+            
+            document.querySelector(".game-over").classList.remove("show");
+            document.querySelector("#hint").classList.remove('show');
+            document.querySelector("#feedback").className = "feedback";
+            
+            updateScores();
+            selectNewCountry();
+
+            // Reset any highlighted countries
+            d3.selectAll('.country')
+                .classed('correct', false)
+                .classed('wrong', false);
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener("load", initGame);
+    </script>
+</body>
+</html>

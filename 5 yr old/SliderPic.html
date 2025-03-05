@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+    border-radius: 15px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.title {
+    color: #2d3748;
+    font-size: 28px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.preview-container {
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+}
+
+.preview {
+    width: 200px;
+    height: 200px;
+}
+
+.puzzle-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    position: relative;
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 120px);
+    grid-template-rows: repeat(3, 120px);
+    gap: 4px;
+    background: #2d3748;
+    padding: 8px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.staging-area {
+    display: grid;
+    grid-template-columns: repeat(3, 120px);
+    grid-template-rows: 120px;
+    gap: 4px;
+    background: #4a5568;
+    padding: 8px;
+    border-radius: 10px;
+    margin-top: 10px;
+    position: relative;
+}
+
+.staging-area::before {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 15px solid #2d3748;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.staging-area.show-arrow::before {
+    opacity: 1;
+}
+
+.staging-area-label {
+    color: #4a5568;
+    font-size: 18px;
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.tile {
+    background: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    overflow: hidden;
+    position: relative;
+}
+
+.tile.movable {
+    animation: pulse 1.5s infinite;
+    box-shadow: 0 0 0 2px #48BB78;
+}
+
+.tile.suggested-helper {
+    animation: suggestPulse 1.5s infinite;
+    box-shadow: 0 0 0 2px #4299E1;
+}
+
+.tile:hover {
+    transform: scale(1.02);
+}
+
+.tile.empty {
+    background: rgba(45, 55, 72, 0.3);
+    border: 3px dashed rgba(255, 255, 255, 0.3);
+    transition: all 0.3s;
+}
+
+.tile.empty.highlight {
+    background: rgba(45, 55, 72, 0.5);
+    border: 3px dashed rgba(255, 255, 255, 0.6);
+}
+
+.staging-area .tile.empty {
+    background: rgba(74, 85, 104, 0.2);
+    border: 3px dashed rgba(255, 255, 255, 0.2);
+}
+
+.staging-area .tile.empty.highlight {
+    background: rgba(74, 85, 104, 0.4);
+    border: 3px dashed rgba(255, 255, 255, 0.5);
+}
+
+.tile-content {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.number-overlay {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+.move-hint {
+    position: absolute;
+    background: rgba(72, 187, 120, 0.2);
+    border: 2px dashed #48BB78;
+    border-radius: 8px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.move-hint.visible {
+    opacity: 1;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(72, 187, 120, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(72, 187, 120, 0); }
+}
+
+@keyframes suggestPulse {
+    0% { box-shadow: 0 0 0 0 rgba(66, 153, 225, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(66, 153, 225, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(66, 153, 225, 0); }
+}
+
+.controls {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+button {
+    padding: 12px 24px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    background: #4299e1;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:hover {
+    background: #3182ce;
+    transform: translateY(-1px);
+}
+
+.stats {
+    margin-top: 20px;
+    font-size: 18px;
+    color: #4a5568;
+    background: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.win-message {
+    display: none;
+    margin-top: 20px;
+    padding: 15px;
+    background: #48bb78;
+    color: white;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: bold;
+    animation: bounce 0.5s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.hint {
+    color: #4a5568;
+    text-align: center;
+    margin-top: 15px;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="title">🏠 Happy House Puzzle 🌳</h1>
+        <div class="preview-container">
+            <svg class="preview" viewBox="0 0 300 300">
+                <!-- SVG content same as before -->
+                <!-- Sky background -->
+                <rect width="300" height="300" fill="#87CEEB"/>
+                
+                <!-- Sun -->
+                <circle cx="250" cy="50" r="30" fill="#FFD700"/>
+                <g id="sun-rays">
+                    <line x1="250" y1="10" x2="250" y2="0" stroke="#FFD700" stroke-width="4"/>
+                    <line x1="250" y1="90" x2="250" y2="100" stroke="#FFD700" stroke-width="4"/>
+                    <line x1="210" y1="50" x2="200" y2="50" stroke="#FFD700" stroke-width="4"/>
+                    <line x1="290" y1="50" x2="300" y2="50" stroke="#FFD700" stroke-width="4"/>
+                </g>
+                
+                <!-- House -->
+                <rect x="100" y="120" width="140" height="120" fill="#FF9999"/>
+                <polygon points="100,120 170,50 240,120" fill="#8B4513"/>
+                <rect x="150" y="180" width="40" height="60" fill="#8B4513"/>
+                <circle cx="180" cy="210" r="3" fill="#FFD700"/>
+                <rect x="120" y="150" width="30" height="30" fill="#87CEEB"/>
+                <rect x="190" y="150" width="30" height="30" fill="#87CEEB"/>
+                
+                <!-- Tree -->
+                <rect x="50" y="160" width="20" height="80" fill="#8B4513"/>
+                <circle cx="60" cy="140" r="30" fill="#228B22"/>
+                
+                <!-- Grass -->
+                <rect x="0" y="240" width="300" height="60" fill="#90EE90"/>
+                
+                <!-- Flower -->
+                <circle cx="260" cy="260" r="10" fill="#FF69B4"/>
+                <circle cx="260" cy="260" r="5" fill="#FFD700"/>
+            </svg>
+        </div>
+        <div class="puzzle-area">
+            <div class="board" id="board"></div>
+            <div class="staging-area-label">Helper Spaces 🌟</div>
+            <div class="staging-area" id="stagingArea">
+                <div class="tile empty"></div>
+                <div class="tile empty"></div>
+                <div class="tile empty"></div>
+            </div>
+        </div>
+        <div class="controls">
+            <button onclick="newGame()">New Game 🔄</button>
+            <button onclick="toggleNumbers()">Show/Hide Numbers 🔢</button>
+        </div>
+        <div class="stats">
+            Moves: <span id="moves">0</span>
+        </div>
+        <div class="win-message" id="winMessage">
+            🎉 Wonderful job! You solved the puzzle! 🎉
+            <br>
+            You're a super smart puzzle master! ⭐
+        </div>
+        <div class="hint">
+            Tip: Use the Helper Spaces below to move pieces around!
+            <br>
+            Click on any piece next to an empty space to move it.
+        </div>
+    </div>
+
+    <script>
+        let board = [];
+        let stagingArea = [null, null, null];
+        let moves = 0;
+        let showNumbers = true;
+        const size = 3;
+        
+        function createTile(index, number, isStaging = false) {
+            const tile = document.createElement('div');
+            tile.className = number === null ? 'tile empty' : 'tile';
+            tile.onclick = () => isStaging ? 
+                handleStagingTileClick(index) : 
+                handleTileClick(index);
+            
+            if (number !== null) {
+                const content = document.createElement('div');
+                content.className = 'tile-content';
+                content.innerHTML = `
+                    <svg viewBox="${getTileViewBox(number)}">
+                        <!-- SVG content same as before -->
+                        <!-- Sky background -->
+                        <rect width="300" height="300" fill="#87CEEB"/>
+                        
+                        <!-- Sun -->
+                        <circle cx="250" cy="50" r="30" fill="#FFD700"/>
+                        <g id="sun-rays">
+                            <line x1="250" y1="10" x2="250" y2="0" stroke="#FFD700" stroke-width="4"/>
+                            <line x1="250" y1="90" x2="250" y2="100" stroke="#FFD700" stroke-width="4"/>
+                            <line x1="210" y1="50" x2="200" y2="50" stroke="#FFD700" stroke-width="4"/>
+                            <line x1="290" y1="50" x2="300" y2="50" stroke="#FFD700" stroke-width="4"/>
+                        </g>
+                        
+                        <!-- House -->
+                        <rect x="100" y="120" width="140" height="120" fill="#FF9999"/>
+                        <polygon points="100,120 170,50 240,120" fill="#8B4513"/>
+                        <rect x="150" y="180" width="40" height="60" fill="#8B4513"/>
+                        <circle cx="180" cy="210" r="3" fill="#FFD700"/>
+                        <rect x="120" y="150" width="30" height="30" fill="#87CEEB"/>
+                        <rect x="190" y="150" width="30" height="30" fill="#87CEEB"/>
+                        
+                        <!-- Tree -->
+                        <rect x="50" y="160" width="20" height="80" fill="#8B4513"/>
+                        <circle cx="60" cy="140" r="30" fill="#228B22"/>
+                        
+                        <!-- Grass -->
+                        <rect x="0" y="240" width="300" height="60" fill="#90EE90"/>
+                        
+                        <!-- Flower -->
+                        <circle cx="260" cy="260" r="10" fill="#FF69B4"/>
+                        <circle cx="260" cy="260" r="5" fill="#FFD700"/>
+                    </svg>
+                `;
+                
+                if (showNumbers) {
+                    const numberOverlay = document.createElement('div');
+                    numberOverlay.className = 'number-overlay';
+                    numberOverlay.textContent = number + 1;
+                    content.appendChild(numberOverlay);
+                }
+                
+                tile.appendChild(content);
+            }
+            
+            return tile;
+        }
+
+        function getTileViewBox(index) {
+            const tileSize = 100;
+            const row = Math.floor(index / size);
+            const col = index % size;
+            return `${col * tileSize} ${row * tileSize} ${tileSize} ${tileSize}`;
+        }
+
+        function handleStagingTileClick(stagingIndex) {
+            // Find empty spots in both areas
+            const boardEmptyIndex = board.indexOf(null);
+            
+            // If clicked on an empty staging spot, try to move from board to staging
+            if (stagingArea[stagingIndex] === null) {
+                const adjacentBoardIndex = findAdjacentTile(boardEmptyIndex);
+                if (adjacentBoardIndex !== -1) {
+                    stagingArea[stagingIndex] = board[adjacentBoardIndex];
+                    board[adjacentBoardIndex] = null;
+                    moves++;
+                    updateMoves();
+                    renderBoard();
+                    renderStagingArea();
+                }
+            }
+            // If clicked on a filled staging spot, try to move to board
+            else if (boardEmptyIndex !== -1) {
+                board[boardEmptyIndex] = stagingArea[stagingIndex];
+                stagingArea[stagingIndex] = null;
+                moves++;
+                updateMoves();
+                renderBoard();
+                renderStagingArea();
+                
+                if (checkWin()) {
+                    document.getElementById('winMessage').style.display = 'block';
+                }
+            }
+        }
+
+        function findAdjacentTile(emptyIndex) {
+            if (emptyIndex === -1) return -1;
+            
+            const row = Math.floor(emptyIndex / size);
+            const col = emptyIndex % size;
+            
+            const possibleMoves = [
+                [row - 1, col], // up
+                [row + 1, col], // down
+                [row, col - 1], // left
+                [row, col + 1]  // right
+            ];
+            
+            for (let [r, c] of possibleMoves) {
+                if (r >= 0 && r < size && c >= 0 && c < size) {
+                    const index = r * size + c;
+                    if (board[index] !== null) return index;
+                }
+            }
+            
+            return -1;
+        }
+
+        function handleTileClick(index) {
+            const emptyIndex = board.indexOf(null);
+            if (!isAdjacent(index, emptyIndex)) return;
+
+            [board[index], board[emptyIndex]] = [board[emptyIndex], board[index]];
+            moves++;
+            updateMoves();
+            renderBoard();
+
+            if (checkWin()) {
+                document.getElementById('winMessage').style.display = 'block';
+            }
+        }
+
+        function isAdjacent(index1, index2) {
+            if (index2 === -1) return false;
+            const row1 = Math.floor(index1 / size);
+            const col1 = index1 % size;
+            const row2 = Math.floor(index2 / size);
+            const col2 = index2 % size;
+            
+            return (Math.abs(row1 - row2) === 1 && col1 === col2) ||
+                   (Math.abs(col1 - col2) === 1 && row1 === row2);
+        }
+
+        function renderBoard() {
+            const boardElement = document.getElementById('board');
+            boardElement.innerHTML = '';
+            board.forEach((number, index) => {
+                boardElement.appendChild(createTile(index, number, false));
+            });
+        }
+
+        function renderStagingArea() {
+            const stagingElement = document.getElementById('stagingArea');
+            stagingElement.innerHTML = '';
+            stagingArea.forEach((number, index) => {
+                stagingElement.appendChild(createTile(index, number, true));
+            });
+        }
+
+        function initializeBoard() {
+            board = Array.from({length: size * size - 1}, (_, i) => i);
+            board.push(null);
+            stagingArea = [null, null, null];
+            shuffleBoard();
+            renderBoard();
+            renderStagingArea();
+            moves = 0;
+            updateMoves();
+            document.getElementById('winMessage').style.display = 'none';
+        }
+
+        function shuffleBoard() {
+            let inversions;
+            do {
+                for (let i = board.length - 2; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [board[i], board[j]] = [board[j], board[i]];
+                }
+                inversions = countInversions();
+            } while (!isSolvable(inversions));
+        }
+
+        function countInversions() {
+            let inversions = 0;
+            for (let i = 0; i < board.length - 1; i++) {
+                if (board[i] === null) continue;
+                for (let j = i + 1; j < board.length; j++) {
+                    if (board[j] === null) continue;
+                    if (board[i] > board[j]) inversions++;
+                }
+            }
+            return inversions;
+        }
+
+        function isSolvable(inversions) {
+            const emptyPosition = board.indexOf(null);
+            const rowFromBottom = Math.floor((size * size - emptyPosition - 1) / size);
+            return size % 2 === 1 ? 
+                inversions % 2 === 0 : 
+                ((rowFromBottom % 2 === 0) === (inversions % 2 === 0));
+        }
+
+        function checkWin() {
+            // Only check the main board for win condition
+            return board.every((number, index) => 
+                (index === board.length - 1 && number === null) ||
+                (number === index)
+            ) && stagingArea.every(spot => spot === null);
+        }
+
+        function updateMoves() {
+            document.getElementById('moves').textContent = moves;
+        }
+
+        function newGame() {
+            initializeBoard();
+        }
+
+        function toggleNumbers() {
+            showNumbers = !showNumbers;
+            renderBoard();
+            renderStagingArea();
+        }
+
+        // Initialize the game
+        initializeBoard();
+    </script>
+</body>
+</html>

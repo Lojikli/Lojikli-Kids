@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: linear-gradient(135deg, #f0f4ff 0%, #e6e9ff 100%);
+      padding: 20px;
+    }
+
+    .game-container {
+      background: white;
+      padding: 2rem;
+      border-radius: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      max-width: 800px;
+      width: 95%;
+    }
+
+    .title {
+      text-align: center;
+      color: #4338ca;
+      font-size: 2rem;
+      font-weight: bold;
+      margin-bottom: 2rem;
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.1);
+    }
+
+    .problem-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 4rem;
+      margin-bottom: 2rem;
+    }
+
+    .fraction-display, .fraction-input {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .fraction-line {
+      width: 100%;
+      height: 3px;
+      background: #000;
+      min-width: 120px;
+      border-radius: 2px;
+    }
+
+    .expression-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      min-height: 50px;
+      min-width: 200px;
+      padding: 0.5rem;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      transition: all 0.2s;
+    }
+
+    .expression-container:focus-within {
+      border-color: #4338ca;
+      background: #f8f9ff;
+    }
+
+    .coefficient-input {
+      width: 60px;
+      height: 40px;
+      text-align: center;
+      font-size: 1.5rem;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .coefficient-input:focus {
+      border-color: #4338ca;
+      box-shadow: 0 0 0 2px rgba(67, 56, 202, 0.2);
+    }
+
+    .variable-input {
+      border: none;
+      outline: none;
+      font-size: 1.5rem;
+      width: 40px;
+      text-align: center;
+      background: transparent;
+    }
+
+    .variable-container {
+      display: flex;
+      align-items: baseline;
+      background: #f3f4f6;
+      padding: 4px 8px;
+      border-radius: 6px;
+      margin: 0 2px;
+    }
+
+    .exponent-input {
+      width: 25px;
+      height: 25px;
+      font-size: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      text-align: center;
+      margin-left: 2px;
+    }
+
+    .variable-controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn {
+      padding: 4px 8px;
+      background: #4338ca;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: #3730a3;
+    }
+
+    .btn.remove {
+      background: #dc2626;
+    }
+
+    .display-text {
+      font-size: 2rem;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+    }
+
+    .equals-sign {
+      font-size: 2rem;
+      margin: 0 1rem;
+    }
+
+    .buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    .action-btn {
+      padding: 0.8rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      transition: all 0.2s;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .action-btn:active {
+      transform: translateY(0);
+    }
+
+    .check-btn {
+      background: #4338ca;
+      color: white;
+    }
+
+    .next-btn {
+      background: #ec4899;
+      color: white;
+    }
+
+    .menu-btn {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .feedback {
+      text-align: center;
+      margin: 1rem 0;
+      font-size: 1.2rem;
+      min-height: 1.5em;
+      font-weight: 600;
+    }
+
+    .correct { color: #059669; }
+    .incorrect { color: #dc2626; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    .score {
+      text-align: center;
+      margin-top: 1rem;
+      font-size: 1.2rem;
+    }
+
+    .variable-term {
+      display: flex;
+      align-items: baseline;
+      margin: 0 2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game-container">
+    <div class="title">Fraction Reduction</div>
+    
+    <div class="problem-container">
+      <!-- Problem display -->
+      <div class="fraction-display">
+        <div class="display-text" id="numeratorDisplay"></div>
+        <div class="fraction-line"></div>
+        <div class="display-text" id="denominatorDisplay"></div>
+      </div>
+      
+      <div class="equals-sign">=</div>
+      
+      <!-- Input fraction -->
+      <div class="fraction-input">
+        <div class="expression-container" id="numeratorContainer">
+          <input type="number" class="coefficient-input" id="numeratorCoef" placeholder="#">
+          <div class="variable-term">
+            <input type="text" class="variable-input" placeholder="x" maxlength="1" pattern="[a-z]" oninput="validateVariable(this)">
+            <input type="number" class="exponent-input" value="1" min="1" max="9">
+          </div>
+          <button class="btn" onclick="addVariableTerm('numerator')">+</button>
+        </div>
+        <div class="fraction-line"></div>
+        <div class="expression-container" id="denominatorContainer">
+          <input type="number" class="coefficient-input" id="denominatorCoef" placeholder="#">
+          <div class="variable-term">
+            <input type="text" class="variable-input" placeholder="x" maxlength="1" pattern="[a-z]" oninput="validateVariable(this)">
+            <input type="number" class="exponent-input" value="1" min="1" max="9">
+          </div>
+          <button class="btn" onclick="addVariableTerm('denominator')">+</button>
+        </div>
+      </div>
+    </div>
+    
+    <div class="feedback" id="feedback"></div>
+    
+    <div class="buttons">
+      <button class="action-btn check-btn" onclick="checkAnswer()">Check</button>
+      <button class="action-btn next-btn" onclick="nextProblem()">Next</button>
+    </div>
+    
+    <div class="score" id="score">
+      Correct: <span id="correctScore">0</span>
+      Incorrect: <span id="incorrectScore">0</span>
+    </div>
+  </div>
+
+  <script>
+    const CONSONANTS = ['b','c','d','f','g','h','j','k','l','m','n','p','q','r','s','t','v','w','x','y','z'];
+    const SUPERSCRIPTS = ['¹','²','³','⁴','⁵','⁶','⁷','⁸','⁹'];
+    let correctCount = 0;
+    let incorrectCount = 0;
+    let currentProblem = null;
+
+    function validateVariable(input) {
+      input.value = input.value.toLowerCase();
+      if (!CONSONANTS.includes(input.value)) {
+        input.value = '';
+      }
+    }
+
+    function addVariableTerm(target) {
+      const container = document.getElementById(`${target}Container`);
+      const newTerm = document.createElement('div');
+      newTerm.className = 'variable-term animate-in';
+      newTerm.innerHTML = `
+        <input type="text" class="variable-input" placeholder="x" maxlength="1" pattern="[a-z]" oninput="validateVariable(this)">
+        <input type="number" class="exponent-input" value="1" min="1" max="9">
+        <button class="btn remove" onclick="this.parentElement.remove()">×</button>
+      `;
+      container.insertBefore(newTerm, container.lastElementChild);
+    }
+
+    function generateProblem() {
+      const getRandomTerm = () => {
+        const coef = Math.floor(Math.random() * 9) + 1;
+        const vars = [];
+        const numVars = Math.floor(Math.random() * 2) + 1;
+        for (let i = 0; i < numVars; i++) {
+          const variable = CONSONANTS[Math.floor(Math.random() * CONSONANTS.length)];
+          const power = Math.floor(Math.random() * 3) + 1;
+          vars.push({ var: variable, power });
+        }
+        return { coefficient: coef, variables: vars };
+      };
+
+      const numerator = getRandomTerm();
+      const denominator = getRandomTerm();
+      
+      // Ensure some variables are common for reduction
+      const commonVar = numerator.variables[0];
+      denominator.variables[0] = { ...commonVar };
+
+      currentProblem = { numerator, denominator };
+      displayProblem();
+      return currentProblem;
+    }
+
+    function formatTerm(coefficient, variables) {
+      let term = coefficient === 1 && variables.length > 0 ? '' : coefficient.toString();
+      variables.forEach(v => {
+        term += v.var + (v.power > 1 ? SUPERSCRIPTS[v.power - 1] : '');
+      });
+      return term;
+    }
+
+    function displayProblem() {
+      document.getElementById('numeratorDisplay').textContent = 
+        formatTerm(currentProblem.numerator.coefficient, currentProblem.numerator.variables);
+      document.getElementById('denominatorDisplay').textContent = 
+        formatTerm(currentProblem.denominator.coefficient, currentProblem.denominator.variables);
+    }
+
+    function getInputTerms() {
+      function getTerms(containerId) {
+        const container = document.getElementById(containerId);
+        const coefficient = parseInt(container.querySelector('.coefficient-input').value) || 1;
+        const variables = [];
+        container.querySelectorAll('.variable-term').forEach(term => {
+          const varInput = term.querySelector('.variable-input');
+          const expInput = term.querySelector('.exponent-input');
+          if (varInput.value) {
+            variables.push({
+              var: varInput.value,
+              power: parseInt(expInput.value) || 1
+            });
+          }
+        });
+        return { coefficient, variables };
+      }
+
+      return {
+        numerator: getTerms('numeratorContainer'),
+        denominator: getTerms('denominatorContainer')
+      };
+    }
+
+    function checkAnswer() {
+      const userInput = getInputTerms();
+      const feedback = document.getElementById('feedback');
+      
+      // Implement proper fraction reduction checking
+      // This is a simplified version - expand based on your needs
+      const correct = JSON.stringify(userInput) === JSON.stringify(currentProblem);
+      
+      if (correct) {
+        feedback.textContent = 'Correct!';
+        feedback.className = 'feedback correct';
+        correctCount++;
+        setTimeout(nextProblem, 1500);
+      } else {
+        feedback.textContent = 'Try again';
+        feedback.className = 'feedback incorrect';
+        incorrectCount++;
+      }
+      
+      updateScore();
+    }
+
+    function updateScore() {
+      document.getElementById('correctScore').textContent = correctCount;
+      document.getElementById('incorrectScore').textContent = incorrectCount;
+    }
+
+    function nextProblem() {
+      generateProblem();
+      clearInputs();
+      document.getElementById('feedback').textContent = '';
+    }
+
+    function clearInputs() {
+      ['numerator', 'denominator'].forEach(part => {
+        const container = document.getElementById(`${part}Container`);
+        container.querySelector('.coefficient-input').value = '';
+        container.querySelectorAll('.variable-term').forEach((term, index) => {
+          if (index === 0) {
+            term.querySelector('.variable-input').value = '';
+            term.querySelector('.exponent-input').value = 1;
+          } else {
+            term.remove();
+          }
+        });
+      });
+    }
+
+    // Initialize first problem
+    generateProblem();
+  </script>
+</body>
+</html>

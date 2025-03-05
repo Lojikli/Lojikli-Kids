@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pac-Man Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: black;
+            font-family: Arial, sans-serif;
+        }
+        #gameCanvas {
+            border: 2px solid white;
+        }
+        #scoreDisplay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="scoreDisplay">Score: 0</div>
+    <canvas id="gameCanvas" width="600" height="400"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+
+        // Game constants
+        const TILE_SIZE = 20;
+        const GRID_WIDTH = canvas.width / TILE_SIZE;
+        const GRID_HEIGHT = canvas.height / TILE_SIZE;
+        const PACMAN_SPEED = 2;
+        const GHOST_SPEED = 1;
+
+        // Game state
+        const game = {
+            pacman: {
+                x: 1 * TILE_SIZE,
+                y: 1 * TILE_SIZE,
+                radius: 10,
+                direction: 'right',
+                mouthAngle: 0,
+                speed: PACMAN_SPEED
+            },
+            ghosts: [
+                { x: (GRID_WIDTH - 2) * TILE_SIZE, y: (GRID_HEIGHT - 2) * TILE_SIZE, color: 'red', speed: GHOST_SPEED },
+                { x: (GRID_WIDTH - 2) * TILE_SIZE, y: 1 * TILE_SIZE, color: 'pink', speed: GHOST_SPEED },
+            ],
+            dots: [],
+            score: 0,
+            gameOver: false
+        };
+
+        // Create maze walls
+        const walls = [
+            { x: 0, y: 0, width: canvas.width, height: TILE_SIZE },
+            { x: 0, y: canvas.height - TILE_SIZE, width: canvas.width, height: TILE_SIZE },
+            { x: 0, y: 0, width: TILE_SIZE, height: canvas.height },
+            { x: canvas.width - TILE_SIZE, y: 0, width: TILE_SIZE, height: canvas.height },
+            // Add more wall segments for maze complexity
+            { x: 100, y: 100, width: TILE_SIZE, height: 100 },
+            { x: 300, y: 200, width: 100, height: TILE_SIZE }
+        ];
+
+        // Initialize dots
+        function initializeDots() {
+            for (let x = 2 * TILE_SIZE; x < canvas.width - 2 * TILE_SIZE; x += TILE_SIZE) {
+                for (let y = 2 * TILE_SIZE; y < canvas.height - 2 * TILE_SIZE; y += TILE_SIZE) {
+                    if (!walls.some(wall => 
+                        x >= wall.x && x < wall.x + wall.width &&
+                        y >= wall.y && y < wall.y + wall.height
+                    )) {
+                        game.dots.push({ x, y, radius: 3 });
+                    }
+                }
+            }
+        }
+
+        // Draw game elements
+        function draw() {
+            // Clear canvas
+            ctx.fillStyle = 'black';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw walls
+            ctx.fillStyle = 'blue';
+            walls.forEach(wall => {
+                ctx.fillRect(wall.x, wall.y, wall.width, wall.height);
+            });
+
+            // Draw dots
+            ctx.fillStyle = 'white';
+            game.dots.forEach(dot => {
+                ctx.beginPath();
+                ctx.arc(dot.x + TILE_SIZE/2, dot.y + TILE_SIZE/2, dot.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+
+            // Draw Pac-Man
+            ctx.fillStyle = 'yellow';
+            ctx.beginPath();
+            let startAngle, endAngle;
+            if (game.pacman.direction === 'right') {
+                startAngle = game.pacman.mouthAngle;
+                endAngle = Math.PI * 2 - game.pacman.mouthAngle;
+            } else if (game.pacman.direction === 'left') {
+                startAngle = Math.PI + game.pacman.mouthAngle;
+                endAngle = Math.PI - game.pacman.mouthAngle;
+            } else if (game.pacman.direction === 'up') {
+                startAngle = Math.PI * 1.5 + game.pacman.mouthAngle;
+                endAngle = Math.PI * 1.5 - game.pacman.mouthAngle;
+            } else {
+                startAngle = Math.PI * 0.5 + game.pacman.mouthAngle;
+                endAngle = Math.PI * 0.5 - game.pacman.mouthAngle;
+            }
+            ctx.arc(game.pacman.x + TILE_SIZE/2, game.pacman.y + TILE_SIZE/2, game.pacman.radius, startAngle, endAngle);
+            ctx.lineTo(game.pacman.x + TILE_SIZE/2, game.pacman.y + TILE_SIZE/2);
+            ctx.fill();
+
+            // Draw Ghosts
+            game.ghosts.forEach(ghost => {
+                ctx.fillStyle = ghost.color;
+                ctx.beginPath();
+                ctx.arc(ghost.x + TILE_SIZE/2, ghost.y + TILE_SIZE/2, game.pacman.radius, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        // Check collision with walls
+        function checkWallCollision(x, y) {
+            return walls.some(wall => 
+                x >= wall.x && x < wall.x + wall.width &&
+                y >= wall.y && y < wall.y + wall.height
+            );
+        }
+
+        // Move Pac-Man
+        function movePacman() {
+            let newX = game.pacman.x;
+            let newY = game.pacman.y;
+
+            // Animate mouth
+            game.pacman.mouthAngle = Math.abs(Math.sin(Date.now() * 0.01)) * 0.4;
+
+            // Handle keyboard input
+            if (keys.ArrowRight) {
+                newX += game.pacman.speed;
+                game.pacman.direction = 'right';
+            }
+            if (keys.ArrowLeft) {
+                newX -= game.pacman.speed;
+                game.pacman.direction = 'left';
+            }
+            if (keys.ArrowUp) {
+                newY -= game.pacman.speed;
+                game.pacman.direction = 'up';
+            }
+            if (keys.ArrowDown) {
+                newY += game.pacman.speed;
+                game.pacman.direction = 'down';
+            }
+
+            // Check wall collision
+            if (!checkWallCollision(newX, game.pacman.y) && 
+                !checkWallCollision(newX + TILE_SIZE, game.pacman.y) &&
+                !checkWallCollision(newX, game.pacman.y + TILE_SIZE) &&
+                !checkWallCollision(newX + TILE_SIZE, game.pacman.y + TILE_SIZE)) {
+                game.pacman.x = newX;
+            }
+
+            if (!checkWallCollision(game.pacman.x, newY) && 
+                !checkWallCollision(game.pacman.x + TILE_SIZE, newY) &&
+                !checkWallCollision(game.pacman.x, newY + TILE_SIZE) &&
+                !checkWallCollision(game.pacman.x + TILE_SIZE, newY + TILE_SIZE)) {
+                game.pacman.y = newY;
+            }
+
+            // Eat dots
+            game.dots = game.dots.filter(dot => {
+                const distance = Math.sqrt(
+                    Math.pow(game.pacman.x + TILE_SIZE/2 - (dot.x + TILE_SIZE/2), 2) +
+                    Math.pow(game.pacman.y + TILE_SIZE/2 - (dot.y + TILE_SIZE/2), 2)
+                );
+                if (distance < TILE_SIZE/2) {
+                    game.score += 10;
+                    scoreDisplay.textContent = `Score: ${game.score}`;
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        // Move Ghosts
+        function moveGhosts() {
+            game.ghosts.forEach(ghost => {
+                // Simple ghost AI - move towards Pac-Man
+                const dx = game.pacman.x - ghost.x;
+                const dy = game.pacman.y - ghost.y;
+                
+                let newX = ghost.x + Math.sign(dx) * ghost.speed;
+                let newY = ghost.y + Math.sign(dy) * ghost.speed;
+
+                // Check wall collision for ghosts
+                if (!checkWallCollision(newX, ghost.y) && 
+                    !checkWallCollision(newX + TILE_SIZE, ghost.y) &&
+                    !checkWallCollision(newX, ghost.y + TILE_SIZE) &&
+                    !checkWallCollision(newX + TILE_SIZE, ghost.y + TILE_SIZE)) {
+                    ghost.x = newX;
+                }
+
+                if (!checkWallCollision(ghost.x, newY) && 
+                    !checkWallCollision(ghost.x + TILE_SIZE, newY) &&
+                    !checkWallCollision(ghost.x, newY + TILE_SIZE) &&
+                    !checkWallCollision(ghost.x + TILE_SIZE, newY + TILE_SIZE)) {
+                    ghost.y = newY;
+                }
+
+                // Check collision with Pac-Man
+                const distance = Math.sqrt(
+                    Math.pow(game.pacman.x - ghost.x, 2) +
+                    Math.pow(game.pacman.y - ghost.y, 2)
+                );
+                if (distance < TILE_SIZE) {
+                    game.gameOver = true;
+                }
+            });
+        }
+
+        // Game loop
+        function gameLoop() {
+            if (!game.gameOver) {
+                movePacman();
+                moveGhosts();
+                draw();
+
+                // Win condition
+                if (game.dots.length === 0) {
+                    alert('Congratulations! You won!');
+                    game.gameOver = true;
+                }
+
+                requestAnimationFrame(gameLoop);
+            } else {
+                ctx.fillStyle = 'red';
+                ctx.font = '40px Arial';
+                ctx.fillText('Game Over', canvas.width/2 - 100, canvas.height/2);
+            }
+        }
+
+        // Keyboard input
+        const keys = {};
+        document.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+        });
+
+        // Initialize game
+        initializeDots();
+        gameLoop();
+    </script>
+</body>
+</html>

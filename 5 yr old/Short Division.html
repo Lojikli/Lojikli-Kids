@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Division Master</title>
+    <style>
+        :root {
+            --primary: #4a3de8;
+            --secondary: #6c5ce7;
+            --accent: #fd79a8;
+            --correct: #00b894;
+            --incorrect: #d63031;
+            --background: #2d3436;
+            --light: #dfe6e9;
+            --highlight: #ffeaa7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--light);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            background-image: radial-gradient(circle at 10% 20%, #6c5ce7 0%, #1e3c72 90%);
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 600px;
+            background-color: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 0.5;
+            animation: twinkle 4s infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 10px;
+        }
+
+        .game-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--light);
+            margin: 0;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+        }
+
+        .game-title::before {
+            content: "✨";
+            margin-right: 10px;
+        }
+
+        .game-stats {
+            display: flex;
+            gap: 15px;
+        }
+
+        .stat {
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 5px 10px;
+            font-size: 14px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+        }
+
+        .stat::before {
+            margin-right: 5px;
+        }
+
+        .level-stat::before {
+            content: "🚀";
+        }
+
+        .score-stat::before {
+            content: "⭐";
+        }
+
+        .streak-stat::before {
+            content: "🔥";
+        }
+
+        .division-problem {
+            position: relative;
+            font-size: 32px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            max-width: 420px;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* New L-shaped division layout */
+        .division-layout {
+            position: relative;
+            display: grid;
+            grid-template-areas:
+                ".    quotient quotient"
+                "divisor divider dividend";
+            grid-template-columns: auto auto 1fr;
+            gap: 0;
+            margin: 0 auto;
+        }
+
+        .divisor {
+            grid-area: divisor;
+            font-size: 36px;
+            font-weight: bold;
+            padding-right: 10px;
+            color: var(--light);
+            align-self: center;
+        }
+
+        .l-division {
+            grid-area: divider;
+            position: relative;
+            width: 15px;
+            height: 100%;
+        }
+
+        .l-division::before {
+            /* Vertical part of the L */
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            width: 5px;
+            background-color: var(--accent);
+            border-radius: 5px;
+        }
+
+        .l-division::after {
+            /* Horizontal part of the L */
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: -100px; /* Extended to cover dividend */
+            height: 5px;
+            background-color: var(--accent);
+            border-radius: 5px;
+        }
+
+        .dividend {
+            grid-area: dividend;
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--light);
+            padding-left: 15px;
+            padding-top: 15px;
+            display: flex;
+            letter-spacing: 0; /* Remove letter spacing */
+        }
+
+        .dividend-digit {
+            width: 30px; /* Fixed width for each digit */
+            text-align: center;
+        }
+
+        .quotient {
+            grid-area: quotient;
+            display: flex;
+            grid-column: 2 / span 2;
+            margin-left: 15px;
+            margin-bottom: 10px;
+            padding-top: 5px;
+        }
+
+        .quotient-digit-container {
+            width: 30px; /* Match width of dividend digits */
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+
+        .digit-input {
+            width: 40px;
+            height: 40px;
+            font-size: 28px;
+            text-align: center;
+            border: 3px solid var(--secondary);
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--light);
+            transition: all 0.3s ease;
+            position: relative;
+            transform-origin: center bottom;
+        }
+
+        .digit-input:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .digit-input.active {
+            border-color: var(--highlight);
+            background-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 15px var(--highlight);
+            transform: scale(1.05);
+        }
+
+        .digit-input.correct {
+            border-color: var(--correct);
+            background-color: rgba(0, 184, 148, 0.2);
+        }
+
+        .digit-input.incorrect {
+            border-color: var(--incorrect);
+            background-color: rgba(214, 48, 49, 0.2);
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .digit-position {
+            position: absolute;
+            font-size: 12px;
+            color: var(--highlight);
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0.7;
+        }
+
+        /* Digit celebration effect */
+        .digit-celebration {
+            position: absolute;
+            top: -10px;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .sparkle {
+            position: absolute;
+            background-color: white;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            animation: sparkle 0.5s ease-out forwards;
+        }
+
+        @keyframes sparkle {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.5) rotate(180deg);
+                opacity: 0;
+            }
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .key {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .key:hover {
+            background-color: var(--secondary);
+            transform: translateY(-2px);
+        }
+
+        .key:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .feedback {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 20px;
+            font-weight: bold;
+            min-height: 30px;
+            color: var(--light);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .hints-achievements {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .hint-button {
+            background-color: #8e44ad;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 15px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .hint-button:hover {
+            background-color: #9b59b6;
+        }
+
+        .hint-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .achievements {
+            display: flex;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 5px 10px;
+        }
+
+        .achievements::before {
+            content: "🏆";
+            margin-right: 5px;
+        }
+
+        .level-up, .achievement-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+
+        .level-up.show, .achievement-popup.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .level-up-content, .achievement-content {
+            background-color: var(--primary);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.5s ease;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .level-up.show .level-up-content, 
+        .achievement-popup.show .achievement-content {
+            transform: scale(1);
+            animation: pulse 0.5s ease-in-out 3;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .level-up-icon, .achievement-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            animation: spin 1.5s ease-in-out infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            25% { transform: rotate(10deg); }
+            75% { transform: rotate(-10deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        .level-up-title, .achievement-title {
+            font-size: 30px;
+            color: var(--light);
+            margin-bottom: 10px;
+        }
+
+        .level-up-subtitle, .achievement-subtitle {
+            font-size: 18px;
+            color: var(--highlight);
+            margin-bottom: 20px;
+        }
+
+        .continue-button {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .continue-button:hover {
+            background-color: #e84393;
+            transform: translateY(-2px);
+        }
+
+        .continue-button:active {
+            transform: translateY(2px);
+        }
+
+        /* Enhanced celebration for correct answer */
+        .correct-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .correct-animation.show {
+            opacity: 1;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0.8;
+            border-radius: 2px;
+            animation: confetti-fall 4s ease-out forwards;
+        }
+
+        .firework {
+            position: absolute;
+            width: 5px;
+            height: 5px;
+            background-color: white;
+            border-radius: 50%;
+            opacity: 0;
+            animation: firework 1s ease-out forwards;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-50px) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(calc(100vh)) rotate(720deg);
+                opacity: 0;
+            }
+        }
+
+        @keyframes firework {
+            0% {
+                transform: scale(0.1);
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(2.5);
+                opacity: 0;
+            }
+        }
+
+        /* Success message */
+        .success-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 60px;
+            font-weight: bold;
+            color: var(--correct);
+            text-shadow: 0 0 10px rgba(0, 184, 148, 0.5);
+            pointer-events: none;
+            z-index: 60;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .success-message.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            animation: success-pop 0.5s ease-out;
+        }
+
+        @keyframes success-pop {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        /* Alignment guides (optional, for debugging) */
+        .guide-line {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background-color: rgba(255, 255, 255, 0.1);
+            z-index: 1;
+        }
+
+        @media (max-width: 600px) {
+            .division-problem {
+                font-size: 24px;
+                padding: 10px;
+            }
+            .divisor, .dividend-digit {
+                font-size: 28px;
+            }
+            .digit-input {
+                width: 35px;
+                height: 35px;
+                font-size: 20px;
+            }
+            .quotient-digit-container {
+                width: 25px;
+            }
+            .dividend-digit {
+                width: 25px;
+            }
+            .keypad {
+                gap: 5px;
+            }
+            .key {
+                font-size: 20px;
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="stars" id="stars"></div>
+        
+        <div class="header">
+            <h1 class="game-title">Division Master</h1>
+            <div class="game-stats">
+                <div class="stat level-stat" id="level">Level 1</div>
+                <div class="stat score-stat" id="score">Score: 0</div>
+                <div class="stat streak-stat" id="streak">Streak: 0/3</div>
+            </div>
+        </div>
+        
+        <div class="division-problem">
+            <div class="division-layout">
+                <div class="divisor" id="divisor">4</div>
+                <div class="l-division"></div>
+                <div class="dividend" id="dividend">
+                    <!-- Dividend digits will be generated here -->
+                </div>
+                <div class="quotient" id="quotient-container">
+                    <!-- Input boxes will be generated here -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="feedback" id="feedback"></div>
+        
+        <div class="keypad">
+            <button class="key">1</button>
+            <button class="key">2</button>
+            <button class="key">3</button>
+            <button class="key">4</button>
+            <button class="key">5</button>
+            <button class="key">6</button>
+            <button class="key">7</button>
+            <button class="key">8</button>
+            <button class="key">9</button>
+            <button class="key">0</button>
+        </div>
+        
+        <div class="hints-achievements">
+            <button class="hint-button" id="hint-button">Need a Hint?</button>
+            <div class="achievements" id="achievements">Achievements: 0/5</div>
+        </div>
+
+        <div class="correct-animation" id="correct-animation"></div>
+        <div class="success-message" id="success-message">AMAZING!</div>
+    </div>
+
+    <div class="level-up" id="level-up">
+        <div class="level-up-content">
+            <div class="level-up-icon">🚀</div>
+            <div class="level-up-title">Level Up!</div>
+            <div class="level-up-subtitle" id="level-up-text">You're moving to Level 2!</div>
+            <button class="continue-button" id="continue-button">Continue</button>
+        </div>
+    </div>
+
+    <div class="achievement-popup" id="achievement-popup">
+        <div class="achievement-content">
+            <div class="achievement-icon">🏆</div>
+            <div class="achievement-title">Achievement Unlocked!</div>
+            <div class="achievement-subtitle" id="achievement-text">First Division!</div>
+            <button class="continue-button" id="achievement-continue">Awesome!</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let level = 1;
+        let score = 0;
+        let streak = 0;
+        let totalSolved = 0;
+        let currentProblem = null;
+        let currentDigitIndex = 0;
+        let gameState = 'playing'; // 'playing', 'correct', 'incorrect'
+        
+        // Dom Elements
+        const divisorElement = document.getElementById('divisor');
+        const dividendElement = document.getElementById('dividend');
+        const quotientContainer = document.getElementById('quotient-container');
+        const feedbackElement = document.getElementById('feedback');
+        const levelElement = document.getElementById('level');
+        const scoreElement = document.getElementById('score');
+        const streakElement = document.getElementById('streak');
+        const achievementsElement = document.getElementById('achievements');
+        const hintButton = document.getElementById('hint-button');
+        const levelUpElement = document.getElementById('level-up');
+        const levelUpTextElement = document.getElementById('level-up-text');
+        const continueButton = document.getElementById('continue-button');
+        const achievementPopup = document.getElementById('achievement-popup');
+        const achievementTextElement = document.getElementById('achievement-text');
+        const achievementContinueButton = document.getElementById('achievement-continue');
+        const correctAnimation = document.getElementById('correct-animation');
+        const successMessage = document.getElementById('success-message');
+        const starsContainer = document.getElementById('stars');
+        const keyButtons = document.querySelectorAll('.key');
+        
+        // Achievements
+        const achievements = [
+            { id: 'first', name: "First Division!", description: "Solve your first problem", threshold: 1, unlocked: false },
+            { id: 'five', name: "Division Apprentice", description: "Solve 5 problems", threshold: 5, unlocked: false },
+            { id: 'ten', name: "Division Expert", description: "Solve 10 problems", threshold: 10, unlocked: false },
+            { id: 'streak3', name: "On Fire!", description: "Get a streak of 3 correct answers", threshold: 3, unlocked: false },
+            { id: 'level3', name: "Division Master", description: "Reach Level 3", threshold: 3, unlocked: false }
+        ];
+        
+        // Initialize stars
+        function createStars() {
+            for (let i = 0; i < 50; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.animationDelay = `${Math.random() * 4}s`;
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Generate a new division problem
+        function generateProblem() {
+            const maxDivisor = Math.min(12, level + 2); // Increase divisor range with level
+            const divisor = Math.floor(Math.random() * (maxDivisor - 1)) + 2; // Avoid divisor = 1
+            
+            // Determine number of digits for dividend (3 or 4 based on level)
+            const digitCount = level < 5 ? 3 : 4;
+            
+            // Generate a quotient first to ensure we get a dividend that's divisible
+            let quotient = '';
+            for (let i = 0; i < digitCount; i++) {
+                const digit = i === 0 ? 
+                    Math.floor(Math.random() * 9) + 1 : // First digit can't be 0
+                    Math.floor(Math.random() * 10); // Other digits can be 0-9
+                quotient += digit;
+            }
+            
+            // Calculate dividend
+            const dividend = parseInt(quotient) * divisor;
+            
+            return {
+                dividend: dividend.toString(),
+                divisor,
+                quotient: quotient.toString(),
+                digitCount: quotient.length
+            };
+        }
+
+        // Set up a new problem
+        function setupProblem() {
+            currentProblem = generateProblem();
+            divisorElement.textContent = currentProblem.divisor;
+            
+            // Clear existing dividend digits and input boxes
+            dividendElement.innerHTML = '';
+            quotientContainer.innerHTML = '';
+            
+            // Create individual digit elements for the dividend for better alignment
+            for (let i = 0; i < currentProblem.dividend.length; i++) {
+                const digitElement = document.createElement('div');
+                digitElement.classList.add('dividend-digit');
+                digitElement.textContent = currentProblem.dividend[i];
+                dividendElement.appendChild(digitElement);
+            }
+            
+            // Create new input boxes aligned with dividend digits
+            for (let i = 0; i < currentProblem.quotient.length; i++) {
+                const quotientDigitContainer = document.createElement('div');
+                quotientDigitContainer.classList.add('quotient-digit-container');
+                
+                const inputBox = document.createElement('input');
+                inputBox.type = 'text';
+                inputBox.classList.add('digit-input');
+                inputBox.maxLength = 1;
+                inputBox.readOnly = true;
+                inputBox.dataset.index = i;
+                
+                const positionLabel = document.createElement('div');
+                positionLabel.classList.add('digit-position');
+                
+                // Set position labels (from left to right)
+                if (i === 0 && currentProblem.quotient.length === 4) {
+                    positionLabel.textContent = "Thousands";
+                } else if ((i === 0 && currentProblem.quotient.length === 3) || 
+                          (i === 1 && currentProblem.quotient.length === 4)) {
+                    positionLabel.textContent = "Hundreds";
+                } else if ((i === 1 && currentProblem.quotient.length === 3) || 
+                          (i === 2 && currentProblem.quotient.length === 4)) {
+                    positionLabel.textContent = "Tens";
+                } else {
+                    positionLabel.textContent = "Ones";
+                }
+                
+                // Add a celebration container for each digit
+                const celebration = document.createElement('div');
+                celebration.classList.add('digit-celebration');
+                
+                quotientDigitContainer.appendChild(inputBox);
+                quotientDigitContainer.appendChild(positionLabel);
+                quotientDigitContainer.appendChild(celebration);
+                
+                quotientContainer.appendChild(quotientDigitContainer);
+            }
+            
+            // Add any padding needed to align perfectly
+            const dividendLength = currentProblem.dividend.length;
+            const quotientLength = currentProblem.quotient.length;
+            
+            // Adjust alignment by adding empty spacers if needed
+            if (dividendLength > quotientLength) {
+                const diff = dividendLength - quotientLength;
+                for (let i = 0; i < diff; i++) {
+                    const spacer = document.createElement('div');
+                    spacer.classList.add('quotient-digit-container');
+                    spacer.style.visibility = 'hidden'; // Hidden but takes up space
+                    quotientContainer.insertBefore(spacer, quotientContainer.firstChild);
+                }
+            }
+            
+            // Start with the first (leftmost) digit
+            currentDigitIndex = 0;
+            activateInputBox(currentDigitIndex);
+            gameState = 'playing';
+            
+            // Clear feedback
+            feedbackElement.textContent = '';
+            feedbackElement.style.color = 'var(--light)';
+        }
+
+        // Activate the current input box
+        function activateInputBox(index) {
+            // Get all actual input boxes (not spacers)
+            const inputBoxes = document.querySelectorAll('.digit-input');
+            inputBoxes.forEach((box, i) => {
+                box.classList.remove('active');
+                if (i === index) {
+                    box.classList.add('active');
+                }
+            });
+        }
+
+        // Create sparkle effects for correct digit
+        function createSparkles(element) {
+            const celebration = element.parentElement.querySelector('.digit-celebration');
+            celebration.innerHTML = '';
+            
+            for (let i = 0; i < 10; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.classList.add('sparkle');
+                sparkle.style.left = `${Math.random() * 100}%`;
+                sparkle.style.top = `${Math.random() * 100}%`;
+                sparkle.style.backgroundColor = getRandomColor();
+                celebration.appendChild(sparkle);
+            }
+        }
+
+        // Handle key press
+        function handleKeyPress(key) {
+            if (gameState !== 'playing') return;
+            
+            const digit = key;
+            // Get all actual input boxes (not spacers)
+            const inputBoxes = document.querySelectorAll('.digit-input');
+            const currentBox = inputBoxes[currentDigitIndex];
+            
+            currentBox.value = digit;
+            
+            // Check if correct
+            if (digit === currentProblem.quotient[currentDigitIndex]) {
+                // Correct digit!
+                currentBox.classList.add('correct');
+                
+                // Create sparkle effect for this digit
+                createSparkles(currentBox);
+                
+                // Move to next digit
+                if (currentDigitIndex < currentProblem.quotient.length - 1) {
+                    currentDigitIndex++;
+                    setTimeout(() => {
+                        activateInputBox(currentDigitIndex);
+                    }, 300);
+                } else {
+                    // All digits correct! Problem solved!
+                    gameState = 'correct';
+                    feedbackElement.textContent = 'Excellent! Great job!';
+                    feedbackElement.style.color = 'var(--correct)';
+                    score += (level * 10);
+                    scoreElement.textContent = `Score: ${score}`;
+                    streak++;
+                    streakElement.textContent = `Streak: ${streak}/3`;
+                    totalSolved++;
+                    
+                    // Show celebration animation
+                    showCorrectAnimation();
+                    
+                    // Check for achievements
+                    checkAchievements();
+                    
+                    // Check for level up
+                    if (streak >= 3) {
+                        setTimeout(() => {
+                            levelUp();
+                        }, 2000);
+                    } else {
+                        setTimeout(() => {
+                            setupProblem();
+                        }, 2500);
+                    }
+                }
+            } else {
+                // Incorrect!
+                gameState = 'incorrect';
+                currentBox.classList.add('incorrect');
+                feedbackElement.textContent = 'Try again!';
+                feedbackElement.style.color = 'var(--incorrect)';
+                streak = 0;
+                streakElement.textContent = `Streak: ${streak}/3`;
+                
+                // Reset after a brief pause
+                setTimeout(() => {
+                    currentBox.value = '';
+                    currentBox.classList.remove('incorrect');
+                    gameState = 'playing';
+                    feedbackElement.textContent = '';
+                    feedbackElement.style.color = 'var(--light)';
+                }, 800);
+            }
+        }
+
+        // Check for achievements
+        function checkAchievements() {
+            let newAchievement = null;
+            
+            // Check total solved
+            if (totalSolved === 1 && !achievements[0].unlocked) {
+                achievements[0].unlocked = true;
+                newAchievement = achievements[0];
+            } else if (totalSolved === 5 && !achievements[1].unlocked) {
+                achievements[1].unlocked = true;
+                newAchievement = achievements[1];
+            } else if (totalSolved === 10 && !achievements[2].unlocked) {
+                achievements[2].unlocked = true;
+                newAchievement = achievements[2];
+            }
+            
+            // Check streak
+            if (streak >= 3 && !achievements[3].unlocked) {
+                achievements[3].unlocked = true;
+                newAchievement = achievements[3];
+            }
+            
+            // Check level
+            if (level >= 3 && !achievements[4].unlocked) {
+                achievements[4].unlocked = true;
+                newAchievement = achievements[4];
+            }
+            
+            // Update achievements display
+            const unlockedCount = achievements.filter(a => a.unlocked).length;
+            achievementsElement.textContent = `Achievements: ${unlockedCount}/5`;
+            
+            // Show achievement popup if new one unlocked
+            if (newAchievement) {
+                showAchievement(newAchievement);
+            }
+        }
+
+        // Level up function
+        function levelUp() {
+            level++;
+            levelElement.textContent = `Level ${level}`;
+            streak = 0;
+            streakElement.textContent = `Streak: ${streak}/3`;
+            
+            // Show level up popup
+            levelUpTextElement.textContent = `You're moving to Level ${level}!`;
+            levelUpElement.classList.add('show');
+        }
+
+        // Show achievement popup
+        function showAchievement(achievement) {
+            achievementTextElement.textContent = achievement.name;
+            achievementPopup.classList.add('show');
+        }
+
+        // Enhanced celebration effect for solving the entire problem
+        function showCorrectAnimation() {
+            correctAnimation.innerHTML = '';
+            correctAnimation.classList.add('show');
+            successMessage.classList.add('show');
+            
+            // Create exciting surprise texts
+            const surpriseTexts = ["AMAZING!", "AWESOME!", "BRILLIANT!", "PERFECT!", "WOW!", "SUPERB!"];
+            successMessage.textContent = surpriseTexts[Math.floor(Math.random() * surpriseTexts.length)];
+            
+            // Create lots of confetti
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.backgroundColor = getRandomColor();
+                confetti.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                confetti.style.width = `${Math.random() * 15 + 5}px`;
+                confetti.style.height = `${Math.random() * 15 + 5}px`;
+                correctAnimation.appendChild(confetti);
+            }
+            
+            // Create firework effects
+            for (let i = 0; i < 5; i++) {
+                setTimeout(() => {
+                    createFirework();
+                }, i * 300);
+            }
+            
+            setTimeout(() => {
+                correctAnimation.classList.remove('show');
+                successMessage.classList.remove('show');
+            }, 2000);
+        }
+        
+        // Create a firework explosion effect
+        function createFirework() {
+            const x = Math.random() * 80 + 10; // Position within 10-90% of the screen
+            const y = Math.random() * 80 + 10;
+            
+            for (let i = 0; i < 30; i++) {
+                const firework = document.createElement('div');
+                firework.classList.add('firework');
+                firework.style.left = `${x}%`;
+                firework.style.top = `${y}%`;
+                firework.style.backgroundColor = getRandomColor();
+                
+                // Calculate angle and distance for this particle
+                const angle = Math.random() * Math.PI * 2; // Random angle
+                const distance = Math.random() * 100 + 50; // Random distance
+                
+                // Set the animation with unique transform values
+                firework.style.animation = `firework ${Math.random() * 0.5 + 0.7}s ease-out forwards`;
+                firework.style.transform = `translate(${Math.cos(angle) * distance}px, ${Math.sin(angle) * distance}px)`;
+                
+                correctAnimation.appendChild(firework);
+            }
+        }
+
+        // Get random color for visual effects
+        function getRandomColor() {
+            const colors = ['#fd79a8', '#ffeaa7', '#55efc4', '#74b9ff', '#a29bfe', '#ff7675', '#00cec9', '#fab1a0', '#6c5ce7'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Handle continue button
+        continueButton.addEventListener('click', () => {
+            levelUpElement.classList.remove('show');
+            setupProblem();
+        });
+
+        // Handle achievement continue button
+        achievementContinueButton.addEventListener('click', () => {
+            achievementPopup.classList.remove('show');
+        });
+
+        // Handle hint button
+        hintButton.addEventListener('click', () => {
+            if (gameState === 'playing') {
+                // Calculate the part of the problem we're working on
+                const divisor = currentProblem.divisor;
+                const dividendDigits = currentProblem.dividend.toString().split('');
+                
+                // For first digit
+                if (currentDigitIndex === 0) {
+                    const firstDigits = dividendDigits.slice(0, 1).join('');
+                    feedbackElement.textContent = `Hint: ${divisor} goes into ${firstDigits} how many times?`;
+                } else {
+                    // For subsequent digits, we need to consider the "bringing down" step in long division
+                    const relevantDigits = dividendDigits.slice(0, currentDigitIndex + 1).join('');
+                    feedbackElement.textContent = `Hint: ${divisor} goes into ${relevantDigits} how many times?`;
+                }
+                
+                setTimeout(() => {
+                    if (gameState === 'playing') {
+                        feedbackElement.textContent = '';
+                    }
+                }, 3000);
+            }
+        });
+
+        // Set up keypad
+        keyButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                handleKeyPress(button.textContent);
+            });
+        });
+
+        // Initialize game
+        createStars();
+        setupProblem();
+    </script>
+</body>
+</html>

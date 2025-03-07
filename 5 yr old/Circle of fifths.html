@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circle of Fifths: Music & Math Explorer</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3 {
+            color: #4b0082;
+            text-align: center;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .circle-container {
+            position: relative;
+            width: 500px;
+            height: 500px;
+            margin: 20px auto;
+        }
+        
+        .circle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: #ffffff;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+        }
+        
+        .note {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            user-select: none;
+        }
+        
+        .note:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+        
+        .note-active {
+            transform: scale(1.2);
+            box-shadow: 0 0 20px gold;
+        }
+        
+        .info-panel {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            margin-top: 30px;
+            width: 100%;
+            max-width: 600px;
+        }
+        
+        .math-connection {
+            background-color: #e6f7ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        
+        .challenge-section {
+            background-color: #fff0f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        button {
+            background-color: #9370db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background-color: #8a2be2;
+            transform: scale(1.05);
+        }
+        
+        .answer-feedback {
+            font-weight: bold;
+            height: 24px;
+            margin-top: 10px;
+        }
+        
+        .correct {
+            color: green;
+        }
+        
+        .incorrect {
+            color: red;
+        }
+        
+        .pattern-display {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .pattern-note {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin: 0 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+        
+        .mode-buttons {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .explanation {
+            font-size: 16px;
+            line-height: 1.5;
+            margin: 10px 0;
+        }
+        
+        .highlight {
+            font-weight: bold;
+            color: #8a2be2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Circle of Fifths: Music & Math Explorer</h1>
+        
+        <div class="mode-buttons">
+            <button id="music-mode">Music Mode</button>
+            <button id="math-mode">Math Mode</button>
+            <button id="combined-mode">Combined Mode</button>
+        </div>
+        
+        <div class="circle-container">
+            <div class="circle"></div>
+            <!-- Notes will be added here by JavaScript -->
+        </div>
+        
+        <div class="info-panel">
+            <h2 id="info-title">Welcome to the Circle of Fifths!</h2>
+            <p id="info-text" class="explanation">
+                This magical circle shows how musical notes are related. Click on the colored circles to explore!
+            </p>
+            
+            <div class="math-connection">
+                <h3>Math & Music Connection</h3>
+                <p id="math-connection-text" class="explanation">
+                    The circle of fifths is a perfect example of <span class="highlight">modular arithmetic</span> (also called clock math). 
+                    Just like a clock wraps around after 12 hours, this circle wraps around after 12 notes!
+                </p>
+            </div>
+        </div>
+        
+        <div class="challenge-section">
+            <h2>Musical Math Challenges</h2>
+            
+            <div id="challenge-container">
+                <p id="challenge-text">Ready to test your knowledge? Press start!</p>
+                <div class="pattern-display" id="pattern-display"></div>
+                <button id="start-challenge">Start Challenge</button>
+                <div id="challenge-buttons" style="display: none;">
+                    <button id="answer1" class="answer-btn"></button>
+                    <button id="answer2" class="answer-btn"></button>
+                    <button id="answer3" class="answer-btn"></button>
+                </div>
+                <div id="answer-feedback" class="answer-feedback"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Musical notes in the circle of fifths
+        const notes = ['C', 'G', 'D', 'A', 'E', 'B', 'F♯/G♭', 'C♯/D♭', 'G♯/A♭', 'D♯/E♭', 'A♯/B♭', 'F'];
+        
+        // Colors for each note (bright, child-friendly colors)
+        const colors = [
+            '#FF5252', // C - Red
+            '#FF9800', // G - Orange
+            '#FFEB3B', // D - Yellow
+            '#8BC34A', // A - Light Green
+            '#4CAF50', // E - Green
+            '#009688', // B - Teal
+            '#00BCD4', // F♯/G♭ - Light Blue
+            '#2196F3', // C♯/D♭ - Blue
+            '#3F51B5', // G♯/A♭ - Indigo
+            '#673AB7', // D♯/E♭ - Deep Purple
+            '#9C27B0', // A♯/B♭ - Purple
+            '#E91E63'  // F - Pink
+        ];
+        
+        // Mathematical representation (mod 12)
+        const mathValues = [0, 7, 2, 9, 4, 11, 6, 1, 8, 3, 10, 5];
+        
+        // Audio frequencies for each note (in Hz, starting with middle C)
+        const frequencies = [
+            261.63, // C
+            392.00, // G
+            293.66, // D
+            440.00, // A
+            329.63, // E
+            493.88, // B
+            369.99, // F♯/G♭
+            277.18, // C♯/D♭
+            415.30, // G♯/A♭
+            311.13, // D♯/E♭
+            466.16, // A♯/B♭
+            349.23  // F
+        ];
+        
+        // Current mode (music, math, or combined)
+        let currentMode = 'music';
+        
+        // Audio context for playing notes
+        let audioContext;
+        
+        // Current challenge state
+        let currentChallenge = null;
+        let correctAnswer = null;
+        
+        // Initialize the circle of fifths
+        function initializeCircle() {
+            const circleContainer = document.querySelector('.circle-container');
+            const circle = document.querySelector('.circle');
+            
+            // Create and position notes around the circle
+            for (let i = 0; i < 12; i++) {
+                const angle = (i * (360 / 12) - 90) * (Math.PI / 180); // Start at top (C)
+                const radius = 200; // Distance from center
+                
+                const noteElement = document.createElement('div');
+                noteElement.className = 'note';
+                noteElement.style.backgroundColor = colors[i];
+                noteElement.style.color = getBrightness(colors[i]) > 150 ? '#000000' : '#FFFFFF';
+                
+                // Position the note using trigonometry
+                const x = radius * Math.cos(angle) + 250 - 30; // Center X + offset for note size
+                const y = radius * Math.sin(angle) + 250 - 30; // Center Y + offset for note size
+                
+                noteElement.style.left = `${x}px`;
+                noteElement.style.top = `${y}px`;
+                
+                // Set note text based on mode
+                updateNoteText(noteElement, i);
+                
+                // Add click event
+                noteElement.addEventListener('click', () => {
+                    playNote(i);
+                    highlightNote(i);
+                    updateInfoPanel(i);
+                });
+                
+                // Add data attributes
+                noteElement.dataset.index = i;
+                noteElement.dataset.note = notes[i];
+                noteElement.dataset.mathValue = mathValues[i];
+                
+                circleContainer.appendChild(noteElement);
+            }
+            
+            // Initialize audio context
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.error('Web Audio API is not supported in this browser');
+            }
+            
+            // Add mode switching functionality
+            document.getElementById('music-mode').addEventListener('click', () => switchMode('music'));
+            document.getElementById('math-mode').addEventListener('click', () => switchMode('math'));
+            document.getElementById('combined-mode').addEventListener('click', () => switchMode('combined'));
+            
+            // Initialize challenge
+            document.getElementById('start-challenge').addEventListener('click', startChallenge);
+        }
+        
+        // Update the text displayed on notes based on current mode
+        function updateNoteText(element, index) {
+            if (!element) {
+                // Update all notes
+                document.querySelectorAll('.note').forEach((el, idx) => {
+                    updateNoteText(el, idx);
+                });
+                return;
+            }
+            
+            switch (currentMode) {
+                case 'music':
+                    element.innerText = notes[index];
+                    break;
+                case 'math':
+                    element.innerText = mathValues[index];
+                    break;
+                case 'combined':
+                    element.innerText = `${notes[index]}\n${mathValues[index]}`;
+                    element.style.fontSize = '14px';
+                    break;
+            }
+        }
+        
+        // Switch between different modes
+        function switchMode(mode) {
+            currentMode = mode;
+            updateNoteText();
+            
+            // Update button styles
+            document.querySelectorAll('.mode-buttons button').forEach(btn => {
+                btn.style.fontWeight = btn.id === `${mode}-mode` ? 'bold' : 'normal';
+                btn.style.transform = btn.id === `${mode}-mode` ? 'scale(1.1)' : 'scale(1)';
+            });
+            
+            // Update info panel
+            const infoTitle = document.getElementById('info-title');
+            const infoText = document.getElementById('info-text');
+            const mathConnectionText = document.getElementById('math-connection-text');
+            
+            switch (mode) {
+                case 'music':
+                    infoTitle.innerText = 'Music Mode: Exploring Harmony';
+                    infoText.innerHTML = 'The <span class="highlight">Circle of Fifths</span> shows how musical notes are related. Each note is a <span class="highlight">perfect fifth</span> (7 semitones) away from the previous one. This creates beautiful harmonies!';
+                    mathConnectionText.innerHTML = 'When you move clockwise, you go up by 7 semitones each time. This is why we call it the "Circle of Fifths" - each step is a musical interval called a fifth.';
+                    break;
+                case 'math':
+                    infoTitle.innerText = 'Math Mode: Modular Arithmetic';
+                    infoText.innerHTML = 'This circle shows <span class="highlight">modular arithmetic</span> (mod 12). Each position shows what you get when you add 7 repeatedly and take the remainder when divided by 12.';
+                    mathConnectionText.innerHTML = 'Starting at 0 (C), adding 7 gives us 7 (G). Adding 7 again: 7+7=14, and 14÷12 gives remainder 2 (D). This pattern continues all the way around!';
+                    break;
+                case 'combined':
+                    infoTitle.innerText = 'Combined Mode: Music + Math';
+                    infoText.innerHTML = 'Now you can see both musical notes and their mathematical values! The numbers represent positions in <span class="highlight">mod 12</span> arithmetic.';
+                    mathConnectionText.innerHTML = 'Musical intervals can be represented mathematically. A perfect fifth is +7 in mod 12. A perfect fourth is +5. A major third is +4. Can you find these patterns on the circle?';
+                    break;
+            }
+        }
+        
+        // Play a note when clicked
+        function playNote(index) {
+            if (!audioContext) return;
+            
+            // Create oscillator
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            // Set properties
+            oscillator.type = 'sine';
+            oscillator.frequency.value = frequencies[index];
+            gainNode.gain.value = 0.3;
+            
+            // Connect and start
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            // Envelope for smoother sound
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.5);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 1.5);
+        }
+        
+        // Highlight a note when clicked
+        function highlightNote(index) {
+            // Remove highlight from all notes
+            document.querySelectorAll('.note').forEach(note => {
+                note.classList.remove('note-active');
+            });
+            
+            // Add highlight to clicked note
+            const notes = document.querySelectorAll('.note');
+            notes[index].classList.add('note-active');
+            
+            // Auto remove after 1.5 seconds
+            setTimeout(() => {
+                notes[index].classList.remove('note-active');
+            }, 1500);
+        }
+        
+        // Update info panel with note-specific information
+        function updateInfoPanel(index) {
+            const note = notes[index];
+            const mathValue = mathValues[index];
+            
+            const infoTitle = document.getElementById('info-title');
+            const infoText = document.getElementById('info-text');
+            const mathConnectionText = document.getElementById('math-connection-text');
+            
+            switch (currentMode) {
+                case 'music':
+                    infoTitle.innerText = `The Note: ${note}`;
+                    infoText.innerHTML = `<span class="highlight">${note}</span> is a musical note. From here, moving clockwise gives you the "dominant" (${getNextNote(index, 1)}), and counterclockwise gives you the "subdominant" (${getNextNote(index, -1)}).`;
+                    mathConnectionText.innerHTML = `${note} major scale contains: ${getMajorScale(index).join(', ')}. These notes create the unique sound of ${note} major!`;
+                    break;
+                case 'math':
+                    infoTitle.innerText = `Number: ${mathValue}`;
+                    infoText.innerHTML = `<span class="highlight">${mathValue}</span> represents this position in our mod 12 system. Adding 7 gives ${(mathValue + 7) % 12}, and subtracting 7 (or adding 5 in mod 12) gives ${(mathValue + 5) % 12}.`;
+                    mathConnectionText.innerHTML = `If we keep adding 7 starting from ${mathValue}: ${getPattern(mathValue, 7, 5).join(' → ')}. Notice how we cycle through all 12 numbers before returning to ${mathValue}!`;
+                    break;
+                case 'combined':
+                    infoTitle.innerText = `${note} (Value: ${mathValue})`;
+                    infoText.innerHTML = `<span class="highlight">${note}</span> has the value <span class="highlight">${mathValue}</span> in our mod 12 system. A perfect fifth up from here is ${getNextNote(index, 1)} (${(mathValue + 7) % 12}), and a perfect fifth down is ${getNextNote(index, -1)} (${(mathValue + 5) % 12}).`;
+                    mathConnectionText.innerHTML = `Major third (+4): ${note} → ${getNextNoteByMath(index, 4)}<br>
+                                                  Minor third (+3): ${note} → ${getNextNoteByMath(index, 3)}<br>
+                                                  Major second (+2): ${note} → ${getNextNoteByMath(index, 2)}`;
+                    break;
+            }
+        }
+        
+        // Get the next note in the circle (clockwise or counterclockwise)
+        function getNextNote(currentIndex, steps) {
+            const newIndex = (currentIndex + steps + 12) % 12;
+            return notes[newIndex];
+        }
+        
+        // Get the next note by adding a specific math value
+        function getNextNoteByMath(currentIndex, mathAdd) {
+            const currentMath = mathValues[currentIndex];
+            const newMath = (currentMath + mathAdd) % 12;
+            const newIndex = mathValues.indexOf(newMath);
+            return notes[newIndex];
+        }
+        
+        // Get major scale notes for a given root note
+        function getMajorScale(rootIndex) {
+            const pattern = [0, 2, 4, 5, 7, 9, 11]; // Major scale pattern
+            return pattern.map(step => {
+                const noteIndex = (mathValues[rootIndex] + step) % 12;
+                const actualIndex = mathValues.indexOf(noteIndex);
+                return notes[actualIndex];
+            });
+        }
+        
+        // Generate a pattern by repeatedly adding a value in mod 12
+        function getPattern(start, addValue, count) {
+            const pattern = [start];
+            let current = start;
+            
+            for (let i = 0; i < count; i++) {
+                current = (current + addValue) % 12;
+                pattern.push(current);
+            }
+            
+            return pattern;
+        }
+        
+        // Start a new challenge
+        function startChallenge() {
+            const challengeText = document.getElementById('challenge-text');
+            const challengeButtons = document.getElementById('challenge-buttons');
+            const startButton = document.getElementById('start-challenge');
+            const patternDisplay = document.getElementById('pattern-display');
+            const answerFeedback = document.getElementById('answer-feedback');
+            
+            // Clear previous feedback and patterns
+            answerFeedback.textContent = '';
+            answerFeedback.className = 'answer-feedback';
+            patternDisplay.innerHTML = '';
+            
+          

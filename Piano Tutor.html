@@ -1,0 +1,2491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Musical Genius: Interactive Piano Learning App for Kids</title>
+    <style>
+        :root {
+            --primary: #4a6bff;
+            --secondary: #ff6b6b;
+            --tertiary: #6bff6b;
+            --neutral: #f9f9f9;
+            --dark: #333;
+            --star-filled: #ffd700;
+            --star-empty: #dddddd;
+        }
+
+        * {
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', cursive;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #c6e4ff 0%, #e6c6ff 100%);
+            color: var(--dark);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #ff6b6b, #4a6bff, #6bff6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+            filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.3));
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .character-container {
+            position: relative;
+            height: 200px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 20px;
+        }
+
+        .speech-bubble {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px;
+            max-width: 80%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .speech-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: white transparent transparent;
+        }
+
+        .character {
+            width: 180px;
+            height: 180px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .piano-container {
+            position: relative;
+            width: 100%;
+            height: 180px;
+            background-color: #222;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .piano-keys {
+            display: flex;
+            height: 100%;
+            position: relative;
+        }
+
+        .white-key {
+            flex: 1;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 5px 5px;
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 10px;
+            font-weight: bold;
+            color: #777;
+            cursor: pointer;
+            transition: background-color 0.1s;
+        }
+
+        .white-key:hover {
+            background-color: #f0f0f0;
+        }
+
+        .white-key.active {
+            background-color: #a9e0ff;
+        }
+
+        .black-key {
+            position: absolute;
+            width: 60%;
+            height: 60%;
+            background-color: #333;
+            border-radius: 0 0 5px 5px;
+            z-index: 2;
+            top: 0;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            padding-bottom: 5px;
+            font-weight: bold;
+            color: #aaa;
+            font-size: 0.8em;
+            transition: background-color 0.1s;
+        }
+
+        .black-key:hover {
+            background-color: #555;
+        }
+
+        .black-key.active {
+            background-color: #7066ff;
+        }
+
+        .black-key[data-note="C#"], .black-key[data-note="Db"] { left: 7%; }
+        .black-key[data-note="D#"], .black-key[data-note="Eb"] { left: 21%; }
+        .black-key[data-note="F#"], .black-key[data-note="Gb"] { left: 50%; }
+        .black-key[data-note="G#"], .black-key[data-note="Ab"] { left: 64%; }
+        .black-key[data-note="A#"], .black-key[data-note="Bb"] { left: 78%; }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: var(--primary);
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        button.secondary {
+            background-color: var(--secondary);
+        }
+
+        button.tertiary {
+            background-color: var(--tertiary);
+        }
+
+        .status-bar {
+            height: 40px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .status-progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 20px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .visualizer {
+            width: 100%;
+            height: 100px;
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .visualizer-bars {
+            display: flex;
+            height: 100%;
+            align-items: flex-end;
+            padding: 0 5px;
+        }
+
+        .visualizer-bar {
+            flex: 1;
+            background: linear-gradient(180deg, var(--primary), var(--secondary));
+            margin: 0 2px;
+            height: 0%;
+            border-radius: 2px 2px 0 0;
+            transition: height 0.05s ease;
+        }
+
+        .circle-progress {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(var(--primary) 0%, var(--secondary) 50%, #ddd 50%, #ddd 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .circle-progress-inner {
+            width: 70%;
+            height: 70%;
+            border-radius: 50%;
+            background-color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .settings-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .setting-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .setting-item label {
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        .setting-item select,
+        .setting-item input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .note-display {
+            font-size: 2rem;
+            font-weight: bold;
+            text-align: center;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .music-sheet {
+            width: 100%;
+            height: 150px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 10px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .staff-lines {
+            position: relative;
+            height: 100%;
+        }
+
+        .staff-line {
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background-color: #aaa;
+        }
+
+        .staff-line:nth-child(1) { top: 30%; }
+        .staff-line:nth-child(2) { top: 40%; }
+        .staff-line:nth-child(3) { top: 50%; }
+        .staff-line:nth-child(4) { top: 60%; }
+        .staff-line:nth-child(5) { top: 70%; }
+
+        .clef {
+            position: absolute;
+            left: 10px;
+            top: 30%;
+            font-size: 60px;
+            font-family: serif;
+            line-height: 0;
+        }
+
+        .note {
+            position: absolute;
+            width: 20px;
+            height: 16px;
+            background-color: #333;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: left 0.5s linear;
+        }
+
+        .note-target {
+            position: absolute;
+            width: 24px;
+            height: 20px;
+            border: 2px dashed var(--primary);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .lesson-card {
+            margin-top: 20px;
+        }
+
+        .lesson-content {
+            margin-bottom: 15px;
+        }
+
+        .quiz-question {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .quiz-option {
+            padding: 10px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .quiz-option:hover {
+            background-color: #e0e0e0;
+        }
+
+        .quiz-option.selected {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .score-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .stars {
+            display: flex;
+            gap: 5px;
+        }
+
+        .star {
+            font-size: 1.5rem;
+            color: var(--star-empty);
+        }
+
+        .star.filled {
+            color: var(--star-filled);
+        }
+
+        .badges-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .badge {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            text-align: center;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .badge.earned {
+            background-color: white;
+            opacity: 1;
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .badge-icon {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        .bounce {
+            animation: bounce 2s infinite;
+        }
+
+        .float {
+            animation: float 3s infinite;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .main-container {
+                gap: 15px;
+            }
+
+            .character {
+                width: 120px;
+                height: 120px;
+            }
+
+            .character-container {
+                height: 160px;
+            }
+
+            .piano-container {
+                height: 150px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .white-key, .black-key {
+                font-size: 0.7rem;
+            }
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 50px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            background-color: white;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            font-weight: bold;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Canvas-based piano roll */
+        .piano-roll-container {
+            width: 100%;
+            height: 200px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .meter-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            position: relative;
+        }
+
+        .meter {
+            width: 200px;
+            height: 200px;
+            position: relative;
+        }
+
+        .meter-circle {
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.3s;
+        }
+
+        .meter-needle {
+            transform-origin: center center;
+            transition: transform 0.3s;
+        }
+
+        /* Practice Mode Specific */
+        .practice-row {
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.7);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .practice-guide {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .melody-preview {
+            height: 60px;
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            margin-top: 10px;
+            position: relative;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal h2 {
+            margin-top: 0;
+        }
+
+        /* Character SVG */
+        .svg-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Musical Genius</h1>
+            <p>Learn to play piano with Professor Melody and friends!</p>
+        </header>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="learn">Learn</div>
+            <div class="tab" data-tab="practice">Practice</div>
+            <div class="tab" data-tab="explore">Explore Music</div>
+            <div class="tab" data-tab="achievements">Achievements</div>
+            <div class="tab" data-tab="settings">Settings</div>
+        </div>
+
+        <div class="main-container">
+            <div class="tab-content active" id="learn-tab">
+                <div class="card">
+                    <div class="character-container">
+                        <div class="speech-bubble" id="character-speech">
+                            Hi there! I'm Professor Melody. Let's learn about music together!
+                        </div>
+                        <div class="svg-container">
+                            <svg width="180" height="180" viewBox="0 0 200 200" class="character">
+                                <!-- Professor Melody Character -->
+                                <circle cx="100" cy="80" r="50" fill="#FFD699" stroke="#333" stroke-width="2"/>
+                                <circle cx="80" cy="70" r="5" fill="#333"/>
+                                <circle cx="120" cy="70" r="5" fill="#333"/>
+                                <path d="M90 90 Q100 100 110 90" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M70 50 Q100 30 130 50" fill="none" stroke="#333" stroke-width="2"/>
+                                <ellipse cx="100" cy="140" rx="40" ry="30" fill="#6C63FF" stroke="#333" stroke-width="2"/>
+                                <rect x="60" y="140" width="80" height="40" fill="#6C63FF" stroke="#333" stroke-width="2"/>
+                                <path d="M100 130 L100 170" fill="none" stroke="#333" stroke-width="2"/>
+                                <path d="M60 140 L140 140" fill="none" stroke="#333" stroke-width="2"/>
+                                <circle cx="70" cy="120" r="10" fill="#FF6B6B" stroke="#333" stroke-width="1"/>
+                                <circle cx="130" cy="120" r="10" fill="#FF6B6B" stroke="#333" stroke-width="1"/>
+                                <path d="M70 60 Q65 40 55 35" fill="none" stroke="#333" stroke-width="2"/>
+                                <path d="M130 60 Q135 40 145 35" fill="none" stroke="#333" stroke-width="2"/>
+                                
+                                <!-- Music notes animation -->
+                                <g class="float">
+                                    <path d="M155 70 Q160 60 165 70 Q170 80 165 90" fill="none" stroke="#333" stroke-width="2"/>
+                                    <ellipse cx="155" cy="70" rx="5" ry="7" fill="#333" transform="rotate(-15 155 70)"/>
+                                </g>
+                                <g class="float" style="animation-delay: 0.5s">
+                                    <path d="M35 80 Q40 70 45 80 Q50 90 45 100" fill="none" stroke="#333" stroke-width="2"/>
+                                    <ellipse cx="35" cy="80" rx="5" ry="7" fill="#333" transform="rotate(-15 35 80)"/>
+                                </g>
+                                <g class="float" style="animation-delay: 1s">
+                                    <path d="M175 100 Q180 90 185 100 Q190 110 185 120" fill="none" stroke="#333" stroke-width="2"/>
+                                    <ellipse cx="175" cy="100" rx="5" ry="7" fill="#333" transform="rotate(-15 175 100)"/>
+                                </g>
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div class="controls">
+                        <button id="start-mic">Start Microphone</button>
+                        <button id="play-note" class="secondary">Play Example Note</button>
+                        <button id="next-lesson" class="tertiary">Next Lesson</button>
+                    </div>
+
+                    <div class="status-bar">
+                        <div class="status-progress" id="lesson-progress">
+                            Lesson 1/10
+                        </div>
+                    </div>
+
+                    <div class="note-display" id="detected-note">
+                        Play a note!
+                    </div>
+
+                    <div class="visualizer">
+                        <div class="visualizer-bars" id="visualizer">
+                            <!-- Visualizer bars will be generated with JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <div class="piano-container">
+                    <div class="piano-keys" id="piano-keys">
+                        <!-- Piano keys will be generated with JavaScript -->
+                    </div>
+                </div>
+
+                <div class="music-sheet">
+                    <div class="staff-lines">
+                        <div class="staff-line"></div>
+                        <div class="staff-line"></div>
+                        <div class="staff-line"></div>
+                        <div class="staff-line"></div>
+                        <div class="staff-line"></div>
+                        <div class="clef">𝄞</div>
+                        <!-- Notes will be added dynamically -->
+                    </div>
+                </div>
+
+                <div class="card lesson-card">
+                    <h2 id="lesson-title">Lesson 1: Introduction to Music Notes</h2>
+                    <div class="lesson-content" id="lesson-content">
+                        <p>Welcome to your first music lesson! Today we're going to learn about the basic music notes: C, D, E, F, G, A, and B.</p>
+                        <p>These notes are like the alphabet of music. When you put them together in different ways, you create melodies!</p>
+                        <p>Let's start by finding the note C on the piano. It's the white key to the left of the group of two black keys.</p>
+                    </div>
+
+                    <div id="quiz-container" style="display: none;">
+                        <div class="quiz-question" id="quiz-question">
+                            Which of these is the note C on a piano?
+                        </div>
+                        <div class="quiz-options" id="quiz-options">
+                            <div class="quiz-option" data-correct="true">The white key to the left of the group of two black keys</div>
+                            <div class="quiz-option">The white key to the left of the group of three black keys</div>
+                            <div class="quiz-option">The black key between two white keys</div>
+                            <div class="quiz-option">The white key between two black keys</div>
+                        </div>
+                        <button id="submit-quiz" class="secondary" style="margin-top: 15px;">Submit Answer</button>
+                    </div>
+
+                    <div class="score-display">
+                        <div>Score: <span id="score">0</span></div>
+                        <div class="stars">
+                            <div class="star">★</div>
+                            <div class="star">★</div>
+                            <div class="star">★</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="practice-tab">
+                <div class="card">
+                    <h2>Practice Mode</h2>
+                    <p>Choose a song to practice or create your own melody!</p>
+
+                    <div class="controls">
+                        <button id="start-practice-mic">Start Microphone</button>
+                        <button id="reset-practice" class="secondary">Reset</button>
+                    </div>
+
+                    <div class="practice-row">
+                        <div class="practice-guide">
+                            <h3>Twinkle Twinkle Little Star</h3>
+                            <div class="melody-preview" id="twinkle-preview">
+                                <!-- Preview will be generated with JavaScript -->
+                            </div>
+                        </div>
+                        <button class="practice-start tertiary" data-melody="twinkle">Start</button>
+                    </div>
+
+                    <div class="practice-row">
+                        <div class="practice-guide">
+                            <h3>Mary Had a Little Lamb</h3>
+                            <div class="melody-preview" id="mary-preview">
+                                <!-- Preview will be generated with JavaScript -->
+                            </div>
+                        </div>
+                        <button class="practice-start tertiary" data-melody="mary">Start</button>
+                    </div>
+
+                    <div class="practice-row">
+                        <div class="practice-guide">
+                            <h3>Hot Cross Buns</h3>
+                            <div class="melody-preview" id="hotcross-preview">
+                                <!-- Preview will be generated with JavaScript -->
+                            </div>
+                        </div>
+                        <button class="practice-start tertiary" data-melody="hotcross">Start</button>
+                    </div>
+
+                    <div class="practice-row">
+                        <div class="practice-guide">
+                            <h3>Create Your Own Melody</h3>
+                            <p>Click piano keys to create a melody, then practice playing it!</p>
+                        </div>
+                        <button class="secondary" id="create-melody">Create</button>
+                    </div>
+                </div>
+
+                <div class="piano-roll-container">
+                    <canvas id="piano-roll"></canvas>
+                </div>
+
+                <div class="meter-container">
+                    <svg width="200" height="200" viewBox="0 0 200 200" class="meter">
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="#eee" stroke-width="20" />
+                        <circle cx="100" cy="100" r="80" fill="none" stroke="#4a6bff" stroke-width="20" 
+                                stroke-dasharray="502" stroke-dashoffset="502" class="meter-circle" />
+                        <circle cx="100" cy="100" r="70" fill="white" />
+                        <text x="100" y="105" text-anchor="middle" font-size="24" font-weight="bold" id="accuracy-text">0%</text>
+                        <line x1="100" y1="100" x2="100" y2="40" stroke="#333" stroke-width="2" class="meter-needle" />
+                        <circle cx="100" cy="100" r="5" fill="#333" />
+                    </svg>
+                </div>
+            </div>
+
+            <div class="tab-content" id="explore-tab">
+                <div class="card">
+                    <h2>Explore Music Concepts</h2>
+                    <p>Dive deep into the fascinating world of music theory and physics!</p>
+
+                    <div class="settings-panel">
+                        <div class="setting-item">
+                            <label for="explore-topic">Choose a Topic:</label>
+                            <select id="explore-topic">
+                                <option value="pitch">Pitch and Frequency</option>
+                                <option value="harmony">Harmony and Chords</option>
+                                <option value="rhythm">Rhythm and Beats</option>
+                                <option value="scales">Scales and Modes</option>
+                                <option value="acoustics">Sound Waves and Acoustics</option>
+                                <option value="instruments">How Instruments Work</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="complexity">Complexity Level:</label>
+                            <input type="range" id="complexity" min="1" max="5" value="3">
+                        </div>
+                    </div>
+
+                    <div id="explore-content" class="lesson-content">
+                        <h3>Pitch and Frequency</h3>
+                        <p>Did you know that music is actually made of vibrations called sound waves? When you hear a high note, that's because the sound is vibrating very fast!</p>
+                        <p>Scientists measure these vibrations in Hertz (Hz). The note A above middle C vibrates 440 times every second - that's 440 Hz!</p>
+                        <p>When you go up one octave (from one C to the next higher C), the frequency doubles. So if middle C is about 262 Hz, the C one octave higher is about 524 Hz.</p>
+                        
+                        <div id="interactive-frequency">
+                            <!-- Interactive elements will be added with JavaScript -->
+                        </div>
+                    </div>
+
+                    <div id="explore-quiz" style="display: none;">
+                        <div class="quiz-question">
+                            If a note has a frequency of 440 Hz, what will be the frequency of the same note one octave higher?
+                        </div>
+                        <div class="quiz-options">
+                            <div class="quiz-option">220 Hz</div>
+                            <div class="quiz-option" data-correct="true">880 Hz</div>
+                            <div class="quiz-option">660 Hz</div>
+                            <div class="quiz-option">1320 Hz</div>
+                        </div>
+                        <button id="submit-explore-quiz" class="secondary" style="margin-top: 15px;">Submit Answer</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="achievements-tab">
+                <div class="card">
+                    <h2>Your Achievements</h2>
+                    <p>Collect badges as you master musical concepts!</p>
+
+                    <div class="badges-container">
+                        <div class="badge" id="badge-notes">
+                            <div class="badge-icon">🎵</div>
+                            <div>Note Master</div>
+                        </div>
+                        <div class="badge" id="badge-rhythm">
+                            <div class="badge-icon">🥁</div>
+                            <div>Rhythm Keeper</div>
+                        </div>
+                        <div class="badge" id="badge-melody">
+                            <div class="badge-icon">🎼</div>
+                            <div>Melody Maker</div>
+                        </div>
+                        <div class="badge" id="badge-ear">
+                            <div class="badge-icon">👂</div>
+                            <div>Perfect Ear</div>
+                        </div>
+                        <div class="badge" id="badge-theory">
+                            <div class="badge-icon">🧠</div>
+                            <div>Music Theorist</div>
+                        </div>
+                        <div class="badge" id="badge-composer">
+                            <div class="badge-icon">✍️</div>
+                            <div>Composer</div>
+                        </div>
+                        <div class="badge" id="badge-performer">
+                            <div class="badge-icon">🎭</div>
+                            <div>Performer</div>
+                        </div>
+                        <div class="badge" id="badge-scientist">
+                            <div class="badge-icon">🔬</div>
+                            <div>Sound Scientist</div>
+                        </div>
+                    </div>
+
+                    <div class="progress-stats" style="margin-top: 20px;">
+                        <h3>Your Progress</h3>
+                        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                            <div>
+                                <p>Lessons Completed: <span id="lessons-completed">0</span>/10</p>
+                                <p>Notes Recognized: <span id="notes-recognized">0</span></p>
+                                <p>Quizzes Passed: <span id="quizzes-passed">0</span></p>
+                            </div>
+                            <div>
+                                <p>Melodies Mastered: <span id="melodies-mastered">0</span></p>
+                                <p>Practice Time: <span id="practice-time">0</span> minutes</p>
+                                <p>Accuracy: <span id="overall-accuracy">0</span>%</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-content" id="settings-tab">
+                <div class="card">
+                    <h2>Settings</h2>
+                    <p>Customize your learning experience!</p>
+
+                    <div class="settings-panel">
+                        <div class="setting-item">
+                            <label for="difficulty">Difficulty Level:</label>
+                            <input type="range" id="difficulty" min="1" max="5" value="2">
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="mic-sensitivity">Microphone Sensitivity:</label>
+                            <input type="range" id="mic-sensitivity" min="1" max="10" value="5">
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="note-display-type">Note Display Style:</label>
+                            <select id="note-display-type">
+                                <option value="letter">Letter (C, D, E...)</option>
+                                <option value="solfege">Solfège (Do, Re, Mi...)</option>
+                                <option value="both">Both</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="theme">Character Theme:</label>
+                            <select id="theme">
+                                <option value="professor">Professor Melody</option>
+                                <option value="robot">Robo Note</option>
+                                <option value="animal">Music Animals</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="animation-speed">Animation Speed:</label>
+                            <input type="range" id="animation-speed" min="1" max="3" value="2">
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="feedback-type">Feedback Style:</label>
+                            <select id="feedback-type">
+                                <option value="encouraging">Encouraging</option>
+                                <option value="precise">Precise</option>
+                                <option value="minimal">Minimal</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="octave-range">Octave Range:</label>
+                            <select id="octave-range">
+                                <option value="middle">Middle Only (C4-B4)</option>
+                                <option value="wide">Wide Range (C3-B5)</option>
+                                <option value="full">Full Piano Range</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-item">
+                            <label for="lesson-pace">Lesson Pace:</label>
+                            <select id="lesson-pace">
+                                <option value="slow">Slow & Thorough</option>
+                                <option value="medium">Balanced</option>
+                                <option value="fast">Fast-Track</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button id="save-settings" style="margin-top: 20px;">Save Settings</button>
+                    <button id="reset-progress" class="secondary" style="margin-top: 10px;">Reset All Progress</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal" id="success-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Great job! 🎉</h2>
+            <p id="success-message">You've completed the lesson successfully!</p>
+            <div class="stars" style="justify-content: center; margin: 20px 0;">
+                <div class="star filled">★</div>
+                <div class="star filled">★</div>
+                <div class="star filled">★</div>
+            </div>
+            <button id="next-from-modal" class="tertiary">Continue to Next Lesson</button>
+        </div>
+    </div>
+
+    <div class="modal" id="concept-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="concept-title">Sound Waves and Harmonics</h2>
+            <div id="concept-content">
+                <p>When a piano key is pressed, it causes a string to vibrate. This vibration creates a sound wave that travels through the air to your ears.</p>
+                <p>The most amazing thing about these vibrations is that they don't just vibrate at one frequency - they create multiple frequencies at once! The main frequency is called the "fundamental frequency," and it's what gives the note its basic pitch.</p>
+                <p>But there are also higher frequencies called "overtones" or "harmonics" that give each instrument its unique sound or "timbre." The pattern of these harmonics is why a piano and a flute sound different even when playing the same note!</p>
+                <p>These harmonics follow a mathematical pattern - they're multiples of the fundamental frequency. If the fundamental frequency is f, the harmonics are 2f, 3f, 4f, and so on.</p>
+                <p>This is why music and mathematics are so closely related. The beautiful sounds we hear in music are actually mathematical patterns of vibrations!</p>
+            </div>
+            <button id="close-concept" class="secondary">Got it!</button>
+        </div>
+    </div>
+
+    <script>
+        // Constants and global variables
+        const NOTE_FREQUENCIES = {
+            'C4': 261.63,
+            'C#4': 277.18,
+            'D4': 293.66,
+            'D#4': 311.13,
+            'E4': 329.63,
+            'F4': 349.23,
+            'F#4': 369.99,
+            'G4': 392.00,
+            'G#4': 415.30,
+            'A4': 440.00,
+            'A#4': 466.16,
+            'B4': 493.88,
+            'C5': 523.25
+        };
+
+        const NOTE_POSITIONS = {
+            'C4': 70,
+            'D4': 65,
+            'E4': 60,
+            'F4': 55,
+            'G4': 50,
+            'A4': 45,
+            'B4': 40,
+            'C5': 35
+        };
+
+        const MELODIES = {
+            'twinkle': [
+                { note: 'C4', duration: 1 },
+                { note: 'C4', duration: 1 },
+                { note: 'G4', duration: 1 },
+                { note: 'G4', duration: 1 },
+                { note: 'A4', duration: 1 },
+                { note: 'A4', duration: 1 },
+                { note: 'G4', duration: 2 },
+                { note: 'F4', duration: 1 },
+                { note: 'F4', duration: 1 },
+                { note: 'E4', duration: 1 },
+                { note: 'E4', duration: 1 },
+                { note: 'D4', duration: 1 },
+                { note: 'D4', duration: 1 },
+                { note: 'C4', duration: 2 }
+            ],
+            'mary': [
+                { note: 'E4', duration: 1 },
+                { note: 'D4', duration: 1 },
+                { note: 'C4', duration: 1 },
+                { note: 'D4', duration: 1 },
+                { note: 'E4', duration: 1 },
+                { note: 'E4', duration: 1 },
+                { note: 'E4', duration: 2 },
+                { note: 'D4', duration: 1 },
+                { note: 'D4', duration: 1 },
+                { note: 'D4', duration: 2 },
+                { note: 'E4', duration: 1 },
+                { note: 'G4', duration: 1 },
+                { note: 'G4', duration: 2 }
+            ],
+            'hotcross': [
+                { note: 'B4', duration: 1 },
+                { note: 'A4', duration: 1 },
+                { note: 'G4', duration: 2 },
+                { note: 'B4', duration: 1 },
+                { note: 'A4', duration: 1 },
+                { note: 'G4', duration: 2 },
+                { note: 'G4', duration: 0.5 },
+                { note: 'G4', duration: 0.5 },
+                { note: 'G4', duration: 0.5 },
+                { note: 'G4', duration: 0.5 },
+                { note: 'A4', duration: 0.5 },
+                { note: 'A4', duration: 0.5 },
+                { note: 'A4', duration: 0.5 },
+                { note: 'A4', duration: 0.5 },
+                { note: 'B4', duration: 1 },
+                { note: 'A4', duration: 1 },
+                { note: 'G4', duration: 2 }
+            ]
+        };
+
+        const LESSONS = [
+            {
+                title: "Lesson 1: Introduction to Music Notes",
+                content: `
+                    <p>Welcome to your first music lesson! Today we're going to learn about the basic music notes: C, D, E, F, G, A, and B.</p>
+                    <p>These notes are like the alphabet of music. When you put them together in different ways, you create melodies!</p>
+                    <p>Let's start by finding the note C on the piano. It's the white key to the left of the group of two black keys.</p>
+                    <p>Try to play the C note on your piano or keyboard, and I'll detect it with the microphone!</p>
+                `,
+                quiz: {
+                    question: "Which of these is the note C on a piano?",
+                    options: [
+                        { text: "The white key to the left of the group of two black keys", correct: true },
+                        { text: "The white key to the left of the group of three black keys", correct: false },
+                        { text: "The black key between two white keys", correct: false },
+                        { text: "The white key between two black keys", correct: false }
+                    ]
+                },
+                targetNote: "C4"
+            },
+            {
+                title: "Lesson 2: The Musical Alphabet",
+                content: `
+                    <p>Great job finding C! Now let's learn about the musical alphabet.</p>
+                    <p>The musical alphabet goes: A, B, C, D, E, F, G, and then it repeats.</p>
+                    <p>On the piano, if you start at C and play each white key in order, you'll play: C, D, E, F, G, A, B, and then back to C.</p>
+                    <p>Try playing each of these notes in order, going up from C to the next C!</p>
+                `,
+                quiz: {
+                    question: "What comes after G in the musical alphabet?",
+                    options: [
+                        { text: "H", correct: false },
+                        { text: "A", correct: true },
+                        { text: "G sharp", correct: false },
+                        { text: "It's the end of the alphabet", correct: false }
+                    ]
+                },
+                targetNote: "E4"
+            },
+            {
+                title: "Lesson 3: High and Low Sounds (Pitch)",
+                content: `
+                    <p>Did you notice how the notes get higher as you move to the right on the piano?</p>
+                    <p>The highness or lowness of a sound is called its <strong>pitch</strong>.</p>
+                    <p>When things vibrate quickly, they make high-pitched sounds. When they vibrate slowly, they make low-pitched sounds.</p>
+                    <p>On a piano, the strings for the keys on the right are shorter and tighter, so they vibrate faster and make higher-pitched sounds.</p>
+                    <p>Try playing a low C (on the left) and a high C (on the right) to hear the difference!</p>
+                `,
+                quiz: {
+                    question: "What determines whether a sound has a high or low pitch?",
+                    options: [
+                        { text: "How loud it is", correct: false },
+                        { text: "How fast it vibrates", correct: true },
+                        { text: "The size of the instrument", correct: false },
+                        { text: "The material it's made from", correct: false }
+                    ]
+                },
+                targetNote: "G4"
+            },
+            {
+                title: "Lesson 4: Rhythm and Beats",
+                content: `
+                    <p>Music isn't just about which notes you play - it's also about <strong>when</strong> you play them!</p>
+                    <p>Rhythm is the pattern of long and short sounds and silences in music.</p>
+                    <p>Most music has a steady beat, like a heartbeat or walking. You can count these beats: 1, 2, 3, 4, 1, 2, 3, 4...</p>
+                    <p>Try playing the C note in a steady rhythm: play on beat 1, wait for beats 2, 3, and 4, then play again!</p>
+                `,
+                quiz: {
+                    question: "What is rhythm in music?",
+                    options: [
+                        { text: "The pattern of high and low notes", correct: false },
+                        { text: "The loudness of the music", correct: false },
+                        { text: "The pattern of long and short sounds and silences", correct: true },
+                        { text: "The speed of the music", correct: false }
+                    ]
+                },
+                targetNote: "A4"
+            },
+            {
+                title: "Lesson 5: Melody - Putting Notes Together",
+                content: `
+                    <p>A melody is a sequence of notes that make a recognizable musical phrase or tune.</p>
+                    <p>Let's try a simple melody! Can you play these notes in order?</p>
+                    <p>C - E - G - C</p>
+                    <p>Congratulations! You just played a C major chord broken into a melody (an arpeggio).</p>
+                    <p>Try it a few times and listen to how the notes work together!</p>
+                `,
+                quiz: {
+                    question: "What is a melody?",
+                    options: [
+                        { text: "A series of notes played at the same time", correct: false },
+                        { text: "A sequence of notes that make a recognizable tune", correct: true },
+                        { text: "The volume changes in music", correct: false },
+                        { text: "The speed of the music", correct: false }
+                    ]
+                },
+                targetNote: "F4"
+            }
+        ];
+
+        // State variables
+        let audioContext = null;
+        let analyser = null;
+        let microphone = null;
+        let animationFrame = null;
+        let currentLesson = 0;
+        let score = 0;
+        let correctNotes = 0;
+        let lastDetectedNote = null;
+        let settings = {
+            difficulty: 2,
+            micSensitivity: 5,
+            noteDisplayType: 'letter',
+            theme: 'professor',
+            animationSpeed: 2,
+            feedbackType: 'encouraging',
+            octaveRange: 'middle',
+            lessonPace: 'medium'
+        };
+        let practiceMelody = null;
+        let currentMelodyIndex = 0;
+        let isPlayingMelody = false;
+        let userCreatedMelody = [];
+        let earnedBadges = new Set();
+        let practiceTime = 0;
+        let practiceTimer = null;
+        let stats = {
+            lessonsCompleted: 0,
+            notesRecognized: 0,
+            quizzesPassed: 0,
+            melodiesMastered: 0,
+            practiceTime: 0,
+            overallAccuracy: 0
+        };
+
+        // DOM elements
+        const pianoKeys = document.getElementById('piano-keys');
+        const startMicButton = document.getElementById('start-mic');
+        const playNoteButton = document.getElementById('play-note');
+        const nextLessonButton = document.getElementById('next-lesson');
+        const detectedNoteDisplay = document.getElementById('detected-note');
+        const visualizer = document.getElementById('visualizer');
+        const lessonProgress = document.getElementById('lesson-progress');
+        const lessonTitle = document.getElementById('lesson-title');
+        const lessonContent = document.getElementById('lesson-content');
+        const quizContainer = document.getElementById('quiz-container');
+        const quizQuestion = document.getElementById('quiz-question');
+        const quizOptions = document.getElementById('quiz-options');
+        const submitQuizButton = document.getElementById('submit-quiz');
+        const scoreDisplay = document.getElementById('score');
+        const characterSpeech = document.getElementById('character-speech');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const startPracticeMicButton = document.getElementById('start-practice-mic');
+        const resetPracticeButton = document.getElementById('reset-practice');
+        const practiceStartButtons = document.querySelectorAll('.practice-start');
+        const createMelodyButton = document.getElementById('create-melody');
+        const pianoRoll = document.getElementById('piano-roll');
+        const exploreTopic = document.getElementById('explore-topic');
+        const complexitySlider = document.getElementById('complexity');
+        const exploreContent = document.getElementById('explore-content');
+        const exploreQuiz = document.getElementById('explore-quiz');
+        const submitExploreQuizButton = document.getElementById('submit-explore-quiz');
+        const successModal = document.getElementById('success-modal');
+        const successMessage = document.getElementById('success-message');
+        const nextFromModalButton = document.getElementById('next-from-modal');
+        const conceptModal = document.getElementById('concept-modal');
+        const conceptTitle = document.getElementById('concept-title');
+        const conceptContent = document.getElementById('concept-content');
+        const closeConceptButton = document.getElementById('close-concept');
+        const closeModalButtons = document.querySelectorAll('.close-modal');
+        const saveSettingsButton = document.getElementById('save-settings');
+        const resetProgressButton = document.getElementById('reset-progress');
+        const difficultySlider = document.getElementById('difficulty');
+        const micSensitivitySlider = document.getElementById('mic-sensitivity');
+        const noteDisplayTypeSelect = document.getElementById('note-display-type');
+        const themeSelect = document.getElementById('theme');
+        const animationSpeedSlider = document.getElementById('animation-speed');
+        const feedbackTypeSelect = document.getElementById('feedback-type');
+        const octaveRangeSelect = document.getElementById('octave-range');
+        const lessonPaceSelect = document.getElementById('lesson-pace');
+        const badgeElements = document.querySelectorAll('.badge');
+        const lessonsCompletedDisplay = document.getElementById('lessons-completed');
+        const notesRecognizedDisplay = document.getElementById('notes-recognized');
+        const quizzesPassedDisplay = document.getElementById('quizzes-passed');
+        const melodiesMasteredDisplay = document.getElementById('melodies-mastered');
+        const practiceTimeDisplay = document.getElementById('practice-time');
+        const overallAccuracyDisplay = document.getElementById('overall-accuracy');
+        const accuracyText = document.getElementById('accuracy-text');
+        const meterCircle = document.querySelector('.meter-circle');
+        const meterNeedle = document.querySelector('.meter-needle');
+
+        // Initialize the visualizer bars
+        function createVisualizerBars() {
+            visualizer.innerHTML = '';
+            for (let i = 0; i < 32; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'visualizer-bar';
+                visualizer.appendChild(bar);
+            }
+        }
+
+        // Initialize the piano keys
+        function createPianoKeys() {
+            const keyNames = ['C', 'D', 'E', 'F', 'G', 'A', 'B'];
+            const sharpNotes = ['C', 'D', 'F', 'G', 'A'];
+            
+            // Create one octave (C4 to B4)
+            for (let i = 0; i < keyNames.length; i++) {
+                const note = keyNames[i] + '4';
+                const whiteKey = document.createElement('div');
+                whiteKey.className = 'white-key';
+                whiteKey.setAttribute('data-note', note);
+                whiteKey.textContent = keyNames[i];
+                pianoKeys.appendChild(whiteKey);
+                
+                // Add event listeners to piano keys
+                whiteKey.addEventListener('click', () => {
+                    playNote(note);
+                    highlightKey(note);
+                });
+                
+                // Add sharp/flat keys
+                if (sharpNotes.includes(keyNames[i])) {
+                    const sharpNote = keyNames[i] + '#4';
+                    const flatNote = keyNames[(i + 1) % keyNames.length] + 'b4';
+                    const blackKey = document.createElement('div');
+                    blackKey.className = 'black-key';
+                    blackKey.setAttribute('data-note', sharpNote);
+                    blackKey.textContent = keyNames[i] + '♯';
+                    pianoKeys.appendChild(blackKey);
+                    
+                    blackKey.addEventListener('click', () => {
+                        playNote(sharpNote);
+                        highlightKey(sharpNote);
+                    });
+                }
+            }
+            
+            // Add C5 for completeness
+            const c5Key = document.createElement('div');
+            c5Key.className = 'white-key';
+            c5Key.setAttribute('data-note', 'C5');
+            c5Key.textContent = 'C';
+            pianoKeys.appendChild(c5Key);
+            
+            c5Key.addEventListener('click', () => {
+                playNote('C5');
+                highlightKey('C5');
+            });
+        }
+
+        // Play a note with the Web Audio API
+        function playNote(note, duration = 1) {
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            
+            const frequency = NOTE_FREQUENCIES[note];
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            
+            // Envelope
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.7, audioContext.currentTime + 0.02);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + duration);
+            
+            // Add a note to the music sheet
+            addNoteToSheet(note);
+            
+            return { oscillator, gainNode };
+        }
+
+        // Highlight a piano key when played
+        function highlightKey(note) {
+            const isSharp = note.includes('#') || note.includes('b');
+            const keySelector = isSharp ? `.black-key[data-note="${note}"]` : `.white-key[data-note="${note}"]`;
+            const key = document.querySelector(keySelector);
+            
+            if (key) {
+                key.classList.add('active');
+                setTimeout(() => {
+                    key.classList.remove('active');
+                }, 500);
+            }
+        }
+
+        // Add a note to the music sheet
+        function addNoteToSheet(note) {
+            const staffLines = document.querySelector('.staff-lines');
+            const noteElement = document.createElement('div');
+            noteElement.className = 'note';
+            
+            // Position based on note pitch
+            const position = NOTE_POSITIONS[note] || 50;
+            
+            // Position horizontally - start at right edge and animate to left
+            noteElement.style.top = `${position}%`;
+            noteElement.style.left = '100%';
+            
+            staffLines.appendChild(noteElement);
+            
+            // Animate the note
+            setTimeout(() => {
+                noteElement.style.left = '20%';
+            }, 10);
+            
+            // Remove the note after animation
+            setTimeout(() => {
+                noteElement.remove();
+            }, 3000);
+        }
+
+        // Add a target note to the music sheet
+        function addTargetNoteToSheet(note) {
+            const staffLines = document.querySelector('.staff-lines');
+            const noteElement = document.createElement('div');
+            noteElement.className = 'note-target';
+            
+            // Position based on note pitch
+            const position = NOTE_POSITIONS[note] || 50;
+            
+            noteElement.style.top = `${position}%`;
+            noteElement.style.left = '20%';
+            
+            staffLines.appendChild(noteElement);
+            
+            return noteElement;
+        }
+
+        // Initialize microphone and pitch detection
+        async function initMicrophone() {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                microphone = audioContext.createMediaStreamSource(stream);
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                microphone.connect(analyser);
+                
+                startPitchDetection();
+                
+                // Change button text
+                startMicButton.textContent = 'Microphone Active';
+                startMicButton.disabled = true;
+                startPracticeMicButton.textContent = 'Microphone Active';
+                startPracticeMicButton.disabled = true;
+                
+                // Update character speech
+                characterSpeech.textContent = `Great! I can hear you now. Try playing the note ${LESSONS[currentLesson].targetNote.substring(0, 1)} on your piano or keyboard!`;
+                
+                // Add target note
+                addTargetNoteToSheet(LESSONS[currentLesson].targetNote);
+                
+                return true;
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                characterSpeech.textContent = "I couldn't access your microphone. Please check your permissions and try again.";
+                return false;
+            }
+        }
+
+        // Pitch detection algorithm using autocorrelation
+        function autoCorrelate(buffer, sampleRate) {
+            // Autocorrelation pitch detection algorithm
+            const SIZE = buffer.length;
+            const MAX_SAMPLES = Math.floor(SIZE / 2);
+            let bestOffset = -1;
+            let bestCorrelation = 0;
+            let rms = 0;
+            let foundGoodCorrelation = false;
+            
+            // Calculate root mean square (volume)
+            for (let i = 0; i < SIZE; i++) {
+                const val = buffer[i];
+                rms += val * val;
+            }
+            rms = Math.sqrt(rms / SIZE);
+            
+            // Insufficient signal
+            if (rms < 0.01) return -1;
+            
+            let lastCorrelation = 1;
+            
+            for (let offset = 0; offset < MAX_SAMPLES; offset++) {
+                let correlation = 0;
+                
+                for (let i = 0; i < MAX_SAMPLES; i++) {
+                    correlation += Math.abs(buffer[i] - buffer[i + offset]);
+                }
+                
+                correlation = 1 - (correlation / MAX_SAMPLES);
+                
+                if (correlation > 0.9 && correlation > lastCorrelation) {
+                    foundGoodCorrelation = true;
+                    if (correlation > bestCorrelation) {
+                        bestCorrelation = correlation;
+                        bestOffset = offset;
+                    }
+                } else if (foundGoodCorrelation) {
+                    // Short-circuit - we found a good offset
+                    break;
+                }
+                
+                lastCorrelation = correlation;
+            }
+            
+            if (bestCorrelation > 0.9) {
+                // Consider frequency:
+                // f = sampleRate / period
+                // period = bestOffset
+                return sampleRate / bestOffset;
+            }
+            
+            return -1;
+        }
+
+        // Find the closest note to a frequency
+        function findClosestNote(frequency) {
+            if (frequency <= 0) return null;
+            
+            let closestNote = null;
+            let closestDistance = Infinity;
+            
+            for (const [note, noteFreq] of Object.entries(NOTE_FREQUENCIES)) {
+                const distance = Math.abs(Math.log2(frequency) - Math.log2(noteFreq));
+                if (distance < closestDistance) {
+                    closestNote = note;
+                    closestDistance = distance;
+                }
+            }
+            
+            // Threshold for accuracy (in octave distance)
+            // Higher sensitivity means more lenient threshold
+            const sensitivityFactor = settings.micSensitivity / 5; // normalize to range 0.2 - 2
+            const threshold = 0.05 / sensitivityFactor;
+            
+            if (closestDistance > threshold) {
+                return null; // Too far from any note
+            }
+            
+            return closestNote;
+        }
+
+        // Start continuous pitch detection
+        function startPitchDetection() {
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Float32Array(bufferLength);
+            
+            const updatePitch = () => {
+                analyser.getFloatTimeDomainData(dataArray);
+                const frequency = autoCorrelate(dataArray, audioContext.sampleRate);
+                
+                if (frequency > 0) {
+                    const note = findClosestNote(frequency);
+                    if (note) {
+                        // Update display
+                        updateNoteDisplay(note);
+                        
+                        // Check if the correct note was played
+                        checkCorrectNote(note);
+                        
+                        // Update practice mode if active
+                        if (isPlayingMelody) {
+                            checkMelodyProgress(note);
+                        }
+                    }
+                }
+                
+                // Update visualizer
+                updateVisualizer();
+                
+                // Continue detection
+                animationFrame = requestAnimationFrame(updatePitch);
+            };
+            
+            updatePitch();
+        }
+
+        // Update the note display
+        function updateNoteDisplay(note) {
+            if (note !== lastDetectedNote) {
+                lastDetectedNote = note;
+                
+                // Update note display based on settings
+                let displayText;
+                const noteSymbol = note.substring(0, note.length - 1); // Remove octave number
+                
+                switch (settings.noteDisplayType) {
+                    case 'solfege':
+                        const solfegeMap = {
+                            'C': 'Do', 'C#': 'Di', 'D': 'Re', 'D#': 'Ri',
+                            'E': 'Mi', 'F': 'Fa', 'F#': 'Fi', 'G': 'Sol',
+                            'G#': 'Si', 'A': 'La', 'A#': 'Li', 'B': 'Ti'
+                        };
+                        displayText = solfegeMap[noteSymbol] || noteSymbol;
+                        break;
+                    case 'both':
+                        const solfege = {
+                            'C': 'Do', 'C#': 'Di', 'D': 'Re', 'D#': 'Ri',
+                            'E': 'Mi', 'F': 'Fa', 'F#': 'Fi', 'G': 'Sol',
+                            'G#': 'Si', 'A': 'La', 'A#': 'Li', 'B': 'Ti'
+                        };
+                        displayText = `${noteSymbol} (${solfege[noteSymbol] || noteSymbol})`;
+                        break;
+                    default: // 'letter'
+                        displayText = noteSymbol;
+                }
+                
+                detectedNoteDisplay.textContent = displayText;
+                
+                // Highlight the corresponding key
+                highlightKey(note);
+                
+                // Play the note (synthesized) for feedback if setting is enabled
+                // playNote(note, 0.2);
+                
+                // Update stats
+                stats.notesRecognized++;
+                notesRecognizedDisplay.textContent = stats.notesRecognized;
+                saveProgress();
+            }
+        }
+
+        // Update the audio visualizer
+        function updateVisualizer() {
+            if (!analyser) return;
+            
+            const bufferLength = analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
+            analyser.getByteFrequencyData(dataArray);
+            
+            const bars = document.querySelectorAll('.visualizer-bar');
+            const barCount = bars.length;
+            
+            for (let i = 0; i < barCount; i++) {
+                const index = Math.floor(i * bufferLength / barCount);
+                const value = dataArray[index] / 255;
+                bars[i].style.height = `${value * 100}%`;
+            }
+        }
+
+        // Check if the correct note was played for the current lesson
+        function checkCorrectNote(note) {
+            const targetNote = LESSONS[currentLesson].targetNote;
+            
+            if (note === targetNote) {
+                correctNotes++;
+                
+                // Provide feedback
+                switch (settings.feedbackType) {
+                    case 'encouraging':
+                        characterSpeech.textContent = "Great job! That's the right note! 🌟";
+                        break;
+                    case 'precise':
+                        characterSpeech.textContent = `Correct. You played ${note}, which matches the target note.`;
+                        break;
+                    case 'minimal':
+                        characterSpeech.textContent = "✓ Correct";
+                        break;
+                }
+                
+                // Show quiz after playing the correct note a few times
+                if (correctNotes >= 3) {
+                    showQuiz();
+                }
+            }
+        }
+
+        // Show the quiz for the current lesson
+        function showQuiz() {
+            lessonContent.style.display = 'none';
+            quizContainer.style.display = 'block';
+            
+            const quiz = LESSONS[currentLesson].quiz;
+            quizQuestion.textContent = quiz.question;
+            
+            // Create quiz options
+            quizOptions.innerHTML = '';
+            quiz.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option.text;
+                if (option.correct) {
+                    optionElement.setAttribute('data-correct', 'true');
+                }
+                
+                optionElement.addEventListener('click', () => {
+                    // Deselect all options
+                    document.querySelectorAll('.quiz-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Select this option
+                    optionElement.classList.add('selected');
+                });
+                
+                quizOptions.appendChild(optionElement);
+            });
+            
+            // Update character speech
+            characterSpeech.textContent = "Now, let's test your knowledge! Answer this question:";
+        }
+
+        // Process quiz submission
+        function submitQuiz() {
+            const selectedOption = document.querySelector('.quiz-option.selected');
+            if (!selectedOption) {
+                characterSpeech.textContent = "Please select an answer before submitting!";
+                return;
+            }
+            
+            if (selectedOption.hasAttribute('data-correct')) {
+                // Correct answer
+                score += 10;
+                scoreDisplay.textContent = score;
+                
+                // Show success modal
+                successMessage.textContent = "You answered correctly! You've earned 10 points!";
+                successModal.style.display = 'flex';
+                
+                // Update stats
+                stats.quizzesPassed++;
+                quizzesPassedDisplay.textContent = stats.quizzesPassed;
+                saveProgress();
+                
+                // Check for badge unlocks
+                if (stats.quizzesPassed >= 3) {
+                    unlockBadge('badge-theory');
+                }
+            } else {
+                // Incorrect answer
+                characterSpeech.textContent = "That's not quite right. Try again!";
+            }
+        }
+
+        // Move to the next lesson
+        function nextLesson() {
+            currentLesson++;
+            correctNotes = 0;
+            
+            if (currentLesson >= LESSONS.length) {
+                // Completed all lessons
+                characterSpeech.textContent = "Congratulations! You've completed all the lessons! Try the Practice mode to apply what you've learned.";
+                lessonTitle.textContent = "All Lessons Completed!";
+                lessonContent.innerHTML = `
+                    <p>You've finished all the basic lessons. Great job! 🎉</p>
+                    <p>Now you can:</p>
+                    <ul>
+                        <li>Practice playing melodies in the Practice tab</li>
+                        <li>Explore advanced music concepts in the Explore tab</li>
+                        <li>Check your achievements and progress</li>
+                    </ul>
+                    <p>Keep playing and learning to unlock all badges!</p>
+                `;
+                lessonContent.style.display = 'block';
+                quizContainer.style.display = 'none';
+                
+                // Update progress
+                lessonProgress.style.width = '100%';
+                lessonProgress.textContent = "Complete!";
+                
+                // Update stats
+                stats.lessonsCompleted = LESSONS.length;
+                lessonsCompletedDisplay.textContent = stats.lessonsCompleted;
+                
+                // Unlock badge
+                unlockBadge('badge-notes');
+                
+                return;
+            }
+            
+            // Update lesson
+            lessonTitle.textContent = LESSONS[currentLesson].title;
+            lessonContent.innerHTML = LESSONS[currentLesson].content;
+            lessonContent.style.display = 'block';
+            quizContainer.style.display = 'none';
+            
+            // Update progress
+            const progressPercent = ((currentLesson + 1) / LESSONS.length) * 100;
+            lessonProgress.style.width = `${progressPercent}%`;
+            lessonProgress.textContent = `Lesson ${currentLesson + 1}/${LESSONS.length}`;
+            
+            // Update character speech
+            characterSpeech.textContent = `Let's learn about ${LESSONS[currentLesson].title.split(':')[1].trim()}!`;
+            
+            // Update target note
+            const staffLines = document.querySelector('.staff-lines');
+            const oldTargets = staffLines.querySelectorAll('.note-target');
+            oldTargets.forEach(target => target.remove());
+            
+            addTargetNoteToSheet(LESSONS[currentLesson].targetNote);
+            
+            // Update stats
+            stats.lessonsCompleted = currentLesson;
+            lessonsCompletedDisplay.textContent = stats.lessonsCompleted;
+            saveProgress();
+        }
+
+        // Initialize the melody preview in practice mode
+        function initMelodyPreviews() {
+            for (const [melodyName, notes] of Object.entries(MELODIES)) {
+                const previewContainer = document.getElementById(`${melodyName}-preview`);
+                if (previewContainer) {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = previewContainer.clientWidth;
+                    canvas.height = previewContainer.clientHeight;
+                    previewContainer.appendChild(canvas);
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Draw the melody preview
+                    ctx.fillStyle = '#4a6bff';
+                    let xPos = 0;
+                    
+                    notes.forEach(note => {
+                        const noteHeight = canvas.height - ((getNoteIndex(note.note) / 12) * canvas.height);
+                        const noteWidth = (note.duration * 20);
+                        
+                        ctx.fillRect(xPos, noteHeight - 10, noteWidth, 20);
+                        xPos += noteWidth + 5;
+                    });
+                }
+            }
+        }
+
+        // Get the index of a note (C4 = 0, C#4 = 1, etc.)
+        function getNoteIndex(note) {
+            const noteMap = {
+                'C4': 0, 'C#4': 1, 'D4': 2, 'D#4': 3,
+                'E4': 4, 'F4': 5, 'F#4': 6, 'G4': 7,
+                'G#4': 8, 'A4': 9, 'A#4': 10, 'B4': 11,
+                'C5': 12
+            };
+            
+            return noteMap[note] || 0;
+        }
+
+        // Start practicing a melody
+        function startPracticeMelody(melodyName) {
+            if (!melodyName || !MELODIES[melodyName]) return;
+            
+            practiceMelody = MELODIES[melodyName];
+            currentMelodyIndex = 0;
+            isPlayingMelody = true;
+            
+            // Reset the piano roll
+            const ctx = pianoRoll.getContext('2d');
+            ctx.clearRect(0, 0, pianoRoll.width, pianoRoll.height);
+            
+            // Draw the melody on the piano roll
+            drawMelodyOnPianoRoll(practiceMelody);
+            
+            // Start the practice timer
+            if (practiceTimer) clearInterval(practiceTimer);
+            practiceTimer = setInterval(() => {
+                practiceTime++;
+                stats.practiceTime = practiceTime;
+                practiceTimeDisplay.textContent = practiceTime;
+                saveProgress();
+            }, 60000); // Update every minute
+            
+            // Show the target note
+            characterSpeech.textContent = `Let's practice! Play the note ${practiceMelody[0].note.substring(0, practiceMelody[0].note.length - 1)}`;
+            
+            // Show the current note on the piano
+            highlightKey(practiceMelody[0].note);
+            
+            // Play the first note as an example
+            playNote(practiceMelody[0].note, 0.5);
+        }
+
+        // Check progress in melody practice
+        function checkMelodyProgress(playedNote) {
+            if (!isPlayingMelody || !practiceMelody) return;
+            
+            const currentTargetNote = practiceMelody[currentMelodyIndex].note;
+            
+            if (playedNote === currentTargetNote) {
+                // Correct note
+                currentMelodyIndex++;
+                
+                // Update accuracy meter
+                updateAccuracyMeter(currentMelodyIndex / practiceMelody.length);
+                
+                if (currentMelodyIndex >= practiceMelody.length) {
+                    // Completed the melody
+                    isPlayingMelody = false;
+                    characterSpeech.textContent = "Great job! You completed the melody perfectly! 🎉";
+                    
+                    // Stop practice timer
+                    if (practiceTimer) clearInterval(practiceTimer);
+                    
+                    // Update stats
+                    stats.melodiesMastered++;
+                    melodiesMasteredDisplay.textContent = stats.melodiesMastered;
+                    
+                    // Update accuracy
+                    stats.overallAccuracy = Math.min(100, stats.overallAccuracy + 5);
+                    overallAccuracyDisplay.textContent = stats.overallAccuracy;
+                    
+                    saveProgress();
+                    
+                    // Check for badge unlocks
+                    if (stats.melodiesMastered >= 3) {
+                        unlockBadge('badge-performer');
+                    }
+                    
+                    return;
+                }
+                
+                // Move to next note
+                const nextNote = practiceMelody[currentMelodyIndex].note;
+                characterSpeech.textContent = `Good! Now play ${nextNote.substring(0, nextNote.length - 1)}`;
+                
+                // Highlight the next note on the piano
+                highlightKey(nextNote);
+                
+                // Play the next note as a guide (optional)
+                // playNote(nextNote, 0.3);
+            }
+        }
+
+        // Draw the melody on the piano roll
+        function drawMelodyOnPianoRoll(melody) {
+            const canvas = pianoRoll;
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            
+            // Background
+            ctx.fillStyle = '#f9f9f9';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw piano roll grid
+            ctx.fillStyle = '#eee';
+            for (let i = 0; i < 13; i++) {
+                const y = (i / 12) * canvas.height;
+                ctx.fillRect(0, y, canvas.width, 1);
+            }
+            
+            // Draw notes
+            let xPos = 10;
+            melody.forEach((note, index) => {
+                const noteIndex = getNoteIndex(note.note);
+                const y = canvas.height - ((noteIndex / 12) * canvas.height) - 10;
+                const width = note.duration * 40;
+                
+                // Draw note
+                ctx.fillStyle = index === currentMelodyIndex ? '#ff6b6b' : '#4a6bff';
+                ctx.fillRect(xPos, y, width, 20);
+                
+                // Draw note label
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Arial';
+                ctx.fillText(note.note.substring(0, note.note.length - 1), xPos + 5, y + 15);
+                
+                xPos += width + 10;
+            });
+        }
+
+        // Update the accuracy meter
+        function updateAccuracyMeter(progress) {
+            const percentage = Math.floor(progress * 100);
+            accuracyText.textContent = `${percentage}%`;
+            
+            // Update circle
+            const circumference = 2 * Math.PI * 80;
+            const offset = circumference - (progress * circumference);
+            meterCircle.style.strokeDasharray = circumference;
+            meterCircle.style.strokeDashoffset = offset;
+            
+            // Update needle
+            const angle = (progress * 180) - 90;
+            meterNeedle.style.transform = `rotate(${angle}deg)`;
+        }
+
+        // Show or hide the concept modal
+        function toggleConceptModal(show, title = '', content = '') {
+            if (show) {
+                conceptTitle.textContent = title;
+                conceptContent.innerHTML = content;
+                conceptModal.style.display = 'flex';
+            } else {
+                conceptModal.style.display = 'none';
+            }
+        }
+
+        // Unlock a badge
+        function unlockBadge(badgeId) {
+            if (!earnedBadges.has(badgeId)) {
+                earnedBadges.add(badgeId);
+                const badgeElement = document.getElementById(badgeId);
+                if (badgeElement) {
+                    badgeElement.classList.add('earned');
+                    badgeElement.classList.add('pulse');
+                    
+                    // Show a notification
+                    characterSpeech.textContent = `Congratulations! You've earned the ${badgeElement.querySelector('div:last-child').textContent} badge! 🎉`;
+                    
+                    setTimeout(() => {
+                        badgeElement.classList.remove('pulse');
+                    }, 3000);
+                }
+                
+                saveProgress();
+            }
+        }
+
+        // Save progress to localStorage
+        function saveProgress() {
+            const progress = {
+                currentLesson,
+                score,
+                earnedBadges: Array.from(earnedBadges),
+                settings,
+                stats
+            };
+            
+            localStorage.setItem('musicalGeniusProgress', JSON.stringify(progress));
+        }
+
+        // Load progress from localStorage
+        function loadProgress() {
+            const savedProgress = localStorage.getItem('musicalGeniusProgress');
+            if (savedProgress) {
+                const progress = JSON.parse(savedProgress);
+                
+                currentLesson = progress.currentLesson || 0;
+                score = progress.score || 0;
+                
+                if (progress.earnedBadges) {
+                    earnedBadges = new Set(progress.earnedBadges);
+                    earnedBadges.forEach(badgeId => {
+                        const badgeElement = document.getElementById(badgeId);
+                        if (badgeElement) {
+                            badgeElement.classList.add('earned');
+                        }
+                    });
+                }
+                
+                if (progress.settings) {
+                    settings = progress.settings;
+                    
+                    // Update UI
+                    difficultySlider.value = settings.difficulty;
+                    micSensitivitySlider.value = settings.micSensitivity;
+                    noteDisplayTypeSelect.value = settings.noteDisplayType;
+                    themeSelect.value = settings.theme;
+                    animationSpeedSlider.value = settings.animationSpeed;
+                    feedbackTypeSelect.value = settings.feedbackType;
+                    octaveRangeSelect.value = settings.octaveRange;
+                    lessonPaceSelect.value = settings.lessonPace;
+                }
+                
+                if (progress.stats) {
+                    stats = progress.stats;
+                    
+                    // Update UI
+                    lessonsCompletedDisplay.textContent = stats.lessonsCompleted;
+                    notesRecognizedDisplay.textContent = stats.notesRecognized;
+                    quizzesPassedDisplay.textContent = stats.quizzesPassed;
+                    melodiesMasteredDisplay.textContent = stats.melodiesMastered;
+                    practiceTimeDisplay.textContent = stats.practiceTime;
+                    overallAccuracyDisplay.textContent = stats.overallAccuracy;
+                    
+                    practiceTime = stats.practiceTime;
+                }
+                
+                // Update lesson
+                lessonTitle.textContent = LESSONS[currentLesson].title;
+                lessonContent.innerHTML = LESSONS[currentLesson].content;
+                
+                // Update progress bar
+                const progressPercent = ((currentLesson + 1) / LESSONS.length) * 100;
+                lessonProgress.style.width = `${progressPercent}%`;
+                lessonProgress.textContent = `Lesson ${currentLesson + 1}/${LESSONS.length}`;
+                
+                // Update score
+                scoreDisplay.textContent = score;
+            }
+        }
+
+        // Reset all progress
+        function resetAllProgress() {
+            localStorage.removeItem('musicalGeniusProgress');
+            
+            currentLesson = 0;
+            score = 0;
+            earnedBadges = new Set();
+            
+            stats = {
+                lessonsCompleted: 0,
+                notesRecognized: 0,
+                quizzesPassed: 0,
+                melodiesMastered: 0,
+                practiceTime: 0,
+                overallAccuracy: 0
+            };
+            
+            // Update UI
+            document.querySelectorAll('.badge').forEach(badge => {
+                badge.classList.remove('earned');
+            });
+            
+            lessonTitle.textContent = LESSONS[currentLesson].title;
+            lessonContent.innerHTML = LESSONS[currentLesson].content;
+            
+            const progressPercent = ((currentLesson + 1) / LESSONS.length) * 100;
+            lessonProgress.style.width = `${progressPercent}%`;
+            lessonProgress.textContent = `Lesson ${currentLesson + 1}/${LESSONS.length}`;
+            
+            scoreDisplay.textContent = score;
+            
+            lessonsCompletedDisplay.textContent = stats.lessonsCompleted;
+            notesRecognizedDisplay.textContent = stats.notesRecognized;
+            quizzesPassedDisplay.textContent = stats.quizzesPassed;
+            melodiesMasteredDisplay.textContent = stats.melodiesMastered;
+            practiceTimeDisplay.textContent = stats.practiceTime;
+            overallAccuracyDisplay.textContent = stats.overallAccuracy;
+            
+            // Refresh the page
+            window.location.reload();
+        }
+
+        // Event listeners
+        startMicButton.addEventListener('click', initMicrophone);
+        startPracticeMicButton.addEventListener('click', initMicrophone);
+        
+        playNoteButton.addEventListener('click', () => {
+            const targetNote = LESSONS[currentLesson].targetNote;
+            playNote(targetNote, 1);
+            highlightKey(targetNote);
+        });
+        
+        nextLessonButton.addEventListener('click', nextLesson);
+        
+        submitQuizButton.addEventListener('click', submitQuiz);
+        
+        resetPracticeButton.addEventListener('click', () => {
+            isPlayingMelody = false;
+            currentMelodyIndex = 0;
+            
+            const ctx = pianoRoll.getContext('2d');
+            ctx.clearRect(0, 0, pianoRoll.width, pianoRoll.height);
+            
+            updateAccuracyMeter(0);
+            
+            characterSpeech.textContent = "Ready to practice! Choose a melody to begin.";
+        });
+        
+        practiceStartButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const melodyName = button.getAttribute('data-melody');
+                startPracticeMelody(melodyName);
+            });
+        });
+        
+        createMelodyButton.addEventListener('click', () => {
+            // TODO: Implement custom melody creation
+            characterSpeech.textContent = "Create your own melody by clicking piano keys in sequence!";
+        });
+        
+        exploreTopic.addEventListener('change', () => {
+            // TODO: Load content for the selected topic
+        });
+        
+        complexitySlider.addEventListener('input', () => {
+            // TODO: Adjust content complexity
+        });
+        
+        submitExploreQuizButton.addEventListener('click', () => {
+            // TODO: Check answers for explore quiz
+        });
+        
+        nextFromModalButton.addEventListener('click', () => {
+            successModal.style.display = 'none';
+            nextLesson();
+        });
+        
+        closeConceptButton.addEventListener('click', () => {
+            toggleConceptModal(false);
+        });
+        
+        closeModalButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                button.closest('.modal').style.display = 'none';
+            });
+        });
+        
+        saveSettingsButton.addEventListener('click', () => {
+            settings.difficulty = parseInt(difficultySlider.value);
+            settings.micSensitivity = parseInt(micSensitivitySlider.value);
+            settings.noteDisplayType = noteDisplayTypeSelect.value;
+            settings.theme = themeSelect.value;
+            settings.animationSpeed = parseInt(animationSpeedSlider.value);
+            settings.feedbackType = feedbackTypeSelect.value;
+            settings.octaveRange = octaveRangeSelect.value;
+            settings.lessonPace = lessonPaceSelect.value;
+            
+            saveProgress();
+            
+            characterSpeech.textContent = "Settings saved successfully!";
+        });
+        
+        resetProgressButton.addEventListener('click', () => {
+            if (confirm("Are you sure you want to reset all progress? This cannot be undone.")) {
+                resetAllProgress();
+            }
+        });
+        
+        // Tab navigation
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabId = tab.getAttribute('data-tab');
+                
+                tabs.forEach(t => t.classList.remove('active'));
+                tabContents.forEach(content => content.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(`${tabId}-tab`).classList.add('active');
+            });
+        });
+        
+        // Initialize the app
+        function init() {
+            createVisualizerBars();
+            createPianoKeys();
+            initMelodyPreviews();
+            loadProgress();
+            
+            // Set canvas size for piano roll
+            pianoRoll.width = pianoRoll.parentElement.clientWidth;
+            pianoRoll.height = pianoRoll.parentElement.clientHeight;
+            
+// Resize handler for canvas
+window.addEventListener('resize', () => {
+                if (pianoRoll) {
+                    pianoRoll.width = pianoRoll.parentElement.clientWidth;
+                    pianoRoll.height = pianoRoll.parentElement.clientHeight;
+                    
+                    // Redraw melody on piano roll if in practice mode
+                    if (practiceMelody) {
+                        drawMelodyOnPianoRoll(practiceMelody);
+                    }
+                }
+            });
+            
+            // Keyboard event handlers (optional for playing with computer keyboard)
+            window.addEventListener('keydown', (e) => {
+                if (e.repeat) return; // Avoid repeated triggers when key is held
+                
+                const keyNoteMap = {
+                    'a': 'C4', 'w': 'C#4', 's': 'D4', 'e': 'D#4',
+                    'd': 'E4', 'f': 'F4', 't': 'F#4', 'g': 'G4',
+                    'y': 'G#4', 'h': 'A4', 'u': 'A#4', 'j': 'B4',
+                    'k': 'C5'
+                };
+                
+                const note = keyNoteMap[e.key.toLowerCase()];
+                if (note) {
+                    playNote(note);
+                    highlightKey(note);
+                    
+                    // If in practice mode, check progress
+                    if (isPlayingMelody) {
+                        checkMelodyProgress(note);
+                    }
+                }
+            });
+            
+            // Setup periodic animations
+            setInterval(() => {
+                if (settings.animationSpeed > 0) {
+                    const character = document.querySelector('.character');
+                    
+                    // Add small random movements to the character
+                    const randomX = (Math.random() - 0.5) * 5;
+                    const randomY = (Math.random() - 0.5) * 5;
+                    
+                    character.style.transform = `translate(${randomX}px, ${randomY}px)`;
+                    
+                    setTimeout(() => {
+                        character.style.transform = 'translate(0, 0)';
+                    }, 500);
+                }
+            }, 3000); // Every 3 seconds
+        }
+        
+        // Start the app
+        init();
+        
+        // Dynamic content related functions
+        
+        // Get facts about a note
+        function getNoteInfo(note) {
+            const noteWithoutOctave = note.substring(0, note.length - 1);
+            const octave = parseInt(note.substring(note.length - 1));
+            const frequency = NOTE_FREQUENCIES[note];
+            
+            const facts = [
+                `The note ${noteWithoutOctave} in octave ${octave} has a frequency of ${frequency.toFixed(2)} Hz.`,
+                `When you play ${noteWithoutOctave}, the piano string vibrates ${frequency.toFixed(0)} times every second!`,
+                `If you go up one octave from ${note}, you'll get ${noteWithoutOctave}${octave + 1}, which vibrates twice as fast.`,
+                `The wavelength of ${note} in air is about ${(343 / frequency).toFixed(2)} meters (sound speed ÷ frequency).`
+            ];
+            
+            return facts[Math.floor(Math.random() * facts.length)];
+        }
+        
+        // Generate random encouraging messages
+        function getRandomEncouragement() {
+            const messages = [
+                "You're doing great! Keep it up! 🌟",
+                "Excellent progress! Music is all about practice. 🎵",
+                "That sounds wonderful! You're becoming a real musician! 🎹",
+                "Fantastic job! Your playing is getting better and better! 👏",
+                "Amazing! You have a natural talent for music! 🎶",
+                "Keep practicing and you'll be playing like a pro in no time! 🚀",
+                "Your hard work is paying off! I can hear the improvement! 🌈",
+                "Music is a journey, and you're well on your way! 🗺️",
+                "Beautiful playing! Your ears are developing nicely! 👂",
+                "You're making Professor Melody proud! 😊"
+            ];
+            
+            return messages[Math.floor(Math.random() * messages.length)];
+        }
+        
+        // Get a musical concept explanation
+        function getConceptExplanation(concept, complexity) {
+            const explanations = {
+                "pitch": [
+                    // Complexity 1 (Simplest)
+                    `<p>Pitch is how high or low a sound is. When things vibrate fast, they make high sounds. When they vibrate slowly, they make low sounds.</p>
+                    <p>On a piano, the keys on the right make higher sounds, and the keys on the left make lower sounds.</p>`,
+                    
+                    // Complexity 2
+                    `<p>Pitch refers to how high or low a sound is. It's determined by how fast something is vibrating.</p>
+                    <p>Fast vibrations create high-pitched sounds, while slow vibrations create low-pitched sounds.</p>
+                    <p>Scientists measure pitch in Hertz (Hz), which tells us how many vibrations happen each second. Middle C on a piano vibrates about 262 times per second, or 262 Hz.</p>`,
+                    
+                    // Complexity 3
+                    `<p>Pitch is the quality of sound determined by the frequency of sound wave vibrations.</p>
+                    <p>The frequency is measured in Hertz (Hz), representing vibrations per second. Each piano key corresponds to a specific frequency - for example, the A above middle C is tuned to exactly 440 Hz.</p>
+                    <p>When we go up one octave, the frequency doubles. So A4 is 440 Hz, and A5 is 880 Hz. Our ears perceive this doubling as the "same note" but higher.</p>`,
+                    
+                    // Complexity 4
+                    `<p>Pitch is our perceptual interpretation of sound frequency. The fundamental frequency (f₀) of a sound wave determines its basic pitch.</p>
+                    <p>In Western music, we use an equal-tempered scale where each octave is divided into 12 semitones. The frequency ratio between adjacent semitones is the 12th root of 2 (approximately 1.059).</p>
+                    <p>This means that for any note with frequency f, the note one semitone higher has frequency f × 2^(1/12). This mathematical relationship creates the familiar musical scale.</p>`,
+                    
+                    // Complexity 5 (Most complex)
+                    `<p>Pitch perception is a psychoacoustic phenomenon where our auditory system analyzes complex waveforms to extract frequency information.</p>
+                    <p>While simple sine waves have a direct frequency-to-pitch relationship, most musical instruments produce complex tones with a fundamental frequency (f₀) and multiple harmonics (integer multiples of f₀).</p>
+                    <p>Our perception of pitch is primarily determined by f₀, but can be influenced by the harmonic structure (timbre). The missing fundamental effect demonstrates this - when we hear only the higher harmonics of a tone, our brain can sometimes "fill in" the fundamental pitch even when it's physically absent from the sound wave.</p>
+                    <p>The just noticeable difference (JND) for pitch varies with frequency but is typically around 0.5-1% under optimal conditions, meaning humans can potentially distinguish over 1000 distinct pitches across our hearing range.</p>`
+                ],
+                "harmony": [
+                    // Complexity levels for harmony concept
+                    `<p>Harmony is when different notes are played together and they sound good.</p>
+                    <p>When you play two or more notes at the same time, you make a chord. Some combinations of notes sound happy, and some sound sad.</p>`,
+                    
+                    // More complex explanations would follow...
+                ],
+                // Other concepts would be defined similarly...
+            };
+            
+            // Adjust complexity level (1-5) to array index (0-4)
+            const level = Math.min(Math.max(complexity - 1, 0), 4);
+            
+            return explanations[concept] ? 
+                   explanations[concept][level] || explanations[concept][0] : 
+                   "<p>Information about this concept will be coming soon!</p>";
+        }
+        
+        // Check for teachable moments
+        function checkForTeachableMoment(note) {
+            // 10% chance of triggering a teachable moment
+            if (Math.random() < 0.1) {
+                const topics = [
+                    {
+                        title: "Sound Waves and Harmonics",
+                        content: `<p>When you play the note ${note}, you're creating sound waves!</p>
+                        <p>The main pitch you hear is called the "fundamental frequency," but the note also contains higher frequencies called "harmonics" that give the instrument its unique sound.</p>
+                        <p>These harmonics follow a mathematical pattern - they're multiples of the fundamental frequency. That's why music and mathematics are so closely related!</p>`
+                    },
+                    {
+                        title: "Why Notes Sound Different on Different Instruments",
+                        content: `<p>Even though you're playing ${note} on the piano, it would sound different on a flute or guitar.</p>
+                        <p>This is because each instrument has a unique "timbre" or tone color, caused by the different pattern of harmonics it produces.</p>
+                        <p>It's like each instrument has its own special voice, even when singing the same note!</p>`
+                    },
+                    {
+                        title: "The Physics of Music",
+                        content: `<p>The note ${note} is vibrating at about ${NOTE_FREQUENCIES[note].toFixed(1)} Hz (vibrations per second).</p>
+                        <p>These vibrations create waves in the air that travel to your ears. Longer waves make lower sounds, and shorter waves make higher sounds.</p>
+                        <p>This is why bigger instruments like tubas and double basses make lower sounds than smaller instruments like flutes and violins!</p>`
+                    }
+                ];
+                
+                const randomTopic = topics[Math.floor(Math.random() * topics.length)];
+                toggleConceptModal(true, randomTopic.title, randomTopic.content);
+                
+                return true;
+            }
+            
+            return false;
+        }
+        
+        // Generate practice feedback based on accuracy
+        function generatePracticeFeedback(accuracy) {
+            if (accuracy >= 0.9) {
+                return "Wow! Your playing was nearly perfect! Your timing and note accuracy were excellent.";
+            } else if (accuracy >= 0.7) {
+                return "Great job! Your playing was very good. Keep practicing to improve your timing.";
+            } else if (accuracy >= 0.5) {
+                return "Good effort! You're making progress. Try to focus on playing each note clearly.";
+            } else {
+                return "You're on your way! Remember to take it slowly at first, and gradually build up speed as you get more comfortable.";
+            }
+        }
+    </script>
+</body>
+</html>

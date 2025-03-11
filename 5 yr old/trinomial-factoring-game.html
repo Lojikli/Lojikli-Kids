@@ -1,0 +1,3160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Polynomial Pals: The Trinomial Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+    <style>
+        /* Global Styles */
+        :root {
+            --primary-color: #4e54c8;
+            --secondary-color: #8f94fb;
+            --accent-color: #ff8c42;
+            --success-color: #6bd425;
+            --error-color: #f44336;
+            --background-color: #f5f7ff;
+            --light-color: #ffffff;
+            --dark-color: #2c3e50;
+            --border-radius: 12px;
+            --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            --shadow-hover: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', cursive, sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--dark-color);
+            overflow-x: hidden;
+            height: 100vh;
+        }
+
+        /* Main Container */
+        #game-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header Styles */
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 0 var(--secondary-color);
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        /* Section Styling */
+        section {
+            background-color: var(--light-color);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: var(--shadow);
+            transition: box-shadow 0.3s ease;
+        }
+
+        section:hover {
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* Interactive Elements */
+        button {
+            background-color: var(--accent-color);
+            color: var(--light-color);
+            border: none;
+            border-radius: 30px;
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: transform 0.2s ease, background-color 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            background-color: #ff7730;
+        }
+
+        button:active {
+            transform: translateY(1px);
+        }
+
+        input, select {
+            padding: 10px 15px;
+            border: 2px solid var(--secondary-color);
+            border-radius: 30px;
+            font-size: 1rem;
+            margin: 5px;
+            background-color: var(--light-color);
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        /* Canvas Container */
+        #canvas-container {
+            width: 100%;
+            position: relative;
+            margin: 20px 0;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        /* Characters */
+        .character {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            transition: transform 0.5s ease;
+        }
+
+        /* Navigation */
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+
+        /* Sections */
+        .section {
+            display: none;
+        }
+
+        .active-section {
+            display: block;
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* Quiz Styles */
+        .quiz-container {
+            background-color: #f0f8ff;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .quiz-option {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #e6f2ff;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background-color: #d1e7ff;
+        }
+
+        .quiz-option.selected {
+            background-color: var(--secondary-color);
+            color: var(--light-color);
+        }
+
+        /* Parameter Controls */
+        .parameter-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 20px 0;
+            padding: 15px;
+            background-color: rgba(143, 148, 251, 0.1);
+            border-radius: var(--border-radius);
+        }
+
+        .parameter-controls label {
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            border-bottom: 1px dotted var(--primary-color);
+            cursor: help;
+        }
+
+        .tooltip .tooltip-text {
+            visibility: hidden;
+            width: 200px;
+            background-color: var(--dark-color);
+            color: var(--light-color);
+            text-align: center;
+            border-radius: var(--border-radius);
+            padding: 10px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltip-text {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            height: 15px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--light-color);
+            margin: auto;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            max-width: 600px;
+            width: 80%;
+            text-align: center;
+            box-shadow: var(--shadow-hover);
+            position: relative;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--dark-color);
+            cursor: pointer;
+        }
+
+        /* Achievement Badge */
+        .achievement-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, var(--accent-color), var(--primary-color));
+            border-radius: 50%;
+            margin: 10px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .achievement-badge::before {
+            content: "";
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: radial-gradient(circle, transparent 60%, rgba(255, 255, 255, 0.8) 60%);
+            animation: pulse 2s linear infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(0.85); opacity: 1; }
+            100% { transform: scale(1.2); opacity: 0; }
+        }
+
+        /* Polynomial Representation */
+        .polynomial-display {
+            font-size: 1.8rem;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* Character Speech Bubble */
+        .speech-bubble {
+            position: relative;
+            background: var(--light-color);
+            border-radius: 0.4em;
+            padding: 15px;
+            margin: 20px 0 20px 80px;
+            border: 2px solid var(--secondary-color);
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border: 20px solid transparent;
+            border-right-color: var(--secondary-color);
+            border-left: 0;
+            margin-top: -20px;
+            margin-left: -20px;
+        }
+
+        /* Character Display */
+        .character-display {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            h2 {
+                font-size: 1.5rem;
+            }
+            .parameter-controls {
+                flex-direction: column;
+            }
+        }
+
+        /* Formula display */
+        .formula {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 1.4rem;
+            font-style: italic;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        /* Area Model Container */
+        .area-model-container {
+            margin: 20px auto;
+            width: 100%;
+            max-width: 500px;
+            background-color: #f9f9f9;
+            border-radius: var(--border-radius);
+            padding: 20px;
+        }
+
+        /* Special animations for the trinomial friends */
+        .friend-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .trinomial-friend {
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .trinomial-friend:hover {
+            transform: scale(1.1);
+        }
+
+        /* Celebration effect */
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        /* Game level indicator */
+        .level-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+        
+        /* Challenge mode styles */
+        .challenge-mode {
+            background: linear-gradient(to right, #fc5c7d, #6a82fb);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+        
+        /* Code for trinomial tiles */
+        .tiles-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        
+        .tile {
+            width: 80px;
+            height: 80px;
+            background-color: var(--secondary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            border-radius: 10px;
+            cursor: pointer;
+            user-select: none;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        
+        .tile:hover {
+            transform: translateY(-5px);
+            background-color: var(--primary-color);
+        }
+        
+        .tile.selected {
+            background-color: var(--accent-color);
+            transform: scale(1.05);
+        }
+        
+        /* Factor pairs display */
+        .factor-pairs {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .factor-pair {
+            padding: 10px 15px;
+            background-color: #e6f2ff;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .factor-pair:hover {
+            background-color: #d1e7ff;
+        }
+        
+        .factor-pair.correct {
+            background-color: var(--success-color);
+            color: white;
+        }
+        
+        /* Custom slider styles */
+        .slider-container {
+            width: 100%;
+            padding: 10px 0;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 15px;
+            border-radius: 10px;
+            background: #d3d3d3;
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: var(--accent-color);
+            cursor: pointer;
+        }
+        
+        /* Celebration animation */
+        @keyframes confetti {
+            0% {
+                transform: translate3d(0, 0, 0) rotate(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate3d(0, 100vh, 0) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: var(--accent-color);
+            opacity: 0;
+            animation: confetti 5s ease-in-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <header>
+            <h1>Polynomial Pals: The Trinomial Adventure</h1>
+            <h2>Factoring Trinomials Made Fun!</h2>
+            <div class="level-indicator">Level: <span id="level-display">1</span></div>
+        </header>
+
+        <div class="nav-buttons">
+            <button id="prev-btn">Previous</button>
+            <button id="next-btn">Next</button>
+        </div>
+
+        <div class="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
+        <!-- Introduction Section -->
+        <section id="intro-section" class="section active-section">
+            <div class="character-display">
+                <div style="width: 100px; height: 120px; position: relative;">
+                    <!-- Professor Poly character (SVG) -->
+                    <svg width="100" height="120" viewBox="0 0 100 120">
+                        <circle cx="50" cy="40" r="30" fill="#8f94fb" />
+                        <circle cx="40" cy="35" r="5" fill="white" />
+                        <circle cx="60" cy="35" r="5" fill="white" />
+                        <circle cx="40" cy="35" r="2" fill="#2c3e50" />
+                        <circle cx="60" cy="35" r="2" fill="#2c3e50" />
+                        <path d="M40 50 Q50 60 60 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <rect x="35" y="15" width="30" height="10" rx="5" fill="#4e54c8" />
+                        <rect x="25" y="15" width="50" height="5" rx="2" fill="#2c3e50" />
+                        <rect x="40" y="70" width="20" height="40" rx="5" fill="#8f94fb" />
+                        <rect x="40" y="70" width="20" height="5" fill="#4e54c8" />
+                        <line x1="40" y1="90" x2="20" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                        <line x1="60" y1="90" x2="80" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <h3>Welcome, Young Mathematician!</h3>
+                    <p>I'm Professor Poly, and I'll be your guide through the magical world of polynomials and trinomials!</p>
+                    <p>Today, we're going on an adventure to learn about factoring trinomials. Don't worry if it sounds complicated - we'll make it super fun and easy to understand!</p>
+                </div>
+            </div>
+
+            <h3>Meet the Trinomial Team!</h3>
+            <div class="friend-container">
+                <!-- Term A -->
+                <div class="trinomial-friend">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="35" fill="#ff8c42" />
+                        <circle cx="30" cy="30" r="5" fill="white" />
+                        <circle cx="50" cy="30" r="5" fill="white" />
+                        <circle cx="30" cy="30" r="2" fill="#2c3e50" />
+                        <circle cx="50" cy="30" r="2" fill="#2c3e50" />
+                        <path d="M30 50 Q40 60 50 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <text x="40" y="40" font-size="15" text-anchor="middle" fill="#2c3e50" font-weight="bold">ax²</text>
+                    </svg>
+                    <p>Term A</p>
+                </div>
+                <!-- Term B -->
+                <div class="trinomial-friend">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="35" fill="#6bd425" />
+                        <circle cx="30" cy="30" r="5" fill="white" />
+                        <circle cx="50" cy="30" r="5" fill="white" />
+                        <circle cx="30" cy="30" r="2" fill="#2c3e50" />
+                        <circle cx="50" cy="30" r="2" fill="#2c3e50" />
+                        <path d="M30 50 Q40 60 50 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <text x="40" y="40" font-size="15" text-anchor="middle" fill="#2c3e50" font-weight="bold">bx</text>
+                    </svg>
+                    <p>Term B</p>
+                </div>
+                <!-- Term C -->
+                <div class="trinomial-friend">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="35" fill="#4e54c8" />
+                        <circle cx="30" cy="30" r="5" fill="white" />
+                        <circle cx="50" cy="30" r="5" fill="white" />
+                        <circle cx="30" cy="30" r="2" fill="#2c3e50" />
+                        <circle cx="50" cy="30" r="2" fill="#2c3e50" />
+                        <path d="M30 50 Q40 60 50 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <text x="40" y="40" font-size="15" text-anchor="middle" fill="#2c3e50" font-weight="bold">c</text>
+                    </svg>
+                    <p>Term C</p>
+                </div>
+            </div>
+
+            <h3>What Are We Going to Learn?</h3>
+            <ul>
+                <li>What polynomials and trinomials are</li>
+                <li>How to visualize trinomials</li>
+                <li>Different ways to factor trinomials</li>
+                <li>Solving problems using factoring</li>
+                <li>Creating your own trinomials and factoring them</li>
+            </ul>
+            <p>By the end, you'll be a trinomial factoring expert! Let's start our adventure!</p>
+            <button id="start-adventure-btn">Start Adventure!</button>
+        </section>
+
+        <!-- What are Polynomials Section -->
+        <section id="polynomials-section" class="section">
+            <h3>What are Polynomials?</h3>
+            
+            <div class="character-display">
+                <div style="width: 80px; height: 100px; position: relative;">
+                    <!-- Term A character -->
+                    <svg width="80" height="100" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="35" fill="#ff8c42" />
+                        <circle cx="30" cy="30" r="5" fill="white" />
+                        <circle cx="50" cy="30" r="5" fill="white" />
+                        <circle cx="30" cy="30" r="2" fill="#2c3e50" />
+                        <circle cx="50" cy="30" r="2" fill="#2c3e50" />
+                        <path d="M30 50 Q40 60 50 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <p>Hi there! A polynomial is like a math sentence made up of terms. Each term has a number (coefficient) and a variable (like x) raised to a power.</p>
+                    <p>For example: <span class="polynomial-display">3x² + 4x + 2</span></p>
+                    <p>The "poly" in polynomial means "many," so a polynomial has multiple terms!</p>
+                </div>
+            </div>
+
+            <h3>Types of Polynomials</h3>
+            <div class="tiles-container">
+                <div class="tile">
+                    <p>Monomial</p>
+                </div>
+                <div class="tile">
+                    <p>Binomial</p>
+                </div>
+                <div class="tile">
+                    <p>Trinomial</p>
+                </div>
+            </div>
+
+            <ul>
+                <li><strong>Monomial</strong>: Has one term (like 5x²)</li>
+                <li><strong>Binomial</strong>: Has two terms (like 3x + 2)</li>
+                <li><strong>Trinomial</strong>: Has three terms (like x² + 5x + 6)</li>
+            </ul>
+
+            <div id="canvas-container-poly">
+                <!-- p5.js canvas will be inserted here -->
+            </div>
+
+            <h3>Try it yourself!</h3>
+            <div class="parameter-controls">
+                <div>
+                    <label for="term-count">Number of Terms:</label>
+                    <select id="term-count">
+                        <option value="1">One Term (Monomial)</option>
+                        <option value="2">Two Terms (Binomial)</option>
+                        <option value="3" selected>Three Terms (Trinomial)</option>
+                    </select>
+                </div>
+                <div>
+                    <button id="generate-polynomial-btn">Generate Random Polynomial</button>
+                </div>
+            </div>
+            <div class="polynomial-display" id="custom-polynomial-display">3x² + 4x + 2</div>
+
+            <div class="quiz-container">
+                <h3>Quick Check!</h3>
+                <p>What do we call a polynomial with 3 terms?</p>
+                <div class="quiz-option" data-answer="monomial">
+                    <input type="radio" name="poly-quiz" id="monomial-option">
+                    <label for="monomial-option">Monomial</label>
+                </div>
+                <div class="quiz-option" data-answer="binomial">
+                    <input type="radio" name="poly-quiz" id="binomial-option">
+                    <label for="binomial-option">Binomial</label>
+                </div>
+                <div class="quiz-option" data-answer="trinomial">
+                    <input type="radio" name="poly-quiz" id="trinomial-option">
+                    <label for="trinomial-option">Trinomial</label>
+                </div>
+                <button id="check-poly-quiz" class="check-quiz-btn">Check Answer</button>
+                <p id="poly-quiz-feedback" class="quiz-feedback"></p>
+            </div>
+        </section>
+
+        <!-- What are Trinomials Section -->
+        <section id="trinomials-section" class="section">
+            <h3>What are Trinomials?</h3>
+            
+            <div class="character-display">
+                <div style="width: 100px; height: 120px; position: relative;">
+                    <!-- Professor Poly character -->
+                    <svg width="100" height="120" viewBox="0 0 100 120">
+                        <circle cx="50" cy="40" r="30" fill="#8f94fb" />
+                        <circle cx="40" cy="35" r="5" fill="white" />
+                        <circle cx="60" cy="35" r="5" fill="white" />
+                        <circle cx="40" cy="35" r="2" fill="#2c3e50" />
+                        <circle cx="60" cy="35" r="2" fill="#2c3e50" />
+                        <path d="M40 50 Q50 60 60 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <rect x="35" y="15" width="30" height="10" rx="5" fill="#4e54c8" />
+                        <rect x="25" y="15" width="50" height="5" rx="2" fill="#2c3e50" />
+                        <rect x="40" y="70" width="20" height="40" rx="5" fill="#8f94fb" />
+                        <rect x="40" y="70" width="20" height="5" fill="#4e54c8" />
+                        <line x1="40" y1="90" x2="20" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                        <line x1="60" y1="90" x2="80" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <p>A trinomial is a special type of polynomial that has exactly three terms. The most common form we'll work with is:</p>
+                    <div class="polynomial-display">ax² + bx + c</div>
+                    <p>Where a, b, and c are numbers. In this adventure, we'll learn how to factor these trinomials!</p>
+                </div>
+            </div>
+
+            <h3>Meet the Trinomial Team</h3>
+
+            <div class="friend-container">
+                <div class="trinomial-friend">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="35" fill="#ff8c42" />
+                        <circle cx="30" cy="30" r="5" fill="white" />
+                        <circle cx="50" cy="30" r="5" fill="white" />
+                        <circle cx="30" cy="30" r="2" fill="#2c3e50" />
+                        <circle cx="50" cy="30" r="2" fill="#2c3e50" />
+                        <path d="M30 50 Q40 60 50 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                    </svg>
+                    <p>a = Coefficient of x²</p>
+                </div>
+                <div class="trinomial-friend">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="35" fill="#6bd425" />
+                        <circle cx="30" cy="30" r="5" fill="white" />
+                        <circle cx="50" cy="30" r="5" fill="white" />
+                        <circle cx="30" cy="30" r="2" fill="#2c3e50" />
+                        <circle cx="50" cy="30" r="2" fill="#2c3e50" />
+                        <path d="M30 50 Q40 60 50 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                    </svg>
+                    <p>b = Coefficient of x</p>
+                </div>
+                <div class="trinomial-friend">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="35" fill="#4e54c8" />
+                        <circle cx="30" cy="30" r="5" fill="white" />
+                        <circle cx="50" cy="30" r="5" fill="white" />
+                        <circle cx="30" cy="30" r="2" fill="#2c3e50" />
+                        <circle cx="50" cy="30" r="2" fill="#2c3e50" />
+                        <path d="M30 50 Q40 60 50 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                    </svg>
+                    <p>c = Constant term</p>
+                </div>
+            </div>
+
+            <div id="trinomial-canvas-container">
+                <!-- Canvas will be inserted here by p5.js -->
+            </div>
+
+            <h3>Create Your Own Trinomial!</h3>
+            
+            <div class="parameter-controls">
+                <div>
+                    <label for="a-value">Value of a:</label>
+                    <input type="number" id="a-value" min="1" max="10" value="1">
+                </div>
+                <div>
+                    <label for="b-value">Value of b:</label>
+                    <input type="number" id="b-value" min="-20" max="20" value="5">
+                </div>
+                <div>
+                    <label for="c-value">Value of c:</label>
+                    <input type="number" id="c-value" min="-20" max="20" value="6">
+                </div>
+                <div>
+                    <button id="update-trinomial-btn">Update Trinomial</button>
+                </div>
+            </div>
+
+            <div class="polynomial-display" id="custom-trinomial-display">x² + 5x + 6</div>
+
+            <div class="quiz-container">
+                <h3>Quick Check!</h3>
+                <p>In the trinomial 2x² - 7x + 3, what is the value of b?</p>
+                <div class="quiz-option" data-answer="2">
+                    <input type="radio" name="trinom-quiz" id="b-2-option">
+                    <label for="b-2-option">2</label>
+                </div>
+                <div class="quiz-option" data-answer="-7">
+                    <input type="radio" name="trinom-quiz" id="b-neg7-option">
+                    <label for="b-neg7-option">-7</label>
+                </div>
+                <div class="quiz-option" data-answer="3">
+                    <input type="radio" name="trinom-quiz" id="b-3-option">
+                    <label for="b-3-option">3</label>
+                </div>
+                <button id="check-trinom-quiz" class="check-quiz-btn">Check Answer</button>
+                <p id="trinom-quiz-feedback" class="quiz-feedback"></p>
+            </div>
+        </section>
+
+        <!-- What is Factoring Section -->
+        <section id="factoring-intro-section" class="section">
+            <h3>What is Factoring?</h3>
+            
+            <div class="character-display">
+                <div style="width: 100px; height: 120px; position: relative;">
+                    <!-- Professor Poly character -->
+                    <svg width="100" height="120" viewBox="0 0 100 120">
+                        <circle cx="50" cy="40" r="30" fill="#8f94fb" />
+                        <circle cx="40" cy="35" r="5" fill="white" />
+                        <circle cx="60" cy="35" r="5" fill="white" />
+                        <circle cx="40" cy="35" r="2" fill="#2c3e50" />
+                        <circle cx="60" cy="35" r="2" fill="#2c3e50" />
+                        <path d="M40 50 Q50 60 60 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <rect x="35" y="15" width="30" height="10" rx="5" fill="#4e54c8" />
+                        <rect x="25" y="15" width="50" height="5" rx="2" fill="#2c3e50" />
+                        <rect x="40" y="70" width="20" height="40" rx="5" fill="#8f94fb" />
+                        <rect x="40" y="70" width="20" height="5" fill="#4e54c8" />
+                        <line x1="40" y1="90" x2="20" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                        <line x1="60" y1="90" x2="80" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <p>Factoring is like breaking down a number or expression into simpler parts that, when multiplied together, give you the original.</p>
+                    <p>For example, the number 12 can be factored as 3 × 4 or 2 × 6.</p>
+                    <p>With trinomials, we're looking for binomials that multiply to give our trinomial!</p>
+                </div>
+            </div>
+
+            <h3>Let's See Factoring in Action!</h3>
+            <p>Consider the trinomial: <span class="polynomial-display">x² + 5x + 6</span></p>
+            <p>When we factor it, we get: <span class="polynomial-display">(x + 2)(x + 3)</span></p>
+            <p>Let's check by multiplying these factors:</p>
+            <div class="area-model-container" id="area-model">
+                <!-- Area model visualization will be inserted here -->
+            </div>
+
+            <p>When we multiply (x + 2)(x + 3), we get:</p>
+            <ul>
+                <li>x × x = x²</li>
+                <li>x × 3 = 3x</li>
+                <li>2 × x = 2x</li>
+                <li>2 × 3 = 6</li>
+            </ul>
+            <p>Adding these terms: x² + 3x + 2x + 6 = x² + 5x + 6</p>
+            <p>The result matches our original trinomial, so our factoring is correct!</p>
+
+            <h3>Factoring is Like Finding Rectangle Dimensions</h3>
+            <p>Think of a trinomial as the area of a rectangle. Factoring finds the length and width of that rectangle.</p>
+            
+            <div id="rectangle-model-container">
+                <!-- Rectangle model visualization will be inserted here -->
+            </div>
+
+            <div class="quiz-container">
+                <h3>Quick Check!</h3>
+                <p>What is the factored form of x² + 7x + 12?</p>
+                <div class="quiz-option" data-answer="(x+3)(x+4)">
+                    <input type="radio" name="factor-quiz" id="factor-a-option">
+                    <label for="factor-a-option">(x + 3)(x + 4)</label>
+                </div>
+                <div class="quiz-option" data-answer="(x+6)(x+2)">
+                    <input type="radio" name="factor-quiz" id="factor-b-option">
+                    <label for="factor-b-option">(x + 6)(x + 2)</label>
+                </div>
+                <div class="quiz-option" data-answer="(x+12)(x+1)">
+                    <input type="radio" name="factor-quiz" id="factor-c-option">
+                    <label for="factor-c-option">(x + 12)(x + 1)</label>
+                </div>
+                <button id="check-factor-quiz" class="check-quiz-btn">Check Answer</button>
+                <p id="factor-quiz-feedback" class="quiz-feedback"></p>
+            </div>
+        </section>
+
+        <!-- Factoring Method 1: AC Method -->
+        <section id="ac-method-section" class="section">
+            <h3>Factoring Method 1: The AC Method</h3>
+            
+            <div class="character-display">
+                <div style="width: 100px; height: 120px; position: relative;">
+                    <!-- Professor Poly character -->
+                    <svg width="100" height="120" viewBox="0 0 100 120">
+                        <circle cx="50" cy="40" r="30" fill="#8f94fb" />
+                        <circle cx="40" cy="35" r="5" fill="white" />
+                        <circle cx="60" cy="35" r="5" fill="white" />
+                        <circle cx="40" cy="35" r="2" fill="#2c3e50" />
+                        <circle cx="60" cy="35" r="2" fill="#2c3e50" />
+                        <path d="M40 50 Q50 60 60 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <rect x="35" y="15" width="30" height="10" rx="5" fill="#4e54c8" />
+                        <rect x="25" y="15" width="50" height="5" rx="2" fill="#2c3e50" />
+                        <rect x="40" y="70" width="20" height="40" rx="5" fill="#8f94fb" />
+                        <rect x="40" y="70" width="20" height="5" fill="#4e54c8" />
+                        <line x1="40" y1="90" x2="20" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                        <line x1="60" y1="90" x2="80" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <p>Now let's learn our first method for factoring trinomials: the AC Method!</p>
+                    <p>This method works especially well for trinomials in the form ax² + bx + c when a = 1.</p>
+                </div>
+            </div>
+
+            <h3>AC Method Steps:</h3>
+            <ol>
+                <li>Find two numbers that multiply to give c</li>
+                <li>And those same two numbers should add up to b</li>
+                <li>Use these numbers to write your factors as (x + p)(x + q)</li>
+            </ol>
+
+            <h3>Example: Factor x² + 5x + 6</h3>
+            <p>Step 1: Find two numbers that multiply to give c = 6</p>
+            <p>The possible pairs are: 1 × 6 = 6 and 2 × 3 = 6</p>
+            <p>Step 2: Check which pair adds up to b = 5</p>
+            <p>1 + 6 = 7 (not what we want)</p>
+            <p>2 + 3 = 5 (this works!)</p>
+            <p>Step 3: Write the factors</p>
+            <p>The factors are (x + 2)(x + 3)</p>
+
+            <div id="ac-method-canvas">
+                <!-- AC method visualization will go here -->
+            </div>
+
+            <h3>Try it yourself!</h3>
+            <div class="parameter-controls">
+                <div>
+                    <label for="ac-b-value">Value of b:</label>
+                    <input type="number" id="ac-b-value" min="-20" max="20" value="5">
+                </div>
+                <div>
+                    <label for="ac-c-value">Value of c:</label>
+                    <input type="number" id="ac-c-value" min="-20" max="20" value="6">
+                </div>
+                <div>
+                    <button id="update-ac-example-btn">Update Example</button>
+                </div>
+            </div>
+
+            <div class="polynomial-display" id="ac-trinomial-display">x² + 5x + 6</div>
+            <p id="ac-method-steps"></p>
+            <p id="ac-method-result"></p>
+
+            <div class="quiz-container">
+                <h3>Quick Check!</h3>
+                <p>Factor the trinomial: x² - 4x - 12</p>
+                <div class="quiz-option" data-answer="(x-6)(x+2)">
+                    <input type="radio" name="ac-quiz" id="ac-a-option">
+                    <label for="ac-a-option">(x - 6)(x + 2)</label>
+                </div>
+                <div class="quiz-option" data-answer="(x+3)(x-4)">
+                    <input type="radio" name="ac-quiz" id="ac-b-option">
+                    <label for="ac-b-option">(x + 3)(x - 4)</label>
+                </div>
+                <div class="quiz-option" data-answer="(x+6)(x-2)">
+                    <input type="radio" name="ac-quiz" id="ac-c-option">
+                    <label for="ac-c-option">(x + 6)(x - 2)</label>
+                </div>
+                <button id="check-ac-quiz" class="check-quiz-btn">Check Answer</button>
+                <p id="ac-quiz-feedback" class="quiz-feedback"></p>
+            </div>
+        </section>
+
+        <!-- Factoring Method 2: Grouping -->
+        <section id="grouping-method-section" class="section">
+            <h3>Factoring Method 2: Grouping Method</h3>
+            
+            <div class="character-display">
+                <div style="width: 100px; height: 120px; position: relative;">
+                    <!-- Professor Poly character -->
+                    <svg width="100" height="120" viewBox="0 0 100 120">
+                        <circle cx="50" cy="40" r="30" fill="#8f94fb" />
+                        <circle cx="40" cy="35" r="5" fill="white" />
+                        <circle cx="60" cy="35" r="5" fill="white" />
+                        <circle cx="40" cy="35" r="2" fill="#2c3e50" />
+                        <circle cx="60" cy="35" r="2" fill="#2c3e50" />
+                        <path d="M40 50 Q50 60 60 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <rect x="35" y="15" width="30" height="10" rx="5" fill="#4e54c8" />
+                        <rect x="25" y="15" width="50" height="5" rx="2" fill="#2c3e50" />
+                        <rect x="40" y="70" width="20" height="40" rx="5" fill="#8f94fb" />
+                        <rect x="40" y="70" width="20" height="5" fill="#4e54c8" />
+                        <line x1="40" y1="90" x2="20" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                        <line x1="60" y1="90" x2="80" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <p>Our second method is called Grouping. This method is very useful when factoring trinomials where a is not 1.</p>
+                    <p>It builds on the AC method but adds some extra steps!</p>
+                </div>
+            </div>
+
+            <h3>Grouping Method Steps:</h3>
+            <ol>
+                <li>Multiply a × c to get the product ac</li>
+                <li>Find two numbers that multiply to ac and add up to b</li>
+                <li>Split the middle term using these numbers</li>
+                <li>Group the terms into pairs and factor out common factors</li>
+                <li>Factor out the common binomial</li>
+            </ol>
+
+            <h3>Example: Factor 2x² + 7x + 3</h3>
+            <p>Step 1: Multiply a × c = 2 × 3 = 6</p>
+            <p>Step 2: Find two numbers that multiply to 6 and add up to 7</p>
+            <p>The numbers are 1 and 6 (1 × 6 = 6 and 1 + 6 = 7)</p>
+            <p>Step 3: Split the middle term 7x into 1x + 6x</p>
+            <p>Rewrite the trinomial as: 2x² + 1x + 6x + 3</p>
+            <p>Step 4: Group terms and factor out common factors</p>
+            <p>(2x² + 1x) + (6x + 3)</p>
+            <p>x(2x + 1) + 3(2x + 1)</p>
+            <p>Step 5: Factor out the common binomial (2x + 1)</p>
+            <p>(2x + 1)(x + 3)</p>
+
+            <div id="grouping-method-canvas">
+                <!-- Grouping method visualization will go here -->
+            </div>
+
+            <h3>Try it yourself!</h3>
+            <div class="parameter-controls">
+                <div>
+                    <label for="grouping-a-value">Value of a:</label>
+                    <input type="number" id="grouping-a-value" min="1" max="10" value="2">
+                </div>
+                <div>
+                    <label for="grouping-b-value">Value of b:</label>
+                    <input type="number" id="grouping-b-value" min="-20" max="20" value="7">
+                </div>
+                <div>
+                    <label for="grouping-c-value">Value of c:</label>
+                    <input type="number" id="grouping-c-value" min="-20" max="20" value="3">
+                </div>
+                <div>
+                    <button id="update-grouping-example-btn">Update Example</button>
+                </div>
+            </div>
+
+            <div class="polynomial-display" id="grouping-trinomial-display">2x² + 7x + 3</div>
+            <p id="grouping-method-steps"></p>
+            <p id="grouping-method-result"></p>
+
+            <div class="quiz-container">
+                <h3>Quick Check!</h3>
+                <p>Factor the trinomial: 3x² + 14x + 8</p>
+                <div class="quiz-option" data-answer="(3x+2)(x+4)">
+                    <input type="radio" name="grouping-quiz" id="grouping-a-option">
+                    <label for="grouping-a-option">(3x + 2)(x + 4)</label>
+                </div>
+                <div class="quiz-option" data-answer="(3x+4)(x+2)">
+                    <input type="radio" name="grouping-quiz" id="grouping-b-option">
+                    <label for="grouping-b-option">(3x + 4)(x + 2)</label>
+                </div>
+                <div class="quiz-option" data-answer="(x+4)(3x+2)">
+                    <input type="radio" name="grouping-quiz" id="grouping-c-option">
+                    <label for="grouping-c-option">(x + 4)(3x + 2)</label>
+                </div>
+                <button id="check-grouping-quiz" class="check-quiz-btn">Check Answer</button>
+                <p id="grouping-quiz-feedback" class="quiz-feedback"></p>
+            </div>
+        </section>
+
+        <!-- Factoring Playground -->
+        <section id="factoring-playground-section" class="section">
+            <h3>Factoring Playground</h3>
+            
+            <div class="character-display">
+                <div style="width: 100px; height: 120px; position: relative;">
+                    <!-- Professor Poly character -->
+                    <svg width="100" height="120" viewBox="0 0 100 120">
+                        <circle cx="50" cy="40" r="30" fill="#8f94fb" />
+                        <circle cx="40" cy="35" r="5" fill="white" />
+                        <circle cx="60" cy="35" r="5" fill="white" />
+                        <circle cx="40" cy="35" r="2" fill="#2c3e50" />
+                        <circle cx="60" cy="35" r="2" fill="#2c3e50" />
+                        <path d="M40 50 Q50 60 60 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <rect x="35" y="15" width="30" height="10" rx="5" fill="#4e54c8" />
+                        <rect x="25" y="15" width="50" height="5" rx="2" fill="#2c3e50" />
+                        <rect x="40" y="70" width="20" height="40" rx="5" fill="#8f94fb" />
+                        <rect x="40" y="70" width="20" height="5" fill="#4e54c8" />
+                        <line x1="40" y1="90" x2="20" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                        <line x1="60" y1="90" x2="80" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <p>Now it's time to play! Create your own trinomials and see if you can factor them.</p>
+                    <p>You can also start with factors and see what trinomial they make!</p>
+                </div>
+            </div>
+
+            <h3>Create Your Own Trinomial</h3>
+            <div class="parameter-controls">
+                <div>
+                    <label for="playground-a-value">Value of a:</label>
+                    <input type="number" id="playground-a-value" min="1" max="10" value="1">
+                </div>
+                <div>
+                    <label for="playground-b-value">Value of b:</label>
+                    <input type="number" id="playground-b-value" min="-20" max="20" value="5">
+                </div>
+                <div>
+                    <label for="playground-c-value">Value of c:</label>
+                    <input type="number" id="playground-c-value" min="-20" max="20" value="6">
+                </div>
+                <div>
+                    <button id="update-playground-btn">Update Trinomial</button>
+                    <button id="auto-factor-btn">Auto Factor</button>
+                </div>
+            </div>
+
+            <div class="polynomial-display" id="playground-trinomial-display">x² + 5x + 6</div>
+            <p id="playground-factoring-result"></p>
+
+            <div id="playground-visualizer">
+                <!-- Visualization of the factoring process -->
+            </div>
+
+            <h3>Or Start with Factors</h3>
+            <div class="parameter-controls">
+                <div>
+                    <label for="factor-1-m">First factor coefficient:</label>
+                    <input type="number" id="factor-1-m" min="1" max="10" value="1">
+                </div>
+                <div>
+                    <label for="factor-1-c">First factor constant:</label>
+                    <input type="number" id="factor-1-c" min="-10" max="10" value="2">
+                </div>
+                <div>
+                    <label for="factor-2-m">Second factor coefficient:</label>
+                    <input type="number" id="factor-2-m" min="1" max="10" value="1">
+                </div>
+                <div>
+                    <label for="factor-2-c">Second factor constant:</label>
+                    <input type="number" id="factor-2-c" min="-10" max="10" value="3">
+                </div>
+                <div>
+                    <button id="multiply-factors-btn">Multiply Factors</button>
+                </div>
+            </div>
+
+            <p id="factors-display">(x + 2)(x + 3)</p>
+            <p id="multiplication-result"></p>
+
+            <div id="factor-multiplication-visual">
+                <!-- Visual representation of factor multiplication -->
+            </div>
+        </section>
+
+        <!-- Advanced Factoring Section -->
+        <section id="advanced-factoring-section" class="section">
+            <h3>Advanced Factoring Challenges</h3>
+            
+            <div class="character-display">
+                <div style="width: 100px; height: 120px; position: relative;">
+                    <!-- Professor Poly character with glasses and graduation cap -->
+                    <svg width="100" height="120" viewBox="0 0 100 120">
+                        <circle cx="50" cy="40" r="30" fill="#8f94fb" />
+                        <circle cx="40" cy="35" r="5" fill="white" />
+                        <circle cx="60" cy="35" r="5" fill="white" />
+                        <circle cx="40" cy="35" r="2" fill="#2c3e50" />
+                        <circle cx="60" cy="35" r="2" fill="#2c3e50" />
+                        <path d="M40 50 Q50 60 60 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <!-- Glasses -->
+                        <circle cx="40" cy="35" r="8" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <circle cx="60" cy="35" r="8" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <line x1="48" y1="35" x2="52" y2="35" stroke="#2c3e50" stroke-width="2" />
+                        <!-- Graduation cap -->
+                        <rect x="25" y="15" width="50" height="5" rx="2" fill="#2c3e50" />
+                        <polygon points="50,5 25,15 75,15" fill="#2c3e50" />
+                        <line x1="50" y1="5" x2="65" y2="15" stroke="#2c3e50" stroke-width="2" />
+                        <circle cx="65" cy="15" r="3" fill="#ff8c42" />
+                        <!-- Body -->
+                        <rect x="40" y="70" width="20" height="40" rx="5" fill="#8f94fb" />
+                        <rect x="40" y="70" width="20" height="5" fill="#4e54c8" />
+                        <line x1="40" y1="90" x2="20" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                        <line x1="60" y1="90" x2="80" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <p>Wow! You've learned so much about factoring trinomials! Now let's tackle some more advanced challenges.</p>
+                    <p>These will help you understand factoring at an even deeper level!</p>
+                </div>
+            </div>
+
+            <div class="challenge-mode">CHALLENGE MODE ACTIVATED!</div>
+
+            <h3>Special Cases in Factoring</h3>
+            <ul>
+                <li><strong>Perfect Square Trinomials</strong>: Like x² + 6x + 9, which factors as (x + 3)²</li>
+                <li><strong>Difference of Squares</strong>: Like x² - 9, which factors as (x + 3)(x - 3)</li>
+                <li><strong>Non-factorable trinomials</strong>: Some trinomials can't be factored with real numbers</li>
+            </ul>
+
+            <h3>Perfect Square Trinomials</h3>
+            <p>A perfect square trinomial has the form:</p>
+            <p class="formula">a² + 2ab + b² = (a + b)²</p>
+            <p>Example: x² + 6x + 9</p>
+            <p>Here, a = x and b = 3, so (x + 3)²</p>
+
+            <div id="perfect-square-visual">
+                <!-- Visual representation of perfect square trinomials -->
+            </div>
+
+            <h3>Advanced Challenge 1: Perfect Square Trinomials</h3>
+            <p>Factor the following:</p>
+            <div class="polynomial-display" id="perfect-square-challenge">4x² + 12x + 9</div>
+
+            <div class="parameter-controls">
+                <div>
+                    <label for="perfect-square-answer">Your answer:</label>
+                    <input type="text" id="perfect-square-answer" placeholder="e.g. (2x+3)²">
+                </div>
+                <div>
+                    <button id="check-perfect-square-btn">Check Answer</button>
+                </div>
+            </div>
+            <p id="perfect-square-feedback"></p>
+
+            <h3>Advanced Challenge 2: Complex Trinomial</h3>
+            <p>Factor the following trinomial:</p>
+            <div class="polynomial-display" id="complex-challenge">6x² + 17x + 12</div>
+
+            <div class="parameter-controls">
+                <div>
+                    <label for="complex-answer">Your answer:</label>
+                    <input type="text" id="complex-answer" placeholder="e.g. (2x+3)(3x+4)">
+                </div>
+                <div>
+                    <button id="check-complex-btn">Check Answer</button>
+                </div>
+            </div>
+            <p id="complex-feedback"></p>
+
+            <h3>Advanced Challenge 3: Create Your Own</h3>
+            <p>Create your own trinomial by choosing two factors:</p>
+            
+            <div class="parameter-controls">
+                <div>
+                    <label for="adv-factor-1">First factor:</label>
+                    <input type="text" id="adv-factor-1" placeholder="e.g. 2x+3" value="2x+3">
+                </div>
+                <div>
+                    <label for="adv-factor-2">Second factor:</label>
+                    <input type="text" id="adv-factor-2" placeholder="e.g. 3x+4" value="3x+4">
+                </div>
+                <div>
+                    <button id="calculate-advanced-btn">Calculate Trinomial</button>
+                </div>
+            </div>
+            <p id="advanced-result"></p>
+
+            <div class="quiz-container">
+                <h3>Advanced Quiz!</h3>
+                <p>Which of these trinomials is a perfect square trinomial?</p>
+                <div class="quiz-option" data-answer="x²+6x+9">
+                    <input type="radio" name="adv-quiz" id="adv-a-option">
+                    <label for="adv-a-option">x² + 6x + 9</label>
+                </div>
+                <div class="quiz-option" data-answer="x²+7x+12">
+                    <input type="radio" name="adv-quiz" id="adv-b-option">
+                    <label for="adv-b-option">x² + 7x + 12</label>
+                </div>
+                <div class="quiz-option" data-answer="4x²+12x+9">
+                    <input type="radio" name="adv-quiz" id="adv-c-option">
+                    <label for="adv-c-option">4x² + 12x + 9</label>
+                </div>
+                <button id="check-adv-quiz" class="check-quiz-btn">Check Answer</button>
+                <p id="adv-quiz-feedback" class="quiz-feedback"></p>
+            </div>
+        </section>
+
+        <!-- Final Quiz and Certificate Section -->
+        <section id="final-quiz-section" class="section">
+            <h3>Final Challenge: Become a Trinomial Master!</h3>
+            
+            <div class="character-display">
+                <div style="width: 100px; height: 120px; position: relative;">
+                    <!-- Professor Poly with medal -->
+                    <svg width="100" height="120" viewBox="0 0 100 120">
+                        <circle cx="50" cy="40" r="30" fill="#8f94fb" />
+                        <circle cx="40" cy="35" r="5" fill="white" />
+                        <circle cx="60" cy="35" r="5" fill="white" />
+                        <circle cx="40" cy="35" r="2" fill="#2c3e50" />
+                        <circle cx="60" cy="35" r="2" fill="#2c3e50" />
+                        <path d="M40 50 Q50 60 60 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <rect x="35" y="15" width="30" height="10" rx="5" fill="#4e54c8" />
+                        <rect x="25" y="15" width="50" height="5" rx="2" fill="#2c3e50" />
+                        <rect x="40" y="70" width="20" height="40" rx="5" fill="#8f94fb" />
+                        <rect x="40" y="70" width="20" height="5" fill="#4e54c8" />
+                        <line x1="40" y1="90" x2="20" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                        <line x1="60" y1="90" x2="80" y2="70" stroke="#8f94fb" stroke-width="10" stroke-linecap="round" />
+                        <!-- Medal -->
+                        <circle cx="50" cy="65" r="10" fill="#ffd700" stroke="#ff8c42" stroke-width="2" />
+                        <text x="50" y="69" font-size="10" text-anchor="middle" fill="#ff8c42" font-weight="bold">1</text>
+                        <rect x="48" y="75" width="4" height="15" fill="#ff8c42" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <p>Congratulations on making it to the final challenge! You've learned all about polynomials, trinomials, and multiple ways to factor them.</p>
+                    <p>Now it's time to put your skills to the test with this final quiz. Show me what you've learned!</p>
+                </div>
+            </div>
+
+            <div class="quiz-container" id="final-quiz">
+                <h3>Final Quiz</h3>
+                <p>Question 1: What type of polynomial has exactly three terms?</p>
+                <div class="quiz-option" data-answer="monomial">
+                    <input type="radio" name="final-q1" id="q1-a">
+                    <label for="q1-a">Monomial</label>
+                </div>
+                <div class="quiz-option" data-answer="binomial">
+                    <input type="radio" name="final-q1" id="q1-b">
+                    <label for="q1-b">Binomial</label>
+                </div>
+                <div class="quiz-option" data-answer="trinomial">
+                    <input type="radio" name="final-q1" id="q1-c">
+                    <label for="q1-c">Trinomial</label>
+                </div>
+
+                <p>Question 2: In the trinomial 3x² - 5x + 2, what is the value of b?</p>
+                <div class="quiz-option" data-answer="3">
+                    <input type="radio" name="final-q2" id="q2-a">
+                    <label for="q2-a">3</label>
+                </div>
+                <div class="quiz-option" data-answer="-5">
+                    <input type="radio" name="final-q2" id="q2-b">
+                    <label for="q2-b">-5</label>
+                </div>
+                <div class="quiz-option" data-answer="2">
+                    <input type="radio" name="final-q2" id="q2-c">
+                    <label for="q2-c">2</label>
+                </div>
+
+                <p>Question 3: What is the factored form of x² + 7x + 10?</p>
+                <div class="quiz-option" data-answer="(x+2)(x+5)">
+                    <input type="radio" name="final-q3" id="q3-a">
+                    <label for="q3-a">(x + 2)(x + 5)</label>
+                </div>
+                <div class="quiz-option" data-answer="(x+10)(x+1)">
+                    <input type="radio" name="final-q3" id="q3-b">
+                    <label for="q3-b">(x + 10)(x + 1)</label>
+                </div>
+                <div class="quiz-option" data-answer="(x+7)(x+3)">
+                    <input type="radio" name="final-q3" id="q3-c">
+                    <label for="q3-c">(x + 7)(x + 3)</label>
+                </div>
+
+                <p>Question 4: What is the factored form of 2x² + 7x + 3?</p>
+                <div class="quiz-option" data-answer="(x+3)(2x+1)">
+                    <input type="radio" name="final-q4" id="q4-a">
+                    <label for="q4-a">(x + 3)(2x + 1)</label>
+                </div>
+                <div class="quiz-option" data-answer="(2x+3)(x+1)">
+                    <input type="radio" name="final-q4" id="q4-b">
+                    <label for="q4-b">(2x + 3)(x + 1)</label>
+                </div>
+                <div class="quiz-option" data-answer="(2x+1)(x+3)">
+                    <input type="radio" name="final-q4" id="q4-c">
+                    <label for="q4-c">(2x + 1)(x + 3)</label>
+                </div>
+
+                <p>Question 5: What is x² + 6x + 9 equivalent to?</p>
+                <div class="quiz-option" data-answer="(x+3)²">
+                    <input type="radio" name="final-q5" id="q5-a">
+                    <label for="q5-a">(x + 3)²</label>
+                </div>
+                <div class="quiz-option" data-answer="(x+9)(x+1)">
+                    <input type="radio" name="final-q5" id="q5-b">
+                    <label for="q5-b">(x + 9)(x + 1)</label>
+                </div>
+                <div class="quiz-option" data-answer="(x+4.5)²">
+                    <input type="radio" name="final-q5" id="q5-c">
+                    <label for="q5-c">(x + 4.5)²</label>
+                </div>
+
+                <button id="submit-final-quiz" class="check-quiz-btn">Submit Quiz</button>
+                <p id="final-quiz-feedback"></p>
+            </div>
+
+            <div id="certificate-section" style="display: none;">
+                <h3>Congratulations!</h3>
+                <div style="border: 10px solid #4e54c8; padding: 20px; margin: 20px auto; max-width: 600px; background-color: #f9f9f9; text-align: center;">
+                    <h2 style="color: #4e54c8;">Certificate of Achievement</h2>
+                    <h3>This certifies that</h3>
+                    <h2 id="student-name" style="color: #ff8c42; margin: 10px 0;">Math Explorer</h2>
+                    <h3>has successfully completed</h3>
+                    <h2 style="margin: 10px 0;">Polynomial Pals: The Trinomial Adventure</h2>
+                    <p>And is now officially recognized as a</p>
+                    <h2 style="color: #4e54c8; margin: 10px 0;">Trinomial Factoring Master</h2>
+                    <div style="margin-top: 30px; display: flex; justify-content: space-between;">
+                        <div>
+                            <p style="border-top: 2px solid #2c3e50; padding-top: 5px; margin-top: 20px; width: 200px;">Professor Poly</p>
+                        </div>
+                        <div style="text-align: right;">
+                            <p id="certificate-date" style="border-top: 2px solid #2c3e50; padding-top: 5px; margin-top: 20px; width: 200px;"></p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <p>Keep exploring the wonderful world of mathematics!</p>
+                    </div>
+                </div>
+                <div style="text-align: center;">
+                    <button id="customize-certificate-btn">Customize Certificate</button>
+                    <div id="customize-form" style="margin-top: 20px; display: none;">
+                        <label for="certificate-name">Your Name:</label>
+                        <input type="text" id="certificate-name" placeholder="Enter your name">
+                        <button id="update-certificate-btn">Update Certificate</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Advanced Parameter Controls -->
+        <section id="advanced-controls-section" class="section">
+            <h3>Advanced Learning Parameters</h3>
+            
+            <div class="character-display">
+                <div style="width: 100px; height: 120px; position: relative;">
+                    <!-- Professor Poly with lab coat -->
+                    <svg width="100" height="120" viewBox="0 0 100 120">
+                        <circle cx="50" cy="40" r="30" fill="#8f94fb" />
+                        <circle cx="40" cy="35" r="5" fill="white" />
+                        <circle cx="60" cy="35" r="5" fill="white" />
+                        <circle cx="40" cy="35" r="2" fill="#2c3e50" />
+                        <circle cx="60" cy="35" r="2" fill="#2c3e50" />
+                        <path d="M40 50 Q50 60 60 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                        <!-- Lab goggles -->
+                        <rect x="35" y="30" width="30" height="10" rx="5" fill="rgba(255, 255, 255, 0.5)" />
+                        <!-- Lab coat -->
+                        <rect x="30" y="70" width="40" height="40" rx="5" fill="white" />
+                        <line x1="50" y1="70" x2="50" y2="110" stroke="#e0e0e0" stroke-width="2" />
+                        <line x1="30" y1="90" x2="10" y2="70" stroke="white" stroke-width="10" stroke-linecap="round" />
+                        <line x1="70" y1="90" x2="90" y2="70" stroke="white" stroke-width="10" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <p>Welcome to the laboratory! Here you can adjust advanced parameters to customize your learning experience.</p>
+                    <p>These controls let you explore concepts at an even deeper level. Adjust them to see how different aspects of trinomial factoring work!</p>
+                </div>
+            </div>
+
+            <h3>Learning Parameters</h3>
+            <div class="parameter-controls">
+                <div>
+                    <label for="difficulty-level">Difficulty Level:</label>
+                    <select id="difficulty-level">
+                        <option value="1">Level 1: Basics (a=1, positive coefficients)</option>
+                        <option value="2" selected>Level 2: Intermediate (a=1, any coefficients)</option>
+                        <option value="3">Level 3: Advanced (any a, any coefficients)</option>
+                        <option value="4">Level 4: Expert (non-factorable trinomials included)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="visualization-style">Visualization Style:</label>
+                    <select id="visualization-style">
+                        <option value="area">Area Model</option>
+                        <option value="algebra" selected>Algebraic Steps</option>
+                        <option value="tiles">Algebra Tiles</option>
+                        <option value="number-line">Number Line</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3>Animation Speed and Visual Elements</h3>
+            <div class="parameter-controls">
+                <div class="slider-container">
+                    <label for="animation-speed">Animation Speed:</label>
+                    <input type="range" min="1" max="10" value="5" class="slider" id="animation-speed">
+                    <span id="speed-value">5</span>
+                </div>
+                <div class="slider-container">
+                    <label for="character-visibility">Character Visibility:</label>
+                    <input type="range" min="0" max="10" value="10" class="slider" id="character-visibility">
+                    <span id="visibility-value">10</span>
+                </div>
+            </div>
+
+            <h3>Mathematical Notation</h3>
+            <div class="parameter-controls">
+                <div>
+                    <label for="notation-style">Notation Style:</label>
+                    <select id="notation-style">
+                        <option value="standard" selected>Standard (x² + 5x + 6)</option>
+                        <option value="expanded">Expanded (1x² + 5x + 6)</option>
+                        <option value="descriptive">Descriptive (Term A + Term B + Term C)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="variable-name">Variable Name:</label>
+                    <select id="variable-name">
+                        <option value="x" selected>x</option>
+                        <option value="y">y</option>
+                        <option value="a">a</option>
+                        <option value="n">n</option>
+                    </select>
+                </div>
+            </div>
+
+            <button id="apply-params-btn">Apply Parameters</button>
+            <button id="reset-params-btn">Reset to Defaults</button>
+
+            <div id="advanced-preview">
+                <h3>Preview</h3>
+                <div class="polynomial-display" id="advanced-polynomial-preview">x² + 5x + 6</div>
+                <div id="advanced-visualization-preview">
+                    <!-- Visualization preview will go here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Conclusion Section -->
+        <section id="conclusion-section" class="section">
+            <h3>Congratulations!</h3>
+            
+            <div class="character-display">
+                <div style="width: 100px; height: 120px; position: relative;">
+                    <!-- All characters together -->
+                    <svg width="100" height="120" viewBox="0 0 100 120">
+                        <!-- Professor Poly -->
+                        <circle cx="50" cy="40" r="20" fill="#8f94fb" />
+                        <circle cx="45" cy="35" r="3" fill="white" />
+                        <circle cx="55" cy="35" r="3" fill="white" />
+                        <circle cx="45" cy="35" r="1" fill="#2c3e50" />
+                        <circle cx="55" cy="35" r="1" fill="#2c3e50" />
+                        <path d="M45 45 Q50 50 55 45" stroke="#2c3e50" stroke-width="1" fill="none" />
+                        
+                        <!-- Term A -->
+                        <circle cx="25" cy="40" r="15" fill="#ff8c42" />
+                        <circle cx="20" cy="35" r="2" fill="white" />
+                        <circle cx="30" cy="35" r="2" fill="white" />
+                        <circle cx="20" cy="35" r="1" fill="#2c3e50" />
+                        <circle cx="30" cy="35" r="1" fill="#2c3e50" />
+                        <path d="M20 45 Q25 48 30 45" stroke="#2c3e50" stroke-width="1" fill="none" />
+                        
+                        <!-- Term C -->
+                        <circle cx="75" cy="40" r="15" fill="#4e54c8" />
+                        <circle cx="70" cy="35" r="2" fill="white" />
+                        <circle cx="80" cy="35" r="2" fill="white" />
+                        <circle cx="70" cy="35" r="1" fill="#2c3e50" />
+                        <circle cx="80" cy="35" r="1" fill="#2c3e50" />
+                        <path d="M70 45 Q75 48 80 45" stroke="#2c3e50" stroke-width="1" fill="none" />
+                        
+                        <!-- Bodies -->
+                        <rect x="45" y="60" width="10" height="30" rx="3" fill="#8f94fb" />
+                        <rect x="20" y="55" width="10" height="25" rx="3" fill="#ff8c42" />
+                        <rect x="70" y="55" width="10" height="25" rx="3" fill="#4e54c8" />
+                        
+                        <!-- Arms holding hands -->
+                        <line x1="20" y1="65" x2="45" y2="75" stroke="#ff8c42" stroke-width="5" stroke-linecap="round" />
+                        <line x1="55" y1="75" x2="70" y2="65" stroke="#4e54c8" stroke-width="5" stroke-linecap="round" />
+                    </svg>
+                </div>
+                <div class="speech-bubble">
+                    <p>You've completed your journey through the world of trinomials! You now understand what trinomials are and how to factor them using different methods.</p>
+                    <p>Remember, these skills will help you solve more complex problems in algebra and beyond!</p>
+                </div>
+            </div>
+
+            <h3>What You've Learned</h3>
+            <ul>
+                <li>What polynomials and trinomials are</li>
+                <li>The parts of a trinomial (ax² + bx + c)</li>
+                <li>How to factor trinomials using the AC method</li>
+                <li>How to factor trinomials using the grouping method</li>
+                <li>Special cases like perfect square trinomials</li>
+                <li>How to create and factor your own trinomials</li>
+            </ul>
+
+            <h3>Where to Go From Here</h3>
+            <p>Now that you've mastered trinomial factoring, you can explore:</p>
+            <ul>
+                <li>Solving quadratic equations using factoring</li>
+                <li>Graphing quadratic functions</li>
+                <li>Applications of quadratics in real-world problems</li>
+                <li>Higher-degree polynomials and their factoring</li>
+            </ul>
+
+            <div class="friend-container">
+                <div class="trinomial-friend">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="35" fill="#ff8c42" />
+                        <circle cx="30" cy="30" r="5" fill="white" />
+                        <circle cx="50" cy="30" r="5" fill="white" />
+                        <circle cx="30" cy="30" r="2" fill="#2c3e50" />
+                        <circle cx="50" cy="30" r="2" fill="#2c3e50" />
+                        <path d="M30 50 Q40 60 50 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                    </svg>
+                    <p>Thanks for playing!</p>
+                </div>
+                <div class="trinomial-friend">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="35" fill="#6bd425" />
+                        <circle cx="30" cy="30" r="5" fill="white" />
+                        <circle cx="50" cy="30" r="5" fill="white" />
+                        <circle cx="30" cy="30" r="2" fill="#2c3e50" />
+                        <circle cx="50" cy="30" r="2" fill="#2c3e50" />
+                        <path d="M30 50 Q40 60 50 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                    </svg>
+                    <p>You're a math star!</p>
+                </div>
+                <div class="trinomial-friend">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="35" fill="#4e54c8" />
+                        <circle cx="30" cy="30" r="5" fill="white" />
+                        <circle cx="50" cy="30" r="5" fill="white" />
+                        <circle cx="30" cy="30" r="2" fill="#2c3e50" />
+                        <circle cx="50" cy="30" r="2" fill="#2c3e50" />
+                        <path d="M30 50 Q40 60 50 50" stroke="#2c3e50" stroke-width="2" fill="none" />
+                    </svg>
+                    <p>Keep exploring!</p>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <button id="start-over-btn">Start Over</button>
+                <button id="view-certificate-btn">View Certificate</button>
+            </div>
+        </section>
+
+        <!-- Modal for messages and celebrations -->
+        <div id="modal" class="modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h3 id="modal-title">Achievement Unlocked!</h3>
+                <div id="modal-body">
+                    <p>You've learned something new!</p>
+                </div>
+                <div class="achievement-badge">
+                    <span id="badge-text">★</span>
+                </div>
+                <button id="modal-button">Continue</button>
+            </div>
+        </div>
+
+        <!-- Celebration effect container -->
+        <div id="celebration" class="celebration"></div>
+    </div>
+
+    <script>
+        ///////////////////////////
+        // Main Application Logic
+        ///////////////////////////
+        
+        // Global state
+        const state = {
+            currentSection: 0,
+            sections: [],
+            level: 1,
+            progress: 0,
+            quizResults: {},
+            parameters: {
+                difficulty: 2,
+                visualizationStyle: 'algebra',
+                animationSpeed: 5,
+                characterVisibility: 10,
+                notationStyle: 'standard',
+                variableName: 'x'
+            },
+            achievements: [],
+            showConfetti: true
+        };
+        
+        // DOM Elements
+        let prevButton, nextButton, progressBar, levelDisplay;
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+        
+        function initializeApp() {
+            // Get references to DOM elements
+            prevButton = document.getElementById('prev-btn');
+            nextButton = document.getElementById('next-btn');
+            progressBar = document.getElementById('progress-bar');
+            levelDisplay = document.getElementById('level-display');
+            
+            // Get all sections
+            state.sections = document.querySelectorAll('.section');
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Initialize the polynomial visualization
+            initializePolynomialVisualizer();
+            
+            // Initialize trinomial visualizer
+            initializeTrinomialVisualizer();
+            
+            // Initialize factoring visualizations
+            initializeFactoringVisualizations();
+            
+            // Initialize the playground
+            initializePlayground();
+            
+            // Set up the advanced parameters
+            initializeAdvancedParameters();
+            
+            // Setup quizzes
+            setupQuizzes();
+            
+            // Update the UI
+            updateUI();
+            
+            // Show welcome modal
+            setTimeout(() => {
+                showModal('Welcome to Polynomial Pals!', 
+                          'Get ready for an exciting adventure in the world of trinomials! Professor Poly and friends will guide you through factoring techniques that even university students find useful. Click "Continue" to begin!',
+                          'Let\'s Go!');
+            }, 1000);
+        }
+        
+        function setupEventListeners() {
+            // Navigation buttons
+            prevButton.addEventListener('click', navigateToPrevious);
+            nextButton.addEventListener('click', navigateToNext);
+            
+            // Start adventure button
+            document.getElementById('start-adventure-btn').addEventListener('click', () => {
+                navigateToNext();
+                unlockAchievement('Adventure Begun!', 'You\'ve started your journey into the world of polynomials!');
+            });
+            
+            // Section-specific buttons
+            document.getElementById('generate-polynomial-btn').addEventListener('click', generateRandomPolynomial);
+            document.getElementById('update-trinomial-btn').addEventListener('click', updateCustomTrinomial);
+            document.getElementById('update-ac-example-btn').addEventListener('click', updateACMethodExample);
+            document.getElementById('update-grouping-example-btn').addEventListener('click', updateGroupingExample);
+            document.getElementById('update-playground-btn').addEventListener('click', updatePlaygroundTrinomial);
+            document.getElementById('auto-factor-btn').addEventListener('click', autoFactorPlaygroundTrinomial);
+            document.getElementById('multiply-factors-btn').addEventListener('click', multiplyFactors);
+            
+            // Advanced challenges
+            document.getElementById('check-perfect-square-btn').addEventListener('click', checkPerfectSquareAnswer);
+            document.getElementById('check-complex-btn').addEventListener('click', checkComplexAnswer);
+            document.getElementById('calculate-advanced-btn').addEventListener('click', calculateAdvancedTrinomial);
+            
+            // Quiz check buttons
+            document.querySelectorAll('.check-quiz-btn').forEach(button => {
+                button.addEventListener('click', checkQuizAnswer);
+            });
+            
+            // Final quiz
+            document.getElementById('submit-final-quiz').addEventListener('click', checkFinalQuiz);
+            
+            // Certificate customization
+            document.getElementById('customize-certificate-btn').addEventListener('click', () => {
+                document.getElementById('customize-form').style.display = 'block';
+            });
+            
+            document.getElementById('update-certificate-btn').addEventListener('click', updateCertificate);
+            
+            // Advanced parameters
+            document.getElementById('apply-params-btn').addEventListener('click', applyAdvancedParameters);
+            document.getElementById('reset-params-btn').addEventListener('click', resetAdvancedParameters);
+            
+            // Conclusion buttons
+            document.getElementById('start-over-btn').addEventListener('click', startOver);
+            document.getElementById('view-certificate-btn').addEventListener('click', viewCertificate);
+            
+            // Modal close
+            document.querySelector('.close-modal').addEventListener('click', closeModal);
+            document.getElementById('modal-button').addEventListener('click', closeModal);
+
+            // Animation speed slider
+            document.getElementById('animation-speed').addEventListener('input', function() {
+                document.getElementById('speed-value').textContent = this.value;
+                state.parameters.animationSpeed = parseInt(this.value);
+            });
+            
+            // Character visibility slider
+            document.getElementById('character-visibility').addEventListener('input', function() {
+                document.getElementById('visibility-value').textContent = this.value;
+                state.parameters.characterVisibility = parseInt(this.value);
+                updateCharacterVisibility();
+            });
+        }
+        
+        // Navigation functions
+        function navigateToNext() {
+            if (state.currentSection < state.sections.length - 1) {
+                state.sections[state.currentSection].classList.remove('active-section');
+                state.currentSection++;
+                state.sections[state.currentSection].classList.add('active-section');
+                updateProgress();
+                updateUI();
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+                
+                // Update level if needed
+                if (state.currentSection > 3 && state.level === 1) {
+                    levelUp();
+                }
+            }
+        }
+        
+        function navigateToPrevious() {
+            if (state.currentSection > 0) {
+                state.sections[state.currentSection].classList.remove('active-section');
+                state.currentSection--;
+                state.sections[state.currentSection].classList.add('active-section');
+                updateProgress();
+                updateUI();
+                
+                // Scroll to top
+                window.scrollTo(0, 0);
+            }
+        }
+        
+        function updateProgress() {
+            state.progress = (state.currentSection / (state.sections.length - 1)) * 100;
+            progressBar.style.width = state.progress + '%';
+        }
+        
+        function updateUI() {
+            // Update navigation buttons
+            prevButton.disabled = state.currentSection === 0;
+            nextButton.disabled = state.currentSection === state.sections.length - 1;
+            
+            // Update level display
+            levelDisplay.textContent = state.level;
+        }
+        
+        function levelUp() {
+            state.level++;
+            levelDisplay.textContent = state.level;
+            showModal('Level Up!', `You've reached Level ${state.level}! You're making great progress on your factoring journey!`, 'Continue');
+            createConfetti();
+        }
+        
+        // Modal functions
+        function showModal(title, message, buttonText = 'OK') {
+            const modal = document.getElementById('modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            const modalButton = document.getElementById('modal-button');
+            
+            modalTitle.textContent = title;
+            modalBody.innerHTML = `<p>${message}</p>`;
+            modalButton.textContent = buttonText;
+            
+            modal.style.display = 'flex';
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById('modal');
+            modal.style.display = 'none';
+        }
+        
+        function unlockAchievement(title, description) {
+            // Check if achievement already unlocked
+            if (state.achievements.includes(title)) return;
+            
+            // Add to achievements
+            state.achievements.push(title);
+            
+            // Show achievement modal
+            showModal('Achievement Unlocked!', description, 'Continue');
+            
+            // Create celebration effect
+            if (state.showConfetti) {
+                createConfetti();
+            }
+        }
+        
+        function createConfetti() {
+            const celebrationContainer = document.getElementById('celebration');
+            celebrationContainer.innerHTML = '';
+            
+            const colors = ['#ff8c42', '#6bd425', '#4e54c8', '#8f94fb', '#ffd700'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.opacity = '1';
+                confetti.style.animation = `confetti ${3 + Math.random() * 5}s ease-in-out forwards`;
+                confetti.style.animationDelay = Math.random() * 2 + 's';
+                
+                celebrationContainer.appendChild(confetti);
+            }
+            
+            // Remove confetti after animation
+            setTimeout(() => {
+                celebrationContainer.innerHTML = '';
+            }, 8000);
+        }
+        
+        // Character visibility
+        function updateCharacterVisibility() {
+            const visibility = state.parameters.characterVisibility / 10;
+            document.querySelectorAll('.character-display').forEach(char => {
+                char.style.opacity = visibility;
+                char.style.display = visibility === 0 ? 'none' : 'flex';
+            });
+        }
+        
+        ///////////////////////////////
+        // Polynomials Section
+        ///////////////////////////////
+        
+        function initializePolynomialVisualizer() {
+            // Initialize p5.js sketch for polynomial visualization
+            new p5(function(p) {
+                let termCount = 3;
+                let terms = [];
+                
+                p.setup = function() {
+                    const container = document.getElementById('canvas-container-poly');
+                    p.createCanvas(container.offsetWidth, 200).parent(container);
+                    
+                    // Generate initial terms
+                    generateTerms();
+                };
+                
+                p.draw = function() {
+                    p.background(245, 247, 255);
+                    
+                    // Draw polynomial visualization
+                    const spacing = p.width / (termCount + 1);
+                    
+                    p.textAlign(p.CENTER, p.CENTER);
+                    p.textSize(18);
+                    p.fill(44, 62, 80);
+                    p.noStroke();
+                    
+                    // Draw the terms
+                    for (let i = 0; i < termCount; i++) {
+                        const x = spacing * (i + 1);
+                        const y = p.height / 2;
+                        
+                        // Draw term circle
+                        p.fill(terms[i].color);
+                        p.ellipse(x, y, 80, 80);
+                        
+                        // Draw term text
+                        p.fill(255);
+                        p.text(terms[i].text, x, y);
+                        
+                        // Draw plus sign if not the last term
+                        if (i < termCount - 1) {
+                            p.fill(44, 62, 80);
+                            p.text("+", x + spacing/2, y);
+                        }
+                    }
+                };
+                
+                function generateTerms() {
+                    const colors = [
+                        p.color(255, 140, 66),  // orange
+                        p.color(107, 212, 37),  // green
+                        p.color(78, 84, 200)    // blue
+                    ];
+                    
+                    terms = [];
+                    
+                    // Generate terms based on count
+                    if (termCount >= 1) terms.push({text: "ax²", color: colors[0]});
+                    if (termCount >= 2) terms.push({text: "bx", color: colors[1]});
+                    if (termCount >= 3) terms.push({text: "c", color: colors[2]});
+                }
+                
+                // Respond to term count changes
+                document.getElementById('term-count').addEventListener('change', function() {
+                    termCount = parseInt(this.value);
+                    generateTerms();
+                });
+                
+            }, 'canvas-container-poly');
+        }
+        
+        function generateRandomPolynomial() {
+            const termCount = parseInt(document.getElementById('term-count').value);
+            const display = document.getElementById('custom-polynomial-display');
+            
+            let polynomial = "";
+            
+            if (termCount >= 1) {
+                // First term (x²)
+                const a = Math.floor(Math.random() * 5) + 1;
+                polynomial += a === 1 ? "x²" : a + "x²";
+            }
+            
+            if (termCount >= 2) {
+                // Second term (x)
+                const b = Math.floor(Math.random() * 10) - 5;
+                if (b !== 0) {
+                    polynomial += b > 0 ? " + " : " - ";
+                    polynomial += Math.abs(b) === 1 ? "x" : Math.abs(b) + "x";
+                }
+            }
+            
+            if (termCount >= 3) {
+                // Third term (constant)
+                const c = Math.floor(Math.random() * 10) - 5;
+                if (c !== 0) {
+                    polynomial += c > 0 ? " + " : " - ";
+                    polynomial += Math.abs(c);
+                }
+            }
+            
+            display.textContent = polynomial;
+        }
+        
+        ///////////////////////////////
+        // Trinomials Section
+        ///////////////////////////////
+        
+        function initializeTrinomialVisualizer() {
+            // Initialize p5.js sketch for trinomial visualization
+            new p5(function(p) {
+                let a = 1, b = 5, c = 6;
+                
+                p.setup = function() {
+                    const container = document.getElementById('trinomial-canvas-container');
+                    p.createCanvas(container.offsetWidth, 200).parent(container);
+                };
+                
+                p.draw = function() {
+                    p.background(245, 247, 255);
+                    
+                    // Draw trinomial visualization
+                    const spacing = p.width / 4;
+                    
+                    p.textAlign(p.CENTER, p.CENTER);
+                    p.textSize(18);
+                    p.fill(44, 62, 80);
+                    p.noStroke();
+                    
+                    // Draw the terms
+                    // Term a (x²)
+                    p.fill(255, 140, 66);  // orange
+                    p.ellipse(spacing, p.height/2, 80, 80);
+                    p.fill(255);
+                    p.text(a === 1 ? "x²" : a + "x²", spacing, p.height/2);
+                    
+                    // Plus sign
+                    p.fill(44, 62, 80);
+                    p.text("+", spacing * 1.5, p.height/2);
+                    
+                    // Term b (x)
+                    p.fill(107, 212, 37);  // green
+                    p.ellipse(spacing * 2, p.height/2, 80, 80);
+                    p.fill(255);
+                    p.text(b === 1 ? "x" : b + "x", spacing * 2, p.height/2);
+                    
+                    // Plus sign
+                    p.fill(44, 62, 80);
+                    p.text("+", spacing * 2.5, p.height/2);
+                    
+                    // Term c (constant)
+                    p.fill(78, 84, 200);  // blue
+                    p.ellipse(spacing * 3, p.height/2, 80, 80);
+                    p.fill(255);
+                    p.text(c, spacing * 3, p.height/2);
+                };
+                
+                // Update values when changed
+                document.getElementById('update-trinomial-btn').addEventListener('click', function() {
+                    a = parseInt(document.getElementById('a-value').value);
+                    b = parseInt(document.getElementById('b-value').value);
+                    c = parseInt(document.getElementById('c-value').value);
+                    updateTrinomialDisplay();
+                });
+                
+                function updateTrinomialDisplay() {
+                    const display = document.getElementById('custom-trinomial-display');
+                    let trinomial = "";
+                    
+                    // First term (ax²)
+                    if (a === 1) {
+                        trinomial += "x²";
+                    } else {
+                        trinomial += a + "x²";
+                    }
+                    
+                    // Second term (bx)
+                    if (b !== 0) {
+                        trinomial += b > 0 ? " + " : " - ";
+                        if (Math.abs(b) === 1) {
+                            trinomial += "x";
+                        } else {
+                            trinomial += Math.abs(b) + "x";
+                        }
+                    }
+                    
+                    // Third term (c)
+                    if (c !== 0) {
+                        trinomial += c > 0 ? " + " : " - ";
+                        trinomial += Math.abs(c);
+                    }
+                    
+                    display.textContent = trinomial;
+                }
+            });
+        }
+        
+        function updateCustomTrinomial() {
+            const a = parseInt(document.getElementById('a-value').value);
+            const b = parseInt(document.getElementById('b-value').value);
+            const c = parseInt(document.getElementById('c-value').value);
+            const display = document.getElementById('custom-trinomial-display');
+            
+            let trinomial = "";
+            
+            // First term (ax²)
+            if (a === 1) {
+                trinomial += "x²";
+            } else if (a !== 0) {
+                trinomial += a + "x²";
+            }
+            
+            // Second term (bx)
+            if (b !== 0) {
+                trinomial += b > 0 ? " + " : " - ";
+                if (Math.abs(b) === 1) {
+                    trinomial += "x";
+                } else {
+                    trinomial += Math.abs(b) + "x";
+                }
+            }
+            
+            // Third term (c)
+            if (c !== 0) {
+                trinomial += c > 0 ? " + " : " - ";
+                trinomial += Math.abs(c);
+            }
+            
+            display.textContent = trinomial;
+        }
+        
+        ///////////////////////////////
+        // Factoring Methods
+        ///////////////////////////////
+        
+        function initializeFactoringVisualizations() {
+            // Initialize area model
+            initializeAreaModel();
+            
+            // Initialize AC method visualization
+            initializeACMethodVisualization();
+            
+            // Initialize grouping method visualization
+            initializeGroupingMethodVisualization();
+        }
+        
+        function initializeAreaModel() {
+            const container = document.getElementById('area-model');
+            
+            // Create a table to represent the multiplication
+            const table = document.createElement('table');
+            table.style.width = '100%';
+            table.style.borderCollapse = 'collapse';
+            
+            // Create header row
+            const headerRow = document.createElement('tr');
+            
+            const emptyCell = document.createElement('th');
+            emptyCell.style.width = '20%';
+            emptyCell.style.height = '40px';
+            emptyCell.style.border = '1px solid #ccc';
+            headerRow.appendChild(emptyCell);
+            
+            const xHeader = document.createElement('th');
+            xHeader.textContent = 'x';
+            xHeader.style.width = '40%';
+            xHeader.style.backgroundColor = '#f0f0f0';
+            xHeader.style.border = '1px solid #ccc';
+            headerRow.appendChild(xHeader);
+            
+            const constHeader = document.createElement('th');
+            constHeader.textContent = '2';
+            constHeader.style.width = '40%';
+            constHeader.style.backgroundColor = '#f0f0f0';
+            constHeader.style.border = '1px solid #ccc';
+            headerRow.appendChild(constHeader);
+            
+            table.appendChild(headerRow);
+            
+            // Create first data row
+            const row1 = document.createElement('tr');
+            
+            const xHeader2 = document.createElement('th');
+            xHeader2.textContent = 'x';
+            xHeader2.style.height = '100px';
+            xHeader2.style.backgroundColor = '#f0f0f0';
+            xHeader2.style.border = '1px solid #ccc';
+            row1.appendChild(xHeader2);
+            
+            const xSquareCell = document.createElement('td');
+            xSquareCell.textContent = 'x²';
+            xSquareCell.style.backgroundColor = '#ff8c4266';
+            xSquareCell.style.border = '1px solid #ccc';
+            xSquareCell.style.textAlign = 'center';
+            xSquareCell.style.fontSize = '1.5rem';
+            row1.appendChild(xSquareCell);
+            
+            const x2Cell = document.createElement('td');
+            x2Cell.textContent = '2x';
+            x2Cell.style.backgroundColor = '#6bd42566';
+            x2Cell.style.border = '1px solid #ccc';
+            x2Cell.style.textAlign = 'center';
+            x2Cell.style.fontSize = '1.5rem';
+            row1.appendChild(x2Cell);
+            
+            table.appendChild(row1);
+            
+            // Create second data row
+            const row2 = document.createElement('tr');
+            
+            const constHeader2 = document.createElement('th');
+            constHeader2.textContent = '3';
+            constHeader2.style.height = '100px';
+            constHeader2.style.backgroundColor = '#f0f0f0';
+            constHeader2.style.border = '1px solid #ccc';
+            row2.appendChild(constHeader2);
+            
+            const x3Cell = document.createElement('td');
+            x3Cell.textContent = '3x';
+            x3Cell.style.backgroundColor = '#6bd42566';
+            x3Cell.style.border = '1px solid #ccc';
+            x3Cell.style.textAlign = 'center';
+            x3Cell.style.fontSize = '1.5rem';
+            row2.appendChild(x3Cell);
+            
+            const const6Cell = document.createElement('td');
+            const6Cell.textContent = '6';
+            const6Cell.style.backgroundColor = '#4e54c866';
+            const6Cell.style.border = '1px solid #ccc';
+            const6Cell.style.textAlign = 'center';
+            const6Cell.style.fontSize = '1.5rem';
+            row2.appendChild(const6Cell);
+            
+            table.appendChild(row2);
+            
+            container.appendChild(table);
+        }
+        
+        function initializeACMethodVisualization() {
+            updateACMethodExample();
+        }
+        
+        function updateACMethodExample() {
+            const b = parseInt(document.getElementById('ac-b-value').value);
+            const c = parseInt(document.getElementById('ac-c-value').value);
+            const display = document.getElementById('ac-trinomial-display');
+            const stepsDisplay = document.getElementById('ac-method-steps');
+            const resultDisplay = document.getElementById('ac-method-result');
+            
+            // Update the trinomial display
+            let trinomial = `x² ${b >= 0 ? '+' : ''} ${b}x ${c >= 0 ? '+' : ''} ${c}`;
+            display.textContent = trinomial;
+            
+            // Find the factors of c that add up to b
+            const factorPairs = findFactorPairs(c);
+            let factorsFound = false;
+            let p, q;
+            
+            for (const pair of factorPairs) {
+                if (pair[0] + pair[1] === b) {
+                    p = pair[0];
+                    q = pair[1];
+                    factorsFound = true;
+                    break;
+                }
+            }
+            
+            // Display the steps
+            let steps = `<strong>Step 1:</strong> Find two numbers that multiply to give c = ${c}<br>`;
+            steps += `The possible pairs are: `;
+            
+            factorPairs.forEach((pair, index) => {
+                steps += `${pair[0]} × ${pair[1]} = ${c}`;
+                if (index < factorPairs.length - 1) {
+                    steps += ` and `;
+                }
+            });
+            
+            steps += `<br><strong>Step 2:</strong> Check which pair adds up to b = ${b}<br>`;
+            
+            factorPairs.forEach(pair => {
+                steps += `${pair[0]} + ${pair[1]} = ${pair[0] + pair[1]}`;
+                if (pair[0] + pair[1] === b) {
+                    steps += ` (this works!)`;
+                } else {
+                    steps += ` (not what we want)`;
+                }
+                steps += `<br>`;
+            });
+            
+            stepsDisplay.innerHTML = steps;
+            
+            // Display the result
+            if (factorsFound) {
+                resultDisplay.innerHTML = `<strong>The factors are:</strong> (x ${p >= 0 ? '+' : ''} ${p})(x ${q >= 0 ? '+' : ''} ${q})`;
+            } else {
+                resultDisplay.innerHTML = `<strong>No integer factors found that add up to ${b}.</strong><br>This trinomial may not be easily factorizable with integers.`;
+            }
+        }
+        
+        function initializeGroupingMethodVisualization() {
+            updateGroupingExample();
+        }
+        
+        function updateGroupingExample() {
+            const a = parseInt(document.getElementById('grouping-a-value').value);
+            const b = parseInt(document.getElementById('grouping-b-value').value);
+            const c = parseInt(document.getElementById('grouping-c-value').value);
+            const display = document.getElementById('grouping-trinomial-display');
+            const stepsDisplay = document.getElementById('grouping-method-steps');
+            const resultDisplay = document.getElementById('grouping-method-result');
+            
+            // Update the trinomial display
+            let trinomial = "";
+            if (a === 1) {
+                trinomial += "x²";
+            } else {
+                trinomial += a + "x²";
+            }
+            
+            if (b >= 0) {
+                trinomial += " + " + b + "x";
+            } else {
+                trinomial += " - " + Math.abs(b) + "x";
+            }
+            
+            if (c >= 0) {
+                trinomial += " + " + c;
+            } else {
+                trinomial += " - " + Math.abs(c);
+            }
+            
+            display.textContent = trinomial;
+            
+            // Step 1: Multiply a × c
+            const ac = a * c;
+            let steps = `<strong>Step 1:</strong> Multiply a × c = ${a} × ${c} = ${ac}<br>`;
+            
+            // Step 2: Find two numbers that multiply to ac and add up to b
+            const factorPairs = findFactorPairs(ac);
+            let factorsFound = false;
+            let m, n;
+            
+            for (const pair of factorPairs) {
+                if (pair[0] + pair[1] === b) {
+                    m = pair[0];
+                    n = pair[1];
+                    factorsFound = true;
+                    break;
+                }
+            }
+            
+            steps += `<strong>Step 2:</strong> Find two numbers that multiply to ${ac} and add up to ${b}<br>`;
+            
+            if (factorsFound) {
+                steps += `The numbers are ${m} and ${n} (${m} × ${n} = ${ac} and ${m} + ${n} = ${b})<br>`;
+                
+                // Step 3: Split the middle term
+                steps += `<strong>Step 3:</strong> Split the middle term ${b}x into ${m}x + ${n}x<br>`;
+                steps += `Rewrite the trinomial as: ${a}x² + ${m}x + ${n}x + ${c}<br>`;
+                
+                // Step 4: Group terms
+                steps += `<strong>Step 4:</strong> Group terms and factor out common factors<br>`;
+                steps += `(${a}x² + ${m}x) + (${n}x + ${c})<br>`;
+                
+                // Find the greatest common factor (GCF) for each group
+                const gcf1 = gcd(a, m);
+                const gcf2 = gcd(n, c);
+                
+                if (gcf1 > 1 || gcf1 === 1) {
+                    steps += `${gcf1}x(${a/gcf1}x + ${m/gcf1}) + ${gcf2}(${n/gcf2}x + ${c/gcf2})<br>`;
+                }
+                
+                // Step 5: Factor out the common binomial
+                steps += `<strong>Step 5:</strong> Factor out the common binomial<br>`;
+                
+                // Check if the binomials are the same
+                if ((a/gcf1) === (n/gcf2) && (m/gcf1) === (c/gcf2)) {
+                    const factor1 = `(${a/gcf1}x + ${m/gcf1})`;
+                    const factor2 = `(${gcf1}x + ${gcf2})`;
+                    steps += `${factor1}(${gcf1}x + ${gcf2}) = ${factor1}${factor2}`;
+                    
+                    resultDisplay.innerHTML = `<strong>The factors are:</strong> ${factor1}${factor2}`;
+                } else {
+                    steps += `The binomials are not the same. This trinomial may be more complex to factor.`;
+                    resultDisplay.innerHTML = `<strong>This trinomial may not be easily factorizable with the grouping method.</strong>`;
+                }
+            } else {
+                steps += `No integer factors found that multiply to ${ac} and add up to ${b}.<br>`;
+                resultDisplay.innerHTML = `<strong>This trinomial may not be easily factorizable with the grouping method.</strong>`;
+            }
+            
+            stepsDisplay.innerHTML = steps;
+        }
+        
+        ///////////////////////////////
+        // Factoring Playground
+        ///////////////////////////////
+        
+        function initializePlayground() {
+            // Set up the factoring playground
+            updatePlaygroundTrinomial();
+            
+            // Initialize the factor multiplication visual
+            const container = document.getElementById('factor-multiplication-visual');
+            container.innerHTML = `
+                <div style="width: 100%; margin: 20px 0;">
+                    <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px;">
+                        <div style="padding: 10px 20px; background-color: #f0f0f0; border-radius: 10px; margin: 0 10px;">
+                            (x + 2)
+                        </div>
+                        <div style="font-size: 24px;">×</div>
+                        <div style="padding: 10px 20px; background-color: #f0f0f0; border-radius: 10px; margin: 0 10px;">
+                            (x + 3)
+                        </div>
+                        <div style="font-size: 24px;">=</div>
+                        <div style="padding: 10px 20px; background-color: #f0f0f0; border-radius: 10px; margin: 0 10px;">
+                            x² + 5x + 6
+                        </div>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ccc;">
+                        <tr>
+                            <th style="width: 20%; height: 40px; border: 1px solid #ccc;"></th>
+                            <th style="width: 40%; border: 1px solid #ccc; background-color: #f0f0f0;">x</th>
+                            <th style="width: 40%; border: 1px solid #ccc; background-color: #f0f0f0;">2</th>
+                        </tr>
+                        <tr>
+                            <th style="height: 100px; border: 1px solid #ccc; background-color: #f0f0f0;">x</th>
+                            <td style="border: 1px solid #ccc; text-align: center; font-size: 1.5rem; background-color: #ff8c4266;">x²</td>
+                            <td style="border: 1px solid #ccc; text-align: center; font-size: 1.5rem; background-color: #6bd42566;">2x</td>
+                        </tr>
+                        <tr>
+                            <th style="height: 100px; border: 1px solid #ccc; background-color: #f0f0f0;">3</th>
+                            <td style="border: 1px solid #ccc; text-align: center; font-size: 1.5rem; background-color: #6bd42566;">3x</td>
+                            <td style="border: 1px solid #ccc; text-align: center; font-size: 1.5rem; background-color: #4e54c866;">6</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+        }
+        
+        function updatePlaygroundTrinomial() {
+            const a = parseInt(document.getElementById('playground-a-value').value);
+            const b = parseInt(document.getElementById('playground-b-value').value);
+            const c = parseInt(document.getElementById('playground-c-value').value);
+            const display = document.getElementById('playground-trinomial-display');
+            const result = document.getElementById('playground-factoring-result');
+            
+            // Update the trinomial display
+            let trinomial = "";
+            if (a === 1) {
+                trinomial += "x²";
+            } else {
+                trinomial += a + "x²";
+            }
+            
+            if (b >= 0) {
+                trinomial += " + " + b + "x";
+            } else {
+                trinomial += " - " + Math.abs(b) + "x";
+            }
+            
+            if (c >= 0) {
+                trinomial += " + " + c;
+            } else {
+                trinomial += " - " + Math.abs(c);
+            }
+            
+            display.textContent = trinomial;
+            result.textContent = "Try factoring this trinomial or click 'Auto Factor'";
+        }
+        
+        function autoFactorPlaygroundTrinomial() {
+            const a = parseInt(document.getElementById('playground-a-value').value);
+            const b = parseInt(document.getElementById('playground-b-value').value);
+            const c = parseInt(document.getElementById('playground-c-value').value);
+            const result = document.getElementById('playground-factoring-result');
+            
+            // Try to factor the trinomial
+            const factors = factorTrinomial(a, b, c);
+            
+            if (factors) {
+                result.innerHTML = `<strong>The factors are:</strong> ${factors}`;
+                unlockAchievement('Factoring Success!', 'You\'ve successfully factored a trinomial!');
+            } else {
+                result.textContent = "This trinomial may not be easily factorizable with integer coefficients.";
+            }
+        }
+        
+        function multiplyFactors() {
+            const m1 = parseInt(document.getElementById('factor-1-m').value);
+            const c1 = parseInt(document.getElementById('factor-1-c').value);
+            const m2 = parseInt(document.getElementById('factor-2-m').value);
+            const c2 = parseInt(document.getElementById('factor-2-c').value);
+            
+            const display = document.getElementById('factors-display');
+            const result = document.getElementById('multiplication-result');
+            
+            // Display the factors
+            display.textContent = `(${m1 === 1 ? '' : m1}x ${c1 >= 0 ? '+' : ''} ${c1})(${m2 === 1 ? '' : m2}x ${c2 >= 0 ? '+' : ''} ${c2})`;
+            
+            // Multiply the factors
+            const a = m1 * m2;  // Coefficient of x²
+            const b = m1 * c2 + m2 * c1;  // Coefficient of x
+            const c = c1 * c2;  // Constant term
+            
+            // Display the result
+            let trinomial = "";
+            if (a === 1) {
+                trinomial += "x²";
+            } else {
+                trinomial += a + "x²";
+            }
+            
+            if (b !== 0) {
+                trinomial += b > 0 ? " + " : " - ";
+                if (Math.abs(b) === 1) {
+                    trinomial += "x";
+                } else {
+                    trinomial += Math.abs(b) + "x";
+                }
+            }
+            
+            if (c !== 0) {
+                trinomial += c > 0 ? " + " : " - ";
+                trinomial += Math.abs(c);
+            }
+            
+            result.textContent = `Multiplying these factors gives: ${trinomial}`;
+            
+            // Update the visualization
+            updateFactorMultiplicationVisual(m1, c1, m2, c2, a, b, c);
+        }
+        
+        function updateFactorMultiplicationVisual(m1, c1, m2, c2, a, b, c) {
+            const container = document.getElementById('factor-multiplication-visual');
+            
+            container.innerHTML = `
+                <div style="width: 100%; margin: 20px 0;">
+                    <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 20px;">
+                        <div style="padding: 10px 20px; background-color: #f0f0f0; border-radius: 10px; margin: 0 10px;">
+                            (${m1 === 1 ? '' : m1}x ${c1 >= 0 ? '+' : ''} ${c1})
+                        </div>
+                        <div style="font-size: 24px;">×</div>
+                        <div style="padding: 10px 20px; background-color: #f0f0f0; border-radius: 10px; margin: 0 10px;">
+                            (${m2 === 1 ? '' : m2}x ${c2 >= 0 ? '+' : ''} ${c2})
+                        </div>
+                        <div style="font-size: 24px;">=</div>
+                        <div style="padding: 10px 20px; background-color: #f0f0f0; border-radius: 10px; margin: 0 10px;">
+                            ${a === 1 ? '' : a}x² ${b >= 0 ? '+' : ''} ${b}x ${c >= 0 ? '+' : ''} ${c}
+                        </div>
+                    </div>
+                    <table style="width: 100%; border-collapse: collapse; border: 1px solid #ccc;">
+                        <tr>
+                            <th style="width: 20%; height: 40px; border: 1px solid #ccc;"></th>
+                            <th style="width: 40%; border: 1px solid #ccc; background-color: #f0f0f0;">${m1 === 1 ? '' : m1}x</th>
+                            <th style="width: 40%; border: 1px solid #ccc; background-color: #f0f0f0;">${c1}</th>
+                        </tr>
+                        <tr>
+                            <th style="height: 100px; border: 1px solid #ccc; background-color: #f0f0f0;">${m2 === 1 ? '' : m2}x</th>
+                            <td style="border: 1px solid #ccc; text-align: center; font-size: 1.5rem; background-color: #ff8c4266;">${a === 1 ? '' : a}x²</td>
+                            <td style="border: 1px solid #ccc; text-align: center; font-size: 1.5rem; background-color: #6bd42566;">${m2 * c1}x</td>
+                        </tr>
+                        <tr>
+                            <th style="height: 100px; border: 1px solid #ccc; background-color: #f0f0f0;">${c2}</th>
+                            <td style="border: 1px solid #ccc; text-align: center; font-size: 1.5rem; background-color: #6bd42566;">${m1 * c2}x</td>
+                            <td style="border: 1px solid #ccc; text-align: center; font-size: 1.5rem; background-color: #4e54c866;">${c}</td>
+                        </tr>
+                    </table>
+                </div>
+            `;
+        }
+        
+        ///////////////////////////////
+        // Advanced Challenges
+        ///////////////////////////////
+        
+        function checkPerfectSquareAnswer() {
+            const userAnswer = document.getElementById('perfect-square-answer').value.trim();
+            const feedback = document.getElementById('perfect-square-feedback');
+            
+            // Correct answer is (2x+3)²
+            const correctAnswers = ['(2x+3)²', '(2x+3)^2', '(2x+3)(2x+3)'];
+            
+            if (correctAnswers.includes(userAnswer)) {
+                feedback.innerHTML = '<span style="color: green;">Correct! 4x² + 12x + 9 is indeed (2x+3)²</span>';
+                unlockAchievement('Perfect Square Master', 'You\'ve mastered perfect square trinomials!');
+            } else {
+                feedback.innerHTML = '<span style="color: red;">Not quite. Try again! Hint: This is a perfect square trinomial.</span>';
+            }
+        }
+        
+        function checkComplexAnswer() {
+            const userAnswer = document.getElementById('complex-answer').value.trim();
+            const feedback = document.getElementById('complex-feedback');
+            
+            // Correct answer is (2x+3)(3x+4)
+            const correctAnswers = ['(2x+3)(3x+4)', '(3x+4)(2x+3)'];
+            
+            if (correctAnswers.includes(userAnswer)) {
+                feedback.innerHTML = '<span style="color: green;">Correct! 6x² + 17x + 12 = (2x+3)(3x+4)</span>';
+                unlockAchievement('Complex Factoring Master', 'You\'ve mastered complex trinomial factoring!');
+            } else {
+                feedback.innerHTML = '<span style="color: red;">Not quite. Try again!</span>';
+            }
+        }
+        
+        function calculateAdvancedTrinomial() {
+            const factor1 = document.getElementById('adv-factor-1').value.trim();
+            const factor2 = document.getElementById('adv-factor-2').value.trim();
+            const result = document.getElementById('advanced-result');
+            
+            try {
+                // Extract coefficients and constants from the factors
+                // Assuming factors are in the form "ax+b"
+                const regex1 = /(\d*)x\s*([+-])\s*(\d+)/;
+                const regex2 = /(\d*)x\s*([+-])\s*(\d+)/;
+                
+                const match1 = factor1.match(regex1);
+                const match2 = factor2.match(regex2);
+                
+                if (match1 && match2) {
+                    const a1 = match1[1] === '' ? 1 : parseInt(match1[1]);
+                    const sign1 = match1[2] === '+' ? 1 : -1;
+                    const b1 = parseInt(match1[3]) * sign1;
+                    
+                    const a2 = match2[1] === '' ? 1 : parseInt(match2[1]);
+                    const sign2 = match2[2] === '+' ? 1 : -1;
+                    const b2 = parseInt(match2[3]) * sign2;
+                    
+                    // Multiply the factors
+                    const a = a1 * a2;  // Coefficient of x²
+                    const b = a1 * b2 + a2 * b1;  // Coefficient of x
+                    const c = b1 * b2;  // Constant term
+                    
+                    // Display the result
+                    let trinomial = "";
+                    if (a === 1) {
+                        trinomial += "x²";
+                    } else {
+                        trinomial += a + "x²";
+                    }
+                    
+                    if (b !== 0) {
+                        trinomial += b > 0 ? " + " : " - ";
+                        if (Math.abs(b) === 1) {
+                            trinomial += "x";
+                        } else {
+                            trinomial += Math.abs(b) + "x";
+                        }
+                    }
+                    
+                    if (c !== 0) {
+                        trinomial += c > 0 ? " + " : " - ";
+                        trinomial += Math.abs(c);
+                    }
+                    
+                    result.innerHTML = `<strong>Your factors ${factor1} and ${factor2} multiply to give:</strong><br>${trinomial}`;
+                } else {
+                    result.textContent = "Please enter factors in the form 'ax+b', e.g. '2x+3'";
+                }
+            } catch (error) {
+                result.textContent = "Error in calculation. Please check your input.";
+            }
+        }
+        
+        ///////////////////////////////
+        // Quiz Functions
+        ///////////////////////////////
+        
+        function setupQuizzes() {
+            // Add event listeners to quiz options
+            document.querySelectorAll('.quiz-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    // Unselect all other options in the same quiz
+                    const name = this.querySelector('input').name;
+                    document.querySelectorAll(`input[name="${name}"]`).forEach(input => {
+                        input.checked = false;
+                        input.parentElement.classList.remove('selected');
+                    });
+                    
+                    // Select this option
+                    this.querySelector('input').checked = true;
+                    this.classList.add('selected');
+                });
+            });
+        }
+        
+        function checkQuizAnswer(event) {
+            const button = event.target;
+            const quizContainer = button.closest('.quiz-container');
+            const feedbackElement = quizContainer.querySelector('.quiz-feedback');
+            const selectedOption = quizContainer.querySelector('.quiz-option.selected');
+            
+            if (!selectedOption) {
+                feedbackElement.innerHTML = '<span style="color: orange;">Please select an answer!</span>';
+                return;
+            }
+            
+            const userAnswer = selectedOption.getAttribute('data-answer');
+            const correctAnswer = getCorrectAnswer(button.id);
+            
+            if (userAnswer === correctAnswer) {
+                feedbackElement.innerHTML = '<span style="color: green;">Correct! Great job!</span>';
+                unlockAchievement('Quiz Master', 'You\'ve answered a quiz correctly!');
+                
+                // Store the result
+                state.quizResults[button.id] = true;
+                
+                // Check if all quizzes in this section are correct
+                const sectionQuizButtons = document.querySelectorAll('.section.active-section .check-quiz-btn');
+                let allCorrect = true;
+                
+                sectionQuizButtons.forEach(btn => {
+                    if (!state.quizResults[btn.id]) {
+                        allCorrect = false;
+                    }
+                });
+                
+                if (allCorrect && sectionQuizButtons.length > 0) {
+                    unlockAchievement('Section Mastery', 'You\'ve mastered all questions in this section!');
+                }
+            } else {
+                feedbackElement.innerHTML = '<span style="color: red;">Not quite right. Try again!</span>';
+            }
+        }
+        
+        function getCorrectAnswer(buttonId) {
+            // Return the correct answer based on the button ID
+            switch (buttonId) {
+                case 'check-poly-quiz':
+                    return 'trinomial';
+                case 'check-trinom-quiz':
+                    return '-7';
+                case 'check-factor-quiz':
+                    return '(x+3)(x+4)';
+                case 'check-ac-quiz':
+                    return '(x+3)(x-4)';
+                case 'check-grouping-quiz':
+                    return '(3x+2)(x+4)';
+                case 'check-adv-quiz':
+                    return 'x²+6x+9';
+                default:
+                    return '';
+            }
+        }
+        
+        function checkFinalQuiz() {
+            const feedback = document.getElementById('final-quiz-feedback');
+            const answers = {
+                'final-q1': 'trinomial',
+                'final-q2': '-5',
+                'final-q3': '(x+2)(x+5)',
+                'final-q4': '(2x+1)(x+3)',
+                'final-q5': '(x+3)²'
+            };
+            
+            let correctCount = 0;
+            let totalQuestions = Object.keys(answers).length;
+            
+            // Check each question
+            for (const [questionName, correctAnswer] of Object.entries(answers)) {
+                const selectedOption = document.querySelector(`input[name="${questionName}"]:checked`);
+                
+                if (selectedOption) {
+                    const userAnswer = selectedOption.parentElement.getAttribute('data-answer');
+                    
+                    if (userAnswer === correctAnswer) {
+                        correctCount++;
+                    }
+                }
+            }
+            
+            // Display results
+            const percentage = (correctCount / totalQuestions) * 100;
+            
+            if (percentage >= 80) {
+                feedback.innerHTML = `<span style="color: green;">Congratulations! You got ${correctCount} out of ${totalQuestions} correct (${percentage}%)!</span>`;
+                document.getElementById('certificate-section').style.display = 'block';
+                
+                // Set the date on the certificate
+                const dateElement = document.getElementById('certificate-date');
+                const today = new Date();
+                dateElement.textContent = today.toLocaleDateString();
+                
+                unlockAchievement('Trinomial Master', 'You\'ve completed the final quiz and earned your certificate!');
+                createConfetti();
+            } else if (percentage >= 60) {
+                feedback.innerHTML = `<span style="color: orange;">Good job! You got ${correctCount} out of ${totalQuestions} correct (${percentage}%). Try again for a better score!</span>`;
+            } else {
+                feedback.innerHTML = `<span style="color: red;">You got ${correctCount} out of ${totalQuestions} correct (${percentage}%). Review the sections and try again!</span>`;
+            }
+        }
+        
+        function updateCertificate() {
+            const name = document.getElementById('certificate-name').value.trim();
+            
+            if (name) {
+                document.getElementById('student-name').textContent = name;
+                document.getElementById('customize-form').style.display = 'none';
+                unlockAchievement('Personalized Certificate', 'You\'ve personalized your certificate!');
+            }
+        }
+        
+        ///////////////////////////////
+        // Advanced Parameters
+        ///////////////////////////////
+        
+        function initializeAdvancedParameters() {
+            // Initialize parameter preview
+            updateAdvancedParametersPreview();
+        }
+        
+        function applyAdvancedParameters() {
+            state.parameters.difficulty = parseInt(document.getElementById('difficulty-level').value);
+            state.parameters.visualizationStyle = document.getElementById('visualization-style').value;
+            state.parameters.notationStyle = document.getElementById('notation-style').value;
+            state.parameters.variableName = document.getElementById('variable-name').value;
+            
+            // Update UI elements
+            updateAdvancedParametersPreview();
+            
+            // Apply to all visualizations
+            updateAllVisualizations();
+            
+            unlockAchievement('Parameter Tweaker', 'You\'ve customized the learning parameters!');
+        }
+        
+        function resetAdvancedParameters() {
+            document.getElementById('difficulty-level').value = '2';
+            document.getElementById('visualization-style').value = 'algebra';
+            document.getElementById('animation-speed').value = '5';
+            document.getElementById('speed-value').textContent = '5';
+            document.getElementById('character-visibility').value = '10';
+            document.getElementById('visibility-value').textContent = '10';
+            document.getElementById('notation-style').value = 'standard';
+            document.getElementById('variable-name').value = 'x';
+            
+            state.parameters.difficulty = 2;
+            state.parameters.visualizationStyle = 'algebra';
+            state.parameters.animationSpeed = 5;
+            state.parameters.characterVisibility = 10;
+            state.parameters.notationStyle = 'standard';
+            state.parameters.variableName = 'x';
+            
+            // Update UI elements
+            updateAdvancedParametersPreview();
+            updateCharacterVisibility();
+            
+            // Apply to all visualizations
+            updateAllVisualizations();
+        }
+        
+        function updateAdvancedParametersPreview() {
+            const preview = document.getElementById('advanced-polynomial-preview');
+            
+            // Create a preview based on the current parameters
+            let variable = state.parameters.variableName;
+            
+            let trinomial = "";
+            if (state.parameters.notationStyle === 'standard') {
+                trinomial = `${variable}² + 5${variable} + 6`;
+            } else if (state.parameters.notationStyle === 'expanded') {
+                trinomial = `1${variable}² + 5${variable} + 6`;
+            } else if (state.parameters.notationStyle === 'descriptive') {
+                trinomial = `Term A + Term B + Term C`;
+            }
+            
+            preview.textContent = trinomial;
+            
+            // Update visualization preview based on style
+            const visualPreview = document.getElementById('advanced-visualization-preview');
+            
+            if (state.parameters.visualizationStyle === 'area') {
+                visualPreview.innerHTML = `
+                    <div style="margin: 20px auto; width: 300px; height: 300px; border: 1px solid #ccc; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;">
+                        <div style="background-color: #ff8c4266; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; border: 1px solid #ccc;">
+                            ${variable}²
+                        </div>
+                        <div style="background-color: #6bd42566; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; border: 1px solid #ccc;">
+                            2${variable}
+                        </div>
+                        <div style="background-color: #6bd42566; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; border: 1px solid #ccc;">
+                            3${variable}
+                        </div>
+                        <div style="background-color: #4e54c866; display: flex; justify-content: center; align-items: center; font-size: 1.5rem; border: 1px solid #ccc;">
+                            6
+                        </div>
+                    </div>
+                `;
+            } else if (state.parameters.visualizationStyle === 'algebra') {
+                visualPreview.innerHTML = `
+                    <div style="margin: 20px auto; width: 300px; text-align: center;">
+                        <p>${variable}² + 5${variable} + 6 = (${variable} + 2)(${variable} + 3)</p>
+                        <p>(${variable} + 2)(${variable} + 3) = ${variable}² + 3${variable} + 2${variable} + 6 = ${variable}² + 5${variable} + 6</p>
+                    </div>
+                `;
+            } else if (state.parameters.visualizationStyle === 'tiles') {
+                visualPreview.innerHTML = `
+                    <div style="margin: 20px auto; width: 300px; text-align: center;">
+                        <div style="display: flex; justify-content: center; margin-bottom: 10px;">
+                            <div style="width: 50px; height: 50px; background-color: #ff8c42; margin: 5px; display: flex; justify-content: center; align-items: center;">${variable}²</div>
+                            <div style="width: 50px; height: 25px; background-color: #6bd425; margin: 5px; display: flex; justify-content: center; align-items: center;">${variable}</div>
+                            <div style="width: 50px; height: 25px; background-color: #6bd425; margin: 5px; display: flex; justify-content: center; align-items: center;">${variable}</div>
+                            <div style="width: 25px; height: 25px; background-color: #4e54c8; margin: 5px; display: flex; justify-content: center; align-items: center;">1</div>
+                            <div style="width: 25px; height: 25px; background-color: #4e54c8; margin: 5px; display: flex; justify-content: center; align-items: center;">1</div>
+                            <div style="width: 25px; height: 25px; background-color: #4e54c8; margin: 5px; display: flex; justify-content: center; align-items: center;">1</div>
+                        </div>
+                        <p>${variable}² + 5${variable} + 6</p>
+                    </div>
+                `;
+            } else if (state.parameters.visualizationStyle === 'number-line') {
+                visualPreview.innerHTML = `
+                    <div style="margin: 20px auto; width: 300px; text-align: center;">
+                        <svg width="300" height="100" viewBox="0 0 300 100">
+                            <line x1="30" y1="50" x2="270" y2="50" stroke="#2c3e50" stroke-width="2" />
+                            
+                            <line x1="50" y1="45" x2="50" y2="55" stroke="#2c3e50" stroke-width="2" />
+                            <text x="50" y="70" text-anchor="middle" fill="#2c3e50">-3</text>
+                            <circle cx="50" cy="30" r="5" fill="#ff8c42" />
+                            
+                            <line x1="100" y1="45" x2="100" y2="55" stroke="#2c3e50" stroke-width="2" />
+                            <text x="100" y="70" text-anchor="middle" fill="#2c3e50">-2</text>
+                            <circle cx="100" cy="30" r="5" fill="#ff8c42" />
+                            
+                            <line x1="150" y1="45" x2="150" y2="55" stroke="#2c3e50" stroke-width="2" />
+                            <text x="150" y="70" text-anchor="middle" fill="#2c3e50">0</text>
+                            
+                            <line x1="200" y1="45" x2="200" y2="55" stroke="#2c3e50" stroke-width="2" />
+                            <text x="200" y="70" text-anchor="middle" fill="#2c3e50">2</text>
+                            
+                            <line x1="250" y1="45" x2="250" y2="55" stroke="#2c3e50" stroke-width="2" />
+                            <text x="250" y="70" text-anchor="middle" fill="#2c3e50">3</text>
+                            
+                            <text x="150" y="25" text-anchor="middle" fill="#2c3e50">Roots: -2 and -3</text>
+                        </svg>
+                        <p>(${variable} + 2)(${variable} + 3) = 0 when ${variable} = -2 or ${variable} = -3</p>
+                    </div>
+                `;
+            }
+        }
+        
+        function updateAllVisualizations() {
+            // Update all visualizations based on the current parameters
+            // This is a placeholder for a more complex implementation
+            console.log("Updating all visualizations with parameters:", state.parameters);
+        }
+        
+        ///////////////////////////////
+        // Conclusion Functions
+        ///////////////////////////////
+        
+        function startOver() {
+            // Reset to the beginning
+            state.sections[state.currentSection].classList.remove('active-section');
+            state.currentSection = 0;
+            state.sections[state.currentSection].classList.add('active-section');
+            
+            // Reset progress
+            updateProgress();
+            
+            // Update UI
+            updateUI();
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+        
+        function viewCertificate() {
+            // Navigate to certificate section
+            state.sections[state.currentSection].classList.remove('active-section');
+            state.currentSection = state.sections.length - 2;  // Final quiz section
+            state.sections[state.currentSection].classList.add('active-section');
+            
+            // Show certificate
+            document.getElementById('certificate-section').style.display = 'block';
+            
+            // Update progress
+            updateProgress();
+            
+            // Update UI
+            updateUI();
+            
+            // Scroll to certificate
+            document.getElementById('certificate-section').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        ///////////////////////////////
+        // Helper Functions
+        ///////////////////////////////
+        
+        function findFactorPairs(n) {
+            const factors = [];
+            const absN = Math.abs(n);
+            
+            for (let i = 1; i <= Math.sqrt(absN); i++) {
+                if (absN % i === 0) {
+                    if (n > 0) {
+                        factors.push([i, absN / i]);
+                        if (i !== absN / i) {
+                            factors.push([absN / i, i]);
+                        }
+                    } else {
+                        factors.push([-i, -absN / i]);
+                        factors.push([i, -absN / i]);
+                        if (i !== absN / i) {
+                            factors.push([-absN / i, -i]);
+                            factors.push([absN / i, -i]);
+                        }
+                    }
+                }
+            }
+            
+            return factors;
+        }
+        
+        function gcd(a, b) {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            if (b > a) {
+                [a, b] = [b, a];
+            }
+            while (b) {
+                [a, b] = [b, a % b];
+            }
+            return a;
+        }
+        
+        function factorTrinomial(a, b, c) {
+            // Special case: a = 1
+            if (a === 1) {
+                // Find two numbers that multiply to c and add up to b
+                const factorPairs = findFactorPairs(c);
+                
+                for (const pair of factorPairs) {
+                    if (pair[0] + pair[1] === b) {
+                        return `(x ${pair[0] >= 0 ? '+' : ''} ${pair[0]})(x ${pair[1] >= 0 ? '+' : ''} ${pair[1]})`;
+                    }
+                }
+            } else {
+                // General case: try factoring by grouping
+                const ac = a * c;
+                const factorPairs = findFactorPairs(ac);
+                
+                for (const pair of factorPairs) {
+                    if (pair[0] + pair[1] === b) {
+                        // Split the middle term
+                        const m = pair[0];
+                        const n = pair[1];
+                        
+                        // Check if we can factor by grouping
+                        const gcf1 = gcd(a, m);
+                        const gcf2 = gcd(n, c);
+                        
+                        const a1 = a / gcf1;
+                        const m1 = m / gcf1;
+                        const n1 = n / gcf2;
+                        const c1 = c / gcf2;
+                        
+                        if (a1 === n1 && m1 === c1) {
+                            return `(${a1}x ${m1 >= 0 ? '+' : ''} ${m1})(${gcf1}x ${gcf2 >= 0 ? '+' : ''} ${gcf2})`;
+                        }
+                    }
+                }
+            }
+            
+            // Perfect square check
+            if (b * b === 4 * a * c) {
+                const sqrt_a = Math.sqrt(a);
+                const sqrt_c = Math.sqrt(c);
+                
+                if (Number.isInteger(sqrt_a) && Number.isInteger(sqrt_c) && b === 2 * sqrt_a * sqrt_c) {
+                    return `(${sqrt_a}x ${sqrt_c >= 0 ? '+' : ''} ${sqrt_c})²`;
+                }
+                
+                if (Number.isInteger(sqrt_a) && Number.isInteger(sqrt_c) && b === -2 * sqrt_a * sqrt_c) {
+                    return `(${sqrt_a}x ${-sqrt_c >= 0 ? '+' : ''} ${-sqrt_c})²`;
+                }
+            }
+            
+            // Difference of squares check
+            if (b === 0 && c < 0) {
+                const sqrt_a = Math.sqrt(a);
+                const sqrt_neg_c = Math.sqrt(-c);
+                
+                if (Number.isInteger(sqrt_a) && Number.isInteger(sqrt_neg_c)) {
+                    return `(${sqrt_a}x + ${sqrt_neg_c})(${sqrt_a}x - ${sqrt_neg_c})`;
+                }
+            }
+            
+            // No factors found
+            return null;
+        }
+    </script>
+</body>
+</html>

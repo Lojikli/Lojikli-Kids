@@ -427,6 +427,80 @@
             z-index: 100;
         }
         
+        /* Mobile Controls */
+        .mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            z-index: 50;
+        }
+        
+        .mobile-control-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: rgba(58, 103, 204, 0.8);
+            color: white;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .mobile-control-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .mobile-direction-pad {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+        
+        .dir-btn {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            background-color: rgba(58, 103, 204, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            border: none;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        
+        .dir-up {
+            top: 0;
+            left: 40px;
+        }
+        
+        .dir-right {
+            top: 40px;
+            right: 0;
+        }
+        
+        .dir-down {
+            bottom: 0;
+            left: 40px;
+        }
+        
+        .dir-left {
+            top: 40px;
+            left: 0;
+        }
+        
         .settings-panel {
             position: fixed;
             top: 0;
@@ -691,7 +765,8 @@
                 <div class="age-option" data-age="8">8-10 Years</div>
                 <div class="age-option" data-age="11">11+ Years</div>
             </div>
-            <p>Click the buttons above to start your journey, or just hit the "Learn" button to begin your adventure!</p>
+            <p style="margin-top: 15px; color: #a3e4ff;">📱 <strong>Mobile Users:</strong> Touch controls are available during gameplay!</p>
+            <p>Click the buttons above to start your journey, or just hit the "Let's Start!" button to begin your adventure!</p>
             <div class="nav-buttons">
                 <button class="nav-button" id="start-btn">Let's Start!</button>
             </div>
@@ -708,9 +783,9 @@
                     <div class="slider-container">
                         <div class="slider-label">
                             <span>Planet Mass</span>
-                            <span id="planet-mass-value">1000</span>
+                            <span id="planet-mass-value">500</span>
                         </div>
-                        <input type="range" min="100" max="5000" value="1000" class="slider" id="planet-mass">
+                        <input type="range" min="100" max="5000" value="500" class="slider" id="planet-mass">
                     </div>
                     <div class="slider-container">
                         <div class="slider-label">
@@ -726,16 +801,16 @@
                     <div class="slider-container">
                         <div class="slider-label">
                             <span>Gravity Strength</span>
-                            <span id="gravity-strength-value">1.0</span>
+                            <span id="gravity-strength-value">0.5</span>
                         </div>
-                        <input type="range" min="0.1" max="5" value="1.0" step="0.1" class="slider" id="gravity-strength">
+                        <input type="range" min="0.1" max="5" value="0.5" step="0.1" class="slider" id="gravity-strength">
                     </div>
                     <div class="slider-container">
                         <div class="slider-label">
                             <span>Time Speed</span>
-                            <span id="time-speed-value">1.0</span>
+                            <span id="time-speed-value">0.8</span>
                         </div>
-                        <input type="range" min="0.1" max="5" value="1.0" step="0.1" class="slider" id="time-speed">
+                        <input type="range" min="0.1" max="5" value="0.8" step="0.1" class="slider" id="time-speed">
                     </div>
                 </div>
                 
@@ -757,6 +832,18 @@
                     </div>
                     <button class="nav-button" id="launch-btn">Launch Object!</button>
                 </div>
+            </div>
+            
+            <!-- Mobile Controls -->
+            <div class="mobile-controls" id="mobile-controls">
+                <button class="mobile-control-btn" id="mobile-launch-btn">🚀</button>
+                <div class="mobile-direction-pad">
+                    <button class="dir-btn dir-up" id="dir-up">↑</button>
+                    <button class="dir-btn dir-right" id="dir-right">→</button>
+                    <button class="dir-btn dir-down" id="dir-down">↓</button>
+                    <button class="dir-btn dir-left" id="dir-left">←</button>
+                </div>
+                <button class="mobile-control-btn" id="mobile-reset-btn">↻</button>
             </div>
             
             <div class="info-panel">
@@ -1458,8 +1545,14 @@
                 document.getElementById('quiz-btn').addEventListener('click', () => this.showScreen('quiz'));
                 document.getElementById('achieve-btn').addEventListener('click', () => this.showScreen('achieve'));
                 
-                // Start button
-                document.getElementById('start-btn').addEventListener('click', () => this.showScreen('learn'));
+                // Start button - fix focus issue
+                document.getElementById('start-btn').addEventListener('click', () => {
+                    this.showScreen('learn');
+                    // Remove focus from button to prevent space key re-activation
+                    document.getElementById('start-btn').blur();
+                    // Move focus to the module container for better keyboard navigation
+                    document.getElementById(`${this.gameState.currentModule}-module`).focus();
+                });
                 
                 // Settings button
                 document.getElementById('settings-button').addEventListener('click', () => this.toggleSettings());
@@ -1564,6 +1657,11 @@
                     this.applySettings();
                 });
                 
+                // Make all modules and containers focusable for better keyboard navigation
+                document.querySelectorAll('.module-container, .screen').forEach(element => {
+                    element.setAttribute('tabindex', '-1'); // Make focusable but not in tab order
+                });
+                
                 // Reset progress button
                 document.getElementById('reset-progress').addEventListener('click', () => this.resetProgress());
                 
@@ -1617,6 +1715,59 @@
                         });
                     }
                 });
+                
+                // Mobile controls event handlers
+                const mobileControls = document.getElementById('mobile-controls');
+                if (mobileControls) {
+                    // Mobile launch button
+                    document.getElementById('mobile-launch-btn')?.addEventListener('click', () => {
+                        if (this.p5Instance && typeof this.p5Instance.launchObject === 'function') {
+                            this.p5Instance.launchObject();
+                            this.gameState.launchCount++;
+                            
+                            // Check for achievement
+                            if (this.gameState.launchCount === 1) {
+                                this.unlockAchievement('first-launch');
+                            }
+                        }
+                    });
+                    
+                    // Mobile reset button
+                    document.getElementById('mobile-reset-btn')?.addEventListener('click', () => {
+                        if (this.p5Instance) {
+                            this.setupSandboxSimulation();
+                        }
+                    });
+                    
+                    // Direction buttons for aiming
+                    let aimX = 0;
+                    let aimY = 0;
+                    const aimSpeed = 5;
+                    
+                    document.getElementById('dir-up')?.addEventListener('click', () => {
+                        if (this.p5Instance && typeof this.p5Instance.moveAim === 'function') {
+                            this.p5Instance.moveAim(0, -aimSpeed);
+                        }
+                    });
+                    
+                    document.getElementById('dir-right')?.addEventListener('click', () => {
+                        if (this.p5Instance && typeof this.p5Instance.moveAim === 'function') {
+                            this.p5Instance.moveAim(aimSpeed, 0);
+                        }
+                    });
+                    
+                    document.getElementById('dir-down')?.addEventListener('click', () => {
+                        if (this.p5Instance && typeof this.p5Instance.moveAim === 'function') {
+                            this.p5Instance.moveAim(0, aimSpeed);
+                        }
+                    });
+                    
+                    document.getElementById('dir-left')?.addEventListener('click', () => {
+                        if (this.p5Instance && typeof this.p5Instance.moveAim === 'function') {
+                            this.p5Instance.moveAim(-aimSpeed, 0);
+                        }
+                    });
+                }
             }
             
             initializeCharacters() {
@@ -2131,8 +2282,8 @@
                 const question = this.gameState.currentQuizQuestions[index];
                 const quizContainer = document.getElementById('main-quiz-container');
                 
-// Clear container
-quizContainer.innerHTML = '';
+                // Clear container
+                quizContainer.innerHTML = '';
                 
                 // Create question element
                 const questionElement = document.createElement('div');
@@ -2327,11 +2478,11 @@ quizContainer.innerHTML = '';
                 
                 // Define sketch
                 const sketch = (p) => {
-                    // Simulation parameters
-                    let planetMass = 1000;
+                    // Simulation parameters - reduced gravity for 5-year-olds
+                    let planetMass = 500;  // Reduced from 1000
                     let planetSize = 30;
-                    let gravityStrength = 1.0;
-                    let timeSpeed = 1.0;
+                    let gravityStrength = 0.5;  // Reduced from 1.0 for easier gameplay
+                    let timeSpeed = 0.8;  // Slightly slower for better visibility
                     let launchSpeed = 5;
                     let objectMass = 10;
                     let showVectors = true;
@@ -2553,30 +2704,54 @@ quizContainer.innerHTML = '';
                     function drawLaunchPreview() {
                         p.push();
                         
-                        // Get mouse position
-                        const mousePos = p.createVector(p.mouseX, p.mouseY);
+                        // Launch aim position (default to mouse, can be overridden by mobile controls)
+                        const aimPos = p.aimPos || p.createVector(p.mouseX, p.mouseY);
                         
                         // Draw launch direction line
                         p.stroke(255, 255, 255, 100);
                         p.strokeWeight(1);
-                        p.line(p.width / 2, p.height - 20, mousePos.x, mousePos.y);
+                        p.line(p.width / 2, p.height - 20, aimPos.x, aimPos.y);
                         
                         // Draw launch point
                         p.noStroke();
                         p.fill(255);
                         p.ellipse(p.width / 2, p.height - 20, 10, 10);
                         
+                        // Draw aim target for better visibility especially on mobile
+                        p.noFill();
+                        p.stroke(255, 100, 100);
+                        p.strokeWeight(2);
+                        p.ellipse(aimPos.x, aimPos.y, 20, 20);
+                        p.line(aimPos.x - 10, aimPos.y, aimPos.x + 10, aimPos.y);
+                        p.line(aimPos.x, aimPos.y - 10, aimPos.x, aimPos.y + 10);
+                        
                         p.pop();
                     }
                     
+                    // Initialize aim position for mobile controls
+                    p.aimPos = p.createVector(p.width / 2, p.height / 2);
+                    
+                    // Mobile control to move aim target
+                    p.moveAim = function(x, y) {
+                        if (!p.aimPos) {
+                            p.aimPos = p.createVector(p.width / 2, p.height / 2);
+                        }
+                        p.aimPos.x += x;
+                        p.aimPos.y += y;
+                        
+                        // Keep within canvas bounds
+                        p.aimPos.x = p.constrain(p.aimPos.x, 0, p.width);
+                        p.aimPos.y = p.constrain(p.aimPos.y, 0, p.height);
+                    };
+                    
                     // Public functions for external control
                     p.launchObject = function() {
-                        // Create launch vector based on mouse position
-                        const mousePos = p.createVector(p.mouseX, p.mouseY);
+                        // Create launch vector based on aim position (mouse or mobile controls)
+                        const aimPos = p.aimPos || p.createVector(p.mouseX, p.mouseY);
                         const launchPos = p.createVector(p.width / 2, p.height - 20);
                         
                         // Calculate direction and normalize
-                        const launchDir = p5.Vector.sub(mousePos, launchPos);
+                        const launchDir = p5.Vector.sub(aimPos, launchPos);
                         launchDir.normalize();
                         
                         // Scale by launch speed
@@ -2826,8 +3001,8 @@ quizContainer.innerHTML = '';
                         if (obj.y + obj.radius < groundY) {
                             allLanded = false;
                             
-                            // Apply gravity
-                            const gravity = 0.2;
+                            // Apply gravity - reduced for 5-year-olds
+                            const gravity = 0.15;  // Reduced from 0.2
                             obj.vy += gravity;
                             
                             // Apply air resistance if not in vacuum

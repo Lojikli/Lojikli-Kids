@@ -837,7 +837,7 @@
     <div class="container">
         <div class="age-toggle">
             <button class="age-toggle-btn" data-age="2">Perfect for 2-year-olds</button>
-            <button class="age-toggle-btn active" data-age="5">Perfectfor 5-year-olds</button>
+            <button class="age-toggle-btn active" data-age="5">Perfect for 5-year-olds</button>
         </div>
 
         <div class="search-container">
@@ -965,24 +965,47 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Repository information - customize these variables
+            const githubUsername = 'Lojikli';  // Change to your GitHub username
+            const repoName = 'Lojikli-Kids';   // Change to your repository name
+            const basePath = '';               // Optional: subfolder within repo if needed
+            
             // Main repository URL
-            const baseRepoUrl = 'https://api.github.com/repos/Lojikli/Lojikli-Kids/contents';
+            const baseRepoUrl = `https://api.github.com/repos/${githubUsername}/${repoName}/contents`;
+            const baseContentUrl = `https://${githubUsername}.github.io/${repoName}`;
+            
+            // DOM elements
             const searchBox = document.getElementById('searchBox');
             const ageToggleBtns = document.querySelectorAll('.age-toggle-btn');
             const backToTopBtn = document.getElementById('backToTop');
             
             // Game containers
-            const mathGamesContainer = document.querySelector('.math-games');
-            const scienceGamesContainer = document.querySelector('.science-games');
-            const musicGamesContainer = document.querySelector('.music-games');
-            const languageGamesContainer = document.querySelector('.language-games');
-            const geographyGamesContainer = document.querySelector('.geography-games');
-            const funGamesContainer = document.querySelector('.fun-games');
-            const logicGamesContainer = document.querySelector('.logic-games');
-            const physicsGamesContainer = document.querySelector('.physics-games');
+            const gameContainers = {
+                math: document.querySelector('.math-games'),
+                science: document.querySelector('.science-games'),
+                music: document.querySelector('.music-games'),
+                language: document.querySelector('.language-games'),
+                geography: document.querySelector('.geography-games'),
+                fun: document.querySelector('.fun-games'),
+                logic: document.querySelector('.logic-games'),
+                physics: document.querySelector('.physics-games')
+            };
+            
+            // Category sections
+            const categorySections = {
+                math: document.getElementById('math-section'),
+                science: document.getElementById('science-section'),
+                music: document.getElementById('music-section'),
+                language: document.getElementById('language-section'),
+                geography: document.getElementById('geography-section'),
+                games: document.getElementById('games-section'),
+                logic: document.getElementById('logic-section'),
+                physics: document.getElementById('physics-section')
+            };
             
             let allGames = [];
             let activeAge = '5'; // Default to 5-year-olds
+            let isGitHubAPIFailed = false;
 
             // Keywords for categorization
             const categoryKeywords = {
@@ -992,187 +1015,265 @@
                 music: ['music', 'piano', 'instrument', 'note', 'rhythm', 'harmony', 'chord', 'melody', 'midi'],
                 language: ['word', 'letter', 'reading', 'spelling', 'vocabulary', 'grammar', 'language', 'scramble'],
                 geography: ['geography', 'map', 'country', 'continent', 'globe', 'world'],
-                games: ['game', 'memory', 'cards', 'fun', 'play', 'bubble', 'pop', 'snake', 'ladder', 'trouble', 'battleship', 'solitaire'],
+                fun: ['game', 'memory', 'cards', 'fun', 'play', 'bubble', 'pop', 'snake', 'ladder', 'trouble', 'battleship', 'solitaire'],
                 logic: ['logic', 'puzzle', 'brain', 'maze', 'pathfinder', 'pipe', 'soduku', 'connect4', 'dot', 'minesweeper', 'hexcell'],
                 physics: ['physics', 'quantum', 'vector', 'scalar', 'perspective', 'neural', 'tech', 'asteroid', 'planet', 'lander']
             };
 
-            // Handle age toggle
-            ageToggleBtns.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    ageToggleBtns.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    activeAge = btn.getAttribute('data-age');
-                    
-                    // Reload games for the selected age
-                    loadGamesForAge(activeAge);
-                });
-            });
+            // Initialize the app
+            initApp();
 
-            // Category jump navigation
-            document.querySelectorAll('.jump-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const targetId = btn.getAttribute('data-target');
-                    const targetElement = document.getElementById(targetId);
+            function initApp() {
+                // Set up event listeners
+                setupEventListeners();
+                
+                // Load games for default age
+                loadGamesForAge(activeAge);
+                
+                // Add interactive elements
+                addInteractiveElements();
+            }
+
+            function setupEventListeners() {
+                // Age toggle buttons
+                ageToggleBtns.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        ageToggleBtns.forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        activeAge = btn.getAttribute('data-age');
+                        
+                        // Reload games for the selected age
+                        loadGamesForAge(activeAge);
+                    });
+                });
+
+                // Category jump navigation
+                document.querySelectorAll('.jump-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const targetId = btn.getAttribute('data-target');
+                        const targetElement = document.getElementById(targetId);
+                        if (targetElement) {
+                            window.scrollTo({
+                                top: targetElement.offsetTop - 100,
+                                behavior: 'smooth'
+                            });
+                        }
+                    });
+                });
+
+                // Back to top button
+                window.addEventListener('scroll', () => {
+                    if (window.scrollY > 300) {
+                        backToTopBtn.classList.add('visible');
+                    } else {
+                        backToTopBtn.classList.remove('visible');
+                    }
+                });
+
+                backToTopBtn.addEventListener('click', () => {
                     window.scrollTo({
-                        top: targetElement.offsetTop - 100,
+                        top: 0,
                         behavior: 'smooth'
                     });
                 });
-            });
+            }
 
-            // Back to top button
-            window.addEventListener('scroll', () => {
-                if (window.scrollY > 300) {
-                    backToTopBtn.classList.add('visible');
-                } else {
-                    backToTopBtn.classList.remove('visible');
-                }
-            });
-
-            backToTopBtn.addEventListener('click', () => {
-                window.scrollTo({
-                    top: 0,
-                    behavior: 'smooth'
-                });
-            });
-
-            // Function to load games for a specific age
             function loadGamesForAge(age) {
-                // Reset all game containers
-                const containers = [mathGamesContainer, scienceGamesContainer, musicGamesContainer, 
-                                  languageGamesContainer, geographyGamesContainer, funGamesContainer, 
-                                  logicGamesContainer, physicsGamesContainer];
-                
-                containers.forEach(container => {
+                // Reset all game containers and show loading state
+                Object.values(gameContainers).forEach(container => {
                     container.innerHTML = '<div class="loading">Loading games...</div>';
                 });
                 
-                // Construct the URL for the age-specific directory
-                const ageDirectoryUrl = `${baseRepoUrl}/${encodeURIComponent(age + ' yr old')}`;
+                // Construct paths to check for games
+                const pathsToCheck = [
+                    `${age} yr old`,                // Standard format: "5 yr old"
+                    `${age} year old`,              // Alternative: "5 year old"
+                    `${age} years old`,             // Alternative: "5 years old"
+                    `${age}yo`,                     // Alternative: "5yo"
+                    `${age}-year-old`,              // Alternative: "5-year-old"
+                    `${age}-yr-old`,                // Alternative: "5-yr-old"
+                    `${age}`,                       // Just the age number: "5"
+                    `age-${age}`,                   // Alternative: "age-5"
+                    `age${age}`                     // Alternative: "age5"
+                ];
                 
-                fetch(ageDirectoryUrl)
+                // Try to fetch from each path until we find games
+                tryNextPath(pathsToCheck, 0);
+            }
+
+            function tryNextPath(paths, index) {
+                if (index >= paths.length) {
+                    // If we've tried all paths and still no games, try the root directory
+                    fetchGamesFromRoot();
+                    return;
+                }
+                
+                const path = paths[index];
+                const directoryUrl = `${baseRepoUrl}/${encodeURIComponent(path)}`;
+                
+                fetch(directoryUrl)
                     .then(response => {
                         if (!response.ok) {
-                            throw new Error('Network response was not ok');
+                            throw new Error(`HTTP error: ${response.status}`);
                         }
                         return response.json();
                     })
                     .then(data => {
-                        // Filter for HTML files that are likely games
-                        allGames = data.filter(item => {
-                            return item.name.endsWith('.html');
-                        });
-
-                        // Categorize and display games
-                        categorizeGames(allGames);
+                        if (Array.isArray(data) && data.length > 0) {
+                            isGitHubAPIFailed = false;
+                            
+                            // Filter for HTML files that are likely games
+                            const games = data.filter(item => {
+                                return item.name.endsWith('.html');
+                            });
+                            
+                            if (games.length > 0) {
+                                allGames = games;
+                                categorizeGames(games);
+                                setupSearch();
+                                return;
+                            }
+                        }
                         
-                        // Setup search functionality
-                        setupSearch();
+                        // No HTML files found, try next path
+                        tryNextPath(paths, index + 1);
                     })
                     .catch(error => {
-                        console.error('Error fetching directory contents:', error);
-                        containers.forEach(container => {
-                            container.innerHTML = `
-                                <div class="error">
-                                    <p>Oops! We couldn't find games for ${age}-year-olds.</p>
-                                    <p>Please try again soon!</p>
-                                </div>
-                            `;
-                        });
+                        console.warn(`Failed to fetch from ${path}:`, error);
+                        
+                        // Try next path
+                        tryNextPath(paths, index + 1);
                     });
             }
 
-            // Function to categorize games based on keywords
+            function fetchGamesFromRoot() {
+                // Try fetching from the root directory as a last resort
+                fetch(baseRepoUrl)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error: ${response.status}`);
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        // Look for HTML files or recursively check directories
+                        const htmlFiles = data.filter(item => item.name.endsWith('.html'));
+                        
+                        if (htmlFiles.length > 0) {
+                            allGames = htmlFiles;
+                            categorizeGames(htmlFiles);
+                            setupSearch();
+                        } else {
+                            // Check if there are directories that might contain games
+                            const directories = data.filter(item => item.type === 'dir');
+                            
+                            if (directories.length > 0) {
+                                // Recursive function to check directories
+                                const recursiveCheck = (dirIndex) => {
+                                    if (dirIndex >= directories.length) {
+                                        handleNoGamesFound();
+                                        return;
+                                    }
+                                    
+                                    fetch(directories[dirIndex].url)
+                                        .then(response => response.json())
+                                        .then(dirData => {
+                                            const htmlFiles = dirData.filter(item => item.name.endsWith('.html'));
+                                            
+                                            if (htmlFiles.length > 0) {
+                                                allGames = htmlFiles;
+                                                categorizeGames(htmlFiles);
+                                                setupSearch();
+                                            } else {
+                                                recursiveCheck(dirIndex + 1);
+                                            }
+                                        })
+                                        .catch(() => recursiveCheck(dirIndex + 1));
+                                };
+                                
+                                recursiveCheck(0);
+                            } else {
+                                handleNoGamesFound();
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Failed to fetch from root directory:', error);
+                        handleNoGamesFound();
+                    });
+            }
+
+            function handleNoGamesFound() {
+                isGitHubAPIFailed = true;
+                
+                Object.values(gameContainers).forEach(container => {
+                    container.innerHTML = `
+                        <div class="error">
+                            <p>We couldn't find games in the GitHub repository.</p>
+                            <p>Check your repository structure and make sure HTML files are available.</p>
+                            <p>Repository path: github.com/${githubUsername}/${repoName}</p>
+                        </div>
+                    `;
+                });
+                
+                searchBox.disabled = true;
+                searchBox.placeholder = "No games available to search";
+            }
+
             function categorizeGames(games) {
                 // Reset arrays for each category
-                const mathGames = [];
-                const scienceGames = [];
-                const musicGames = [];
-                const languageGames = [];
-                const geographyGames = [];
-                const funGames = [];
-                const logicGames = [];
-                const physicsGames = [];
+                const categorizedGames = {
+                    math: [],
+                    science: [],
+                    music: [],
+                    language: [],
+                    geography: [],
+                    fun: [],
+                    logic: [],
+                    physics: []
+                };
                 
                 games.forEach(game => {
                     const lowerName = game.name.toLowerCase();
-                    
-                    // Check each category
                     let categorized = false;
                     
-                    // Math
-                    if (categoryKeywords.math.some(keyword => lowerName.includes(keyword))) {
-                        mathGames.push(game);
-                        categorized = true;
-                    }
+                    // Check each category
+                    Object.entries(categoryKeywords).forEach(([category, keywords]) => {
+                        if (keywords.some(keyword => lowerName.includes(keyword))) {
+                            categorizedGames[category].push(game);
+                            categorized = true;
+                        }
+                    });
                     
-                    // Science
-                    if (categoryKeywords.science.some(keyword => lowerName.includes(keyword))) {
-                        scienceGames.push(game);
-                        categorized = true;
-                    }
-                    
-                    // Music
-                    if (categoryKeywords.music.some(keyword => lowerName.includes(keyword))) {
-                        musicGames.push(game);
-                        categorized = true;
-                    }
-                    
-                    // Language
-                    if (categoryKeywords.language.some(keyword => lowerName.includes(keyword))) {
-                        languageGames.push(game);
-                        categorized = true;
-                    }
-                    
-                    // Geography
-                    if (categoryKeywords.geography.some(keyword => lowerName.includes(keyword))) {
-                        geographyGames.push(game);
-                        categorized = true;
-                    }
-                    
-                    // Logic
-                    if (categoryKeywords.logic.some(keyword => lowerName.includes(keyword))) {
-                        logicGames.push(game);
-                        categorized = true;
-                    }
-                    
-                    // Physics
-                    if (categoryKeywords.physics.some(keyword => lowerName.includes(keyword))) {
-                        physicsGames.push(game);
-                        categorized = true;
-                    }
-                    
-                    // Fun Games (if not categorized or contains game keywords)
-                    if (!categorized || categoryKeywords.games.some(keyword => lowerName.includes(keyword))) {
-                        funGames.push(game);
+                    // Add to fun games if not categorized or contains game keywords
+                    if (!categorized || categoryKeywords.fun.some(keyword => lowerName.includes(keyword))) {
+                        categorizedGames.fun.push(game);
                     }
                 });
                 
                 // Display games in each category
-                displayGames(mathGames, mathGamesContainer, 'math-card');
-                displayGames(scienceGames, scienceGamesContainer, 'science-card');
-                displayGames(musicGames, musicGamesContainer, 'music-card');
-                displayGames(languageGames, languageGamesContainer, 'language-card');
-                displayGames(geographyGames, geographyGamesContainer, 'geography-card');
-                displayGames(funGames, funGamesContainer, 'games-card');
-                displayGames(logicGames, logicGamesContainer, 'logic-card');
-                displayGames(physicsGames, physicsGamesContainer, 'physics-card');
+                displayGames(categorizedGames.math, gameContainers.math, 'math-card');
+                displayGames(categorizedGames.science, gameContainers.science, 'science-card');
+                displayGames(categorizedGames.music, gameContainers.music, 'music-card');
+                displayGames(categorizedGames.language, gameContainers.language, 'language-card');
+                displayGames(categorizedGames.geography, gameContainers.geography, 'geography-card');
+                displayGames(categorizedGames.fun, gameContainers.fun, 'games-card');
+                displayGames(categorizedGames.logic, gameContainers.logic, 'logic-card');
+                displayGames(categorizedGames.physics, gameContainers.physics, 'physics-card');
                 
                 // Hide empty sections
                 hideEmptySections([
-                    { games: mathGames, section: document.getElementById('math-section') },
-                    { games: scienceGames, section: document.getElementById('science-section') },
-                    { games: musicGames, section: document.getElementById('music-section') },
-                    { games: languageGames, section: document.getElementById('language-section') },
-                    { games: geographyGames, section: document.getElementById('geography-section') },
-                    { games: funGames, section: document.getElementById('games-section') },
-                    { games: logicGames, section: document.getElementById('logic-section') },
-                    { games: physicsGames, section: document.getElementById('physics-section') }
+                    { games: categorizedGames.math, section: categorySections.math },
+                    { games: categorizedGames.science, section: categorySections.science },
+                    { games: categorizedGames.music, section: categorySections.music },
+                    { games: categorizedGames.language, section: categorySections.language },
+                    { games: categorizedGames.geography, section: categorySections.geography },
+                    { games: categorizedGames.fun, section: categorySections.games },
+                    { games: categorizedGames.logic, section: categorySections.logic },
+                    { games: categorizedGames.physics, section: categorySections.physics }
                 ]);
             }
 
-            // Hide empty sections
             function hideEmptySections(sections) {
                 sections.forEach(({ games, section }) => {
                     if (games.length === 0) {
@@ -1186,7 +1287,7 @@
                 document.querySelectorAll('.jump-btn').forEach(btn => {
                     const targetId = btn.getAttribute('data-target');
                     const targetElement = document.getElementById(targetId);
-                    if (targetElement.style.display === 'none') {
+                    if (targetElement && targetElement.style.display === 'none') {
                         btn.style.display = 'none';
                     } else {
                         btn.style.display = 'block';
@@ -1194,9 +1295,8 @@
                 });
             }
 
-            // Function to display games in a container
             function displayGames(games, container, cardClass) {
-                if (games.length === 0) {
+                if (!games || games.length === 0) {
                     container.innerHTML = `
                         <div class="error">
                             <p>No games found in this category.</p>
@@ -1207,19 +1307,22 @@
 
                 container.innerHTML = '';
                 
-                games.forEach(game => {
+                games.forEach((game, index) => {
                     // Create a readable title from the filename
                     const readableTitle = formatTitle(game.name);
                     
                     // Create game description based on the name
                     const description = generateDescription(game.name, activeAge);
                     
-                    // Create the correct GitHub Pages URL for the game
-                    // Using the path property which includes the age directory
-                    const gamePageUrl = `https://lojikli.github.io/Lojikli-Kids/${encodeURIComponent(game.path)}`;
+                    // Create the correct URL for the game
+                    const gamePageUrl = game.html_url ? 
+                                       game.html_url.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/') : 
+                                       `${baseContentUrl}/${game.path}`;
                     
                     const gameCard = document.createElement('div');
                     gameCard.className = `game-card ${cardClass}`;
+                    gameCard.style.animationDelay = `${0.1 * index}s`;
+                    
                     gameCard.innerHTML = `
                         <a href="${gamePageUrl}" target="_blank">
                             <div class="game-title">${readableTitle}</div>
@@ -1230,16 +1333,15 @@
                     
                     container.appendChild(gameCard);
                 });
-
-                // Add animation class to new cards
-                const cards = container.querySelectorAll('.game-card');
-                cards.forEach((card, index) => {
-                    card.style.animationDelay = `${0.1 * index}s`;
-                });
             }
 
-            // Setup search functionality
             function setupSearch() {
+                if (isGitHubAPIFailed) return;
+                
+                // Enable search box
+                searchBox.disabled = false;
+                searchBox.placeholder = "Find your favorite game...";
+                
                 searchBox.addEventListener('input', () => {
                     const searchTerm = searchBox.value.toLowerCase();
                     
@@ -1254,7 +1356,7 @@
                     });
                     
                     // Show all sections for search results
-                    document.querySelectorAll('.category-container').forEach(section => {
+                    Object.values(categorySections).forEach(section => {
                         section.style.display = 'block';
                     });
                     
@@ -1263,17 +1365,13 @@
                     });
                     
                     // Clear all containers
-                    const containers = [mathGamesContainer, scienceGamesContainer, musicGamesContainer, 
-                                      languageGamesContainer, geographyGamesContainer, funGamesContainer, 
-                                      logicGamesContainer, physicsGamesContainer];
-                    
-                    containers.forEach(container => {
+                    Object.values(gameContainers).forEach(container => {
                         container.innerHTML = '';
                     });
                     
                     // If no games found with search term
                     if (filteredGames.length === 0) {
-                        containers.forEach(container => {
+                        Object.values(gameContainers).forEach(container => {
                             container.innerHTML = `
                                 <div class="error">
                                     <p>No games found matching "${searchTerm}"</p>
@@ -1356,10 +1454,6 @@
                 return 'A fun learning activity for curious young minds';
             }
 
-            // Initial load of games for default age
-            loadGamesForAge(activeAge);
-
-            // Add some interactive elements for young kids
             function addInteractiveElements() {
                 // Easter egg - clicking on the header creates bubbles
                 const header = document.querySelector('header');
@@ -1389,9 +1483,6 @@
                     searchBox.placeholder = "Find your favorite game...";
                 });
             }
-            
-            // Call the function to add interactive elements
-            addInteractiveElements();
         });
     </script>
 </body>

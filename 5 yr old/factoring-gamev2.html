@@ -1,0 +1,2051 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Factoring Friends: Polynomial Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <style>
+        body {
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            background-color: #f0f8ff;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            color: #333;
+        }
+        
+        #gameContainer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+        
+        #gameCanvas {
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.2);
+            margin: 10px;
+        }
+        
+        #controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 10px;
+            max-width: 800px;
+        }
+        
+        .control-group {
+            background-color: #fff;
+            border-radius: 10px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .control-group h3 {
+            margin-top: 0;
+            color: #4b0082;
+            text-align: center;
+            font-size: 16px;
+        }
+        
+        button {
+            background-color: #6a5acd;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            margin: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            background-color: #483d8b;
+            transform: scale(1.05);
+        }
+        
+        button.active {
+            background-color: #ff6347;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .slider-container label {
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .slider-container input {
+            flex: 2;
+        }
+        
+        #message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+            z-index: 100;
+            display: none;
+        }
+        
+        #message-box h2 {
+            color: #4b0082;
+            margin-top: 0;
+            text-align: center;
+        }
+        
+        #message-box p {
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        #message-box button {
+            margin-top: 15px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* Quiz styling */
+        .quiz-container {
+            padding: 15px;
+        }
+        
+        .quiz-option {
+            background-color: #e0e0ff;
+            border-radius: 10px;
+            padding: 10px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quiz-option:hover {
+            background-color: #d0d0ff;
+            transform: scale(1.02);
+        }
+        
+        .quiz-option.selected {
+            background-color: #9090ff;
+            color: white;
+        }
+        
+        .character {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            transition: all 0.3s ease-out;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));
+        }
+        
+        #help-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #4b0082;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            cursor: pointer;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="controls">
+            <div class="control-group">
+                <h3>Game Mode</h3>
+                <button id="explore-mode" class="active">Explore & Learn</button>
+                <button id="challenge-mode">Challenge</button>
+                <button id="quiz-mode">Quiz Time</button>
+            </div>
+            
+            <div class="control-group">
+                <h3>Difficulty</h3>
+                <div class="slider-container">
+                    <label for="difficulty">Easy → Hard</label>
+                    <input type="range" id="difficulty" min="1" max="5" value="1">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3>Visualization</h3>
+                <button id="area-model" class="active">Area Model</button>
+                <button id="algebra-tiles">Algebra Tiles</button>
+                <button id="number-line">Number Line</button>
+            </div>
+            
+            <div class="control-group">
+                <h3>Polynomial Type</h3>
+                <button id="binomials" class="active">Binomials</button>
+                <button id="trinomials">Trinomials</button>
+                <button id="difference-of-squares">Difference of Squares</button>
+                <button id="perfect-squares">Perfect Square Trinomials</button>
+            </div>
+        </div>
+        
+        <div id="gameCanvas"></div>
+        
+        <div id="message-box">
+            <h2>Welcome to Factoring Friends!</h2>
+            <div id="message-content"></div>
+            <button id="message-close">Got it!</button>
+        </div>
+        
+        <div id="help-button">?</div>
+    </div>
+
+    <script>
+        // Main Game Variables
+        let gameState = {
+            mode: "explore",
+            difficulty: 1,
+            visualization: "area",
+            polynomialType: "binomials",
+            score: 0,
+            level: 1,
+            currentProblem: null,
+            draggedTile: null,
+            characters: {},
+            bubbles: [],
+            particles: [],
+            showGrid: true,
+            showHints: true,
+            successCount: 0,
+            factorsRevealed: false,
+            quizActive: false,
+            currentQuiz: null,
+            quizAnswered: false,
+            quizAnswerSelected: null,
+            areaWidth: 400,
+            areaHeight: 400
+        };
+        
+        // Character definitions
+        const characterDefs = {
+            poly: {
+                name: "Poly",
+                color: "#9c27b0",
+                description: "The Polynomial Panda! Poly helps you understand what polynomials are made of.",
+                messages: [
+                    "Polynomials are math expressions with variables and exponents!",
+                    "A binomial has TWO terms, like x² + 2x",
+                    "A trinomial has THREE terms, like x² + 3x + 2",
+                    "When we factor, we're finding what multiplies together to make the polynomial!"
+                ]
+            },
+            facty: {
+                name: "Facty",
+                color: "#ff9800",
+                description: "The Factoring Fox! Facty shows you how to break polynomials into their factors.",
+                messages: [
+                    "Factoring means finding what multiplies to make your polynomial!",
+                    "For x² + 5x + 6, the factors are (x + 2)(x + 3)",
+                    "When you multiply (x + 2)(x + 3), you get x² + 5x + 6",
+                    "I'll help you find patterns to make factoring easy!"
+                ]
+            },
+            bina: {
+                name: "Bina",
+                color: "#2196f3",
+                description: "The Binomial Bear! Bina specializes in expressions with two terms.",
+                messages: [
+                    "Binomials have TWO terms, like x² - 4",
+                    "A special binomial is x² - 4, which is a difference of squares!",
+                    "x² - 4 can be factored as (x + 2)(x - 2)",
+                    "Try factoring x² - 9... what do you think the factors are?"
+                ]
+            },
+            trina: {
+                name: "Trina",
+                color: "#4caf50",
+                description: "The Trinomial Tiger! Trina helps with expressions that have three terms.",
+                messages: [
+                    "Trinomials have THREE terms, like x² + 5x + 6",
+                    "To factor x² + 5x + 6, we need to find two numbers that multiply to 6 and add to 5",
+                    "Those numbers are 2 and 3, so x² + 5x + 6 = (x + 2)(x + 3)",
+                    "Let's practice with more trinomials!"
+                ]
+            }
+        };
+
+        // Game problems by difficulty
+        const gameProblems = {
+            binomials: [
+                // Difficulty 1
+                [
+                    { expression: "x + 3", factors: ["1", "x + 3"], type: "simple" },
+                    { expression: "x - 2", factors: ["1", "x - 2"], type: "simple" },
+                    { expression: "2x + 6", factors: ["2", "x + 3"], type: "common factor" },
+                    { expression: "3x - 9", factors: ["3", "x - 3"], type: "common factor" }
+                ],
+                // Difficulty 2
+                [
+                    { expression: "x² - 4", factors: ["x - 2", "x + 2"], type: "difference of squares" },
+                    { expression: "x² - 9", factors: ["x - 3", "x + 3"], type: "difference of squares" },
+                    { expression: "x² - 16", factors: ["x - 4", "x + 4"], type: "difference of squares" },
+                    { expression: "x² - 25", factors: ["x - 5", "x + 5"], type: "difference of squares" }
+                ],
+                // Difficulty 3
+                [
+                    { expression: "x² - 36", factors: ["x - 6", "x + 6"], type: "difference of squares" },
+                    { expression: "4x² - 9", factors: ["2x - 3", "2x + 3"], type: "difference of squares" },
+                    { expression: "9x² - 16", factors: ["3x - 4", "3x + 4"], type: "difference of squares" },
+                    { expression: "25x² - 49", factors: ["5x - 7", "5x + 7"], type: "difference of squares" }
+                ],
+                // Difficulty 4
+                [
+                    { expression: "x² + 6x + 9", factors: ["x + 3", "x + 3"], type: "perfect square" },
+                    { expression: "x² - 8x + 16", factors: ["x - 4", "x - 4"], type: "perfect square" },
+                    { expression: "x² + 10x + 25", factors: ["x + 5", "x + 5"], type: "perfect square" },
+                    { expression: "x² - 12x + 36", factors: ["x - 6", "x - 6"], type: "perfect square" }
+                ],
+                // Difficulty 5
+                [
+                    { expression: "4x² - 9y²", factors: ["2x - 3y", "2x + 3y"], type: "difference of squares" },
+                    { expression: "9x² - 25z²", factors: ["3x - 5z", "3x + 5z"], type: "difference of squares" },
+                    { expression: "x² + 6xy + 9y²", factors: ["x + 3y", "x + 3y"], type: "perfect square" },
+                    { expression: "x² - 10xy + 25y²", factors: ["x - 5y", "x - 5y"], type: "perfect square" }
+                ]
+            ],
+            trinomials: [
+                // Difficulty 1
+                [
+                    { expression: "x² + 3x + 2", factors: ["x + 1", "x + 2"], type: "simple" },
+                    { expression: "x² + 5x + 6", factors: ["x + 2", "x + 3"], type: "simple" },
+                    { expression: "x² + 6x + 8", factors: ["x + 2", "x + 4"], type: "simple" },
+                    { expression: "x² + 7x + 12", factors: ["x + 3", "x + 4"], type: "simple" }
+                ],
+                // Difficulty 2
+                [
+                    { expression: "x² - 3x + 2", factors: ["x - 1", "x - 2"], type: "simple" },
+                    { expression: "x² - 7x + 12", factors: ["x - 3", "x - 4"], type: "simple" },
+                    { expression: "x² - x - 6", factors: ["x - 3", "x + 2"], type: "simple with negative" },
+                    { expression: "x² - 4x - 5", factors: ["x - 5", "x + 1"], type: "simple with negative" }
+                ],
+                // Difficulty 3
+                [
+                    { expression: "x² + 5x - 24", factors: ["x + 8", "x - 3"], type: "simple with negative" },
+                    { expression: "x² - 3x - 10", factors: ["x - 5", "x + 2"], type: "simple with negative" },
+                    { expression: "x² - 11x + 28", factors: ["x - 4", "x - 7"], type: "simple" },
+                    { expression: "x² + 2x - 15", factors: ["x + 5", "x - 3"], type: "simple with negative" }
+                ],
+                // Difficulty 4
+                [
+                    { expression: "2x² + 7x + 3", factors: ["2x + 1", "x + 3"], type: "leading coefficient" },
+                    { expression: "3x² + 10x + 3", factors: ["3x + 1", "x + 3"], type: "leading coefficient" },
+                    { expression: "2x² + x - 6", factors: ["2x + 3", "x - 2"], type: "leading coefficient" },
+                    { expression: "3x² - 10x + 3", factors: ["3x - 1", "x - 3"], type: "leading coefficient" }
+                ],
+                // Difficulty 5
+                [
+                    { expression: "6x² + 17x + 12", factors: ["2x + 3", "3x + 4"], type: "leading coefficient" },
+                    { expression: "6x² - x - 2", factors: ["3x + 1", "2x - 2"], type: "leading coefficient" },
+                    { expression: "4x² - 9x + 5", factors: ["4x - 5", "x - 1"], type: "leading coefficient" },
+                    { expression: "12x² - 11x + 2", factors: ["4x - 1", "3x - 2"], type: "leading coefficient" }
+                ]
+            ]
+        };
+
+        // Quiz questions by difficulty
+        const quizQuestions = [
+            // Easy
+            [
+                {
+                    question: "What are the factors of x² - 4?",
+                    options: ["(x - 2)(x + 2)", "(x - 4)(x + 1)", "(x - 1)(x - 4)", "(x - 2)(x - 2)"],
+                    answer: 0,
+                    explanation: "x² - 4 is a difference of squares: x² - 4 = x² - 2² = (x - 2)(x + 2)"
+                },
+                {
+                    question: "Which expression is a binomial?",
+                    options: ["x² + 3x + 2", "x² + 4", "x³ + x² + x", "x + 1 + 2 + 3x"],
+                    answer: 1,
+                    explanation: "A binomial has exactly two terms. x² + 4 has two terms."
+                },
+                {
+                    question: "What are the factors of x² + 5x + 6?",
+                    options: ["(x + 2)(x + 3)", "(x + 1)(x + 5)", "(x + 6)(x + 1)", "(x + 2)(x + 4)"],
+                    answer: 0,
+                    explanation: "To factor x² + 5x + 6, we need two numbers that multiply to 6 and add to 5. Those numbers are 2 and 3."
+                }
+            ],
+            // Medium
+            [
+                {
+                    question: "What are the factors of x² - 9?",
+                    options: ["(x - 3)(x + 3)", "(x - 9)(x + 1)", "(x - 4.5)(x - 4.5)", "(x - 3)(x - 3)"],
+                    answer: 0,
+                    explanation: "x² - 9 is a difference of squares: x² - 9 = x² - 3² = (x - 3)(x + 3)"
+                },
+                {
+                    question: "Which is the factored form of x² + 6x + 9?",
+                    options: ["(x + 3)²", "(x + 3)(x + 3)", "(x + 9)(x - 3)", "(x + 4.5)(x + 4.5)"],
+                    answer: 0,
+                    explanation: "x² + 6x + 9 is a perfect square trinomial: (x + 3)² = x² + 6x + 9"
+                },
+                {
+                    question: "What are the factors of x² - 5x + 6?",
+                    options: ["(x - 2)(x - 3)", "(x - 1)(x - 6)", "(x - 2)(x + 3)", "(x + 2)(x + 3)"],
+                    answer: 0,
+                    explanation: "To factor x² - 5x + 6, we need two numbers that multiply to 6 and add to -5. Those numbers are -2 and -3."
+                }
+            ],
+            // Hard
+            [
+                {
+                    question: "What are the factors of 2x² + 5x + 3?",
+                    options: ["(2x + 3)(x + 1)", "(x + 3)(2x + 1)", "(2x + 1)(x + 3)", "(x + 1.5)(2x + 2)"],
+                    answer: 2,
+                    explanation: "For 2x² + 5x + 3, we need factors of 2×3=6 that add to 5. 2 and 3 work, giving (2x + 1)(x + 3)."
+                },
+                {
+                    question: "Which is the factored form of 6x² - 7x - 3?",
+                    options: ["(2x - 3)(3x + 1)", "(3x - 1)(2x + 3)", "(6x + 1)(x - 3)", "(2x + 1)(3x - 3)"],
+                    answer: 1,
+                    explanation: "For 6x² - 7x - 3, we need factors of 6×(-3)=-18 that add to -7. -9 and 2 work, giving (3x - 1)(2x + 3)."
+                },
+                {
+                    question: "What are the factors of 4x² - 9?",
+                    options: ["(2x - 3)(2x + 3)", "(4x - 3)(x + 3)", "(2x - 3)(2x - 3)", "(4x - 9)(1)"],
+                    answer: 0,
+                    explanation: "4x² - 9 is a difference of squares: 4x² - 9 = (2x)² - 3² = (2x - 3)(2x + 3)"
+                }
+            ]
+        ];
+
+        // P5.js sketch
+        let sketch = function(p) {
+            let canvas;
+            let characterImages = {};
+            let backgroundParticles = [];
+            let tileImages = {};
+            let gameWidth, gameHeight;
+            let gridSize = 40;
+            let factorBoxes = [];
+            let draggingTile = null;
+            let lastDragPosition = { x: 0, y: 0 };
+            let tiles = [];
+            let areaGrid = [];
+            
+            p.setup = function() {
+                gameWidth = Math.min(800, window.innerWidth - 40);
+                gameHeight = Math.min(600, window.innerHeight - 200);
+                canvas = p.createCanvas(gameWidth, gameHeight);
+                canvas.parent('gameCanvas');
+                
+                // Create character images
+                createCharacterImages();
+                
+                // Create tile images
+                createTileImages();
+                
+                // Create background particles
+                for (let i = 0; i < 50; i++) {
+                    backgroundParticles.push({
+                        x: p.random(gameWidth),
+                        y: p.random(gameHeight),
+                        size: p.random(5, 15),
+                        color: p.color(p.random(180, 255), p.random(180, 255), p.random(180, 255), 100),
+                        speed: p.random(0.2, 1)
+                    });
+                }
+                
+                // Set initial game state
+                resetGame();
+                
+                // Show welcome message
+                showMessage("Welcome to Factoring Friends!", 
+                           `<p>Hi there! I'm Poly the Polynomial Panda, and these are my friends: Facty, Bina, and Trina.</p>
+                            <p>We're going to learn about factoring polynomials together!</p>
+                            <p>Polynomials are math expressions with variables (like x) and numbers.</p>
+                            <p>When we "factor" a polynomial, we're finding what multiplies together to make it!</p>
+                            <p>Don't worry if that sounds complicated - we'll make it fun with colorful shapes and games!</p>
+                            <p>Let's start with some simple examples. Click "Got it!" to begin our adventure!</p>`);
+            };
+            
+            p.draw = function() {
+                p.background(240, 248, 255);
+                
+                // Draw background particles
+                drawBackgroundParticles();
+                
+                if (gameState.mode === "explore") {
+                    drawExploreMode();
+                } else if (gameState.mode === "challenge") {
+                    drawChallengeMode();
+                } else if (gameState.mode === "quiz") {
+                    drawQuizMode();
+                }
+                
+                // Draw characters
+                drawCharacters();
+                
+                // Draw speech bubbles
+                drawSpeechBubbles();
+                
+                // Draw particles
+                drawParticles();
+                
+                // Draw score and level
+                drawScoreAndLevel();
+            };
+            
+            p.mousePressed = function() {
+                handleMousePressed();
+            };
+            
+            p.mouseDragged = function() {
+                handleMouseDragged();
+            };
+            
+            p.mouseReleased = function() {
+                handleMouseReleased();
+            };
+            
+            function createCharacterImages() {
+                // Create SVG-based character images
+                for (let charKey in characterDefs) {
+                    characterImages[charKey] = createCharacterImage(characterDefs[charKey]);
+                }
+                
+                // Position characters
+                gameState.characters = {
+                    poly: { x: 50, y: gameHeight - 100, img: characterImages.poly, speaking: false, targetX: 50, targetY: gameHeight - 100 },
+                    facty: { x: gameWidth - 130, y: gameHeight - 100, img: characterImages.facty, speaking: false, targetX: gameWidth - 130, targetY: gameHeight - 100 },
+                    bina: { x: 150, y: gameHeight - 100, img: characterImages.bina, speaking: false, targetX: 150, targetY: gameHeight - 100 },
+                    trina: { x: gameWidth - 230, y: gameHeight - 100, img: characterImages.trina, speaking: false, targetX: gameWidth - 230, targetY: gameHeight - 100 }
+                };
+            }
+            
+            function createCharacterImage(charDef) {
+                let pg = p.createGraphics(100, 100);
+                
+                // Draw basic character shape
+                pg.noStroke();
+                pg.fill(charDef.color);
+                
+                // Draw character body (circle with ears for animals)
+                pg.ellipse(50, 50, 80, 80);
+                
+                // Draw character features based on the animal type
+                if (charDef.name === "Poly") {
+                    // Panda features
+                    pg.fill(255);
+                    pg.ellipse(35, 40, 25, 25); // Left eye patch
+                    pg.ellipse(65, 40, 25, 25); // Right eye patch
+                    pg.fill(0);
+                    pg.ellipse(35, 40, 10, 10); // Left eye
+                    pg.ellipse(65, 40, 10, 10); // Right eye
+                    pg.ellipse(50, 60, 20, 15); // Nose
+                } else if (charDef.name === "Facty") {
+                    // Fox features
+                    pg.fill(255);
+                    pg.triangle(20, 25, 40, 5, 45, 35); // Left ear
+                    pg.triangle(80, 25, 60, 5, 55, 35); // Right ear
+                    pg.fill(255);
+                    pg.ellipse(35, 40, 15, 15); // Left eye area
+                    pg.ellipse(65, 40, 15, 15); // Right eye area
+                    pg.fill(0);
+                    pg.ellipse(35, 40, 7, 7); // Left eye
+                    pg.ellipse(65, 40, 7, 7); // Right eye
+                    pg.fill(255);
+                    pg.triangle(50, 60, 40, 70, 60, 70); // Snout
+                } else if (charDef.name === "Bina") {
+                    // Bear features
+                    pg.fill(charDef.color);
+                    pg.ellipse(30, 25, 20, 20); // Left ear
+                    pg.ellipse(70, 25, 20, 20); // Right ear
+                    pg.fill(255);
+                    pg.ellipse(35, 45, 15, 15); // Left eye area
+                    pg.ellipse(65, 45, 15, 15); // Right eye area
+                    pg.fill(0);
+                    pg.ellipse(35, 45, 7, 7); // Left eye
+                    pg.ellipse(65, 45, 7, 7); // Right eye
+                    pg.ellipse(50, 60, 15, 10); // Nose
+                } else if (charDef.name === "Trina") {
+                    // Tiger features
+                    pg.fill(charDef.color);
+                    pg.triangle(25, 25, 35, 5, 45, 25); // Left ear
+                    pg.triangle(75, 25, 65, 5, 55, 25); // Right ear
+                    pg.fill(255);
+                    pg.ellipse(35, 40, 15, 15); // Left eye area
+                    pg.ellipse(65, 40, 15, 15); // Right eye area
+                    pg.fill(0);
+                    pg.ellipse(35, 40, 7, 7); // Left eye
+                    pg.ellipse(65, 40, 7, 7); // Right eye
+                    pg.triangle(50, 50, 40, 65, 60, 65); // Snout
+                    
+                    // Tiger stripes
+                    pg.stroke(0);
+                    pg.strokeWeight(2);
+                    pg.noFill();
+                    pg.arc(30, 25, 30, 30, p.PI * 0.2, p.PI * 0.6);
+                    pg.arc(70, 25, 30, 30, p.PI * 0.4, p.PI * 0.8);
+                    pg.arc(50, 70, 40, 30, p.PI * 1.7, p.PI * 2.3);
+                }
+                
+                // Draw mouth for all characters
+                pg.noFill();
+                pg.stroke(0);
+                pg.strokeWeight(2);
+                pg.arc(50, 65, 30, 15, 0, p.PI);
+                
+                return pg;
+            }
+            
+            function createTileImages() {
+                // Create various tile images for different polynomial terms
+                tileImages = {
+                    // Positive terms
+                    "x²": createTileImage("x²", 40, 40, p.color(173, 216, 230)),
+                    "x": createTileImage("x", 40, 40, p.color(144, 238, 144)),
+                    "1": createTileImage("1", 40, 40, p.color(255, 182, 193)),
+                    
+                    // Negative terms
+                    "-x²": createTileImage("-x²", 40, 40, p.color(135, 206, 250)),
+                    "-x": createTileImage("-x", 40, 40, p.color(152, 251, 152)),
+                    "-1": createTileImage("-1", 40, 40, p.color(255, 192, 203)),
+                    
+                    // Factors and binomials
+                    "(x+1)": createTileImage("(x+1)", 80, 40, p.color(255, 222, 173)),
+                    "(x+2)": createTileImage("(x+2)", 80, 40, p.color(216, 191, 216)),
+                    "(x+3)": createTileImage("(x+3)", 80, 40, p.color(255, 250, 205)),
+                    "(x-1)": createTileImage("(x-1)", 80, 40, p.color(255, 228, 196)),
+                    "(x-2)": createTileImage("(x-2)", 80, 40, p.color(221, 160, 221)),
+                    "(x-3)": createTileImage("(x-3)", 80, 40, p.color(238, 232, 170))
+                };
+            }
+            
+            function createTileImage(text, width, height, color) {
+                let pg = p.createGraphics(width, height);
+                
+                // Draw tile background
+                pg.fill(color);
+                pg.stroke(100);
+                pg.strokeWeight(2);
+                pg.rect(2, 2, width - 4, height - 4, 5);
+                
+                // Draw text
+                pg.textAlign(p.CENTER, p.CENTER);
+                pg.textSize(16);
+                pg.fill(0);
+                pg.noStroke();
+                pg.text(text, width / 2, height / 2);
+                
+                return pg;
+            }
+            
+            function resetGame() {
+                gameState.score = 0;
+                gameState.level = 1;
+                gameState.successCount = 0;
+                gameState.factorsRevealed = false;
+                gameState.quizActive = false;
+                gameState.currentQuiz = null;
+                
+                // Set up a new problem
+                setNewProblem();
+            }
+            
+            function setNewProblem() {
+                let difficultyIndex = gameState.difficulty - 1;
+                let problems;
+                
+                // Get problems based on polynomial type setting
+                if (gameState.polynomialType === "binomials") {
+                    problems = gameProblems.binomials[difficultyIndex];
+                } else {
+                    problems = gameProblems.trinomials[difficultyIndex];
+                }
+                
+                // Randomly select a problem
+                gameState.currentProblem = problems[Math.floor(Math.random() * problems.length)];
+                
+                // Set up tiles and area grid based on the visualization type
+                setupVisualization();
+                
+                // Make a character speak about the problem
+                speakAboutProblem();
+            }
+            
+            function setupVisualization() {
+                // Clear existing tiles and grid
+                tiles = [];
+                areaGrid = [];
+                factorBoxes = [];
+                
+                if (gameState.visualization === "area") {
+                    setupAreaModel();
+                } else if (gameState.visualization === "algebra-tiles") {
+                    setupAlgebraTiles();
+                } else if (gameState.visualization === "number-line") {
+                    setupNumberLine();
+                }
+            }
+            
+            function setupAreaModel() {
+                // Create the area model visualization for the current problem
+                let centerX = gameWidth / 2;
+                let centerY = gameHeight / 2 - 50;
+                gameState.areaWidth = 300;
+                gameState.areaHeight = 300;
+                
+                // Create the factor boxes
+                factorBoxes = [
+                    {
+                        x: centerX - 150,
+                        y: centerY - 180,
+                        width: 300,
+                        height: 30,
+                        label: "First Factor",
+                        value: "",
+                        correctValue: gameState.currentProblem.factors[0]
+                    },
+                    {
+                        x: centerX - 190,
+                        y: centerY - 150,
+                        width: 30,
+                        height: 300,
+                        label: "Second Factor",
+                        value: "",
+                        correctValue: gameState.currentProblem.factors[1],
+                        vertical: true
+                    }
+                ];
+                
+                // Create drag tiles for each possible factor the user might try
+                let possibleFactors = generatePossibleFactors();
+                
+                let tileY = centerY + 200;
+                let spacing = 100;
+                let startX = centerX - (possibleFactors.length * spacing) / 2 + spacing / 2;
+                
+                for (let i = 0; i < possibleFactors.length; i++) {
+                    tiles.push({
+                        x: startX + i * spacing,
+                        y: tileY,
+                        width: 80,
+                        height: 40,
+                        label: possibleFactors[i],
+                        draggable: true,
+                        placed: false,
+                        targetBox: null
+                    });
+                }
+                
+                // Create grid elements for the area model
+                createAreaGrid(centerX - 150, centerY - 150, 300, 300);
+            }
+            
+            function createAreaGrid(x, y, width, height) {
+                // Clear existing grid
+                areaGrid = [];
+                
+                // Create grid based on problem type
+                if (gameState.currentProblem.expression.includes("²")) {
+                    // This is a quadratic expression, create a 2x2 grid
+                    areaGrid = [
+                        { x: x, y: y, width: width * 0.7, height: height * 0.7, term: "x²", color: p.color(173, 216, 230, 100) },
+                        { x: x + width * 0.7, y: y, width: width * 0.3, height: height * 0.7, term: "bx", color: p.color(144, 238, 144, 100) },
+                        { x: x, y: y + height * 0.7, width: width * 0.7, height: height * 0.3, term: "cx", color: p.color(144, 238, 144, 100) },
+                        { x: x + width * 0.7, y: y + height * 0.7, width: width * 0.3, height: height * 0.3, term: "d", color: p.color(255, 182, 193, 100) }
+                    ];
+                } else {
+                    // This is a simple expression, create a 1x1 grid
+                    areaGrid = [
+                        { x: x, y: y, width: width, height: height, term: "ab", color: p.color(255, 182, 193, 100) }
+                    ];
+                }
+            }
+            
+            function setupAlgebraTiles() {
+                // Create algebra tile visualization
+                // Similar to area model but with physical tiles for each term
+                let centerX = gameWidth / 2;
+                let centerY = gameHeight / 2 - 50;
+                
+                // Parse the expression to get terms
+                let terms = parseExpression(gameState.currentProblem.expression);
+                
+                // Create tiles for each term
+                let tileX = centerX - terms.length * 30;
+                for (let i = 0; i < terms.length; i++) {
+                    tiles.push({
+                        x: tileX + i * 60,
+                        y: centerY - 80,
+                        width: 50,
+                        height: 50,
+                        label: terms[i].term,
+                        draggable: false,
+                        color: getColorForTerm(terms[i].term)
+                    });
+                }
+                
+                // Create factor boxes
+                factorBoxes = [
+                    {
+                        x: centerX - 150,
+                        y: centerY,
+                        width: 300,
+                        height: 50,
+                        label: "First Factor",
+                        value: "",
+                        correctValue: gameState.currentProblem.factors[0]
+                    },
+                    {
+                        x: centerX - 150,
+                        y: centerY + 60,
+                        width: 300,
+                        height: 50,
+                        label: "Second Factor",
+                        value: "",
+                        correctValue: gameState.currentProblem.factors[1]
+                    }
+                ];
+                
+                // Create draggable factor tiles
+                let possibleFactors = generatePossibleFactors();
+                
+                let tileY = centerY + 170;
+                let spacing = 100;
+                let startX = centerX - (possibleFactors.length * spacing) / 2 + spacing / 2;
+                
+                for (let i = 0; i < possibleFactors.length; i++) {
+                    tiles.push({
+                        x: startX + i * spacing,
+                        y: tileY,
+                        width: 80,
+                        height: 40,
+                        label: possibleFactors[i],
+                        draggable: true,
+                        placed: false,
+                        targetBox: null
+                    });
+                }
+            }
+            
+            function setupNumberLine() {
+                // Create number line visualization
+                let centerX = gameWidth / 2;
+                let centerY = gameHeight / 2 - 50;
+                
+                // Create the number line
+                let lineStart = centerX - 200;
+                let lineEnd = centerX + 200;
+                
+                // Draw roots for quadratic expressions
+                if (gameState.currentProblem.expression.includes("²")) {
+                    // Parse the factors to find roots
+                    let roots = extractRoots(gameState.currentProblem.factors);
+                    
+                    // Add visual elements for the number line and roots
+                    // (In draw function)
+                }
+                
+                // Create factor boxes
+                factorBoxes = [
+                    {
+                        x: centerX - 150,
+                        y: centerY + 50,
+                        width: 300,
+                        height: 50,
+                        label: "First Factor",
+                        value: "",
+                        correctValue: gameState.currentProblem.factors[0]
+                    },
+                    {
+                        x: centerX - 150,
+                        y: centerY + 110,
+                        width: 300,
+                        height: 50,
+                        label: "Second Factor",
+                        value: "",
+                        correctValue: gameState.currentProblem.factors[1]
+                    }
+                ];
+                
+                // Create draggable factor tiles
+                let possibleFactors = generatePossibleFactors();
+                
+                let tileY = centerY + 200;
+                let spacing = 100;
+                let startX = centerX - (possibleFactors.length * spacing) / 2 + spacing / 2;
+                
+                for (let i = 0; i < possibleFactors.length; i++) {
+                    tiles.push({
+                        x: startX + i * spacing,
+                        y: tileY,
+                        width: 80,
+                        height: 40,
+                        label: possibleFactors[i],
+                        draggable: true,
+                        placed: false,
+                        targetBox: null
+                    });
+                }
+            }
+            
+            function drawExploreMode() {
+                let centerX = gameWidth / 2;
+                let centerY = gameHeight / 2 - 50;
+                
+                // Draw expression to factor
+                p.fill(50);
+                p.textSize(28);
+                p.textAlign(p.CENTER, p.TOP);
+                p.text("Factor: " + gameState.currentProblem.expression, centerX, 30);
+                
+                if (gameState.visualization === "area") {
+                    drawAreaModel();
+                } else if (gameState.visualization === "algebra-tiles") {
+                    drawAlgebraTiles();
+                } else if (gameState.visualization === "number-line") {
+                    drawNumberLine();
+                }
+                
+                // Draw tiles
+                drawTiles();
+                
+                // Draw factor boxes
+                drawFactorBoxes();
+                
+                // Draw hint if enabled
+                if (gameState.showHints && !factorsCorrect()) {
+                    p.fill(100);
+                    p.textSize(16);
+                    p.textAlign(p.CENTER, p.TOP);
+                    p.text("Hint: Drag the factors to the boxes", centerX, centerY + 250);
+                }
+                
+                // Check if both factors are correct
+                if (factorsCorrect() && !gameState.factorsRevealed) {
+                    // Show success message
+                    showSuccessMessage();
+                }
+            }
+            
+            function drawAreaModel() {
+                // Draw area grid
+                let hasFactors = factorBoxes[0].value !== "" && factorBoxes[1].value !== "";
+                
+                for (let i = 0; i < areaGrid.length; i++) {
+                    let cell = areaGrid[i];
+                    
+                    p.fill(cell.color);
+                    p.stroke(100);
+                    p.strokeWeight(2);
+                    p.rect(cell.x, cell.y, cell.width, cell.height);
+                    
+                    // Draw grid lines if enabled
+                    if (gameState.showGrid) {
+                        p.stroke(200);
+                        p.strokeWeight(1);
+                        // Vertical grid lines
+                        for (let x = cell.x + gridSize; x < cell.x + cell.width; x += gridSize) {
+                            p.line(x, cell.y, x, cell.y + cell.height);
+                        }
+                        // Horizontal grid lines
+                        for (let y = cell.y + gridSize; y < cell.y + cell.height; y += gridSize) {
+                            p.line(cell.x, y, cell.x + cell.width, y);
+                        }
+                    }
+                    
+                    // Draw term in the cell
+                    if (hasFactors) {
+                        p.fill(0);
+                        p.textSize(20);
+                        p.textAlign(p.CENTER, p.CENTER);
+                        
+                        let term = "";
+                        if (cell.term === "x²") {
+                            term = "x²";
+                        } else if (cell.term === "bx") {
+                            // Get coefficient from second factor
+                            let coef = extractCoefficient(factorBoxes[1].value);
+                            term = coef + "x";
+                        } else if (cell.term === "cx") {
+                            // Get coefficient from first factor
+                            let coef = extractCoefficient(factorBoxes[0].value);
+                            term = coef + "x";
+                        } else if (cell.term === "d") {
+                            // Multiply constants from both factors
+                            let const1 = extractConstant(factorBoxes[0].value);
+                            let const2 = extractConstant(factorBoxes[1].value);
+                            term = const1 * const2;
+                        } else if (cell.term === "ab") {
+                            // Simple product of the factors
+                            term = factorBoxes[0].value + " × " + factorBoxes[1].value;
+                        }
+                        
+                        p.text(term, cell.x + cell.width / 2, cell.y + cell.height / 2);
+                    }
+                }
+                
+                // Draw area model outline
+                p.noFill();
+                p.stroke(0);
+                p.strokeWeight(3);
+                p.rect(areaGrid[0].x, areaGrid[0].y, gameState.areaWidth, gameState.areaHeight);
+            }
+            
+            function drawAlgebraTiles() {
+                let centerX = gameWidth / 2;
+                let centerY = gameHeight / 2 - 50;
+                
+                // Draw expression box
+                p.fill(255);
+                p.stroke(0);
+                p.strokeWeight(2);
+                p.rect(centerX - 175, centerY - 100, 350, 70, 10);
+                
+                // Draw tiles for each term in the original expression
+                let drawnTiles = tiles.filter(t => !t.draggable);
+                for (let i = 0; i < drawnTiles.length; i++) {
+                    let tile = drawnTiles[i];
+                    
+                    p.fill(tile.color || p.color(200, 200, 255));
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    p.rect(tile.x, tile.y, tile.width, tile.height, 5);
+                    
+                    p.fill(0);
+                    p.textSize(20);
+                    p.textAlign(p.CENTER, p.CENTER);
+                    p.text(tile.label, tile.x + tile.width / 2, tile.y + tile.height / 2);
+                }
+            }
+            
+            function drawNumberLine() {
+                let centerX = gameWidth / 2;
+                let centerY = gameHeight / 2 - 50;
+                
+                // Draw number line
+                p.stroke(0);
+                p.strokeWeight(2);
+                p.line(centerX - 200, centerY, centerX + 200, centerY);
+                
+                // Draw tick marks
+                for (let i = -5; i <= 5; i++) {
+                    let x = centerX + i * 40;
+                    let tickHeight = (i % 5 === 0) ? 15 : (i % 1 === 0) ? 10 : 5;
+                    
+                    p.line(x, centerY - tickHeight, x, centerY + tickHeight);
+                    
+                    if (i % 1 === 0) {
+                        p.fill(0);
+                        p.textSize(16);
+                        p.textAlign(p.CENTER, p.TOP);
+                        p.text(i, x, centerY + 20);
+                    }
+                }
+                
+                // If we have factors in place, draw the roots
+                if (factorBoxes[0].value !== "" && factorBoxes[1].value !== "") {
+                    let roots = [];
+                    
+                    for (let i = 0; i < 2; i++) {
+                        let factor = factorBoxes[i].value;
+                        // Extract the root from the factor (e.g., (x+2) has root -2)
+                        let root;
+                        
+                        if (factor.includes("x+")) {
+                            root = -parseInt(factor.split("x+")[1].split(")")[0]);
+                        } else if (factor.includes("x-")) {
+                            root = parseInt(factor.split("x-")[1].split(")")[0]);
+                        } else {
+                            root = 0;
+                        }
+                        
+                        roots.push(root);
+                        
+                        // Draw the root on the number line
+                        let rootX = centerX + root * 40;
+                        
+                        p.fill(p.color(255, 100, 100));
+                        p.noStroke();
+                        p.ellipse(rootX, centerY, 12, 12);
+                        
+                        p.fill(p.color(50, 100, 200));
+                        p.textSize(16);
+                        p.textAlign(p.CENTER, p.BOTTOM);
+                        p.text("Root: " + root, rootX, centerY - 20);
+                    }
+                    
+                    // Draw the parabola shape based on roots
+                    if (gameState.currentProblem.expression.includes("²")) {
+                        p.stroke(p.color(100, 100, 255, 150));
+                        p.strokeWeight(2);
+                        p.noFill();
+                        
+                        let root1X = centerX + roots[0] * 40;
+                        let root2X = centerX + roots[1] * 40;
+                        let topX = (root1X + root2X) / 2;
+                        let topY = centerY - 100;
+                        
+                        p.beginShape();
+                        for (let x = Math.min(root1X, root2X) - 80; x <= Math.max(root1X, root2X) + 80; x += 5) {
+                            // Parabola calculation
+                            let t = (x - topX) / 40;
+                            let y = topY + 50 * t * t;
+                            p.vertex(x, y);
+                        }
+                        p.endShape();
+                    }
+                }
+            }
+            
+            function drawChallengeMode() {
+                // Similar to explore mode but with score tracking and level progression
+                drawExploreMode();
+            }
+            
+            function drawQuizMode() {
+                if (!gameState.currentQuiz) {
+                    // No quiz active, set one
+                    setNewQuiz();
+                }
+                
+                let quiz = gameState.currentQuiz;
+                let centerX = gameWidth / 2;
+                let centerY = gameHeight / 2 - 30;
+                
+                // Draw quiz question
+                p.fill(50);
+                p.textSize(24);
+                p.textAlign(p.CENTER, p.TOP);
+                p.text(quiz.question, centerX, 50);
+                
+                // Draw options
+                for (let i = 0; i < quiz.options.length; i++) {
+                    let y = centerY - 70 + i * 70;
+                    
+                    // Option box
+                    p.fill(gameState.quizAnswerSelected === i ? 
+                          (gameState.quizAnswered ? 
+                           (i === quiz.answer ? p.color(100, 255, 100) : p.color(255, 100, 100)) 
+                           : p.color(200, 200, 255)) 
+                          : p.color(240));
+                    p.stroke(100);
+                    p.strokeWeight(2);
+                    p.rect(centerX - 200, y, 400, 50, 10);
+                    
+                    // Option text
+                    p.fill(0);
+                    p.textSize(18);
+                    p.textAlign(p.LEFT, p.CENTER);
+                    p.text(quiz.options[i], centerX - 180, y + 25);
+                }
+                
+                // Draw explanation if answered
+                if (gameState.quizAnswered) {
+                    p.fill(50);
+                    p.textSize(18);
+                    p.textAlign(p.CENTER, p.TOP);
+                    p.text(quiz.explanation, centerX, centerY + 150, 450, 200);
+                    
+                    // Draw next button
+                    p.fill(p.color(100, 200, 100));
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    p.rect(centerX - 60, centerY + 250, 120, 40, 10);
+                    
+                    p.fill(0);
+                    p.textSize(18);
+                    p.textAlign(p.CENTER, p.CENTER);
+                    p.text("Next", centerX, centerY + 270);
+                }
+            }
+            
+            function setNewQuiz() {
+                let difficultyIndex = Math.min(Math.floor((gameState.difficulty - 1) / 2), 2);
+                let questions = quizQuestions[difficultyIndex];
+                gameState.currentQuiz = questions[Math.floor(Math.random() * questions.length)];
+                gameState.quizAnswered = false;
+                gameState.quizAnswerSelected = null;
+            }
+            
+            function drawTiles() {
+                // Draw all draggable tiles
+                for (let i = 0; i < tiles.length; i++) {
+                    let tile = tiles[i];
+                    
+                    if (tile.draggable && !tile.placed) {
+                        // Draw tile
+                        p.fill(p.color(220, 220, 255));
+                        p.stroke(100);
+                        p.strokeWeight(2);
+                        p.rect(tile.x, tile.y, tile.width, tile.height, 5);
+                        
+                        // Draw label
+                        p.fill(0);
+                        p.textSize(16);
+                        p.textAlign(p.CENTER, p.CENTER);
+                        p.text(tile.label, tile.x + tile.width / 2, tile.y + tile.height / 2);
+                    }
+                }
+                
+                // Draw the tile being dragged (if any) on top
+                if (draggingTile !== null) {
+                    let tile = tiles[draggingTile];
+                    
+                    p.fill(p.color(200, 255, 200));
+                    p.stroke(50);
+                    p.strokeWeight(2);
+                    p.rect(tile.x, tile.y, tile.width, tile.height, 5);
+                    
+                    p.fill(0);
+                    p.textSize(16);
+                    p.textAlign(p.CENTER, p.CENTER);
+                    p.text(tile.label, tile.x + tile.width / 2, tile.y + tile.height / 2);
+                }
+            }
+            
+            function drawFactorBoxes() {
+                for (let i = 0; i < factorBoxes.length; i++) {
+                    let box = factorBoxes[i];
+                    
+                    // Draw box
+                    p.fill(p.color(255, 240, 200));
+                    p.stroke(100);
+                    p.strokeWeight(2);
+                    p.rect(box.x, box.y, box.width, box.height, 5);
+                    
+                    // Draw label
+                    p.fill(100);
+                    p.textSize(12);
+                    p.textAlign(box.vertical ? p.CENTER : p.LEFT, p.TOP);
+                    if (box.vertical) {
+                        p.push();
+                        p.translate(box.x + box.width / 2, box.y + 10);
+                        p.rotate(-p.HALF_PI);
+                        p.text(box.label, 0, 0);
+                        p.pop();
+                    } else {
+                        p.text(box.label, box.x + 10, box.y + 5);
+                    }
+                    
+                    // Draw value if any
+                    if (box.value) {
+                        p.fill(0);
+                        p.textSize(18);
+                        p.textAlign(p.CENTER, p.CENTER);
+                        
+                        if (box.vertical) {
+                            p.push();
+                            p.translate(box.x + box.width / 2, box.y + box.height / 2 + 20);
+                            p.rotate(-p.HALF_PI);
+                            p.text(box.value, 0, 0);
+                            p.pop();
+                        } else {
+                            p.text(box.value, box.x + box.width / 2, box.y + box.height / 2);
+                        }
+                    }
+                }
+            }
+            
+            function drawBackgroundParticles() {
+                // Draw floating particles in the background
+                for (let i = 0; i < backgroundParticles.length; i++) {
+                    let particle = backgroundParticles[i];
+                    
+                    p.fill(particle.color);
+                    p.noStroke();
+                    p.ellipse(particle.x, particle.y, particle.size, particle.size);
+                    
+                    // Move particle
+                    particle.y -= particle.speed;
+                    
+                    // Wrap around screen
+                    if (particle.y < -particle.size) {
+                        particle.y = gameHeight + particle.size;
+                        particle.x = p.random(gameWidth);
+                    }
+                }
+            }
+            
+            function drawCharacters() {
+                // Draw all characters
+                for (let charKey in gameState.characters) {
+                    let character = gameState.characters[charKey];
+                    
+                    // Move character towards target position
+                    character.x = p.lerp(character.x, character.targetX, 0.1);
+                    character.y = p.lerp(character.y, character.targetY, 0.1);
+                    
+                    // Draw character image
+                    p.image(character.img, character.x, character.y, 80, 80);
+                    
+                    // Draw character name
+                    p.fill(0);
+                    p.textSize(12);
+                    p.textAlign(p.CENTER, p.TOP);
+                    p.text(characterDefs[charKey].name, character.x + 40, character.y + 80);
+                }
+            }
+            
+            function drawSpeechBubbles() {
+                // Draw any active speech bubbles
+                for (let i = 0; i < gameState.bubbles.length; i++) {
+                    let bubble = gameState.bubbles[i];
+                    
+                    // Draw bubble
+                    p.fill(255);
+                    p.stroke(0);
+                    p.strokeWeight(2);
+                    p.rect(bubble.x, bubble.y, bubble.width, bubble.height, 15);
+                    
+                    // Draw little triangle pointer
+                    p.fill(255);
+                    p.triangle(
+                        bubble.pointerX, bubble.pointerY,
+                        bubble.pointerX - 10, bubble.pointerY - 20,
+                        bubble.pointerX + 10, bubble.pointerY - 20
+                    );
+                    
+                    // Draw text
+                    p.fill(0);
+                    p.textSize(14);
+                    p.textAlign(p.LEFT, p.TOP);
+                    p.text(bubble.text, bubble.x + 15, bubble.y + 15, bubble.width - 30, bubble.height - 30);
+                    
+                    // Update bubble lifetime
+                    bubble.timeLeft -= 1/60; // Roughly 1 second
+                }
+                
+                // Remove expired bubbles
+                gameState.bubbles = gameState.bubbles.filter(b => b.timeLeft > 0);
+            }
+            
+            function drawParticles() {
+                // Draw any active particles (for celebrations, etc.)
+                for (let i = 0; i < gameState.particles.length; i++) {
+                    let particle = gameState.particles[i];
+                    
+                    p.fill(particle.color);
+                    p.noStroke();
+                    p.ellipse(particle.x, particle.y, particle.size, particle.size);
+                    
+                    // Update particle
+                    particle.x += particle.vx;
+                    particle.y += particle.vy;
+                    particle.vy += 0.1; // Gravity
+                    particle.size *= 0.98; // Shrink
+                    
+                    // Remove tiny particles
+                    if (particle.size < 1) {
+                        gameState.particles.splice(i, 1);
+                        i--;
+                    }
+                }
+            }
+            
+            function drawScoreAndLevel() {
+                // Draw score and level info
+                p.fill(0);
+                p.textSize(16);
+                p.textAlign(p.LEFT, p.TOP);
+                p.text("Score: " + gameState.score, 20, 20);
+                p.text("Level: " + gameState.level, 20, 45);
+            }
+            
+            function handleMousePressed() {
+                let mouseX = p.mouseX;
+                let mouseY = p.mouseY;
+                
+                // Check if we're in quiz mode
+                if (gameState.mode === "quiz") {
+                    handleQuizClick(mouseX, mouseY);
+                    return;
+                }
+                
+                // Check for draggable tile
+                for (let i = 0; i < tiles.length; i++) {
+                    let tile = tiles[i];
+                    
+                    if (tile.draggable && !tile.placed &&
+                        mouseX >= tile.x && mouseX <= tile.x + tile.width &&
+                        mouseY >= tile.y && mouseY <= tile.y + tile.height) {
+                        
+                        draggingTile = i;
+                        lastDragPosition = { x: mouseX, y: mouseY };
+                        break;
+                    }
+                }
+                
+                // Check for character click
+                for (let charKey in gameState.characters) {
+                    let character = gameState.characters[charKey];
+                    
+                    if (mouseX >= character.x && mouseX <= character.x + 80 &&
+                        mouseY >= character.y && mouseY <= character.y + 80) {
+                        
+                        characterSpeak(charKey);
+                        break;
+                    }
+                }
+                
+                // Check for help button click
+                if (mouseX >= gameWidth - 50 && mouseY <= 50) {
+                    showHelpMessage();
+                }
+            }
+            
+            function handleQuizClick(mouseX, mouseY) {
+                let centerX = gameWidth / 2;
+                let centerY = gameHeight / 2 - 30;
+                
+                if (gameState.quizAnswered) {
+                    // Check for next button
+                    if (mouseX >= centerX - 60 && mouseX <= centerX + 60 &&
+                        mouseY >= centerY + 250 && mouseY <= centerY + 290) {
+                        
+                        // Move to next quiz question
+                        setNewQuiz();
+                    }
+                } else {
+                    // Check for option click
+                    for (let i = 0; i < gameState.currentQuiz.options.length; i++) {
+                        let y = centerY - 70 + i * 70;
+                        
+                        if (mouseX >= centerX - 200 && mouseX <= centerX + 200 &&
+                            mouseY >= y && mouseY <= y + 50) {
+                            
+                            // Select this answer
+                            gameState.quizAnswerSelected = i;
+                            gameState.quizAnswered = true;
+                            
+                            // Update score
+                            if (i === gameState.currentQuiz.answer) {
+                                gameState.score += 10;
+                                createSuccessParticles(centerX, y + 25);
+                                
+                                // Speak about correct answer
+                                let char = ["poly", "facty", "bina", "trina"][Math.floor(Math.random() * 4)];
+                                characterSpeak(char, "Correct! " + gameState.currentQuiz.explanation);
+                            } else {
+                                let char = ["poly", "facty", "bina", "trina"][Math.floor(Math.random() * 4)];
+                                characterSpeak(char, "Not quite! " + gameState.currentQuiz.explanation);
+                            }
+                            
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            function handleMouseDragged() {
+                if (draggingTile !== null) {
+                    let dx = p.mouseX - lastDragPosition.x;
+                    let dy = p.mouseY - lastDragPosition.y;
+                    
+                    // Update tile position
+                    tiles[draggingTile].x += dx;
+                    tiles[draggingTile].y += dy;
+                    
+                    // Update last position
+                    lastDragPosition = { x: p.mouseX, y: p.mouseY };
+                }
+            }
+            
+            function handleMouseReleased() {
+                if (draggingTile !== null) {
+                    let tile = tiles[draggingTile];
+                    
+                    // Check if tile is over a factor box
+                    for (let i = 0; i < factorBoxes.length; i++) {
+                        let box = factorBoxes[i];
+                        
+                        if (p.mouseX >= box.x && p.mouseX <= box.x + box.width &&
+                            p.mouseY >= box.y && p.mouseY <= box.y + box.height) {
+                            
+                            // Place tile in the box
+                            box.value = tile.label;
+                            tile.placed = true;
+                            tile.targetBox = i;
+                            
+                            // Create a new tile to replace this one
+                            tiles.push({
+                                x: tile.x - 50,
+                                y: tile.y - 50,
+                                width: tile.width,
+                                height: tile.height,
+                                label: tile.label,
+                                draggable: true,
+                                placed: false,
+                                targetBox: null
+                            });
+                            
+                            // Check if all factors are correct
+                            checkFactors();
+                            
+                            break;
+                        }
+                    }
+                    
+                    // If tile wasn't placed, reset its position
+                    if (!tile.placed) {
+                        for (let i = 0; i < factorBoxes.length; i++) {
+                            if (factorBoxes[i].value === tile.label) {
+                                factorBoxes[i].value = "";
+                                break;
+                            }
+                        }
+                    }
+                    
+                    draggingTile = null;
+                }
+            }
+            
+            function checkFactors() {
+                // Check if both factors are filled
+                if (factorBoxes[0].value !== "" && factorBoxes[1].value !== "") {
+                    // Check if multiplication is correct
+                    if (factorsCorrect()) {
+                        // Success!
+                        showSuccessMessage();
+                    }
+                }
+            }
+            
+            function factorsCorrect() {
+                // Get correct factors from the problem
+                let correctFactors = [
+                    gameState.currentProblem.factors[0],
+                    gameState.currentProblem.factors[1]
+                ];
+                
+                // Get user's factors
+                let userFactors = [
+                    factorBoxes[0].value,
+                    factorBoxes[1].value
+                ];
+                
+                // Check if they match (in either order)
+                return (userFactors[0] === correctFactors[0] && userFactors[1] === correctFactors[1]) ||
+                       (userFactors[0] === correctFactors[1] && userFactors[1] === correctFactors[0]);
+            }
+            
+            function showSuccessMessage() {
+                gameState.factorsRevealed = true;
+                
+                // Show success message
+                let char = ["poly", "facty", "bina", "trina"][Math.floor(Math.random() * 4)];
+                characterSpeak(char, "Great job! You factored " + gameState.currentProblem.expression + " correctly!");
+                
+                // Create celebration particles
+                createSuccessParticles(gameWidth / 2, gameHeight / 2);
+                
+                // Increase score and success count
+                gameState.score += 20;
+                gameState.successCount++;
+                
+                // Check for level up (every 3 successful problems)
+                if (gameState.successCount >= 3) {
+                    gameState.level++;
+                    gameState.successCount = 0;
+                    
+                    // Show level up message
+                    setTimeout(() => {
+                        showMessage("Level Up!", 
+                            `<p>Congratulations! You've reached Level ${gameState.level}!</p>
+                             <p>The problems will get a little more challenging now.</p>
+                             <p>Keep up the great work!</p>`);
+                    }, 2000);
+                } else {
+                    // Set new problem after a delay
+                    setTimeout(() => {
+                        setNewProblem();
+                    }, 3000);
+                }
+            }
+            
+            function createSuccessParticles(x, y) {
+                // Create celebratory particles
+                for (let i = 0; i < 30; i++) {
+                    let angle = p.random(p.TWO_PI);
+                    let speed = p.random(2, 8);
+                    
+                    gameState.particles.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 2, // Initial upward velocity
+                        size: p.random(5, 15),
+                        color: p.color(
+                            p.random(100, 255),
+                            p.random(100, 255),
+                            p.random(100, 255)
+                        )
+                    });
+                }
+            }
+            
+            function characterSpeak(charKey, customMessage = null) {
+                let character = gameState.characters[charKey];
+                
+                // Set character as speaking
+                character.speaking = true;
+                
+                // Get message
+                let message;
+                if (customMessage) {
+                    message = customMessage;
+                } else {
+                    let messages = characterDefs[charKey].messages;
+                    message = messages[Math.floor(Math.random() * messages.length)];
+                }
+                
+                // Create speech bubble
+                let bubbleWidth = 200;
+                let bubbleHeight = 100;
+                let bubbleX, bubbleY, pointerX, pointerY;
+                
+                if (character.x < gameWidth / 2) {
+                    // Character on left side
+                    bubbleX = character.x + 70;
+                    pointerX = bubbleX + 20;
+                } else {
+                    // Character on right side
+                    bubbleX = character.x - bubbleWidth + 10;
+                    pointerX = bubbleX + bubbleWidth - 20;
+                }
+                
+                bubbleY = character.y - bubbleHeight - 20;
+                pointerY = character.y - 10;
+                
+                gameState.bubbles.push({
+                    x: bubbleX,
+                    y: bubbleY,
+                    width: bubbleWidth,
+                    height: bubbleHeight,
+                    text: message,
+                    pointerX: pointerX,
+                    pointerY: pointerY,
+                    timeLeft: 4 // 4 seconds
+                });
+                
+                // Move other characters away slightly to give focus
+                for (let otherKey in gameState.characters) {
+                    if (otherKey !== charKey) {
+                        let other = gameState.characters[otherKey];
+                        
+                        if (other.x < gameWidth / 2) {
+                            other.targetX = other.x - 20;
+                        } else {
+                            other.targetX = other.x + 20;
+                        }
+                    }
+                }
+                
+                // Reset after bubble disappears
+                setTimeout(() => {
+                    character.speaking = false;
+                    
+                    // Reset character positions
+                    for (let otherKey in gameState.characters) {
+                        let other = gameState.characters[otherKey];
+                        
+                        if (otherKey === "poly") {
+                            other.targetX = 50;
+                        } else if (otherKey === "facty") {
+                            other.targetX = gameWidth - 130;
+                        } else if (otherKey === "bina") {
+                            other.targetX = 150;
+                        } else if (otherKey === "trina") {
+                            other.targetX = gameWidth - 230;
+                        }
+                    }
+                }, 4000);
+            }
+            
+            function speakAboutProblem() {
+                // Have a character introduce the current problem
+                let char;
+                let problemType = gameState.currentProblem.type;
+                
+                if (problemType.includes("difference of squares")) {
+                    char = "bina";
+                } else if (problemType.includes("perfect square")) {
+                    char = "trina";
+                } else if (problemType.includes("common factor")) {
+                    char = "facty";
+                } else {
+                    char = "poly";
+                }
+                
+                // Create message about the problem
+                let message = "Let's factor " + gameState.currentProblem.expression + "! ";
+                
+                if (problemType === "difference of squares") {
+                    message += "This is a difference of squares pattern!";
+                } else if (problemType === "perfect square") {
+                    message += "This is a perfect square trinomial!";
+                } else if (problemType === "common factor") {
+                    message += "Look for a common factor first!";
+                } else if (problemType === "simple") {
+                    message += "Try to find two factors that multiply together correctly.";
+                } else if (problemType === "simple with negative") {
+                    message += "One term is negative, so the factors will have different signs.";
+                } else if (problemType === "leading coefficient") {
+                    message += "This has a leading coefficient other than 1, so we need to be careful!";
+                }
+                
+                characterSpeak(char, message);
+            }
+            
+            function showMessage(title, content) {
+                // Show a message box with the given title and content
+                document.getElementById('message-box').style.display = 'block';
+                document.getElementById('message-content').innerHTML = content;
+                document.querySelector('#message-box h2').innerText = title;
+            }
+            
+            function showHelpMessage() {
+                let helpContent = `
+                    <p><b>How to Play:</b></p>
+                    <p>1. Drag the factor tiles to the factor boxes.</p>
+                    <p>2. Try to find the correct factors that multiply to make the given expression.</p>
+                    <p>3. If you get stuck, click on the characters for hints!</p>
+                    <p><b>Game Controls:</b></p>
+                    <p>- Use the buttons at the top to change game mode, difficulty, and visualization.</p>
+                    <p>- In Quiz mode, select the correct answer to the factoring questions.</p>
+                    <p>- Click on the characters to hear helpful tips about factoring!</p>
+                `;
+                
+                showMessage("Help & Instructions", helpContent);
+            }
+            
+            // Utility functions
+            function generatePossibleFactors() {
+                // Generate a set of possible factors including the correct ones
+                // plus some distractors appropriate for the difficulty level
+                
+                let correct = gameState.currentProblem.factors;
+                let allFactors = [...correct];
+                
+                // Add some wrong options based on common mistake patterns
+                if (correct[0].includes("x+")) {
+                    // Swap signs
+                    allFactors.push(correct[0].replace("x+", "x-"));
+                } else if (correct[0].includes("x-")) {
+                    allFactors.push(correct[0].replace("x-", "x+"));
+                }
+                
+                if (correct[1].includes("x+")) {
+                    allFactors.push(correct[1].replace("x+", "x-"));
+                } else if (correct[1].includes("x-")) {
+                    allFactors.push(correct[1].replace("x+", "x-"));
+                }
+                
+                // Add more distractors based on difficulty
+                if (gameState.difficulty >= 3) {
+                    // Add factors with wrong coefficients
+                    if (correct[0].includes("x")) {
+                        let coef = correct[0].startsWith("(") ? correct[0].split("x")[0].replace("(", "") : 
+                                  correct[0].split("x")[0] || "1";
+                        coef = parseInt(coef) || 1;
+                        
+                        let wrongCoef = coef + 1;
+                        let wrongFactor = correct[0].replace(coef === 1 ? "" : coef.toString(), wrongCoef.toString());
+                        allFactors.push(wrongFactor);
+                    }
+                }
+                
+                // Shuffle and trim to have a reasonable number of options
+                allFactors = shuffleArray(allFactors);
+                return allFactors.slice(0, 6); // Limit to 6 options
+            }
+            
+            function shuffleArray(array) {
+                // Fisher-Yates shuffle
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+            
+            function parseExpression(expr) {
+                // Parse an expression into its terms
+                let terms = [];
+                
+                if (expr.includes("x²")) {
+                    terms.push({ term: "x²", coefficient: 1 });
+                }
+                
+                if (expr.includes("x") && !expr.includes("x²")) {
+                    terms.push({ term: "x", coefficient: 1 });
+                } else if (expr.includes("+") && expr.includes("x ")) {
+                    terms.push({ term: expr.split("+")[1].split("+")[0].trim(), coefficient: 1 });
+                } else if (expr.includes("-") && expr.includes("x ")) {
+                    terms.push({ term: expr.split("-")[1].split("+")[0].trim(), coefficient: -1 });
+                }
+                
+                // Check for constant term
+                if (expr.match(/[+-]?\s*\d+$/)) {
+                    let constTerm = expr.match(/[+-]?\s*\d+$/)[0].trim();
+                    terms.push({ term: constTerm, coefficient: parseInt(constTerm) });
+                }
+                
+                return terms;
+            }
+            
+            function getColorForTerm(term) {
+                if (term.includes("x²")) {
+                    return p.color(173, 216, 230); // Light blue for x²
+                } else if (term.includes("x")) {
+                    return p.color(144, 238, 144); // Light green for x terms
+                } else {
+                    return p.color(255, 182, 193); // Light pink for constants
+                }
+            }
+            
+            function extractCoefficient(factor) {
+                if (factor.includes("+")) {
+                    return "+" + factor.split("+")[1].split(")")[0];
+                } else if (factor.includes("-")) {
+                    return "-" + factor.split("-")[1].split(")")[0];
+                }
+                return "";
+            }
+            
+            function extractConstant(factor) {
+                if (factor.includes("+")) {
+                    return parseInt(factor.split("+")[1].split(")")[0]);
+                } else if (factor.includes("-")) {
+                    return -parseInt(factor.split("-")[1].split(")")[0]);
+                }
+                return 1;
+            }
+            
+            function extractRoots(factors) {
+                let roots = [];
+                
+                for (let i = 0; i < factors.length; i++) {
+                    let factor = factors[i];
+                    
+                    if (factor.includes("x+")) {
+                        roots.push(-parseInt(factor.split("x+")[1].split(")")[0]));
+                    } else if (factor.includes("x-")) {
+                        roots.push(parseInt(factor.split("x-")[1].split(")")[0]));
+                    }
+                }
+                
+                return roots;
+            }
+        };
+        
+        new p5(sketch);
+        
+        // Event Listeners for UI Controls
+        document.getElementById('explore-mode').addEventListener('click', function() {
+            setGameMode('explore');
+        });
+        
+        document.getElementById('challenge-mode').addEventListener('click', function() {
+            setGameMode('challenge');
+        });
+        
+        document.getElementById('quiz-mode').addEventListener('click', function() {
+            setGameMode('quiz');
+        });
+        
+        document.getElementById('difficulty').addEventListener('input', function() {
+            gameState.difficulty = parseInt(this.value);
+            resetGame();
+        });
+        
+        document.getElementById('area-model').addEventListener('click', function() {
+            setVisualization('area');
+        });
+        
+        document.getElementById('algebra-tiles').addEventListener('click', function() {
+            setVisualization('algebra-tiles');
+        });
+        
+        document.getElementById('number-line').addEventListener('click', function() {
+            setVisualization('number-line');
+        });
+        
+        document.getElementById('binomials').addEventListener('click', function() {
+            setPolynomialType('binomials');
+        });
+        
+        document.getElementById('trinomials').addEventListener('click', function() {
+            setPolynomialType('trinomials');
+        });
+        
+        document.getElementById('difference-of-squares').addEventListener('click', function() {
+            setPolynomialType('binomials');
+            gameState.difficulty = Math.max(2, gameState.difficulty);
+            document.getElementById('difficulty').value = gameState.difficulty;
+            setupSpecialType('difference of squares');
+        });
+        
+        document.getElementById('perfect-squares').addEventListener('click', function() {
+            setPolynomialType('trinomials');
+            gameState.difficulty = Math.max(2, gameState.difficulty);
+            document.getElementById('difficulty').value = gameState.difficulty;
+            setupSpecialType('perfect square');
+        });
+        
+        document.getElementById('message-close').addEventListener('click', function() {
+            document.getElementById('message-box').style.display = 'none';
+        });
+        
+        document.getElementById('help-button').addEventListener('click', function() {
+            showHelpMessage();
+        });
+        
+        function setGameMode(mode) {
+            gameState.mode = mode;
+            
+            // Update UI
+            document.getElementById('explore-mode').classList.toggle('active', mode === 'explore');
+            document.getElementById('challenge-mode').classList.toggle('active', mode === 'challenge');
+            document.getElementById('quiz-mode').classList.toggle('active', mode === 'quiz');
+            
+            // Reset game with new mode
+            resetGame();
+        }
+        
+        function setVisualization(vis) {
+            gameState.visualization = vis;
+            
+            // Update UI
+            document.getElementById('area-model').classList.toggle('active', vis === 'area');
+            document.getElementById('algebra-tiles').classList.toggle('active', vis === 'algebra-tiles');
+            document.getElementById('number-line').classList.toggle('active', vis === 'number-line');
+            
+            // Reset visualization
+            setupVisualization();
+        }
+        
+        function setPolynomialType(type) {
+            gameState.polynomialType = type;
+            
+            // Update UI
+            document.getElementById('binomials').classList.toggle('active', type === 'binomials');
+            document.getElementById('trinomials').classList.toggle('active', type === 'trinomials');
+            document.getElementById('difference-of-squares').classList.toggle('active', false);
+            document.getElementById('perfect-squares').classList.toggle('active', false);
+            
+            // Reset game with new polynomial type
+            resetGame();
+        }
+        
+        function setupSpecialType(specialType) {
+            // Find a problem of the special type
+            let difficultyIndex = gameState.difficulty - 1;
+            let problems;
+            
+            if (specialType === 'difference of squares') {
+                problems = gameProblems.binomials[difficultyIndex].filter(p => p.type === 'difference of squares');
+            } else if (specialType === 'perfect square') {
+                problems = gameProblems.trinomials[difficultyIndex].filter(p => p.type === 'perfect square');
+            } else {
+                return;
+            }
+            
+            if (problems.length > 0) {
+                gameState.currentProblem = problems[Math.floor(Math.random() * problems.length)];
+                setupVisualization();
+                speakAboutProblem();
+            }
+        }
+        
+        function showHelpMessage() {
+            let helpContent = `
+                <p><b>How to Play:</b></p>
+                <p>1. Drag the factor tiles to the factor boxes.</p>
+                <p>2. Try to find the correct factors that multiply to make the given expression.</p>
+                <p>3. If you get stuck, click on the characters for hints!</p>
+                <p><b>Game Controls:</b></p>
+                <p>- Use the buttons at the top to change game mode, difficulty, and visualization.</p>
+                <p>- In Quiz mode, select the correct answer to the factoring questions.</p>
+                <p>- Click on the characters to hear helpful tips about factoring!</p>
+            `;
+            
+            document.getElementById('message-box').style.display = 'block';
+            document.getElementById('message-content').innerHTML = helpContent;
+            document.querySelector('#message-box h2').innerText = 'Help & Instructions';
+        }
+        
+        function resetGame() {
+            gameState.score = 0;
+            gameState.level = 1;
+            gameState.successCount = 0;
+            gameState.factorsRevealed = false;
+            gameState.quizActive = false;
+            gameState.currentQuiz = null;
+            
+            // Set up a new problem or quiz
+            if (gameState.mode === 'quiz') {
+                setNewQuiz();
+            } else {
+                setNewProblem();
+            }
+        }
+        
+        function setNewProblem() {
+            let difficultyIndex = gameState.difficulty - 1;
+            let problems;
+            
+            // Get problems based on polynomial type setting
+            if (gameState.polynomialType === "binomials") {
+                problems = gameProblems.binomials[difficultyIndex];
+            } else {
+                problems = gameProblems.trinomials[difficultyIndex];
+            }
+            
+            // Randomly select a problem
+            gameState.currentProblem = problems[Math.floor(Math.random() * problems.length)];
+            
+            // Set up tiles and area grid based on the visualization type
+            setupVisualization();
+            
+            // Make a character speak about the problem
+            speakAboutProblem();
+        }
+        
+        function setNewQuiz() {
+            let difficultyIndex = Math.min(Math.floor((gameState.difficulty - 1) / 2), 2);
+            let questions = quizQuestions[difficultyIndex];
+            gameState.currentQuiz = questions[Math.floor(Math.random() * questions.length)];
+            gameState.quizAnswered = false;
+            gameState.quizAnswerSelected = null;
+        }
+        
+        function setupVisualization() {
+            // This function is called from the p5 sketch
+        }
+        
+        function speakAboutProblem() {
+            // This function is called from the p5 sketch
+        }
+    </script>
+</body>
+</html>

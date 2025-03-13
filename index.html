@@ -22,6 +22,7 @@
             --games-color: #FC76AF;
             --logic-color: #43BCCD;
             --physics-color: #EAC435;
+            --misc-color: #9370DB;
             --dark-color: #292F36;
             --light-color: #F7FFF7;
             --shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
@@ -193,6 +194,10 @@
         .category-physics {
             background-color: var(--physics-color);
         }
+        
+        .category-misc {
+            background-color: var(--misc-color);
+        }
 
         .tagline {
             font-size: 1.4rem;
@@ -294,6 +299,10 @@
         .physics-card {
             border-color: var(--physics-color);
         }
+        
+        .misc-card {
+            border-color: var(--misc-color);
+        }
 
         .game-card:hover {
             transform: translateY(-10px) scale(1.03);
@@ -339,6 +348,10 @@
 
         .physics-card::before {
             background: var(--physics-color);
+        }
+        
+        .misc-card::before {
+            background: var(--misc-color);
         }
 
         .game-card a {
@@ -391,6 +404,10 @@
 
         .physics-card .game-title {
             color: var(--physics-color);
+        }
+        
+        .misc-card .game-title {
+            color: var(--misc-color);
         }
 
         .game-card .game-description {
@@ -762,6 +779,11 @@
             background-color: var(--physics-color);
             color: white;
         }
+        
+        .misc-icon {
+            background-color: var(--misc-color);
+            color: white;
+        }
 
         .game-content {
             display: flex;
@@ -884,6 +906,7 @@
         .jump-games { background-color: var(--games-color); }
         .jump-logic { background-color: var(--logic-color); }
         .jump-physics { background-color: var(--physics-color); }
+        .jump-misc { background-color: var(--misc-color); }
 
         /* Status indicators */
         .status-indicator {
@@ -947,6 +970,7 @@
             <button class="jump-btn jump-games" data-target="games-section">Games</button>
             <button class="jump-btn jump-logic" data-target="logic-section">Logic</button>
             <button class="jump-btn jump-physics" data-target="physics-section">Physics</button>
+            <button class="jump-btn jump-misc" data-target="misc-section">Misc</button>
         </div>
 
         <!-- Math Section -->
@@ -1045,6 +1069,18 @@
             </div>
         </div>
 
+        <!-- Miscellaneous Section -->
+        <div class="category-container" id="misc-section">
+            <div class="category-header">
+                <h2 class="category-title category-misc">Miscellaneous 🎲</h2>
+                <p>Other interesting games and activities</p>
+            </div>
+            <div class="games-container misc-games">
+                <!-- Miscellaneous games will be loaded here -->
+                <div class="loading">Loading miscellaneous games...</div>
+            </div>
+        </div>
+
         <!-- Back to top button -->
         <div id="backToTop">↑</div>
 
@@ -1079,6 +1115,7 @@
             const funGamesContainer = document.querySelector('.fun-games');
             const logicGamesContainer = document.querySelector('.logic-games');
             const physicsGamesContainer = document.querySelector('.physics-games');
+            const miscGamesContainer = document.querySelector('.misc-games');
             
             let allGames = [];
             let activeAge = '5'; // Default to 5-year-olds
@@ -1092,7 +1129,8 @@
                 geography: '🌎',
                 games: '🎮',
                 logic: '🧩',
-                physics: '🚀'
+                physics: '🚀',
+                misc: '🎲'
             };
 
             // Category-specific keywords for better classification
@@ -1184,8 +1222,8 @@
                     }
                 }
                 
-                // Default to the "games" category if no match is found
-                return "games";
+                // Return "misc" for files that don't match any category
+                return "misc";
             }
 
             // Function to load games for a specific age
@@ -1196,7 +1234,7 @@
                 // Reset all game containers
                 const containers = [mathGamesContainer, scienceGamesContainer, musicGamesContainer, 
                                   languageGamesContainer, geographyGamesContainer, funGamesContainer, 
-                                  logicGamesContainer, physicsGamesContainer];
+                                  logicGamesContainer, physicsGamesContainer, miscGamesContainer];
                 
                 containers.forEach(container => {
                     container.innerHTML = '<div class="loading">Loading games...</div>';
@@ -1262,40 +1300,60 @@
                 const funGames = [];
                 const logicGames = [];
                 const physicsGames = [];
+                const miscGames = [];
+                
+                // Keep track of categorized games
+                const categorizedGames = new Set();
                 
                 games.forEach(game => {
                     const category = determineGameCategory(game.name);
                     
                     // Add game to the appropriate category array
-                    // Log each game's category assignment
-                    console.log(`Categorizing "${game.name}" as: ${category}`);
-                    
                     switch(category) {
                         case 'math':
                             mathGames.push(game);
+                            categorizedGames.add(game.name);
                             break;
                         case 'science':
                             scienceGames.push(game);
+                            categorizedGames.add(game.name);
                             break;
                         case 'music':
                             musicGames.push(game);
+                            categorizedGames.add(game.name);
                             break;
                         case 'language':
                             languageGames.push(game);
+                            categorizedGames.add(game.name);
                             break;
                         case 'geography':
                             geographyGames.push(game);
+                            categorizedGames.add(game.name);
                             break;
                         case 'logic':
                             logicGames.push(game);
+                            categorizedGames.add(game.name);
                             break;
                         case 'physics':
                             physicsGames.push(game);
+                            categorizedGames.add(game.name);
                             break;
                         case 'games':
-                        default:
                             funGames.push(game);
+                            categorizedGames.add(game.name);
                             break;
+                        default:
+                            // If we get here, the game doesn't fit in any category
+                            miscGames.push(game);
+                            categorizedGames.add(game.name);
+                            break;
+                    }
+                });
+                
+                // Find any games that weren't categorized and put them in the miscellaneous category
+                games.forEach(game => {
+                    if (!categorizedGames.has(game.name)) {
+                        miscGames.push(game);
                     }
                 });
                 
@@ -1308,6 +1366,7 @@
                 displayGames(funGames, funGamesContainer, 'games-card', 'games-icon');
                 displayGames(logicGames, logicGamesContainer, 'logic-card', 'logic-icon');
                 displayGames(physicsGames, physicsGamesContainer, 'physics-card', 'physics-icon');
+                displayGames(miscGames, miscGamesContainer, 'misc-card', 'misc-icon');
                 
                 // Hide empty sections
                 hideEmptySections([
@@ -1318,7 +1377,8 @@
                     { games: geographyGames, section: document.getElementById('geography-section'), jumpBtn: document.querySelector('.jump-geography') },
                     { games: funGames, section: document.getElementById('games-section'), jumpBtn: document.querySelector('.jump-games') },
                     { games: logicGames, section: document.getElementById('logic-section'), jumpBtn: document.querySelector('.jump-logic') },
-                    { games: physicsGames, section: document.getElementById('physics-section'), jumpBtn: document.querySelector('.jump-physics') }
+                    { games: physicsGames, section: document.getElementById('physics-section'), jumpBtn: document.querySelector('.jump-physics') },
+                    { games: miscGames, section: document.getElementById('misc-section'), jumpBtn: document.querySelector('.jump-misc') }
                 ]);
             }
 
@@ -1415,7 +1475,7 @@
                     // Clear all containers
                     const containers = [mathGamesContainer, scienceGamesContainer, musicGamesContainer, 
                                       languageGamesContainer, geographyGamesContainer, funGamesContainer, 
-                                      logicGamesContainer, physicsGamesContainer];
+                                      logicGamesContainer, physicsGamesContainer, miscGamesContainer];
                     
                     containers.forEach(container => {
                         container.innerHTML = '';
@@ -1449,8 +1509,8 @@
                 // Replace hyphens and underscores with spaces
                 title = title.replace(/[-_]/g, ' ');
                 
-                // Remove version numbers (v1, v2, etc.) - both with and without spaces
-                title = title.replace(/\s*v\d+(\.\d+)?$/i, '');
+                // Remove version numbers (v1, v2, etc.)
+                title = title.replace(/\s+v\d+(\.\d+)?/i, '');
                 
                 // Title case
                 title = title.split(' ').map(word => {

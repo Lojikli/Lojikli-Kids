@@ -1231,8 +1231,36 @@
             
             const userAnswer = answerInput.value;
             
-            // Simple string comparison
-            if (userAnswer === currentProblem.solution) {
+            // Normalize both answers for comparison (remove spaces)
+            const normalizedUserAnswer = userAnswer.replace(/\s+/g, '');
+            const normalizedSolution = currentProblem.solution.replace(/\s+/g, '');
+            
+            // Check for alternative correct forms (commutative property)
+            let isCorrect = false;
+            
+            // Direct match after normalization
+            if (normalizedUserAnswer === normalizedSolution) {
+                isCorrect = true;
+            }
+            
+            // For beginner problems like a(b + c), also accept a(c + b)
+            if (difficulty === "beginner" && !isCorrect) {
+                // Extract the pattern a(b + c)
+                const match = currentProblem.solution.match(/^(\S+)\((\S+)\s*\+\s*(\S+)\)$/);
+                if (match) {
+                    const [_, factor, term1, term2] = match;
+                    // Check if user entered a(c + b) instead of a(b + c)
+                    const alternativeSolution = `${factor}(${term2} + ${term1})`;
+                    const normalizedAlternative = alternativeSolution.replace(/\s+/g, '');
+                    
+                    if (normalizedUserAnswer === normalizedAlternative) {
+                        isCorrect = true;
+                    }
+                }
+            }
+            
+            // Check if the answer is correct
+            if (isCorrect) {
                 // Correct answer
                 showFeedback('Correct!', 'success');
                 score += pointsPerCorrectAnswer;

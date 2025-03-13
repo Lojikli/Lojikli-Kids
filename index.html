@@ -932,6 +932,87 @@
             background-color: #FF6B6B;
             color: white;
         }
+
+        /* Debug panel for file verification */
+        #debugPanel {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            padding: 15px;
+            max-width: 400px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            font-size: 0.8rem;
+            display: none;
+        }
+
+        #debugPanel.visible {
+            display: block;
+        }
+
+        .debug-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .debug-close {
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .debug-item {
+            margin-bottom: 5px;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .debug-item.success {
+            background-color: rgba(78, 205, 196, 0.2);
+        }
+
+        .debug-item.warning {
+            background-color: rgba(255, 209, 102, 0.2);
+        }
+
+        .debug-item.error {
+            background-color: rgba(255, 107, 107, 0.2);
+        }
+
+        .verification-summary {
+            background-color: var(--accent1-color);
+            color: var(--dark-color);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-weight: 600;
+            box-shadow: var(--shadow);
+        }
+
+        #debugToggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background-color: var(--accent2-color);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 1.2rem;
+            box-shadow: var(--shadow);
+            z-index: 1001;
+        }
     </style>
 </head>
 <body>
@@ -960,6 +1041,8 @@
                 <span class="search-icon">🔍</span>
             </div>
         </div>
+
+        <div class="verification-summary" id="verificationSummary"></div>
 
         <div class="category-jump-nav" id="categoryJumpNav">
             <button class="jump-btn jump-math" data-target="math-section">Math</button>
@@ -1084,6 +1167,18 @@
         <!-- Back to top button -->
         <div id="backToTop">↑</div>
 
+        <!-- Debug toggle button -->
+        <div id="debugToggle">🔍</div>
+
+        <!-- Debug panel for verification -->
+        <div id="debugPanel">
+            <div class="debug-header">
+                <span>File Verification</span>
+                <span class="debug-close">×</span>
+            </div>
+            <div id="debugContent"></div>
+        </div>
+
         <!-- Status indicator -->
         <div id="statusIndicator" class="status-indicator">Loading games...</div>
     </div>
@@ -1095,16 +1190,26 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Main repository URL
-            const repoOwner = 'Lojikli';  // Replace with your GitHub username
-            const repoName = 'Lojikli-Kids';  // Replace with your repository name
+            // Main repository URL - use your actual GitHub username and repository name
+            const repoOwner = 'Lojikli';
+            const repoName = 'Lojikli-Kids';
+            
+            // URL construction for GitHub API and raw content
             const baseRepoUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents`;
             const rawContentBaseUrl = `https://raw.githubusercontent.com/${repoOwner}/${repoName}/main`;
             
+            // Direct GitHub Pages URL (used for generating proper links)
+            const gitHubPagesUrl = `https://${repoOwner}.github.io/${repoName}`;
+            
+            // Elements
             const searchBox = document.getElementById('searchBox');
             const ageToggleBtns = document.querySelectorAll('.age-toggle-btn');
             const backToTopBtn = document.getElementById('backToTop');
             const statusIndicator = document.getElementById('statusIndicator');
+            const debugPanel = document.getElementById('debugPanel');
+            const debugToggle = document.getElementById('debugToggle');
+            const debugContent = document.getElementById('debugContent');
+            const verificationSummary = document.getElementById('verificationSummary');
             
             // Game containers
             const mathGamesContainer = document.querySelector('.math-games');
@@ -1117,8 +1222,11 @@
             const physicsGamesContainer = document.querySelector('.physics-games');
             const miscGamesContainer = document.querySelector('.misc-games');
             
+            // State variables
             let allGames = [];
+            let processedGames = new Set(); // Track which games have been processed
             let activeAge = '5'; // Default to 5-year-olds
+            let debugMode = false;
 
             // Icon mapping for different game types
             const gameIcons = {
@@ -1133,24 +1241,42 @@
                 misc: '🎲'
             };
 
-            // Category-specific keywords for better classification
+            // Expanded category-specific keywords for better classification
             const categoryKeywords = {
-                math: ['math', 'addition', 'subtraction', 'multiplication', 'division', 'algebra', 'geometry', 
-                      'calculus', 'fraction', 'decimal', 'percentage', 'number', 'arithmetic', 'zero', 'pemdas',
-                      'area', 'volume', 'binomial', 'factor', 'factoring', 'polynomial', 'gcf', 'distributive', 
-                      'divisibility', 'compare', 'term', 'trinomial', 'property', 'scientific', 'notation', 'plot',
-                      'negative', 'statistic', 'unit', 'conversion', 'vector', 'scalar', 'mx', 'plus', 'line'],
+                math: ['math', 'addition', 'subtraction', 'multiplication', 'division', 'algebra', 'geometry', 'calculus', 
+                      'fraction', 'decimal', 'percentage', 'number', 'arithmetic', 'zero', 'pemdas', 'area', 'volume', 
+                      'binomial', 'factor', 'factoring', 'polynomial', 'gcf', 'distributive', 'divisibility', 'compare', 
+                      'term', 'trinomial', 'property', 'scientific', 'notation', 'plot', 'negative', 'statistic', 'unit', 
+                      'conversion', 'vector', 'scalar', 'mx', 'plus', 'line', 'reducing', 'zeroProperty'],
+                      
                 science: ['science', 'chemistry', 'biology', 'experiment', 'lab', 'neural', 'tech', 'explorer'],
-                music: ['music', 'piano', 'instrument', 'note', 'rhythm', 'harmony', 'chord', 'melody', 'midi', 'circle of fifths'],
-                language: ['word', 'letter', 'reading', 'spelling', 'vocabulary', 'grammar', 'language', 'scramble', 'writing', 'problem'],
+                
+                music: ['music', 'piano', 'instrument', 'note', 'rhythm', 'harmony', 'chord', 'melody', 'midi', 
+                       'circle of fifths', 'read music', 'harmonics'],
+                       
+                language: ['word', 'letter', 'reading', 'spelling', 'vocabulary', 'grammar', 'language', 'scramble', 
+                          'writing', 'problem', 'wordscramble', 'wordproblem', 'writingfitness'],
+                          
                 geography: ['geography', 'map', 'country', 'continent', 'globe', 'world', 'geo'],
-                games: ['memory', 'cards', 'fun', 'play', 'bubble', 'pop', 'snake', 'ladder', 'trouble', 'battleship', 'solitaire', 'space-adventure', 'pacman', 'slider', 'timer'],
-                logic: ['logic', 'puzzle', 'brain', 'maze', 'pathfinder', 'pipe', 'soduku', 'connect4', 'dot', 'minesweeper', 'hexcell', 'ai', 'enhanced'],
-                physics: ['physics', 'quantum', 'vector', 'scalar', 'perspective', 'asteroid', 'planet', 'lander', 'trig', 'triangle']
+                
+                games: ['memory', 'cards', 'fun', 'play', 'bubble', 'pop', 'snake', 'ladder', 'trouble', 'battleship', 
+                       'solitaire', 'space-adventure', 'pacman', 'slider', 'timer', 'enhanced-toddler', 'bubblepop', 
+                       'bubbleshooter'],
+                       
+                logic: ['logic', 'puzzle', 'brain', 'maze', 'pathfinder', 'pipe', 'soduku', 'connect4', 'dot', 'minesweeper', 
+                       'hexcell', 'ai', 'enhanced', 'mahjong', 'aipathfinder', 'dotsgame'],
+                       
+                physics: ['physics', 'quantum', 'vector', 'scalar', 'perspective', 'asteroid', 'planet', 'lander', 'trig', 
+                         'triangle', 'planetlander', 'asteroidblaster']
             };
 
             // Helper function to properly encode GitHub Pages URLs for filenames with spaces
             function createGitHubPagesUrl(repoOwner, repoName, filePath) {
+                // Handle absolute paths that start with a slash
+                if (filePath.startsWith('/')) {
+                    filePath = filePath.substring(1);
+                }
+                
                 // Split the path into segments (handles nested directories)
                 const pathSegments = filePath.split('/');
                 
@@ -1162,6 +1288,22 @@
                 
                 // Return the full GitHub Pages URL
                 return `https://${repoOwner}.github.io/${repoName}/${encodedPath}`;
+            }
+
+            // Debug logging function
+            function logDebug(message, type = 'info') {
+                if (debugMode) {
+                    const item = document.createElement('div');
+                    item.className = `debug-item ${type}`;
+                    item.textContent = message;
+                    debugContent.appendChild(item);
+                    
+                    // Auto-scroll to bottom
+                    debugPanel.scrollTop = debugPanel.scrollHeight;
+                }
+                
+                // Always log to console
+                console.log(`[${type.toUpperCase()}] ${message}`);
             }
 
             // Show status indicator
@@ -1186,12 +1328,37 @@
                 }, 3000);
             }
 
+            // Toggle debug panel
+            debugToggle.addEventListener('click', () => {
+                debugMode = !debugMode;
+                debugPanel.classList.toggle('visible');
+                
+                if (debugMode) {
+                    logDebug('Debug mode enabled', 'success');
+                }
+            });
+
+            // Close debug panel
+            document.querySelector('.debug-close').addEventListener('click', () => {
+                debugPanel.classList.remove('visible');
+                debugMode = false;
+            });
+
             // Handle age toggle
             ageToggleBtns.forEach(btn => {
                 btn.addEventListener('click', () => {
                     ageToggleBtns.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     activeAge = btn.getAttribute('data-age');
+                    
+                    // Reset processed games tracking
+                    processedGames = new Set();
+                    
+                    // Clear debug content
+                    debugContent.innerHTML = '';
+                    
+                    // Hide verification summary initially
+                    verificationSummary.style.display = 'none';
                     
                     // Reload games for the selected age
                     loadGamesForAge(activeAge);
@@ -1232,28 +1399,39 @@
             function determineGameCategory(gameName) {
                 const lowerName = gameName.toLowerCase();
                 
-                // Debug log to see what files are being processed
-                console.log(`Processing file: ${gameName}`);
+                // Debug log
+                logDebug(`Processing file: ${gameName}`, 'info');
                 
-                // Special handling for specific files
+                // Process special cases first
                 if (lowerName.includes('factoring polynomial') || 
                     lowerName.includes('factoring term') || 
-                    lowerName.includes('factoring-binomial')) {
-                    console.log(`Categorizing ${gameName} as math`);
+                    lowerName.includes('factoring-binomial') ||
+                    lowerName.includes('shortdivision') ||
+                    lowerName.includes('short division') ||
+                    lowerName.includes('reducing fraction')) {
+                    logDebug(`Categorizing ${gameName} as math (special case)`, 'success');
                     return 'math';
                 }
                 
                 // Check each category's keywords
                 for (const [category, keywords] of Object.entries(categoryKeywords)) {
-                    if (keywords.some(keyword => lowerName.includes(keyword))) {
-                        console.log(`Categorizing ${gameName} as ${category}`);
-                        return category;
+                    for (const keyword of keywords) {
+                        if (lowerName.includes(keyword)) {
+                            logDebug(`Categorizing ${gameName} as ${category} (matched keyword: ${keyword})`, 'success');
+                            return category;
+                        }
                     }
                 }
                 
                 // Return "misc" for files that don't match any category
-                console.log(`Categorizing ${gameName} as misc (no category match)`);
+                logDebug(`Categorizing ${gameName} as misc (no category match)`, 'warning');
                 return "misc";
+            }
+
+            // Function to check if a file is a game (HTML file, not index.html)
+            function isGameFile(filename) {
+                const lowerName = filename.toLowerCase();
+                return lowerName.endsWith('.html') && !lowerName.includes('index');
             }
 
             // Function to load games for a specific age
@@ -1262,68 +1440,149 @@
                 showStatus(`Loading games for ${age}-year-olds...`);
                 
                 // Reset all game containers
-                const containers = [mathGamesContainer, scienceGamesContainer, musicGamesContainer, 
-                                  languageGamesContainer, geographyGamesContainer, funGamesContainer, 
-                                  logicGamesContainer, physicsGamesContainer, miscGamesContainer];
+                const containers = [
+                    mathGamesContainer, scienceGamesContainer, musicGamesContainer, 
+                    languageGamesContainer, geographyGamesContainer, funGamesContainer, 
+                    logicGamesContainer, physicsGamesContainer, miscGamesContainer
+                ];
                 
                 containers.forEach(container => {
                     container.innerHTML = '<div class="loading">Loading games...</div>';
                 });
                 
-                // Try both folder formats: "X yr old" and "X-yr-old"
-                // First try the format present in the user's directory structure
-                let ageDirectoryUrl = `${baseRepoUrl}/${encodeURIComponent(age + ' yr old')}`;
+                // Try different folder naming patterns
+                const folderPatterns = [
+                    `${age} yr old`,
+                    `${age}-yr-old`,
+                    `${age}yr-old`,
+                    `${age}yr old`,
+                    `${age} year old`,
+                    `${age}-year-old`,
+                    `${age}yearold`
+                ];
                 
-                fetch(ageDirectoryUrl)
-                    .then(response => {
-                        if (!response.ok) {
-                            // If the first format fails, try the alternative format
-                            ageDirectoryUrl = `${baseRepoUrl}/${encodeURIComponent(age + '-yr-old')}`;
-                            return fetch(ageDirectoryUrl);
-                        }
-                        return response;
-                    })
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`No games found for ${age}-year-olds. Check repository structure.`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Debug: Log all files found
-                        console.log("Files found in repository:", data.map(item => item.name));
-                        
-                        // Filter for HTML files that are likely games
-                        allGames = data.filter(item => {
-                            const isHtml = item.name.toLowerCase().endsWith('.html');
-                            const isNotIndex = !item.name.toLowerCase().includes('index');
-                            return isHtml && isNotIndex;
-                        });
-                        
-                        console.log("Filtered HTML files:", allGames.map(item => item.name));
-
-                        // Categorize and display games
-                        categorizeGames(allGames);
-                        
-                        // Setup search functionality
-                        setupSearch();
-                        
-                        // Show success status
-                        showStatus(`Successfully loaded ${allGames.length} games for ${age}-year-olds!`);
-                    })
-                    .catch(error => {
-                        console.error('Error fetching directory contents:', error);
-                        showStatus(`Error: ${error.message}`, true);
+                // Track loading attempts
+                let currentPatternIndex = 0;
+                
+                function tryNextPattern() {
+                    if (currentPatternIndex >= folderPatterns.length) {
+                        // All patterns tried and failed
+                        logDebug(`Failed to find games for ${age}-year-olds after trying all patterns`, 'error');
+                        showStatus(`Error: Could not find games for ${age}-year-olds`, true);
                         
                         containers.forEach(container => {
                             container.innerHTML = `
                                 <div class="error">
                                     <p>Oops! We couldn't find games for ${age}-year-olds.</p>
-                                    <p>Please check that your repository is structured correctly with folders named "${age} yr old" or "${age}-yr-old".</p>
+                                    <p>Please check that your repository is structured correctly.</p>
                                 </div>
                             `;
                         });
-                    });
+                        return;
+                    }
+                    
+                    const folderPattern = folderPatterns[currentPatternIndex];
+                    const ageDirectoryUrl = `${baseRepoUrl}/${encodeURIComponent(folderPattern)}`;
+                    
+                    logDebug(`Trying to load from: ${folderPattern}`, 'info');
+                    
+                    fetch(ageDirectoryUrl)
+                        .then(response => {
+                            if (!response.ok) {
+                                // Try next pattern
+                                currentPatternIndex++;
+                                tryNextPattern();
+                                return null;
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (!data) return; // Skip if no data (pattern failed)
+                            
+                            // Debug: Log all files found
+                            logDebug(`Found ${data.length} files in ${folderPattern}`, 'success');
+                            
+                            // Filter for HTML files that are likely games
+                            allGames = data.filter(item => isGameFile(item.name));
+                            
+                            logDebug(`Filtered ${allGames.length} HTML game files`, 'success');
+                            
+                            if (allGames.length === 0) {
+                                showStatus(`No HTML game files found for ${age}-year-olds`, true);
+                                containers.forEach(container => {
+                                    container.innerHTML = `
+                                        <div class="error">
+                                            <p>No HTML game files found for ${age}-year-olds.</p>
+                                            <p>Make sure your repository contains HTML game files.</p>
+                                        </div>
+                                    `;
+                                });
+                                return;
+                            }
+                            
+                            // Verify file paths
+                            allGames.forEach(game => {
+                                const url = createGitHubPagesUrl(repoOwner, repoName, game.path);
+                                logDebug(`Generated URL for ${game.name}: ${url}`, 'info');
+                            });
+                            
+                            // Categorize and display games
+                            categorizeGames(allGames);
+                            
+                            // Setup search functionality
+                            setupSearch();
+                            
+                            // Verify all files were processed and categorized
+                            verifyAllFilesProcessed();
+                            
+                            // Show success status
+                            showStatus(`Successfully loaded ${allGames.length} games for ${age}-year-olds!`);
+                        })
+                        .catch(error => {
+                            logDebug(`Error fetching directory contents: ${error.message}`, 'error');
+                            
+                            // Try next pattern
+                            currentPatternIndex++;
+                            tryNextPattern();
+                        });
+                }
+                
+                // Start trying patterns
+                tryNextPattern();
+            }
+
+            // Function to verify all files were processed and show any missed files
+            function verifyAllFilesProcessed() {
+                const totalFiles = allGames.length;
+                const processedCount = processedGames.size;
+                const missingFiles = [];
+                
+                allGames.forEach(game => {
+                    if (!processedGames.has(game.name)) {
+                        missingFiles.push(game);
+                        logDebug(`Missed file: ${game.name}`, 'error');
+                    }
+                });
+                
+                const percentProcessed = ((processedCount / totalFiles) * 100).toFixed(1);
+                
+                logDebug(`Verification complete: ${processedCount}/${totalFiles} files processed (${percentProcessed}%)`, 
+                    missingFiles.length > 0 ? 'warning' : 'success');
+                
+                // Show verification summary
+                verificationSummary.style.display = 'block';
+                
+                if (missingFiles.length > 0) {
+                    verificationSummary.textContent = `File Verification: ${processedCount}/${totalFiles} files processed (${percentProcessed}%). ${missingFiles.length} files were added to the Misc section.`;
+                    verificationSummary.style.backgroundColor = '#FFD166';
+                    
+                    // Add missing files to misc section
+                    displayGames(missingFiles, miscGamesContainer, 'misc-card', 'misc-icon', true);
+                } else {
+                    verificationSummary.textContent = `File Verification: All ${totalFiles} files processed successfully (100%)`;
+                    verificationSummary.style.backgroundColor = '#4ECDC4';
+                    verificationSummary.style.color = 'white';
+                }
             }
 
             // Function to categorize games based on keywords
@@ -1339,58 +1598,42 @@
                 const physicsGames = [];
                 const miscGames = [];
                 
-                // Keep track of categorized games
-                const categorizedGames = new Set();
+                // Reset processed games
+                processedGames = new Set();
                 
                 games.forEach(game => {
                     const category = determineGameCategory(game.name);
+                    processedGames.add(game.name);
                     
                     // Add game to the appropriate category array
                     switch(category) {
                         case 'math':
                             mathGames.push(game);
-                            categorizedGames.add(game.name);
                             break;
                         case 'science':
                             scienceGames.push(game);
-                            categorizedGames.add(game.name);
                             break;
                         case 'music':
                             musicGames.push(game);
-                            categorizedGames.add(game.name);
                             break;
                         case 'language':
                             languageGames.push(game);
-                            categorizedGames.add(game.name);
                             break;
                         case 'geography':
                             geographyGames.push(game);
-                            categorizedGames.add(game.name);
                             break;
                         case 'logic':
                             logicGames.push(game);
-                            categorizedGames.add(game.name);
                             break;
                         case 'physics':
                             physicsGames.push(game);
-                            categorizedGames.add(game.name);
                             break;
                         case 'games':
                             funGames.push(game);
-                            categorizedGames.add(game.name);
                             break;
                         default:
-                            // If we get here, the game doesn't fit in any category
                             miscGames.push(game);
-                            categorizedGames.add(game.name);
                             break;
-                    }
-                });
-                
-                // Find any games that weren't categorized and put them in the miscellaneous category
-                games.forEach(game => {
-                    if (!categorizedGames.has(game.name)) {
-                        miscGames.push(game);
                     }
                 });
                 
@@ -1433,19 +1676,36 @@
             }
 
             // Function to display games in a container with icons
-            function displayGames(games, container, cardClass, iconClass) {
+            function displayGames(games, container, cardClass, iconClass, areMissingFiles = false) {
                 if (!container) return;
                 
                 if (games.length === 0) {
-                    container.innerHTML = `
-                        <div class="error">
-                            <p>No games found in this category.</p>
-                        </div>
-                    `;
+                    if (!areMissingFiles) {
+                        container.innerHTML = `
+                            <div class="error">
+                                <p>No games found in this category.</p>
+                            </div>
+                        `;
+                    }
                     return;
                 }
 
-                container.innerHTML = '';
+                // Don't clear container for missing files - append instead
+                if (!areMissingFiles) {
+                    container.innerHTML = '';
+                } else {
+                    // Remove loading indicator if present
+                    const loadingEl = container.querySelector('.loading');
+                    if (loadingEl) {
+                        loadingEl.remove();
+                    }
+                    
+                    // Remove error indicator if present
+                    const errorEl = container.querySelector('.error');
+                    if (errorEl) {
+                        errorEl.remove();
+                    }
+                }
                 
                 games.forEach((game, index) => {
                     // Create a readable title from the filename
@@ -1461,21 +1721,20 @@
                     // Use the helper function to create a properly encoded URL
                     const gamePageUrl = createGitHubPagesUrl(repoOwner, repoName, game.path);
                     
-                    // Debug logging for URL construction
-                    console.log(`Game: ${game.name}`);
-                    console.log(`Path: ${game.path}`);
-                    console.log(`Encoded URL: ${gamePageUrl}`);
-                    
                     const gameCard = document.createElement('div');
                     gameCard.className = `game-card ${cardClass}`;
                     gameCard.style.animationDelay = `${0.05 * index}s`;
+                    
+                    // Add visual indicator for recovered missing files
+                    const specialIndicator = areMissingFiles ? 
+                        '<span style="position: absolute; top: 5px; right: 10px; font-size: 16px;" title="Recovered file">🔄</span>' : '';
                     
                     gameCard.innerHTML = `
                         <a href="${gamePageUrl}" target="_blank">
                             <div class="game-content">
                                 <div class="game-icon ${iconClass}">${gameEmoji}</div>
                                 <div>
-                                    <div class="game-title">${readableTitle}</div>
+                                    <div class="game-title">${readableTitle}${specialIndicator}</div>
                                     <div class="game-description">${description}</div>
                                 </div>
                             </div>
@@ -1484,6 +1743,21 @@
                     `;
                     
                     container.appendChild(gameCard);
+                    
+                    // Test the URL by fetching it in debug mode
+                    if (debugMode) {
+                        fetch(gamePageUrl, { method: 'HEAD' })
+                            .then(response => {
+                                if (response.ok) {
+                                    logDebug(`URL verified: ${gamePageUrl}`, 'success');
+                                } else {
+                                    logDebug(`URL failed: ${gamePageUrl} (${response.status})`, 'error');
+                                }
+                            })
+                            .catch(error => {
+                                logDebug(`URL test error: ${gamePageUrl} - ${error.message}`, 'error');
+                            });
+                    }
                 });
             }
 
@@ -1515,9 +1789,11 @@
                     });
                     
                     // Clear all containers
-                    const containers = [mathGamesContainer, scienceGamesContainer, musicGamesContainer, 
-                                      languageGamesContainer, geographyGamesContainer, funGamesContainer, 
-                                      logicGamesContainer, physicsGamesContainer, miscGamesContainer];
+                    const containers = [
+                        mathGamesContainer, scienceGamesContainer, musicGamesContainer, 
+                        languageGamesContainer, geographyGamesContainer, funGamesContainer, 
+                        logicGamesContainer, physicsGamesContainer, miscGamesContainer
+                    ];
                     
                     containers.forEach(container => {
                         container.innerHTML = '';
@@ -1551,8 +1827,11 @@
                 // Replace hyphens and underscores with spaces
                 title = title.replace(/[-_]/g, ' ');
                 
-                // Remove version numbers (v1, v2, etc.)
+                // Remove version numbers (v1, v2, v0.1, etc.)
                 title = title.replace(/\s+v\d+(\.\d+)?/i, '');
+                
+                // Remove other version indicators
+                title = title.replace(/\s+V\d+(\.\d+)?/i, '');
                 
                 // Title case
                 title = title.split(' ').map(word => {
@@ -1616,7 +1895,15 @@
                     'writing': 'Develop your writing skills through practice',
                     'planet': 'Explore planets and space concepts',
                     'trouble': 'Play the classic Trouble board game',
-                    'game': 'A fun game with educational benefits'
+                    'game': 'A fun game with educational benefits',
+                    'calculator': 'Practice using a calculator with guided activities',
+                    'enhanced': 'An improved interactive learning experience',
+                    'property': 'Learn about mathematical properties and rules',
+                    'zero': 'Explore the concept of zero in mathematics',
+                    'line': 'Understand number lines and linear equations',
+                    'negative': 'Work with negative numbers in a visual way',
+                    'decimal': 'Master decimal operations and concepts',
+                    'unit': 'Practice unit conversions and measurements'
                 };
                 
                 // Check for matching keywords
@@ -1628,6 +1915,17 @@
                 
                 // Default description if no match
                 return 'A fun learning activity for curious young minds';
+            }
+
+            // Tests a URL to see if it's accessible
+            async function testUrl(url) {
+                try {
+                    const response = await fetch(url, { method: 'HEAD', mode: 'no-cors' });
+                    return response.ok;
+                } catch (error) {
+                    logDebug(`Error testing URL ${url}: ${error.message}`, 'error');
+                    return false;
+                }
             }
 
             // Initial load of games for default age
@@ -1672,7 +1970,9 @@
                 // Check for updates every 5 minutes (300000 ms)
                 setInterval(() => {
                     const currentAge = activeAge;
-                    fetch(`${baseRepoUrl}/${encodeURIComponent(currentAge + ' yr old')}`)
+                    const ageDirectoryUrl = `${baseRepoUrl}/${encodeURIComponent(currentAge + ' yr old')}`;
+                    
+                    fetch(ageDirectoryUrl)
                         .then(response => {
                             if (!response.ok) {
                                 // Try alternative format if the first one fails
@@ -1687,15 +1987,14 @@
                             return response.json();
                         })
                         .then(data => {
-                            const newGames = data.filter(item => {
-                                return item.name.endsWith('.html') && !item.name.toLowerCase().includes('index');
-                            });
+                            const newGames = data.filter(item => isGameFile(item.name));
                             
                             // Check if there are any changes
                             if (newGames.length !== allGames.length) {
                                 // Re-load games if the number of games has changed
                                 loadGamesForAge(currentAge);
                                 showStatus('Games updated! New content available.');
+                                logDebug(`Auto-refresh detected ${Math.abs(newGames.length - allGames.length)} game changes`, 'success');
                             } else {
                                 // Check if any game files have been modified
                                 const oldNames = allGames.map(game => game.name).sort().join(',');
@@ -1704,11 +2003,14 @@
                                 if (oldNames !== newNames) {
                                     loadGamesForAge(currentAge);
                                     showStatus('Games updated! New content available.');
+                                    logDebug('Auto-refresh detected changes in game files', 'success');
+                                } else {
+                                    logDebug('Auto-refresh check complete - no changes detected', 'info');
                                 }
                             }
                         })
                         .catch(error => {
-                            console.error('Error checking for updates:', error);
+                            logDebug(`Error checking for updates: ${error.message}`, 'error');
                         });
                 }, 300000); // 5 minutes
             }

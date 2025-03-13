@@ -1137,14 +1137,16 @@
             const categoryKeywords = {
                 math: ['math', 'addition', 'subtraction', 'multiplication', 'division', 'algebra', 'geometry', 
                       'calculus', 'fraction', 'decimal', 'percentage', 'number', 'arithmetic', 'zero', 'pemdas',
-                      'area', 'volume', 'binomial', 'factor', 'distributive', 'divisibility', 'compare'],
+                      'area', 'volume', 'binomial', 'factor', 'factoring', 'polynomial', 'gcf', 'distributive', 
+                      'divisibility', 'compare', 'term', 'trinomial', 'property', 'scientific', 'notation', 'plot',
+                      'negative', 'statistic', 'unit', 'conversion', 'vector', 'scalar', 'mx', 'plus', 'line'],
                 science: ['science', 'chemistry', 'biology', 'experiment', 'lab', 'neural', 'tech', 'explorer'],
                 music: ['music', 'piano', 'instrument', 'note', 'rhythm', 'harmony', 'chord', 'melody', 'midi', 'circle of fifths'],
-                language: ['word', 'letter', 'reading', 'spelling', 'vocabulary', 'grammar', 'language', 'scramble', 'writing'],
+                language: ['word', 'letter', 'reading', 'spelling', 'vocabulary', 'grammar', 'language', 'scramble', 'writing', 'problem'],
                 geography: ['geography', 'map', 'country', 'continent', 'globe', 'world', 'geo'],
-                games: ['memory', 'cards', 'fun', 'play', 'bubble', 'pop', 'snake', 'ladder', 'trouble', 'battleship', 'solitaire', 'space-adventure', 'pacman'],
-                logic: ['logic', 'puzzle', 'brain', 'maze', 'pathfinder', 'pipe', 'soduku', 'connect4', 'dot', 'minesweeper', 'hexcell', 'ai'],
-                physics: ['physics', 'quantum', 'vector', 'scalar', 'perspective', 'asteroid', 'planet', 'lander', 'trig', 'stat']
+                games: ['memory', 'cards', 'fun', 'play', 'bubble', 'pop', 'snake', 'ladder', 'trouble', 'battleship', 'solitaire', 'space-adventure', 'pacman', 'slider', 'timer'],
+                logic: ['logic', 'puzzle', 'brain', 'maze', 'pathfinder', 'pipe', 'soduku', 'connect4', 'dot', 'minesweeper', 'hexcell', 'ai', 'enhanced'],
+                physics: ['physics', 'quantum', 'vector', 'scalar', 'perspective', 'asteroid', 'planet', 'lander', 'trig', 'triangle']
             };
 
             // Show status indicator
@@ -1215,14 +1217,27 @@
             function determineGameCategory(gameName) {
                 const lowerName = gameName.toLowerCase();
                 
+                // Debug log to see what files are being processed
+                console.log(`Processing file: ${gameName}`);
+                
+                // Special handling for specific files
+                if (lowerName.includes('factoring polynomial') || 
+                    lowerName.includes('factoring term') || 
+                    lowerName.includes('factoring-binomial')) {
+                    console.log(`Categorizing ${gameName} as math`);
+                    return 'math';
+                }
+                
                 // Check each category's keywords
                 for (const [category, keywords] of Object.entries(categoryKeywords)) {
                     if (keywords.some(keyword => lowerName.includes(keyword))) {
+                        console.log(`Categorizing ${gameName} as ${category}`);
                         return category;
                     }
                 }
                 
                 // Return "misc" for files that don't match any category
+                console.log(`Categorizing ${gameName} as misc (no category match)`);
                 return "misc";
             }
 
@@ -1260,10 +1275,17 @@
                         return response.json();
                     })
                     .then(data => {
+                        // Debug: Log all files found
+                        console.log("Files found in repository:", data.map(item => item.name));
+                        
                         // Filter for HTML files that are likely games
                         allGames = data.filter(item => {
-                            return item.name.endsWith('.html') && !item.name.toLowerCase().includes('index');
+                            const isHtml = item.name.toLowerCase().endsWith('.html');
+                            const isNotIndex = !item.name.toLowerCase().includes('index');
+                            return isHtml && isNotIndex;
                         });
+                        
+                        console.log("Filtered HTML files:", allGames.map(item => item.name));
 
                         // Categorize and display games
                         categorizeGames(allGames);

@@ -1,4 +1,4 @@
 git add .
 git commit -m "Automated push"
-git commit origin emo1
+git push origin emo1
 pause

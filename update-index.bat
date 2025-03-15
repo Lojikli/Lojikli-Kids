@@ -1,96 +1,63 @@
 @echo off
 setlocal enabledelayedexpansion
 
+echo ===== Lojikli Index Updater =====
 echo Scanning repository structure...
 
-:: Create temporary files
-set "temp_toddler=%TEMP%\toddler_files.txt"
-set "temp_elem=%TEMP%\elementary_files.txt"
-set "temp_index=%TEMP%\index_temp.html"
-set "backup_index=index.html.bak"
+:: Create temporary files for repository data
+set "toddler_files_temp=%TEMP%\toddler_files.js"
+set "elem_files_temp=%TEMP%\elem_files.js"
+set "repo_object=%TEMP%\repository.js"
 
-:: Count files and create file lists
+:: Clear temporary files if they exist
+echo. > "%toddler_files_temp%"
+echo. > "%elem_files_temp%"
+
+:: Process toddler files
 set toddler_count=0
 for %%f in ("2 yr old\*.html") do (
     set /a toddler_count+=1
-    echo "%%~nxf">> "%temp_toddler%"
+    echo                "%%~nxf",>> "%toddler_files_temp%"
 )
 
+:: Process elementary files
 set elem_count=0
 for %%f in ("5 yr old\*.html") do (
     set /a elem_count+=1
-    echo "%%~nxf">> "%temp_elem%"
+    echo                "%%~nxf",>> "%elem_files_temp%"
 )
+
+:: Remove the last comma from each file
+powershell -Command "(Get-Content '%toddler_files_temp%') -replace ',$', '' | Set-Content '%toddler_files_temp%'"
+powershell -Command "(Get-Content '%elem_files_temp%') -replace ',$', '' | Set-Content '%elem_files_temp%'"
 
 echo Found %toddler_count% files in toddler directory
 echo Found %elem_count% files in elementary directory
 
 :: Create backup of index.html
-copy "index.html" "%backup_index%" /Y
+copy "index.html" "index.html.bak" /Y
 echo Created backup: index.html.bak
 
-:: Read the files into variables with proper formatting
-set "toddler_files="
-for /f "usebackq delims=" %%a in ("%temp_toddler%") do (
-    if defined toddler_files (
-        set "toddler_files=!toddler_files!,^
-                %%a"
-    ) else (
-        set "toddler_files=%%a"
-    )
-)
+:: Generate repository object
+echo         // Define the structure of your repository> "%repo_object%"
+echo         const repository = {>> "%repo_object%"
+echo             "2 yr old": [>> "%repo_object%"
+type "%toddler_files_temp%" >> "%repo_object%"
+echo             ],>> "%repo_object%"
+echo             "5 yr old": [>> "%repo_object%"
+type "%elem_files_temp%" >> "%repo_object%"
+echo             ]>> "%repo_object%"
+echo         };>> "%repo_object%"
 
-set "elem_files="
-for /f "usebackq delims=" %%a in ("%temp_elem%") do (
-    if defined elem_files (
-        set "elem_files=!elem_files!,^
-                %%a"
-    ) else (
-        set "elem_files=%%a"
-    )
-)
+:: Update index.html with the new repository object
+powershell -Command "$content = Get-Content -Raw 'index.html'; $pattern = '(?s)        // Define the structure of your repository.*?        \};'; $replacement = [System.IO.File]::ReadAllText('%repo_object%', [System.Text.Encoding]::UTF8); $newContent = $content -replace $pattern, $replacement; [System.IO.File]::WriteAllText('index.html', $newContent, [System.Text.Encoding]::UTF8)"
 
-:: Create the new repository object text
-(
-echo         // Define the structure of your repository
-echo         const repository = {
-echo             "2 yr old": [
-echo                 %toddler_files%
-echo             ],
-echo             "5 yr old": [
-echo                 %elem_files%
-echo             ]
-echo         };
-) > "%temp_index%"
-
-:: Update the index.html file
-set "in_repo_section=0"
-set "repo_section_start=        // Define the structure of your repository"
-set "repo_section_end=        };"
-
-type nul > "index.html.new"
-
-for /f "usebackq delims=" %%a in ("index.html") do (
-    set "line=%%a"
-    
-    if "!line!"=="%repo_section_start%" (
-        set "in_repo_section=1"
-        type "%temp_index%" >> "index.html.new"
-    ) else if "!line!"=="%repo_section_end%" (
-        set "in_repo_section=0"
-    ) else if "!in_repo_section!"=="0" (
-        echo.%%a>> "index.html.new"
-    )
-)
-
-:: Replace old index with new one
-move /Y "index.html.new" "index.html"
 echo index.html updated successfully!
 
 :: Clean up temp files
-del "%temp_toddler%" 2>nul
-del "%temp_elem%" 2>nul
-del "%temp_index%" 2>nul
+del "%toddler_files_temp%" 2>nul
+del "%elem_files_temp%" 2>nul
+del "%repo_object%" 2>nul
 
 :: Ask to commit and push
 set /p commit_confirm=Do you want to commit and push these changes to GitHub? (y/n): 
@@ -109,5 +76,5 @@ if /i "%commit_confirm%"=="y" (
     echo Changes made locally only. No GitHub push performed.
 )
 
-echo Operation completed!
+echo ===== Operation completed! =====
 pause

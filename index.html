@@ -1430,8 +1430,29 @@
 
             // Function to check if a file is a game (HTML file, not index.html)
             function isGameFile(filename) {
+                if (!filename) return false;
+                
                 const lowerName = filename.toLowerCase();
-                return lowerName.endsWith('.html') && !lowerName.includes('index');
+                
+                // Basic check: it's an HTML file and not index.html
+                const isHtml = lowerName.endsWith('.html') || lowerName.endsWith('.htm');
+                
+                if (!isHtml) return false;
+                
+                // Exclude index files and other common non-game files
+                const exclusions = ['index', 'readme', 'about', 'contact', 'help', 'license', 'terms'];
+                for (const exclusion of exclusions) {
+                    if (lowerName.includes(exclusion)) return false;
+                }
+                
+                // Special handling for files with trailing periods or weird characters
+                // Some file systems/encodings can have issues with these
+                const cleanName = lowerName.replace(/\s+/g, ' ').trim();
+                if (cleanName.endsWith('.html.') || cleanName.endsWith('.htm.')) {
+                    return true;
+                }
+                
+                return true;
             }
 
             // Function to load games for a specific age
@@ -1450,6 +1471,9 @@
                     container.innerHTML = '<div class="loading">Loading games...</div>';
                 });
                 
+                // Store all found games across all folders
+                allGames = [];
+                
                 // Try different folder naming patterns
                 const folderPatterns = [
                     `${age} yr old`,
@@ -1461,94 +1485,158 @@
                     `${age}yearold`
                 ];
                 
-                // Track loading attempts
-                let currentPatternIndex = 0;
-                
-                function tryNextPattern() {
-                    if (currentPatternIndex >= folderPatterns.length) {
-                        // All patterns tried and failed
-                        logDebug(`Failed to find games for ${age}-year-olds after trying all patterns`, 'error');
-                        showStatus(`Error: Could not find games for ${age}-year-olds`, true);
-                        
-                        containers.forEach(container => {
-                            container.innerHTML = `
-                                <div class="error">
-                                    <p>Oops! We couldn't find games for ${age}-year-olds.</p>
-                                    <p>Please check that your repository is structured correctly.</p>
-                                </div>
-                            `;
-                        });
-                        return;
-                    }
-                    
-                    const folderPattern = folderPatterns[currentPatternIndex];
-                    const ageDirectoryUrl = `${baseRepoUrl}/${encodeURIComponent(folderPattern)}`;
-                    
-                    logDebug(`Trying to load from: ${folderPattern}`, 'info');
-                    
-                    fetch(ageDirectoryUrl)
-                        .then(response => {
-                            if (!response.ok) {
-                                // Try next pattern
-                                currentPatternIndex++;
-                                tryNextPattern();
-                                return null;
-                            }
-                            return response.json();
-                        })
-                        .then(data => {
-                            if (!data) return; // Skip if no data (pattern failed)
-                            
-                            // Debug: Log all files found
-                            logDebug(`Found ${data.length} files in ${folderPattern}`, 'success');
-                            
-                            // Filter for HTML files that are likely games
-                            allGames = data.filter(item => isGameFile(item.name));
-                            
-                            logDebug(`Filtered ${allGames.length} HTML game files`, 'success');
-                            
-                            if (allGames.length === 0) {
-                                showStatus(`No HTML game files found for ${age}-year-olds`, true);
-                                containers.forEach(container => {
-                                    container.innerHTML = `
-                                        <div class="error">
-                                            <p>No HTML game files found for ${age}-year-olds.</p>
-                                            <p>Make sure your repository contains HTML game files.</p>
-                                        </div>
-                                    `;
-                                });
-                                return;
-                            }
-                            
-                            // Verify file paths
-                            allGames.forEach(game => {
-                                const url = createGitHubPagesUrl(repoOwner, repoName, game.path);
-                                logDebug(`Generated URL for ${game.name}: ${url}`, 'info');
-                            });
-                            
-                            // Categorize and display games
-                            categorizeGames(allGames);
-                            
-                            // Setup search functionality
-                            setupSearch();
-                            
-                            // Verify all files were processed and categorized
-                            verifyAllFilesProcessed();
-                            
-                            // Show success status
-                            showStatus(`Successfully loaded ${allGames.length} games for ${age}-year-olds!`);
-                        })
-                        .catch(error => {
-                            logDebug(`Error fetching directory contents: ${error.message}`, 'error');
-                            
-                            // Try next pattern
-                            currentPatternIndex++;
-                            tryNextPattern();
-                        });
+                // Also check base structure without age folder (check if 2 and 5 are flat in the repo)
+                if (age === '2' || age === '5') {
+                    folderPatterns.push(''); // Check root directory as well
                 }
                 
-                // Start trying patterns
-                tryNextPattern();
+                // Promise array to track all folder loading attempts
+                const folderPromises = [];
+                const foldersChecked = [];
+                
+                // Try each pattern
+                folderPatterns.forEach(folderPattern => {
+                    // Skip empty patterns if specified
+                    if (folderPattern === '') {
+                        // For empty pattern (root check), we need to check all files and filter by name
+                        const rootPromise = fetch(baseRepoUrl)
+                            .then(response => {
+                                if (!response.ok) {
+                                    return null;
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                if (!data) return;
+                                
+                                // Check for folders that contain the age in their name
+                                const potentialFolders = data.filter(item => 
+                                    item.type === 'dir' && 
+                                    item.name.toLowerCase().includes(age)
+                                );
+                                
+                                // Process each potential folder
+                                const nestedPromises = potentialFolders.map(folder => {
+                                    return fetch(folder.url)
+                                        .then(resp => resp.ok ? resp.json() : null)
+                                        .then(folderData => {
+                                            if (!folderData) return;
+                                            foldersChecked.push(folder.name);
+                                            
+                                            const htmlFiles = folderData.filter(item => isGameFile(item.name));
+                                            if (htmlFiles.length > 0) {
+                                                logDebug(`Found ${htmlFiles.length} HTML files in folder: ${folder.name}`, 'success');
+                                                allGames = [...allGames, ...htmlFiles];
+                                            }
+                                        })
+                                        .catch(err => {
+                                            logDebug(`Error checking folder ${folder.name}: ${err.message}`, 'error');
+                                        });
+                                });
+                                
+                                return Promise.all(nestedPromises);
+                            })
+                            .catch(error => {
+                                logDebug(`Error checking root directory: ${error.message}`, 'error');
+                                return null;
+                            });
+                            
+                        folderPromises.push(rootPromise);
+                    } else {
+                        // For named pattern
+                        const ageDirectoryUrl = `${baseRepoUrl}/${encodeURIComponent(folderPattern)}`;
+                        foldersChecked.push(folderPattern);
+                        
+                        const folderPromise = fetch(ageDirectoryUrl)
+                            .then(response => {
+                                if (!response.ok) {
+                                    return null;
+                                }
+                                return response.json();
+                            })
+                            .then(data => {
+                                if (!data) return;
+                                
+                                logDebug(`Found ${data.length} files in ${folderPattern}`, 'success');
+                                
+                                // Filter for HTML files that are likely games
+                                const htmlFiles = data.filter(item => isGameFile(item.name));
+                                
+                                if (htmlFiles.length > 0) {
+                                    logDebug(`Filtered ${htmlFiles.length} HTML game files from ${folderPattern}`, 'success');
+                                    // Add to the master list
+                                    allGames = [...allGames, ...htmlFiles];
+                                }
+                            })
+                            .catch(error => {
+                                logDebug(`Error fetching directory ${folderPattern}: ${error.message}`, 'error');
+                            });
+                            
+                        folderPromises.push(folderPromise);
+                    }
+                });
+                
+                // Process all folders and then handle results
+                Promise.all(folderPromises)
+                    .then(() => {
+                        // Check if we found any games
+                        if (allGames.length === 0) {
+                            logDebug(`No HTML game files found for ${age}-year-olds after checking folders: ${foldersChecked.join(', ')}`, 'error');
+                            showStatus(`No HTML game files found for ${age}-year-olds`, true);
+                            
+                            containers.forEach(container => {
+                                container.innerHTML = `
+                                    <div class="error">
+                                        <p>No HTML game files found for ${age}-year-olds.</p>
+                                        <p>We checked: ${foldersChecked.join(', ')}</p>
+                                        <p>Make sure your repository contains HTML game files.</p>
+                                    </div>
+                                `;
+                            });
+                            return;
+                        }
+                        
+                        // Remove duplicate files (in case they were found in multiple folders)
+                        const uniqueGames = [];
+                        const seenPaths = new Set();
+                        
+                        allGames.forEach(game => {
+                            if (!seenPaths.has(game.path)) {
+                                seenPaths.add(game.path);
+                                uniqueGames.push(game);
+                            }
+                        });
+                        
+                        allGames = uniqueGames;
+                        
+                        logDebug(`Found a total of ${allGames.length} unique HTML game files for ${age}-year-olds`, 'success');
+                        
+                        // Create a detailed verification report
+                        const fullFileList = allGames.map(game => `- ${game.name} (${game.path})`).join('\n');
+                        logDebug(`Full file list:\n${fullFileList}`, 'info');
+                        
+                        // Verify file paths
+                        allGames.forEach(game => {
+                            const url = createGitHubPagesUrl(repoOwner, repoName, game.path);
+                            logDebug(`Generated URL for ${game.name}: ${url}`, 'info');
+                        });
+                        
+                        // Categorize and display games
+                        categorizeGames(allGames);
+                        
+                        // Setup search functionality
+                        setupSearch();
+                        
+                        // Verify all files were processed and categorized
+                        verifyAllFilesProcessed();
+                        
+                        // Show success status
+                        showStatus(`Successfully loaded ${allGames.length} games for ${age}-year-olds!`);
+                    })
+                    .catch(err => {
+                        logDebug(`Unexpected error loading games: ${err.message}`, 'error');
+                        showStatus(`Error loading games: ${err.message}`, true);
+                    });
             }
 
             // Function to verify all files were processed and show any missed files
@@ -1557,10 +1645,13 @@
                 const processedCount = processedGames.size;
                 const missingFiles = [];
                 
+                // Use path as the unique identifier instead of just the name
+                // This fixes issues with files that have the same name in different folders
                 allGames.forEach(game => {
-                    if (!processedGames.has(game.name)) {
+                    const identifier = game.path || game.name;
+                    if (!processedGames.has(identifier)) {
                         missingFiles.push(game);
-                        logDebug(`Missed file: ${game.name}`, 'error');
+                        logDebug(`Missed file: ${game.name} (${game.path})`, 'error');
                     }
                 });
                 
@@ -1573,15 +1664,41 @@
                 verificationSummary.style.display = 'block';
                 
                 if (missingFiles.length > 0) {
-                    verificationSummary.textContent = `File Verification: ${processedCount}/${totalFiles} files processed (${percentProcessed}%). ${missingFiles.length} files were added to the Misc section.`;
+                    verificationSummary.innerHTML = `
+                        <strong>File Verification:</strong> ${processedCount}/${totalFiles} files processed (${percentProcessed}%).<br>
+                        ${missingFiles.length} files were added to the Misc section.<br>
+                        <small>Click the 🔍 button in the bottom left for details.</small>
+                    `;
                     verificationSummary.style.backgroundColor = '#FFD166';
+                    
+                    // Add detailed info to debug panel
+                    logDebug(`Missing files details:`, 'warning');
+                    missingFiles.forEach(file => {
+                        logDebug(`- ${file.name} (${file.path})`, 'warning');
+                    });
                     
                     // Add missing files to misc section
                     displayGames(missingFiles, miscGamesContainer, 'misc-card', 'misc-icon', true);
+                    
+                    // Show debug panel automatically if there are missing files
+                    debugPanel.classList.add('visible');
+                    debugMode = true;
                 } else {
-                    verificationSummary.textContent = `File Verification: All ${totalFiles} files processed successfully (100%)`;
+                    verificationSummary.innerHTML = `<strong>File Verification:</strong> All ${totalFiles} files processed successfully (100%)`;
                     verificationSummary.style.backgroundColor = '#4ECDC4';
                     verificationSummary.style.color = 'white';
+                }
+                
+                // Add total count to debug log
+                logDebug(`Total unique files found: ${totalFiles}`, 'success');
+                logDebug(`Expected total: 67 HTML files`, 'info');
+                
+                if (totalFiles < 67) {
+                    logDebug(`WARNING: ${67 - totalFiles} files are missing from the total count!`, 'error');
+                    verificationSummary.innerHTML += `<br><strong>WARNING:</strong> Found ${totalFiles}/67 expected files. ${67 - totalFiles} files may be missing.`;
+                    verificationSummary.style.backgroundColor = '#FF6B6B';
+                } else if (totalFiles > 67) {
+                    logDebug(`NOTE: Found ${totalFiles - 67} more files than expected (67)`, 'warning');
                 }
             }
 
@@ -1601,9 +1718,40 @@
                 // Reset processed games
                 processedGames = new Set();
                 
+                // Special cases mapping for specific files we know about
+                // This ensures they're categorized correctly regardless of naming
+                const specialCases = {
+                    // Map specific filenames or partial paths to their categories
+                    'writingfitnessv4.html': 'language',
+                    'reading-game prek to grade 3 v2.html': 'language',
+                    'enhanced-toddler-app.html': 'games',
+                    'bubblepop2.0..html': 'games',   // Note the double dot in the filename
+                    'circle of fifths.html': 'music',
+                    'read music.html': 'music'
+                };
+                
                 games.forEach(game => {
-                    const category = determineGameCategory(game.name);
-                    processedGames.add(game.name);
+                    const lowerName = game.name.toLowerCase();
+                    const identifier = game.path || game.name;
+                    let category;
+                    
+                    // Check for special cases first
+                    for (const [pattern, cat] of Object.entries(specialCases)) {
+                        if (lowerName === pattern.toLowerCase() || 
+                            (game.path && game.path.toLowerCase().includes(pattern.toLowerCase()))) {
+                            category = cat;
+                            logDebug(`Categorizing ${game.name} as ${category} (special case match)`, 'success');
+                            break;
+                        }
+                    }
+                    
+                    // If no special case match, determine category normally
+                    if (!category) {
+                        category = determineGameCategory(game.name);
+                    }
+                    
+                    // Mark as processed using path as identifier
+                    processedGames.add(identifier);
                     
                     // Add game to the appropriate category array
                     switch(category) {
@@ -1647,6 +1795,21 @@
                 displayGames(logicGames, logicGamesContainer, 'logic-card', 'logic-icon');
                 displayGames(physicsGames, physicsGamesContainer, 'physics-card', 'physics-icon');
                 displayGames(miscGames, miscGamesContainer, 'misc-card', 'misc-icon');
+                
+                // Count games per category for debug
+                logDebug(`Category counts:`, 'info');
+                logDebug(`- Math: ${mathGames.length}`, 'info');
+                logDebug(`- Science: ${scienceGames.length}`, 'info');
+                logDebug(`- Music: ${musicGames.length}`, 'info');
+                logDebug(`- Language: ${languageGames.length}`, 'info');
+                logDebug(`- Geography: ${geographyGames.length}`, 'info');
+                logDebug(`- Fun/Games: ${funGames.length}`, 'info');
+                logDebug(`- Logic: ${logicGames.length}`, 'info');
+                logDebug(`- Physics: ${physicsGames.length}`, 'info');
+                logDebug(`- Misc: ${miscGames.length}`, 'info');
+                logDebug(`- Total categorized: ${mathGames.length + scienceGames.length + musicGames.length + 
+                    languageGames.length + geographyGames.length + funGames.length + 
+                    logicGames.length + physicsGames.length + miscGames.length}`, 'success');
                 
                 // Hide empty sections
                 hideEmptySections([

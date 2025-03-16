@@ -1,0 +1,3047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exponent Explorer: Operations Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #ff9a76;
+            --tertiary-color: #6ecb63;
+            --quaternary-color: #ffec5f;
+            --background-color: #f5f5f5;
+            --text-color: #333;
+            --card-color: #ffffff;
+            --success-color: #66bb6a;
+            --error-color: #ef5350;
+            --hint-color: #7986cb;
+            --level1-color: #c8e6c9;
+            --level2-color: #a5d6a7;
+            --level3-color: #81c784;
+            --level4-color: #66bb6a;
+            --level5-color: #4caf50;
+            --level6-color: #43a047;
+            --level7-color: #388e3c;
+            --level8-color: #2e7d32;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: 36px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .levels-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding: 15px;
+            background-color: var(--card-color);
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .level-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            color: white;
+        }
+
+        .level-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .level-btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .level-btn.locked {
+            background-color: #bdbdbd;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .level-btn:nth-child(1) { background-color: var(--level1-color); color: var(--text-color); }
+        .level-btn:nth-child(2) { background-color: var(--level2-color); color: var(--text-color); }
+        .level-btn:nth-child(3) { background-color: var(--level3-color); color: var(--text-color); }
+        .level-btn:nth-child(4) { background-color: var(--level4-color); }
+        .level-btn:nth-child(5) { background-color: var(--level5-color); }
+        .level-btn:nth-child(6) { background-color: var(--level6-color); }
+        .level-btn:nth-child(7) { background-color: var(--level7-color); }
+        .level-btn:nth-child(8) { background-color: var(--level8-color); }
+
+        .character-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+
+        .character {
+            width: 150px;
+            height: 150px;
+            position: relative;
+            margin: 0 10px;
+        }
+
+        .character-speech {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 14px;
+            max-width: 250px;
+            border: 2px solid var(--primary-color);
+            box-shadow: 3px 3px 5px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .character-speech:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent transparent;
+        }
+
+        .visualization-container {
+            width: 100%;
+            height: 300px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            background-color: var(--card-color);
+        }
+
+        .controls-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            background-color: var(--card-color);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-group {
+            flex: 1;
+            min-width: 250px;
+            margin: 10px;
+        }
+
+        .control-title {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .slider-container {
+            margin-bottom: 15px;
+        }
+
+        .slider-label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 25px;
+            background: #d3d3d3;
+            outline: none;
+            border-radius: 15px;
+        }
+
+        .quiz-container {
+            background-color: var(--card-color);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .quiz-header {
+            font-size: 24px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .level-info {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 10px;
+            background-color: var(--quaternary-color);
+            border-radius: 10px;
+            font-weight: bold;
+        }
+
+        .problem-container {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .answer-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .answer-input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .answer-input {
+            width: 300px;
+            height: 40px;
+            font-size: 18px;
+            text-align: center;
+            padding: 5px 10px;
+            border: 2px solid var(--primary-color);
+            border-radius: 10px;
+        }
+
+        .variable-selector {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .variable-btn {
+            background-color: var(--quaternary-color);
+            border: none;
+            color: var(--text-color);
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .variable-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .variable-btn:active {
+            transform: translateY(0);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .operation-btn {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.1s, box-shadow 0.1s;
+            margin: 0 5px;
+        }
+
+        .operation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-btns {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .check-btn {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .hint-btn {
+            background-color: var(--hint-color);
+            color: white;
+        }
+
+        .new-problem-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn:active {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-message {
+            text-align: center;
+            margin: 20px 0;
+            font-size: 20px;
+            padding: 10px;
+            border-radius: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .hint-panel {
+            background-color: var(--hint-color);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .hint-title {
+            font-size: 18px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .variable-info {
+            background-color: var(--secondary-color);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+
+        .rule-explanation {
+            background-color: var(--tertiary-color);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            color: var(--text-color);
+        }
+
+        .progress-container {
+            margin-top: 20px;
+            background-color: var(--card-color);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-title {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+
+        .progress-stat {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            margin: 0 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-color);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background-color: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--tertiary-color);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .score-display {
+            text-align: right;
+            margin-top: 5px;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+
+        .achievements-container {
+            margin-top: 20px;
+            background-color: var(--card-color);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .achievements-title {
+            font-size: 18px;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+        }
+        
+        .achievement {
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            padding: 10px;
+            text-align: center;
+            opacity: 0.5;
+            transition: opacity 0.3s;
+        }
+        
+        .achievement.unlocked {
+            opacity: 1;
+            background-color: var(--quaternary-color);
+        }
+        
+        .achievement-icon {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+        
+        .achievement-name {
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: var(--card-color);
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 15px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+        }
+
+        .modal-title {
+            color: var(--primary-color);
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+
+        .modal-text {
+            font-size: 16px;
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        .character-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .character-img {
+            width: 80px;
+            height: 80px;
+            margin-right: 15px;
+        }
+
+        .celebration {
+            position: fixed;
+            z-index: 999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: none;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 0;
+            animation: fall 3s ease-in-out forwards;
+        }
+
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .streak-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .timer-container {
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .timer {
+            font-size: 18px;
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .bounce {
+            animation: bounce 0.5s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .character-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                font-size: 28px;
+            }
+            
+            .visualization-container {
+                height: 250px;
+            }
+            
+            .control-group {
+                min-width: 100%;
+            }
+            
+            .problem-container {
+                font-size: 20px;
+            }
+            
+            .variable-btn {
+                font-size: 16px;
+                padding: 6px 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <h1 class="header">Exponent Explorer: Operations Adventure</h1>
+        
+        <div class="levels-container" id="levels-container">
+            <!-- Level buttons will be added here -->
+        </div>
+        
+        <div class="character-container">
+            <div class="character" id="professor-poly">
+                <svg class="character-svg" viewBox="0 0 100 100">
+                    <!-- Professor Poly -->
+                    <circle cx="50" cy="50" r="40" fill="#4a6fa5" />
+                    <circle cx="35" cy="40" r="5" fill="white" />
+                    <circle cx="35" cy="40" r="2" fill="black" />
+                    <circle cx="65" cy="40" r="5" fill="white" />
+                    <circle cx="65" cy="40" r="2" fill="black" />
+                    <path d="M 35 65 Q 50 75 65 65" stroke="white" stroke-width="3" fill="transparent" />
+                    <ellipse cx="50" cy="30" rx="10" ry="5" fill="white" transform="rotate(-10, 50, 30)" />
+                </svg>
+                <div class="character-speech" id="professor-speech">
+                    Welcome to Exponent Explorer! I'm Professor Poly!
+                </div>
+            </div>
+            
+            <div class="character" id="variable-vicky">
+                <svg class="character-svg" viewBox="0 0 100 100">
+                    <!-- Variable Vicky -->
+                    <circle cx="50" cy="50" r="40" fill="#ff9a76" />
+                    <circle cx="35" cy="40" r="5" fill="white" />
+                    <circle cx="35" cy="40" r="2" fill="black" />
+                    <circle cx="65" cy="40" r="5" fill="white" />
+                    <circle cx="65" cy="40" r="2" fill="black" />
+                    <path d="M 35 60 Q 50 70 65 60" stroke="white" stroke-width="3" fill="transparent" />
+                    <path d="M 30 25 L 50 15 L 70 25" stroke="black" stroke-width="2" fill="transparent" />
+                    <path d="M 50 15 L 50 30" stroke="black" stroke-width="2" fill="transparent" />
+                </svg>
+                <div class="character-speech" id="vicky-speech">
+                    I'm Variable Vicky! I'll teach you about variables from around the world!
+                </div>
+            </div>
+            
+            <div class="character" id="exponent-eddie">
+                <svg class="character-svg" viewBox="0 0 100 100">
+                    <!-- Exponent Eddie -->
+                    <circle cx="50" cy="50" r="40" fill="#6ecb63" />
+                    <circle cx="35" cy="40" r="5" fill="white" />
+                    <circle cx="35" cy="40" r="2" fill="black" />
+                    <circle cx="65" cy="40" r="5" fill="white" />
+                    <circle cx="65" cy="40" r="2" fill="black" />
+                    <path d="M 35 65 Q 50 55 65 65" stroke="white" stroke-width="3" fill="transparent" />
+                    <text x="40" y="30" font-size="20" font-weight="bold">x<tspan baseline-shift="super" font-size="15">2</tspan></text>
+                </svg>
+                <div class="character-speech" id="eddie-speech">
+                    I'm Exponent Eddie! I'll help you master exponent operations!
+                </div>
+            </div>
+        </div>
+        
+        <div class="visualization-container" id="visualization">
+            <!-- Three.js visualization will be rendered here -->
+        </div>
+        
+        <div class="controls-container">
+            <div class="control-group">
+                <div class="control-title">Game Settings</div>
+                <div class="slider-container">
+                    <label class="slider-label" for="difficulty-slider">Problem Difficulty: <span id="difficulty-value">Medium</span></label>
+                    <input type="range" min="1" max="3" value="2" class="slider" id="difficulty-slider">
+                </div>
+                <div class="slider-container">
+                    <label class="slider-label" for="timer-slider">Timer: <span id="timer-value">Off</span></label>
+                    <input type="range" min="0" max="3" value="0" class="slider" id="timer-slider">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div class="control-title">Visualization Settings</div>
+                <div class="slider-container">
+                    <label class="slider-label" for="speed-slider">Animation Speed: <span id="speed-value">5</span></label>
+                    <input type="range" min="1" max="10" value="5" class="slider" id="speed-slider">
+                </div>
+                <div class="slider-container">
+                    <label class="slider-label" for="color-slider">Color Theme: <span id="color-value">Vibrant</span></label>
+                    <input type="range" min="1" max="3" value="1" class="slider" id="color-slider">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <div class="control-title">Help & Info</div>
+                <div class="slider-container">
+                    <label class="slider-label" for="character-slider">Character Help Level: <span id="character-value">Medium</span></label>
+                    <input type="range" min="1" max="3" value="2" class="slider" id="character-slider">
+                </div>
+                <button class="btn" id="intro-btn" style="margin-top: 10px; background-color: var(--quaternary-color); color: var(--text-color);">Meet the Characters</button>
+            </div>
+        </div>
+        
+        <div class="quiz-container">
+            <h2 class="quiz-header">Exponent Operations Challenge</h2>
+            <div class="level-info" id="level-info">
+                Select a level to begin!
+            </div>
+            
+            <div class="timer-container">
+                <div class="timer" id="timer">Time: 00:00</div>
+            </div>
+            
+            <div class="problem-container" id="problem-display">
+                Choose a level to get started!
+            </div>
+            
+            <div class="variable-selector" id="variable-buttons">
+                <!-- Variable buttons will be added here dynamically -->
+            </div>
+            
+            <div class="variable-selector" id="operation-buttons" style="margin-top: 0;">
+                <!-- Operation buttons will be added here dynamically -->
+            </div>
+            
+            <div class="answer-input-container">
+                <input type="text" id="answer-input" class="answer-input" placeholder="Your answer..." readonly>
+            </div>
+            
+            <div class="action-btns">
+                <button class="btn hint-btn" id="hint-btn">Get Hint</button>
+                <button class="btn check-btn" id="check-btn">Check Answer</button>
+                <button class="btn new-problem-btn" id="new-problem-btn">New Problem</button>
+            </div>
+            
+            <div class="result-message" id="result-message"></div>
+            
+            <div class="hint-panel" id="hint-panel">
+                <div class="hint-title">Helpful Hint:</div>
+                <div id="hint-content"></div>
+            </div>
+        </div>
+        
+        <div class="progress-container">
+            <div class="progress-title">Your Learning Progress</div>
+            <div class="progress-stats">
+                <div class="progress-stat">
+                    <div class="stat-value" id="total-points">0</div>
+                    <div class="stat-label">Total Points</div>
+                </div>
+                <div class="progress-stat">
+                    <div class="stat-value" id="current-level">1</div>
+                    <div class="stat-label">Current Level</div>
+                </div>
+                <div class="progress-stat">
+                    <div class="stat-value" id="current-streak">0</div>
+                    <div class="stat-label">Current Streak</div>
+                </div>
+                <div class="progress-stat">
+                    <div class="stat-value" id="highest-streak">0</div>
+                    <div class="stat-label">Highest Streak</div>
+                </div>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            <div class="score-display">
+                Score: <span id="correct-count">0</span> / <span id="total-count">0</span>
+            </div>
+        </div>
+        
+        <div class="achievements-container">
+            <div class="achievements-title">Achievements</div>
+            <div class="achievements-grid" id="achievements-grid">
+                <!-- Achievements will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <div id="characters-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-modal">&times;</span>
+            <h2 class="modal-title">Meet Your Exponent Explorer Friends!</h2>
+            
+            <div class="character-info">
+                <svg class="character-img" viewBox="0 0 100 100">
+                    <!-- Professor Poly -->
+                    <circle cx="50" cy="50" r="40" fill="#4a6fa5" />
+                    <circle cx="35" cy="40" r="5" fill="white" />
+                    <circle cx="35" cy="40" r="2" fill="black" />
+                    <circle cx="65" cy="40" r="5" fill="white" />
+                    <circle cx="65" cy="40" r="2" fill="black" />
+                    <path d="M 35 65 Q 50 75 65 65" stroke="white" stroke-width="3" fill="transparent" />
+                    <ellipse cx="50" cy="30" rx="10" ry="5" fill="white" transform="rotate(-10, 50, 30)" />
+                </svg>
+                <div>
+                    <h3>Professor Poly</h3>
+                    <p>A brilliant mathematician who loves teaching about exponents. Professor Poly will guide you through the rules and operations of exponents!</p>
+                </div>
+            </div>
+            
+            <div class="character-info">
+                <svg class="character-img" viewBox="0 0 100 100">
+                    <!-- Variable Vicky -->
+                    <circle cx="50" cy="50" r="40" fill="#ff9a76" />
+                    <circle cx="35" cy="40" r="5" fill="white" />
+                    <circle cx="35" cy="40" r="2" fill="black" />
+                    <circle cx="65" cy="40" r="5" fill="white" />
+                    <circle cx="65" cy="40" r="2" fill="black" />
+                    <path d="M 35 60 Q 50 70 65 60" stroke="white" stroke-width="3" fill="transparent" />
+                    <path d="M 30 25 L 50 15 L 70 25" stroke="black" stroke-width="2" fill="transparent" />
+                    <path d="M 50 15 L 50 30" stroke="black" stroke-width="2" fill="transparent" />
+                </svg>
+                <div>
+                    <h3>Variable Vicky</h3>
+                    <p>A world traveler who knows variables from many languages and alphabets. She'll teach you about the origin and meaning of mathematical symbols from around the world!</p>
+                </div>
+            </div>
+            
+            <div class="character-info">
+                <svg class="character-img" viewBox="0 0 100 100">
+                    <!-- Exponent Eddie -->
+                    <circle cx="50" cy="50" r="40" fill="#6ecb63" />
+                    <circle cx="35" cy="40" r="5" fill="white" />
+                    <circle cx="35" cy="40" r="2" fill="black" />
+                    <circle cx="65" cy="40" r="5" fill="white" />
+                    <circle cx="65" cy="40" r="2" fill="black" />
+                    <path d="M 35 65 Q 50 55 65 65" stroke="white" stroke-width="3" fill="transparent" />
+                    <text x="40" y="30" font-size="20" font-weight="bold">x<tspan baseline-shift="super" font-size="15">2</tspan></text>
+                </svg>
+                <div>
+                    <h3>Exponent Eddie</h3>
+                    <p>An energetic character who's passionate about the power of exponents! Eddie will help you understand how to add, subtract, multiply, divide, and raise exponents to power!</p>
+                </div>
+            </div>
+            
+            <div class="modal-text">
+                <p>Together, these friends will help you master exponent operations from basic concepts to complex expressions. Are you ready for the adventure?</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="level-up-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" id="close-level-modal">&times;</span>
+            <h2 class="modal-title">Level Up!</h2>
+            <div id="level-up-content">
+                <!-- Level up content will be added here dynamically -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="celebration" id="celebration"></div>
+    
+    <div class="streak-indicator" id="streak-indicator">Streak: 0</div>
+
+    <script>
+        // Global variables
+        let scene, camera, renderer;
+        let currentProblem = null;
+        let score = { correct: 0, total: 0 };
+        let points = 0;
+        let streak = 0;
+        let highestStreak = 0;
+        let currentLevel = 1;
+        let unlockedLevels = [1]; // Start with level 1 unlocked
+        let variablesInfo = {};
+        let animationSpeed = 5;
+        let colorTheme = 1;
+        let helpLevel = 2;
+        let objects = [];
+        let timer = null;
+        let timerInterval = null;
+        let timerSeconds = 0;
+        let achievements = {};
+        let problemStartTime;
+
+        // Level definitions
+        const levels = [
+            {
+                id: 1,
+                name: "Exponent Basics",
+                description: "Learn what exponents are and how they work",
+                color: "var(--level1-color)",
+                textColor: "var(--text-color)",
+                rule: "x^n means x multiplied by itself n times",
+                unlockPoints: 0
+            },
+            {
+                id: 2,
+                name: "Addition & Subtraction",
+                description: "Add and subtract terms with the same exponents",
+                color: "var(--level2-color)",
+                textColor: "var(--text-color)",
+                rule: "You can only add or subtract terms if they have the same variable and exponent",
+                unlockPoints: 500
+            },
+            {
+                id: 3,
+                name: "Multiplication Rule",
+                description: "Learn the rule for multiplying exponents",
+                color: "var(--level3-color)",
+                textColor: "var(--text-color)",
+                rule: "When multiplying terms with the same base, add the exponents: x^a × x^b = x^(a+b)",
+                unlockPoints: 1000
+            },
+            {
+                id: 4,
+                name: "Division Rule",
+                description: "Learn the rule for dividing exponents",
+                color: "var(--level4-color)",
+                textColor: "white",
+                rule: "When dividing terms with the same base, subtract the exponents: x^a ÷ x^b = x^(a-b)",
+                unlockPoints: 2000
+            },
+            {
+                id: 5,
+                name: "Negative Exponents",
+                description: "Convert between negative and positive exponents",
+                color: "var(--level5-color)",
+                textColor: "white",
+                rule: "Negative exponents represent reciprocals: x^(-a) = 1/x^a",
+                unlockPoints: 3500
+            },
+            {
+                id: 6,
+                name: "Power Rule",
+                description: "Learn how to raise an exponent to another exponent",
+                color: "var(--level6-color)",
+                textColor: "white",
+                rule: "When raising a power to another power, multiply the exponents: (x^a)^b = x^(a×b)",
+                unlockPoints: 5000
+            },
+            {
+                id: 7,
+                name: "Mixed Operations",
+                description: "Apply multiple exponent rules in sequence",
+                color: "var(--level7-color)",
+                textColor: "white",
+                rule: "Solve step by step, applying each rule in the correct order",
+                unlockPoints: 7000
+            },
+            {
+                id: 8,
+                name: "Master Challenge",
+                description: "Complex problems using all exponent rules",
+                color: "var(--level8-color)",
+                textColor: "white",
+                rule: "Apply all exponent rules to solve complex expressions",
+                unlockPoints: 10000
+            }
+        ];
+
+        // Achievement definitions
+        const achievementsList = [
+            {
+                id: "first_correct",
+                name: "First Steps",
+                icon: "🏆",
+                description: "Solve your first problem correctly",
+                condition: () => score.correct >= 1
+            },
+            {
+                id: "level_2",
+                name: "Level Up!",
+                icon: "🔼",
+                description: "Reach Level 2",
+                condition: () => currentLevel >= 2
+            },
+            {
+                id: "streak_5",
+                name: "On Fire!",
+                icon: "🔥",
+                description: "Get a streak of 5 correct answers",
+                condition: () => streak >= 5 || highestStreak >= 5
+            },
+            {
+                id: "streak_10",
+                name: "Unstoppable!",
+                icon: "⚡",
+                description: "Get a streak of 10 correct answers",
+                condition: () => streak >= 10 || highestStreak >= 10
+            },
+            {
+                id: "master_level_1",
+                name: "Basics Mastered",
+                icon: "📚",
+                description: "Master Level 1 (10 correct answers)",
+                condition: () => getLevelStats(1).correct >= 10
+            },
+            {
+                id: "speed_demon",
+                name: "Speed Demon",
+                icon: "⏱️",
+                description: "Solve a problem in under 10 seconds",
+                condition: () => false // Will be checked separately
+            },
+            {
+                id: "half_levels",
+                name: "Halfway There",
+                icon: "🏄",
+                description: "Unlock 4 out of 8 levels",
+                condition: () => unlockedLevels.length >= 4
+            },
+            {
+                id: "all_levels",
+                name: "Explorer",
+                icon: "🌟",
+                description: "Unlock all 8 levels",
+                condition: () => unlockedLevels.length >= 8
+            }
+        ];
+
+        // Character variables
+        const characterMessages = {
+            professor: {
+                generic: [
+                    "Remember the basic exponent rules!",
+                    "Take your time and think step by step.",
+                    "Exponents represent repeated multiplication, like x³ = x×x×x.",
+                    "When in doubt, break down the problem into smaller parts.",
+                    "The fundamentals are key to mastering exponents!"
+                ],
+                level1: [
+                    "x² means x times x!",
+                    "Remember, x⁰ always equals 1 for any non-zero x!",
+                    "The exponent tells you how many times to multiply the base by itself.",
+                    "Exponents are a shorthand for repeated multiplication."
+                ],
+                level2: [
+                    "You can only add or subtract terms with the same variable and exponent!",
+                    "2x² + 3x² = 5x². The exponents stay the same when adding!",
+                    "Different exponents? Can't combine! 2x² + 3x³ can't be simplified further."
+                ],
+                level3: [
+                    "When multiplying exponents with the same base, add the powers!",
+                    "x³ × x⁴ = x⁷ because 3 + 4 = 7!",
+                    "The multiplication rule: x^a × x^b = x^(a+b)"
+                ],
+                level4: [
+                    "When dividing exponents with the same base, subtract the powers!",
+                    "x⁵ ÷ x² = x³ because 5 - 2 = 3!",
+                    "The division rule: x^a ÷ x^b = x^(a-b)"
+                ],
+                level5: [
+                    "A negative exponent means take the reciprocal!",
+                    "x^(-3) = 1/x³",
+                    "Any number raised to the -1 power is just 1 divided by that number."
+                ],
+                level6: [
+                    "For the power rule, multiply the exponents!",
+                    "(x²)³ = x⁶ because 2 × 3 = 6!",
+                    "The power rule: (x^a)^b = x^(a×b)"
+                ],
+                level7: [
+                    "Take it step by step. Which rule should you apply first?",
+                    "Use parentheses to keep track of what you're doing.",
+                    "Sometimes you need to apply multiple rules in sequence."
+                ],
+                level8: [
+                    "Complex problems can be broken down into smaller steps.",
+                    "Try identifying which rules you need to apply and in what order.",
+                    "You've learned all the rules - now put them together!"
+                ]
+            },
+            vicky: {
+                generic: [
+                    "Variables come from many languages and have interesting histories!",
+                    "Different symbols have been used throughout history to represent unknown quantities.",
+                    "The letters we use in math often come from different alphabets, like Greek or Hebrew!",
+                    "Every culture has contributed to mathematics in its own unique way."
+                ]
+            },
+            eddie: {
+                generic: [
+                    "Exponents are powerful tools for expressing repeated multiplication!",
+                    "With exponents, you can represent very large or very small numbers easily.",
+                    "Exponent rules help us simplify complex expressions.",
+                    "Master the exponent rules and you'll become a math superhero!"
+                ],
+                level1: [
+                    "x³ is just a shorter way to write x×x×x!",
+                    "Any number raised to the power of 1 is just the number itself.",
+                    "Learn the basics and you'll be an exponent expert in no time!"
+                ],
+                level2: [
+                    "Only like terms can be added or subtracted - check those exponents!",
+                    "3x² + 4x² = 7x² - this is just like regular addition!",
+                    "Different exponents? No adding allowed! Keep them separate."
+                ],
+                level3: [
+                    "Multiplying exponents? Add the powers!",
+                    "Think of x³ × x⁴ as x×x×x × x×x×x×x = x⁷!",
+                    "The multiplication rule is your friend: x^a × x^b = x^(a+b)"
+                ],
+                level4: [
+                    "Dividing exponents? Subtract the powers!",
+                    "x⁵ ÷ x² means canceling out two factors: x×x×x×x×x ÷ x×x = x×x×x = x³",
+                    "The division rule is super useful: x^a ÷ x^b = x^(a-b)"
+                ],
+                level5: [
+                    "Negative exponents flip to the other side of the fraction!",
+                    "x^(-2) is the same as 1/x²",
+                    "Negative exponents are just reciprocals in disguise."
+                ],
+                level6: [
+                    "Power to a power? Multiply those exponents!",
+                    "(x³)⁴ means raise x³ to the 4th power: x³×x³×x³×x³ = x¹²",
+                    "The power rule makes complex expressions simpler: (x^a)^b = x^(a×b)"
+                ],
+                level7: [
+                    "Break it down step by step! Each rule has its place.",
+                    "Look for patterns in the expression to decide which rule to apply.",
+                    "You can solve any exponent problem with the rules you've learned!"
+                ],
+                level8: [
+                    "You've got all the tools you need - now put them together!",
+                    "Complex problems? Just apply the rules one at a time.",
+                    "You're becoming an exponent master! Keep it up!"
+                ]
+            }
+        };
+
+        // Special characters from various alphabets with mnemonics
+        const specialCharacters = [
+            { 
+                symbol: "α", 
+                name: "alpha", 
+                origin: "Greek", 
+                meaning: "First letter of the Greek alphabet, often used for angles or coefficients",
+                mnemonic: "Think of 'alpha' as the 'A-lpha' (A) of the Greek alphabet - it's first in line!"
+            },
+            { 
+                symbol: "β", 
+                name: "beta", 
+                origin: "Greek", 
+                meaning: "Second letter of the Greek alphabet, used for angles or coefficients",
+                mnemonic: "Beta sounds like 'better' - one 'better' (or one more) than alpha."
+            },
+            { 
+                symbol: "γ", 
+                name: "gamma", 
+                origin: "Greek", 
+                meaning: "Third letter of the Greek alphabet, often used for angles or functions",
+                mnemonic: "Gamma looks like a 'y' hanging from a clothesline - picture it for 'y-angles'."
+            },
+            { 
+                symbol: "δ", 
+                name: "delta", 
+                origin: "Greek", 
+                meaning: "Fourth letter of the Greek alphabet, represents change or difference",
+                mnemonic: "Delta is a triangle (Δ) and D is for 'difference' - delta shows changes!"
+            },
+            { 
+                symbol: "θ", 
+                name: "theta", 
+                origin: "Greek", 
+                meaning: "Eighth letter of the Greek alphabet, often used for angles",
+                mnemonic: "Theta (θ) looks like a face with an eye - think of it 'seeing' angles all around."
+            },
+            { 
+                symbol: "λ", 
+                name: "lambda", 
+                origin: "Greek", 
+                meaning: "Eleventh letter of the Greek alphabet, used in physics and calculus",
+                mnemonic: "Lambda looks like a tiny slide (λ) - things 'slide' down it at different rates!"
+            },
+            { 
+                symbol: "π", 
+                name: "pi", 
+                origin: "Greek", 
+                meaning: "The ratio of a circle's circumference to its diameter (approximately 3.14159)",
+                mnemonic: "Pi sounds like 'pie' - and pies are round like circles!"
+            },
+            { 
+                symbol: "φ", 
+                name: "phi", 
+                origin: "Greek", 
+                meaning: "21st letter of the Greek alphabet, represents the golden ratio",
+                mnemonic: "Phi looks like a circle with a line (φ) - like measuring the perfect proportions!"
+            },
+            { 
+                symbol: "א", 
+                name: "alef", 
+                origin: "Hebrew", 
+                meaning: "First letter of the Hebrew alphabet, used in set theory",
+                mnemonic: "Alef looks like an 'X' with arms - it's 'eXtra special' as it represents infinity in math!"
+            },
+            { 
+                symbol: "ℵ", 
+                name: "aleph", 
+                origin: "Hebrew (mathematical)", 
+                meaning: "Used to represent infinite cardinalities in mathematics",
+                mnemonic: "Aleph looks like a number with a fancy hat - infinitely stylish!"
+            },
+            { 
+                symbol: "ש", 
+                name: "shin", 
+                origin: "Hebrew", 
+                meaning: "21st letter of the Hebrew alphabet",
+                mnemonic: "Shin looks like a crown with three points - think 'shine' like a crown jewel!"
+            },
+            { 
+                symbol: "ب", 
+                name: "ba", 
+                origin: "Arabic", 
+                meaning: "Second letter of the Arabic alphabet",
+                mnemonic: "Ba looks like a boat on waves - 'b'oat starts with 'b' just like 'ba'!"
+            },
+            { 
+                symbol: "ج", 
+                name: "jim", 
+                origin: "Arabic", 
+                meaning: "Fifth letter of the Arabic alphabet",
+                mnemonic: "Jim looks like a smile with a dot - 'j'oyful like the name 'Jim'!"
+            },
+            { 
+                symbol: "म", 
+                name: "ma", 
+                origin: "Devanagari", 
+                meaning: "A consonant in the Devanagari script used in Hindi and Sanskrit",
+                mnemonic: "Ma has a straight line on top - like a 'm'other putting a roof over your head!"
+            },
+            { 
+                symbol: "क", 
+                name: "ka", 
+                origin: "Devanagari", 
+                meaning: "A consonant in the Devanagari script used in Hindi and Sanskrit",
+                mnemonic: "Ka looks like a 'k'ite with its string - ready to fly high in mathematics!"
+            },
+            { 
+                symbol: "ξ", 
+                name: "xi", 
+                origin: "Greek", 
+                meaning: "The 14th letter of the Greek alphabet, often used in mathematics",
+                mnemonic: "Xi looks like a squiggly 'ξ' - think of it as an 'e'X'tra squiggly line!"
+            },
+            { 
+                symbol: "ψ", 
+                name: "psi", 
+                origin: "Greek", 
+                meaning: "The 23rd letter of the Greek alphabet, used in physics and psychology",
+                mnemonic: "Psi (ψ) looks like a trident - 'p'owerful like Poseidon's weapon!"
+            },
+            { 
+                symbol: "ω", 
+                name: "omega", 
+                origin: "Greek", 
+                meaning: "The 24th and last letter of the Greek alphabet, represents the end",
+                mnemonic: "Omega looks like a horseshoe (ω) - it's at the end of the race!"
+            },
+            { 
+                symbol: "ζ", 
+                name: "zeta", 
+                origin: "Greek", 
+                meaning: "The 6th letter of the Greek alphabet, used in mathematics",
+                mnemonic: "Zeta looks like a curvy 'z' - 'z'ipping through mathematics problems!"
+            },
+            { 
+                symbol: "χ", 
+                name: "chi", 
+                origin: "Greek", 
+                meaning: "The 22nd letter of the Greek alphabet, used in statistics",
+                mnemonic: "Chi looks like an 'x' - think of it as a 'c'rossroads of probability!"
+            }
+        ];
+
+        // Latin alphabet and numbers for variable selection
+        const latinAlphabet = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z"];
+        const numbers = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9"];
+        const operations = ["+", "-", "×", "÷", "(", ")", "^"];
+
+        // Initialize the game when the page loads
+        window.onload = initGame;
+
+        function initGame() {
+            initThreeJS();
+            createLevelButtons();
+            setupEventListeners();
+            updateControlLabels();
+            createAchievements();
+            showCharacterIntroductions();
+            
+            // Initialize the level stats in localStorage if not already present
+            for (let i = 1; i <= levels.length; i++) {
+                if (!localStorage.getItem(`level_${i}_stats`)) {
+                    localStorage.setItem(`level_${i}_stats`, JSON.stringify({
+                        correct: 0,
+                        total: 0,
+                        points: 0
+                    }));
+                }
+            }
+            
+            // Load saved progress from localStorage
+            loadProgress();
+        }
+
+        // Initialize Three.js visualization
+        function initThreeJS() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f8ff);
+
+            // Create camera
+            camera = new THREE.PerspectiveCamera(75, document.getElementById('visualization').offsetWidth / document.getElementById('visualization').offsetHeight, 0.1, 1000);
+            camera.position.z = 5;
+
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(document.getElementById('visualization').offsetWidth, document.getElementById('visualization').offsetHeight);
+            document.getElementById('visualization').appendChild(renderer.domElement);
+
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(0, 1, 1);
+            scene.add(directionalLight);
+
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                camera.aspect = document.getElementById('visualization').offsetWidth / document.getElementById('visualization').offsetHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(document.getElementById('visualization').offsetWidth, document.getElementById('visualization').offsetHeight);
+            });
+
+            // Start animation loop
+            animate();
+        }
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Rotate objects based on animation speed
+            objects.forEach((obj) => {
+                obj.rotation.x += 0.001 * animationSpeed;
+                obj.rotation.y += 0.002 * animationSpeed;
+            });
+            
+            renderer.render(scene, camera);
+        }
+
+        // Create level selection buttons
+        function createLevelButtons() {
+            const levelsContainer = document.getElementById('levels-container');
+            levelsContainer.innerHTML = '';
+            
+            levels.forEach(level => {
+                const levelBtn = document.createElement('button');
+                levelBtn.className = 'level-btn';
+                levelBtn.id = `level-${level.id}-btn`;
+                levelBtn.textContent = `Level ${level.id}: ${level.name}`;
+                levelBtn.style.backgroundColor = level.color;
+                levelBtn.style.color = level.textColor;
+                
+                // Check if level is unlocked
+                if (unlockedLevels.includes(level.id)) {
+                    levelBtn.addEventListener('click', () => selectLevel(level.id));
+                } else {
+                    levelBtn.classList.add('locked');
+                    levelBtn.textContent += ` (${level.unlockPoints} pts)`;
+                }
+                
+                levelsContainer.appendChild(levelBtn);
+            });
+        }
+
+        // Setup event listeners for controls and buttons
+        function setupEventListeners() {
+            // Slider event listeners
+            document.getElementById('difficulty-slider').addEventListener('input', function() {
+                const difficultyLabels = ["Easy", "Medium", "Hard"];
+                document.getElementById('difficulty-value').textContent = difficultyLabels[this.value - 1];
+            });
+            
+            document.getElementById('timer-slider').addEventListener('input', function() {
+                const timerLabels = ["Off", "30 sec", "60 sec", "90 sec"];
+                document.getElementById('timer-value').textContent = timerLabels[this.value];
+                
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                
+                document.getElementById('timer').textContent = "Time: 00:00";
+                timerSeconds = 0;
+                
+                if (this.value > 0 && currentProblem) {
+                    startTimer(parseInt(this.value) * 30);
+                }
+            });
+            
+            document.getElementById('speed-slider').addEventListener('input', function() {
+                document.getElementById('speed-value').textContent = this.value;
+                animationSpeed = parseInt(this.value);
+            });
+            
+            document.getElementById('color-slider').addEventListener('input', function() {
+                const colorLabels = ["Vibrant", "Pastel", "Monochrome"];
+                document.getElementById('color-value').textContent = colorLabels[this.value - 1];
+                colorTheme = parseInt(this.value);
+                updateVisualization();
+            });
+            
+            document.getElementById('character-slider').addEventListener('input', function() {
+                const helpLabels = ["Minimal", "Medium", "Maximum"];
+                document.getElementById('character-value').textContent = helpLabels[this.value - 1];
+                helpLevel = parseInt(this.value);
+            });
+            
+            // Button event listeners
+            document.getElementById('hint-btn').addEventListener('click', showHint);
+            document.getElementById('check-btn').addEventListener('click', checkAnswer);
+            document.getElementById('new-problem-btn').addEventListener('click', generateNewProblem);
+            document.getElementById('intro-btn').addEventListener('click', showCharactersModal);
+            document.getElementById('close-modal').addEventListener('click', hideCharactersModal);
+            document.getElementById('close-level-modal').addEventListener('click', hideLevelUpModal);
+            
+            // Answer input event listener
+            document.getElementById('answer-input').addEventListener('click', function() {
+                // Just to make sure it doesn't try to edit directly
+                this.blur();
+            });
+            
+            // Close modals when clicking outside of them
+            window.addEventListener('click', function(event) {
+                if (event.target === document.getElementById('characters-modal')) {
+                    hideCharactersModal();
+                }
+                if (event.target === document.getElementById('level-up-modal')) {
+                    hideLevelUpModal();
+                }
+            });
+        }
+
+        // Update control labels based on slider values
+        function updateControlLabels() {
+            const difficultyLabels = ["Easy", "Medium", "Hard"];
+            document.getElementById('difficulty-value').textContent = difficultyLabels[document.getElementById('difficulty-slider').value - 1];
+            
+            const timerLabels = ["Off", "30 sec", "60 sec", "90 sec"];
+            document.getElementById('timer-value').textContent = timerLabels[document.getElementById('timer-slider').value];
+            
+            document.getElementById('speed-value').textContent = document.getElementById('speed-slider').value;
+            
+            const colorLabels = ["Vibrant", "Pastel", "Monochrome"];
+            document.getElementById('color-value').textContent = colorLabels[document.getElementById('color-slider').value - 1];
+            
+            const helpLabels = ["Minimal", "Medium", "Maximum"];
+            document.getElementById('character-value').textContent = helpLabels[document.getElementById('character-slider').value - 1];
+        }
+
+        // Show character introductions with animations
+        function showCharacterIntroductions() {
+            const speeches = [
+                document.getElementById('professor-speech'),
+                document.getElementById('vicky-speech'),
+                document.getElementById('eddie-speech')
+            ];
+            
+            // Clear any existing timeouts
+            speeches.forEach(s => {
+                s.style.opacity = 0;
+            });
+            
+            // Show speech bubbles sequentially
+            setTimeout(() => {
+                speeches[0].style.opacity = 1;
+                setTimeout(() => {
+                    speeches[0].style.opacity = 0;
+                    speeches[1].style.opacity = 1;
+                    setTimeout(() => {
+                        speeches[1].style.opacity = 0;
+                        speeches[2].style.opacity = 1;
+                        setTimeout(() => {
+                            speeches[2].style.opacity = 0;
+                        }, 3000);
+                    }, 3000);
+                }, 3000);
+            }, 1000);
+        }
+
+        // Select a level
+        function selectLevel(levelId) {
+            currentLevel = levelId;
+            document.getElementById('current-level').textContent = levelId;
+            
+            // Update level info display
+            const levelInfo = levels.find(level => level.id === levelId);
+            document.getElementById('level-info').textContent = `Level ${levelId}: ${levelInfo.name} - ${levelInfo.description}`;
+            document.getElementById('level-info').style.backgroundColor = levelInfo.color;
+            document.getElementById('level-info').style.color = levelInfo.textColor;
+            
+            // Generate a new problem for this level
+            generateNewProblem();
+            
+            // Show character message about the level
+            showLevelCharacterMessage(levelId);
+            
+            // Update level buttons to highlight the selected level
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.style.transform = '';
+                btn.style.boxShadow = '';
+            });
+            
+            const selectedLevelBtn = document.getElementById(`level-${levelId}-btn`);
+            selectedLevelBtn.style.transform = 'translateY(-5px)';
+            selectedLevelBtn.style.boxShadow = '0 10px 20px rgba(0, 0, 0, 0.2)';
+            
+            // Save current level to localStorage
+            localStorage.setItem('current_level', levelId);
+        }
+
+        // Show a character message about the selected level
+        function showLevelCharacterMessage(levelId) {
+            const levelMessages = characterMessages.professor[`level${levelId}`];
+            if (levelMessages && levelMessages.length > 0) {
+                const randomMessage = levelMessages[Math.floor(Math.random() * levelMessages.length)];
+                showCharacterMessage('professor', randomMessage);
+            }
+        }
+
+        // Generate a new problem based on the current level
+        function generateNewProblem() {
+            // Clear previous problem
+            clearProblemDisplay();
+
+            // Hide hint panel
+            document.getElementById('hint-panel').style.display = 'none';
+            
+            // Reset result message
+            const resultMessage = document.getElementById('result-message');
+            resultMessage.textContent = '';
+            resultMessage.style.opacity = 0;
+            resultMessage.style.backgroundColor = '';
+            
+            // Clear answer input
+            document.getElementById('answer-input').value = '';
+            
+            // Get problem settings
+            const difficulty = parseInt(document.getElementById('difficulty-slider').value);
+            
+            // Generate problem based on current level
+            currentProblem = createProblemForLevel(currentLevel, difficulty);
+            
+            // Display problem
+            displayProblem(currentProblem);
+            
+            // Create variable and operation buttons
+            createInputButtons(currentProblem);
+            
+            // Update visualization
+            updateVisualization();
+            
+            // Show random character message
+            showRandomCharacterMessage();
+            
+            // Record problem start time for speed achievement
+            problemStartTime = new Date();
+            
+            // Start timer if enabled
+            const timerSetting = parseInt(document.getElementById('timer-slider').value);
+            if (timerSetting > 0) {
+                startTimer(timerSetting * 30); // Convert to seconds
+            }
+        }
+
+        // Start a timer for the problem
+        function startTimer(seconds) {
+            // Clear any existing timer
+            if (timerInterval) {
+                clearInterval(timerInterval);
+            }
+            
+            timerSeconds = 0;
+            const timerDisplay = document.getElementById('timer');
+            timerDisplay.textContent = "Time: 00:00";
+            
+            timerInterval = setInterval(() => {
+                timerSeconds++;
+                
+                // Format the time
+                const minutes = Math.floor(timerSeconds / 60);
+                const secs = timerSeconds % 60;
+                timerDisplay.textContent = `Time: ${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                
+                // Check if time is up
+                if (seconds > 0 && timerSeconds >= seconds) {
+                    clearInterval(timerInterval);
+                    timerDisplay.textContent = "Time's up!";
+                    timerDisplay.style.color = "red";
+                    
+                    // Auto-check the answer
+                    checkAnswer();
+                }
+            }, 1000);
+        }
+
+        // Create a problem based on the current level and difficulty
+        function createProblemForLevel(levelId, difficulty) {
+            let problem = {
+                levelId,
+                difficulty,
+                expression: "",
+                correctAnswer: "",
+                variables: [],
+                steps: []
+            };
+            
+            // Get random variables
+            const numVariables = Math.min(levelId, 3); // More variables at higher levels
+            problem.variables = getRandomVariables(numVariables);
+            
+            // Store information about the variables used
+            variablesInfo = {};
+            problem.variables.forEach(variable => {
+                variablesInfo[variable.symbol] = {
+                    name: variable.name,
+                    origin: variable.origin,
+                    meaning: variable.meaning,
+                    mnemonic: variable.mnemonic
+                };
+            });
+            
+            // Generate problem based on level
+            switch (levelId) {
+                case 1: // Exponent Basics
+                    problem = generateBasicExponentProblem(problem, difficulty);
+                    break;
+                case 2: // Addition & Subtraction
+                    problem = generateAddSubtractProblem(problem, difficulty);
+                    break;
+                case 3: // Multiplication Rule
+                    problem = generateMultiplicationProblem(problem, difficulty);
+                    break;
+                case 4: // Division Rule
+                    problem = generateDivisionProblem(problem, difficulty);
+                    break;
+                case 5: // Negative Exponents
+                    problem = generateNegativeExponentProblem(problem, difficulty);
+                    break;
+                case 6: // Power Rule
+                    problem = generatePowerRuleProblem(problem, difficulty);
+                    break;
+                case 7: // Mixed Operations
+                    problem = generateMixedOperationsProblem(problem, difficulty);
+                    break;
+                case 8: // Master Challenge
+                    problem = generateMasterChallengeProblem(problem, difficulty);
+                    break;
+                default:
+                    // Default to basic exponent problem
+                    problem = generateBasicExponentProblem(problem, difficulty);
+            }
+            
+            return problem;
+        }
+
+        // Get random variables from the available pool
+        function getRandomVariables(count) {
+            const variables = [];
+            const availableVariables = [...specialCharacters];
+            
+            // Add some Latin alphabet letters if there aren't enough special characters
+            if (availableVariables.length < count) {
+                latinAlphabet.forEach(letter => {
+                    availableVariables.push({
+                        symbol: letter,
+                        name: letter,
+                        origin: "Latin",
+                        meaning: `A letter from the Latin alphabet, commonly used in algebra.`,
+                        mnemonic: `The letter '${letter}' is easy to remember - just think of words like '${getWordStartingWith(letter)}'!`
+                    });
+                });
+            }
+            
+            // Select random variables
+            while (variables.length < count && availableVariables.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableVariables.length);
+                variables.push(availableVariables[randomIndex]);
+                availableVariables.splice(randomIndex, 1);
+            }
+            
+            return variables;
+        }
+
+        // Get a common word starting with a given letter
+        function getWordStartingWith(letter) {
+            const commonWords = {
+                'a': 'apple', 'b': 'ball', 'c': 'cat', 'd': 'dog', 'e': 'elephant',
+                'f': 'fish', 'g': 'goat', 'h': 'hat', 'i': 'ice', 'j': 'jump',
+                'k': 'kite', 'l': 'lion', 'm': 'moon', 'n': 'nest', 'o': 'orange',
+                'p': 'pen', 'q': 'queen', 'r': 'rabbit', 's': 'sun', 't': 'tree',
+                'u': 'umbrella', 'v': 'violin', 'w': 'water', 'x': 'xylophone',
+                'y': 'yellow', 'z': 'zebra'
+            };
+            
+            return commonWords[letter] || letter;
+        }
+
+        // Generate a basic exponent problem (Level 1)
+        function generateBasicExponentProblem(problem, difficulty) {
+            const variable = problem.variables[0].symbol;
+            let exponent;
+            
+            // Generate exponent based on difficulty
+            if (difficulty === 1) {
+                exponent = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            } else if (difficulty === 2) {
+                exponent = Math.floor(Math.random() * 4) + 2; // 2 to 5
+            } else {
+                exponent = Math.floor(Math.random() * 5) + 3; // 3 to 7
+            }
+            
+            // Decide type of basic problem
+            const problemType = Math.floor(Math.random() * 3);
+            
+            if (problemType === 0) {
+                // Evaluate exponent
+                const base = Math.floor(Math.random() * 5) + 2; // 2 to 6
+                problem.expression = `${base}^${exponent}`;
+                problem.correctAnswer = Math.pow(base, exponent).toString();
+                problem.steps.push(`Calculate ${base} raised to the power of ${exponent}.`);
+                problem.steps.push(`${base}^${exponent} = ${base} × ${base}${"×".repeat(exponent-2)} ${base}`);
+                problem.steps.push(`${base}^${exponent} = ${problem.correctAnswer}`);
+            } else if (problemType === 1) {
+                // Expand expression
+                problem.expression = `${variable}^${exponent}`;
+                let expansion = variable;
+                for (let i = 1; i < exponent; i++) {
+                    expansion += ` × ${variable}`;
+                }
+                problem.correctAnswer = expansion;
+                problem.steps.push(`Expand ${variable}^${exponent} into repeated multiplication.`);
+                problem.steps.push(`${variable}^${exponent} = ${variable} × ${variable}${"×".repeat(exponent-2)} ${variable}`);
+                problem.steps.push(`${variable}^${exponent} = ${problem.correctAnswer}`);
+            } else {
+                // Zero exponent or first power
+                if (Math.random() < 0.5) {
+                    problem.expression = `${variable}^0`;
+                    problem.correctAnswer = "1";
+                    problem.steps.push(`Any non-zero number raised to the power of 0 equals 1.`);
+                    problem.steps.push(`${variable}^0 = 1`);
+                } else {
+                    problem.expression = `${variable}^1`;
+                    problem.correctAnswer = variable;
+                    problem.steps.push(`Any number raised to the power of 1 equals itself.`);
+                    problem.steps.push(`${variable}^1 = ${variable}`);
+                }
+            }
+            
+            return problem;
+        }
+
+        // Generate an addition/subtraction problem (Level 2)
+        function generateAddSubtractProblem(problem, difficulty) {
+            const variable = problem.variables[0].symbol;
+            const exponent = Math.floor(Math.random() * 3) + 2; // 2 to 4
+            const numTerms = difficulty === 1 ? 2 : (difficulty === 2 ? 3 : 4);
+            
+            let expression = "";
+            let correctAnswer = 0;
+            const operators = ['+', '-'];
+            
+            problem.steps.push(`Identify like terms with the same variable and exponent.`);
+            problem.steps.push(`Remember: You can only add or subtract terms with the same variable and exponent.`);
+            
+            for (let i = 0; i < numTerms; i++) {
+                const coefficient = Math.floor(Math.random() * 9) + 1; // 1 to 9
+                
+                if (i === 0) {
+                    expression += `${coefficient}${variable}^${exponent}`;
+                    correctAnswer = coefficient;
+                } else {
+                    const operator = operators[Math.floor(Math.random() * operators.length)];
+                    expression += ` ${operator} ${coefficient}${variable}^${exponent}`;
+                    
+                    if (operator === '+') {
+                        correctAnswer += coefficient;
+                    } else {
+                        correctAnswer -= coefficient;
+                    }
+                }
+            }
+            
+            problem.expression = expression;
+            problem.correctAnswer = `${correctAnswer}${variable}^${exponent}`;
+            
+            problem.steps.push(`Combine the coefficients: ${expression}`);
+            problem.steps.push(`= ${problem.correctAnswer}`);
+            
+            return problem;
+        }
+
+        // Generate a multiplication problem (Level 3)
+        function generateMultiplicationProblem(problem, difficulty) {
+            const variable = problem.variables[0].symbol;
+            
+            // Generate exponents based on difficulty
+            let exponent1, exponent2;
+            if (difficulty === 1) {
+                exponent1 = Math.floor(Math.random() * 3) + 1; // 1 to 3
+                exponent2 = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            } else if (difficulty === 2) {
+                exponent1 = Math.floor(Math.random() * 4) + 1; // 1 to 4
+                exponent2 = Math.floor(Math.random() * 4) + 1; // 1 to 4
+            } else {
+                exponent1 = Math.floor(Math.random() * 5) + 1; // 1 to 5
+                exponent2 = Math.floor(Math.random() * 5) + 1; // 1 to 5
+            }
+            
+            // Generate coefficients based on difficulty
+            let coef1 = 1, coef2 = 1;
+            if (difficulty >= 2) {
+                coef1 = Math.floor(Math.random() * 5) + 1; // 1 to 5
+                coef2 = Math.floor(Math.random() * 5) + 1; // 1 to 5
+            }
+            
+            const term1 = coef1 === 1 ? `${variable}^${exponent1}` : `${coef1}${variable}^${exponent1}`;
+            const term2 = coef2 === 1 ? `${variable}^${exponent2}` : `${coef2}${variable}^${exponent2}`;
+            
+            problem.expression = `${term1} × ${term2}`;
+            
+            const resultCoef = coef1 * coef2;
+            const resultExp = exponent1 + exponent2;
+            
+            problem.correctAnswer = resultCoef === 1 ? 
+                `${variable}^${resultExp}` : 
+                `${resultCoef}${variable}^${resultExp}`;
+            
+            problem.steps.push(`Apply the multiplication rule: When multiplying terms with the same base, add the exponents.`);
+            problem.steps.push(`${term1} × ${term2} = ${coef1} × ${coef2} × ${variable}^(${exponent1} + ${exponent2})`);
+            problem.steps.push(`= ${resultCoef}${variable}^${resultExp}`);
+            
+            return problem;
+        }
+
+        // Generate a division problem (Level 4)
+        function generateDivisionProblem(problem, difficulty) {
+            const variable = problem.variables[0].symbol;
+            
+            // Generate exponents based on difficulty
+            let exponent1, exponent2;
+            if (difficulty === 1) {
+                exponent1 = Math.floor(Math.random() * 3) + 3; // 3 to 5
+                exponent2 = Math.floor(Math.random() * 2) + 1; // 1 to 2
+            } else if (difficulty === 2) {
+                exponent1 = Math.floor(Math.random() * 4) + 4; // 4 to 7
+                exponent2 = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            } else {
+                exponent1 = Math.floor(Math.random() * 5) + 5; // 5 to 9
+                exponent2 = Math.floor(Math.random() * 4) + 1; // 1 to 4
+            }
+            
+            // Ensure exponent1 > exponent2
+            if (exponent1 <= exponent2) {
+                exponent1 = exponent2 + 1;
+            }
+            
+            // Generate coefficients based on difficulty
+            let coef1 = 1, coef2 = 1;
+            if (difficulty >= 2) {
+                coef1 = Math.floor(Math.random() * 9) + 1; // 1 to 9
+                coef2 = Math.floor(Math.random() * 5) + 1; // 1 to 5
+                
+                // Ensure the coefficient division results in a whole number
+                coef1 = coef1 * coef2;
+            }
+            
+            const term1 = coef1 === 1 ? `${variable}^${exponent1}` : `${coef1}${variable}^${exponent1}`;
+            const term2 = coef2 === 1 ? `${variable}^${exponent2}` : `${coef2}${variable}^${exponent2}`;
+            
+            problem.expression = `${term1} ÷ ${term2}`;
+            
+            const resultCoef = coef1 / coef2;
+            const resultExp = exponent1 - exponent2;
+            
+            problem.correctAnswer = resultCoef === 1 ? 
+                `${variable}^${resultExp}` : 
+                `${resultCoef}${variable}^${resultExp}`;
+            
+            problem.steps.push(`Apply the division rule: When dividing terms with the same base, subtract the exponents.`);
+            problem.steps.push(`${term1} ÷ ${term2} = ${coef1} ÷ ${coef2} × ${variable}^(${exponent1} - ${exponent2})`);
+            problem.steps.push(`= ${resultCoef}${variable}^${resultExp}`);
+            
+            return problem;
+        }
+
+        // Generate a negative exponent problem (Level 5)
+        function generateNegativeExponentProblem(problem, difficulty) {
+            const variable = problem.variables[0].symbol;
+            
+            // Generate exponent based on difficulty
+            let exponent;
+            if (difficulty === 1) {
+                exponent = -1; // Simple negative exponent
+            } else if (difficulty === 2) {
+                exponent = -(Math.floor(Math.random() * 2) + 1); // -1 or -2
+            } else {
+                exponent = -(Math.floor(Math.random() * 3) + 1); // -1 to -3
+            }
+            
+            // Generate coefficient based on difficulty
+            let coef = 1;
+            if (difficulty >= 2) {
+                coef = Math.floor(Math.random() * 5) + 1; // 1 to 5
+            }
+            
+            // Decide problem type
+            const problemType = Math.floor(Math.random() * 2);
+            
+            if (problemType === 0) {
+                // Convert negative exponent to positive
+                const term = coef === 1 ? `${variable}^${exponent}` : `${coef}${variable}^${exponent}`;
+                
+                problem.expression = term;
+                
+                const positiveExp = -exponent;
+                if (coef === 1) {
+                    problem.correctAnswer = `\\frac{1}{${variable}^${positiveExp}}`;
+                } else {
+                    problem.correctAnswer = `\\frac{${coef}}{${variable}^${positiveExp}}`;
+                }
+                
+                problem.steps.push(`Apply the negative exponent rule: x^(-n) = 1/x^n`);
+                problem.steps.push(`${term} = ${coef === 1 ? '1' : coef}/${variable}^${positiveExp}`);
+            } else {
+                // Convert fraction with negative exponent
+                const positiveExp = -exponent;
+                
+                if (coef === 1) {
+                    problem.expression = `\\frac{1}{${variable}^${positiveExp}}`;
+                    problem.correctAnswer = `${variable}^${exponent}`;
+                } else {
+                    problem.expression = `\\frac{${coef}}{${variable}^${positiveExp}}`;
+                    problem.correctAnswer = `${coef}${variable}^${exponent}`;
+                }
+                
+                problem.steps.push(`Apply the negative exponent rule in reverse: 1/x^n = x^(-n)`);
+                problem.steps.push(`${problem.expression} = ${problem.correctAnswer}`);
+            }
+            
+            return problem;
+        }
+
+        // Generate a power rule problem (Level 6)
+        function generatePowerRuleProblem(problem, difficulty) {
+            const variable = problem.variables[0].symbol;
+            
+            // Generate exponents based on difficulty
+            let innerExponent, outerExponent;
+            if (difficulty === 1) {
+                innerExponent = Math.floor(Math.random() * 2) + 2; // 2 or 3
+                outerExponent = 2; // Simple squaring
+            } else if (difficulty === 2) {
+                innerExponent = Math.floor(Math.random() * 3) + 2; // 2 to 4
+                outerExponent = Math.floor(Math.random() * 2) + 2; // 2 or 3
+            } else {
+                innerExponent = Math.floor(Math.random() * 4) + 2; // 2 to 5
+                outerExponent = Math.floor(Math.random() * 3) + 2; // 2 to 4
+            }
+            
+            // Generate coefficient based on difficulty
+            let coef = 1;
+            if (difficulty >= 2) {
+                coef = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            }
+            
+            // Create expression
+            const innerTerm = coef === 1 ? `${variable}^${innerExponent}` : `${coef}${variable}^${innerExponent}`;
+            problem.expression = `(${innerTerm})^${outerExponent}`;
+            
+            // Calculate correct answer
+            const resultCoef = Math.pow(coef, outerExponent);
+            const resultExp = innerExponent * outerExponent;
+            
+            problem.correctAnswer = resultCoef === 1 ? 
+                `${variable}^${resultExp}` : 
+                `${resultCoef}${variable}^${resultExp}`;
+            
+            problem.steps.push(`Apply the power rule: (x^a)^b = x^(a×b)`);
+            problem.steps.push(`(${innerTerm})^${outerExponent} = ${coef !== 1 ? `(${coef})^${outerExponent} ×` : ''} ${variable}^(${innerExponent} × ${outerExponent})`);
+            problem.steps.push(`= ${resultCoef !== 1 ? `${resultCoef} ×` : ''} ${variable}^${resultExp}`);
+
+            problem.steps.push(`= ${problem.correctAnswer}`);
+            
+            return problem;
+        }
+
+        // Generate a mixed operations problem (Level 7)
+        function generateMixedOperationsProblem(problem, difficulty) {
+            const variable = problem.variables[0].symbol;
+            
+            // Generate multiple operations based on difficulty
+            let operations = ['multiply', 'divide', 'power'];
+            if (difficulty === 1) {
+                operations = operations.slice(0, 2); // Just multiply and divide
+            }
+            
+            // Shuffle operations
+            operations.sort(() => Math.random() - 0.5);
+            
+            // Generate base expression
+            let exp1 = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            let exp2 = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            
+            let expression = `${variable}^${exp1}`;
+            let resultExp = exp1;
+            let steps = [];
+            
+            // Apply operations
+            for (let i = 0; i < Math.min(difficulty + 1, operations.length); i++) {
+                const op = operations[i];
+                
+                if (op === 'multiply') {
+                    const nextExp = Math.floor(Math.random() * 3) + 1; // 1 to 3
+                    expression = `${expression} × ${variable}^${nextExp}`;
+                    steps.push(`Apply the multiplication rule: ${variable}^${resultExp} × ${variable}^${nextExp} = ${variable}^(${resultExp} + ${nextExp})`);
+                    resultExp += nextExp;
+                } else if (op === 'divide') {
+                    const nextExp = Math.floor(Math.random() * 2) + 1; // 1 to 2
+                    expression = `${expression} ÷ ${variable}^${nextExp}`;
+                    steps.push(`Apply the division rule: ${variable}^${resultExp} ÷ ${variable}^${nextExp} = ${variable}^(${resultExp} - ${nextExp})`);
+                    resultExp -= nextExp;
+                } else if (op === 'power') {
+                    const powerExp = Math.floor(Math.random() * 2) + 2; // 2 to 3
+                    expression = `(${expression})^${powerExp}`;
+                    steps.push(`Apply the power rule: (${variable}^${resultExp})^${powerExp} = ${variable}^(${resultExp} × ${powerExp})`);
+                    resultExp *= powerExp;
+                }
+                
+                steps.push(`= ${variable}^${resultExp}`);
+            }
+            
+            problem.expression = expression;
+            problem.correctAnswer = `${variable}^${resultExp}`;
+            problem.steps = steps;
+            
+            return problem;
+        }
+
+        // Generate a master challenge problem (Level 8)
+        function generateMasterChallengeProblem(problem, difficulty) {
+            // Use multiple variables for master challenge
+            const variables = problem.variables;
+            
+            // Generate complex expression based on difficulty
+            if (difficulty === 1) {
+                // Simpler master challenge
+                return generateSimpleMasterProblem(problem, variables);
+            } else if (difficulty === 2) {
+                // Medium master challenge
+                return generateMediumMasterProblem(problem, variables);
+            } else {
+                // Hard master challenge
+                return generateHardMasterProblem(problem, variables);
+            }
+        }
+
+        // Generate simple master challenge problem
+        function generateSimpleMasterProblem(problem, variables) {
+            const var1 = variables[0].symbol;
+            const var2 = variables.length > 1 ? variables[1].symbol : var1;
+            
+            // Create expression with multiple operations
+            const exp1 = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            const exp2 = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            
+            problem.expression = `${var1}^${exp1} × ${var2}^${exp2}`;
+            problem.correctAnswer = `${var1}^${exp1} × ${var2}^${exp2}`;
+            
+            if (var1 === var2) {
+                // If variables are the same, we can simplify
+                problem.correctAnswer = `${var1}^${exp1 + exp2}`;
+                problem.steps.push(`Since the variables are the same, apply the multiplication rule.`);
+                problem.steps.push(`${var1}^${exp1} × ${var1}^${exp2} = ${var1}^(${exp1} + ${exp2})`);
+                problem.steps.push(`= ${var1}^${exp1 + exp2}`);
+            } else {
+                // Different variables, just multiply coefficients
+                problem.steps.push(`Since the variables are different, we keep them separate in the final expression.`);
+                problem.steps.push(`${var1}^${exp1} × ${var2}^${exp2} = ${var1}^${exp1} × ${var2}^${exp2}`);
+            }
+            
+            return problem;
+        }
+
+        // Generate medium master challenge problem
+        function generateMediumMasterProblem(problem, variables) {
+            const var1 = variables[0].symbol;
+            const var2 = variables.length > 1 ? variables[1].symbol : var1;
+            
+            // Create more complex expression
+            const exp1 = Math.floor(Math.random() * 3) + 2; // 2 to 4
+            const exp2 = Math.floor(Math.random() * 3) + 2; // 2 to 4
+            const exp3 = Math.floor(Math.random() * 2) + 2; // 2 or 3
+            
+            problem.expression = `(${var1}^${exp1} × ${var2}^${exp2})^${exp3}`;
+            
+            // Calculate correct answer
+            if (var1 === var2) {
+                const resultExp = (exp1 + exp2) * exp3;
+                problem.correctAnswer = `${var1}^${resultExp}`;
+                
+                problem.steps.push(`First, apply the multiplication rule inside the parentheses.`);
+                problem.steps.push(`${var1}^${exp1} × ${var1}^${exp2} = ${var1}^(${exp1} + ${exp2}) = ${var1}^${exp1 + exp2}`);
+                problem.steps.push(`Then, apply the power rule to the entire expression.`);
+                problem.steps.push(`(${var1}^${exp1 + exp2})^${exp3} = ${var1}^(${exp1 + exp2} × ${exp3})`);
+                problem.steps.push(`= ${var1}^${resultExp}`);
+            } else {
+                const resultExp1 = exp1 * exp3;
+                const resultExp2 = exp2 * exp3;
+                problem.correctAnswer = `${var1}^${resultExp1} × ${var2}^${resultExp2}`;
+                
+                problem.steps.push(`Apply the power rule to distribute the outer exponent.`);
+                problem.steps.push(`(${var1}^${exp1} × ${var2}^${exp2})^${exp3} = ${var1}^(${exp1}×${exp3}) × ${var2}^(${exp2}×${exp3})`);
+                problem.steps.push(`= ${var1}^${resultExp1} × ${var2}^${resultExp2}`);
+            }
+            
+            return problem;
+        }
+
+        // Generate hard master challenge problem
+        function generateHardMasterProblem(problem, variables) {
+            const var1 = variables[0].symbol;
+            const var2 = variables.length > 1 ? variables[1].symbol : var1;
+            const var3 = variables.length > 2 ? variables[2].symbol : var1;
+            
+            // Create complex expression with negative exponents
+            const exp1 = Math.floor(Math.random() * 3) + 2; // 2 to 4
+            const exp2 = Math.floor(Math.random() * 3) - 1; // -1 to 1
+            const exp3 = Math.floor(Math.random() * 3) + 1; // 1 to 3
+            
+            problem.expression = `${var1}^${exp1} × (${var2}^${exp2} ÷ ${var3}^${exp3})`;
+            
+            // Calculate steps and correct answer
+            problem.steps.push(`Break down the problem step by step.`);
+            
+            if (exp2 < 0) {
+                problem.steps.push(`First, convert the negative exponent: ${var2}^${exp2} = 1/${var2}^${-exp2}`);
+            }
+            
+            if (var2 === var3) {
+                const resultExp = exp2 - exp3;
+                problem.steps.push(`Apply the division rule: ${var2}^${exp2} ÷ ${var2}^${exp3} = ${var2}^(${exp2} - ${exp3}) = ${var2}^${resultExp}`);
+                
+                if (resultExp < 0) {
+                    const positiveExp = -resultExp;
+                    problem.steps.push(`Convert negative exponent: ${var2}^${resultExp} = 1/${var2}^${positiveExp}`);
+                    
+                    if (var1 === var2) {
+                        problem.steps.push(`Since ${var1} and ${var2} are the same, we combine: ${var1}^${exp1} × 1/${var1}^${positiveExp} = ${var1}^(${exp1}-${positiveExp}) = ${var1}^${exp1-positiveExp}`);
+                        problem.correctAnswer = `${var1}^${exp1-positiveExp}`;
+                    } else {
+                        problem.steps.push(`Keep the variables separate: ${var1}^${exp1} × 1/${var2}^${positiveExp} = ${var1}^${exp1} / ${var2}^${positiveExp}`);
+                        problem.correctAnswer = `\\frac{${var1}^${exp1}}{${var2}^${positiveExp}}`;
+                    }
+                } else {
+                    if (var1 === var2) {
+                        problem.steps.push(`Since ${var1} and ${var2} are the same, we combine: ${var1}^${exp1} × ${var2}^${resultExp} = ${var1}^(${exp1}+${resultExp}) = ${var1}^${exp1+resultExp}`);
+                        problem.correctAnswer = `${var1}^${exp1+resultExp}`;
+                    } else {
+                        problem.steps.push(`Keep the variables separate: ${var1}^${exp1} × ${var2}^${resultExp} = ${var1}^${exp1} × ${var2}^${resultExp}`);
+                        problem.correctAnswer = `${var1}^${exp1} × ${var2}^${resultExp}`;
+                    }
+                }
+            } else {
+                // Different variables for division
+                problem.steps.push(`Since ${var2} and ${var3} are different, we keep the division: ${var2}^${exp2} ÷ ${var3}^${exp3} = ${var2}^${exp2} / ${var3}^${exp3}`);
+                
+                if (exp2 < 0) {
+                    const positiveExp = -exp2;
+                    problem.steps.push(`Rewriting with the negative exponent: ${var2}^${exp2} / ${var3}^${exp3} = 1/${var2}^${positiveExp} / ${var3}^${exp3} = 1/(${var2}^${positiveExp} × ${var3}^${exp3})`);
+                    
+                    if (var1 === var2 || var1 === var3) {
+                        problem.steps.push(`This expression can't be simplified further due to the different variables.`);
+                    }
+                    
+                    problem.correctAnswer = `\\frac{${var1}^${exp1}}{${var2}^${positiveExp} × ${var3}^${exp3}}`;
+                } else {
+                    problem.steps.push(`Multiply the first term: ${var1}^${exp1} × (${var2}^${exp2} / ${var3}^${exp3}) = (${var1}^${exp1} × ${var2}^${exp2}) / ${var3}^${exp3}`);
+                    
+                    if (var1 === var2) {
+                        problem.steps.push(`Since ${var1} and ${var2} are the same: ${var1}^${exp1} × ${var2}^${exp2} = ${var1}^(${exp1}+${exp2}) = ${var1}^${exp1+exp2}`);
+                        problem.correctAnswer = `\\frac{${var1}^${exp1+exp2}}{${var3}^${exp3}}`;
+                    } else {
+                        problem.correctAnswer = `\\frac{${var1}^${exp1} × ${var2}^${exp2}}{${var3}^${exp3}}`;
+                    }
+                }
+            }
+            
+            return problem;
+        }
+
+        // Display the problem
+        function displayProblem(problem) {
+            const problemDisplay = document.getElementById('problem-display');
+            problemDisplay.innerHTML = '';
+            
+            const instructions = document.createElement('p');
+            instructions.textContent = "Solve the following exponent problem:";
+            instructions.style.marginBottom = '10px';
+            instructions.style.fontSize = '18px';
+            problemDisplay.appendChild(instructions);
+            
+            const expressionContainer = document.createElement('div');
+            expressionContainer.style.fontSize = '28px';
+            expressionContainer.style.fontWeight = 'bold';
+            expressionContainer.style.margin = '20px 0';
+            
+            // Format expression for display
+            let formattedExpression = problem.expression
+                .replace(/\^(-?\d+)/g, '<sup>$1</sup>') // Format exponents
+                .replace(/\\frac\{([^}]+)\}\{([^}]+)\}/g, '<div style="display:inline-block;text-align:center;vertical-align:middle;"><div style="border-bottom:2px solid black;">$1</div><div>$2</div></div>'); // Format fractions
+            
+            expressionContainer.innerHTML = formattedExpression;
+            problemDisplay.appendChild(expressionContainer);
+        }
+
+        // Create variable and operation buttons for input
+        function createInputButtons(problem) {
+            createVariableButtons(problem);
+            createOperationButtons();
+        }
+
+        // Create variable selection buttons
+        function createVariableButtons(problem) {
+            const variableButtons = document.getElementById('variable-buttons');
+            variableButtons.innerHTML = '';
+            
+            // Add a header for the variables section
+            const header = document.createElement('div');
+            header.textContent = 'Variables:';
+            header.style.width = '100%';
+            header.style.textAlign = 'center';
+            header.style.marginBottom = '10px';
+            header.style.fontWeight = 'bold';
+            variableButtons.appendChild(header);
+            
+            // Add buttons for the variables in the problem
+            problem.variables.forEach(variable => {
+                const btn = document.createElement('button');
+                btn.className = 'variable-btn';
+                btn.textContent = variable.symbol;
+                btn.addEventListener('click', function() {
+                    appendToAnswer(variable.symbol);
+                });
+                variableButtons.appendChild(btn);
+            });
+            
+            // Add number buttons
+            numbers.forEach(num => {
+                const btn = document.createElement('button');
+                btn.className = 'variable-btn';
+                btn.style.backgroundColor = '#f0f0f0';
+                btn.textContent = num;
+                btn.addEventListener('click', function() {
+                    appendToAnswer(num);
+                });
+                variableButtons.appendChild(btn);
+            });
+        }
+
+        // Create operation buttons
+        function createOperationButtons() {
+            const operationButtons = document.getElementById('operation-buttons');
+            operationButtons.innerHTML = '';
+            
+            // Add a header for the operations section
+            const header = document.createElement('div');
+            header.textContent = 'Operations:';
+            header.style.width = '100%';
+            header.style.textAlign = 'center';
+            header.style.marginBottom = '10px';
+            header.style.fontWeight = 'bold';
+            operationButtons.appendChild(header);
+            
+            // Add operation buttons
+            operations.forEach(op => {
+                const btn = document.createElement('button');
+                btn.className = 'operation-btn';
+                btn.textContent = op;
+                btn.addEventListener('click', function() {
+                    appendToAnswer(op);
+                });
+                operationButtons.appendChild(btn);
+            });
+            
+            // Add backspace button
+            const backspaceBtn = document.createElement('button');
+            backspaceBtn.className = 'operation-btn';
+            backspaceBtn.textContent = '⌫';
+            backspaceBtn.style.backgroundColor = '#ff9a76';
+            backspaceBtn.addEventListener('click', function() {
+                const answerInput = document.getElementById('answer-input');
+                answerInput.value = answerInput.value.slice(0, -1);
+            });
+            operationButtons.appendChild(backspaceBtn);
+            
+            // Add clear button
+            const clearBtn = document.createElement('button');
+            clearBtn.className = 'operation-btn';
+            clearBtn.textContent = 'Clear';
+            clearBtn.style.backgroundColor = '#ef5350';
+            clearBtn.style.color = 'white';
+            clearBtn.addEventListener('click', function() {
+                document.getElementById('answer-input').value = '';
+            });
+            operationButtons.appendChild(clearBtn);
+            
+            // Add fraction button
+            const fractionBtn = document.createElement('button');
+            fractionBtn.className = 'operation-btn';
+            fractionBtn.innerHTML = 'a/b';
+            fractionBtn.addEventListener('click', function() {
+                appendToAnswer('/');
+            });
+            operationButtons.appendChild(fractionBtn);
+        }
+
+        // Append character to answer input
+        function appendToAnswer(char) {
+            const answerInput = document.getElementById('answer-input');
+            answerInput.value += char;
+        }
+
+        // Update the Three.js visualization
+        function updateVisualization() {
+            // Clear existing objects
+            objects.forEach(obj => {
+                scene.remove(obj);
+            });
+            objects = [];
+            
+            if (!currentProblem) return;
+            
+            // Get color scheme based on theme
+            let colors;
+            if (colorTheme === 1) { // Vibrant
+                colors = [0xff5733, 0x33ff57, 0x3357ff, 0xff33f5, 0xf5ff33];
+            } else if (colorTheme === 2) { // Pastel
+                colors = [0xffb6c1, 0xadd8e6, 0xb0e0e6, 0xdda0dd, 0xffdab9];
+            } else { // Monochrome
+                colors = [0x333333, 0x555555, 0x777777, 0x999999, 0xbbbbbb];
+            }
+            
+            // Parse the expression to create 3D objects
+            const terms = parseExpressionForVisualization(currentProblem);
+            
+            // Create objects for each term
+            terms.forEach((term, index) => {
+                // Create geometry based on the term
+                let geometry;
+                let size = 0.4;
+                
+                if (term.type === 'variable') {
+                    // Base variable - sphere
+                    geometry = new THREE.SphereGeometry(size, 32, 32);
+                } else if (term.type === 'exponent') {
+                    // Exponent - different shapes based on value
+                    if (term.value < 0) {
+                        // Negative exponent - cone pointing down
+                        geometry = new THREE.ConeGeometry(size, size * 2, 32);
+                    } else if (term.value === 0) {
+                        // Zero exponent - small cube
+                        geometry = new THREE.BoxGeometry(size, size, size);
+                    } else if (term.value === 1) {
+                        // First power - cylinder
+                        geometry = new THREE.CylinderGeometry(size, size, size * 2, 32);
+                    } else if (term.value === 2) {
+                        // Square - torus
+                        geometry = new THREE.TorusGeometry(size, size / 3, 16, 32);
+                    } else {
+                        // Higher powers - icosahedron
+                        geometry = new THREE.IcosahedronGeometry(size);
+                    }
+                } else if (term.type === 'operation') {
+                    // Operation - special shapes
+                    if (term.value === 'multiply') {
+                        // Multiply - cross shape
+                        geometry = new THREE.BoxGeometry(size * 2, size / 2, size / 2);
+                    } else if (term.value === 'divide') {
+                        // Divide - flat plane
+                        geometry = new THREE.PlaneGeometry(size * 2, size / 2);
+                    } else if (term.value === 'power') {
+                        // Power - octahedron
+                        geometry = new THREE.OctahedronGeometry(size);
+                    } else {
+                        // Other operations - tetrahedron
+                        geometry = new THREE.TetrahedronGeometry(size);
+                    }
+                } else {
+                    // Default - sphere
+                    geometry = new THREE.SphereGeometry(size, 32, 32);
+                }
+                
+                // Create material with color based on index
+                const color = colors[index % colors.length];
+                const material = new THREE.MeshPhongMaterial({ color, shininess: 100 });
+                
+                // Create mesh
+                const mesh = new THREE.Mesh(geometry, material);
+                
+                // Position the object
+                const spacing = 1.2;
+                const xPos = (index - (terms.length - 1) / 2) * spacing;
+                mesh.position.set(xPos, 0, 0);
+                
+                // Add object to scene
+                scene.add(mesh);
+                objects.push(mesh);
+            });
+        }
+
+        // Parse expression for visualization
+        function parseExpressionForVisualization(problem) {
+            const terms = [];
+            
+            // Simple parsing for visualization - just extract key elements
+            const expression = problem.expression;
+            
+            // Extract variables
+            problem.variables.forEach(variable => {
+                terms.push({
+                    type: 'variable',
+                    value: variable.symbol
+                });
+                
+                // Look for exponents for this variable
+                const regex = new RegExp(`${variable.symbol}\\^(\\d+)`, 'g');
+                const matches = [...expression.matchAll(regex)];
+                
+                if (matches.length > 0) {
+                    matches.forEach(match => {
+                        terms.push({
+                            type: 'exponent',
+                            value: parseInt(match[1])
+                        });
+                    });
+                }
+            });
+            
+            // Add operation terms
+            if (expression.includes('×')) {
+                terms.push({
+                    type: 'operation',
+                    value: 'multiply'
+                });
+            }
+            
+            if (expression.includes('÷')) {
+                terms.push({
+                    type: 'operation',
+                    value: 'divide'
+                });
+            }
+            
+            if (expression.includes('^')) {
+                terms.push({
+                    type: 'operation',
+                    value: 'power'
+                });
+            }
+            
+            // Ensure we have at least a minimal number of objects
+            while (terms.length < 3) {
+                terms.push({
+                    type: 'variable',
+                    value: problem.variables[0].symbol
+                });
+            }
+            
+            return terms;
+        }
+
+        // Show a hint for the current problem
+        function showHint() {
+            const hintPanel = document.getElementById('hint-panel');
+            const hintContent = document.getElementById('hint-content');
+            
+            if (!currentProblem) return;
+            
+            // Generate hint based on the problem's level
+            let hint = "";
+            
+            // Add rule explanation based on the level
+            const levelInfo = levels.find(level => level.id === currentProblem.levelId);
+            hint += `<div class="rule-explanation">${levelInfo.rule}</div>`;
+            
+            // Add specific steps for this problem
+            hint += "<p style='margin-top: 15px;'>Solving steps:</p>";
+            hint += "<ol style='margin-left: 20px;'>";
+            
+            // Use the first 1-2 steps from the problem's steps
+            const stepsToShow = Math.min(2, currentProblem.steps.length);
+            for (let i = 0; i < stepsToShow; i++) {
+                hint += `<li>${currentProblem.steps[i]}</li>`;
+            }
+            
+            hint += "</ol>";
+            
+            // Add variable information
+            const variableKeys = Object.keys(variablesInfo);
+            if (variableKeys.length > 0) {
+                // Pick a random variable
+                const randomVar = variableKeys[Math.floor(Math.random() * variableKeys.length)];
+                const varInfo = variablesInfo[randomVar];
+                
+                hint += `<div class="variable-info">
+                    <p><strong>Variable Spotlight: ${randomVar}</strong></p>
+                    <p><strong>Name:</strong> ${varInfo.name}</p>
+                    <p><strong>Origin:</strong> ${varInfo.origin}</p>
+                    <p><strong>Meaning:</strong> ${varInfo.meaning}</p>
+                    <p><strong>Memory Tip:</strong> ${varInfo.mnemonic}</p>
+                </div>`;
+            }
+            
+            hintContent.innerHTML = hint;
+            hintPanel.style.display = 'block';
+            
+            // Deduct points for using hint (but ensure points don't go negative)
+            const hintCost = 20;
+            if (points >= hintCost) {
+                points -= hintCost;
+                document.getElementById('total-points').textContent = points;
+                
+                // Show character message about using hint
+                showCharacterMessage('vicky', "I gave you a hint! It cost you 20 points, but learning is worth it!");
+            }
+        }
+
+        // Check the user's answer
+        function checkAnswer() {
+            if (!currentProblem) return;
+            
+            const resultMessage = document.getElementById('result-message');
+            const userAnswer = document.getElementById('answer-input').value.trim();
+            
+            // Calculate time taken
+            const endTime = new Date();
+            const timeTaken = (endTime - problemStartTime) / 1000; // in seconds
+            
+            // Format the correct answer to match potential user formats
+            const formattedCorrectAnswer = formatAnswerForComparison(currentProblem.correctAnswer);
+            const formattedUserAnswer = formatAnswerForComparison(userAnswer);
+            
+            const isCorrect = formattedUserAnswer === formattedCorrectAnswer;
+            
+            // Update score
+            score.total++;
+            document.getElementById('total-count').textContent = score.total;
+            
+            // Update level stats
+            const levelStats = getLevelStats(currentProblem.levelId);
+            levelStats.total++;
+            
+            if (isCorrect) {
+                score.correct++;
+                document.getElementById('correct-count').textContent = score.correct;
+                
+                // Update level stats
+                levelStats.correct++;
+                
+                // Calculate points based on level, difficulty, and time
+                const basePoints = currentProblem.levelId * 50;
+                const difficultyBonus = currentProblem.difficulty * 20;
+                const timeBonus = Math.max(0, 100 - Math.floor(timeTaken) * 2); // Decreases as time increases
+                
+                const earnedPoints = basePoints + difficultyBonus + timeBonus;
+                points += earnedPoints;
+                levelStats.points += earnedPoints;
+                
+                // Update streak
+                streak++;
+                if (streak > highestStreak) {
+                    highestStreak = streak;
+                    document.getElementById('highest-streak').textContent = highestStreak;
+                }
+                
+                document.getElementById('current-streak').textContent = streak;
+                document.getElementById('total-points').textContent = points;
+                
+                // Show streak indicator
+                showStreakIndicator();
+                
+                // Check if unlocked new level
+                checkLevelUnlock();
+                
+                // Check if earned achievement
+                checkAchievements(timeTaken);
+                
+                // Show celebration for correct answer
+                if (streak >= 3) {
+                    showCelebration();
+                }
+                
+                resultMessage.textContent = `Correct! You earned ${earnedPoints} points!`;
+                resultMessage.style.backgroundColor = "rgba(102, 187, 106, 0.2)";
+                
+                // Show congratulatory character message
+                if (streak >= 5) {
+                    showCharacterMessage('professor', `Amazing streak of ${streak}! You're mastering exponents!`);
+                } else {
+                    showCharacterMessage('eddie', "Great job! You're getting the hang of these exponent rules!");
+                }
+            } else {
+                // Reset streak
+                streak = 0;
+                document.getElementById('current-streak').textContent = streak;
+                
+                resultMessage.textContent = `Not quite right. The correct answer is ${currentProblem.correctAnswer}.`;
+                resultMessage.style.backgroundColor = "rgba(239, 83, 80, 0.2)";
+                
+                // Show encouraging character message
+                showCharacterMessage('professor', "That's not quite right. Let's review the steps together!");
+            }
+            
+            resultMessage.style.opacity = 1;
+            
+            // Save level stats
+            saveLevelStats(currentProblem.levelId, levelStats);
+            
+            // Update progress bar
+            updateProgress();
+            
+            // Save progress to localStorage
+            saveProgress();
+        }
+
+        // Format answer for comparison (to handle different formats of the same answer)
+        function formatAnswerForComparison(answer) {
+            return answer
+                .replace(/\s+/g, '') // Remove all whitespace
+                .replace(/×/g, '*') // Replace × with *
+                .replace(/\^/g, '') // Remove ^ symbols (to compare with or without them)
+                .replace(/\(/g, '') // Remove parentheses
+                .replace(/\)/g, '')
+                .toLowerCase(); // Case insensitive
+        }
+
+        // Get level stats from localStorage
+        function getLevelStats(levelId) {
+            const statsString = localStorage.getItem(`level_${levelId}_stats`);
+            if (statsString) {
+                return JSON.parse(statsString);
+            } else {
+                return { correct: 0, total: 0, points: 0 };
+            }
+        }
+
+        // Save level stats to localStorage
+        function saveLevelStats(levelId, stats) {
+            localStorage.setItem(`level_${levelId}_stats`, JSON.stringify(stats));
+        }
+
+        // Check if a new level has been unlocked
+        function checkLevelUnlock() {
+            // Check if points are enough to unlock next levels
+            levels.forEach(level => {
+                if (!unlockedLevels.includes(level.id) && points >= level.unlockPoints) {
+                    // Unlock the level
+                    unlockedLevels.push(level.id);
+                    
+                    // Update level buttons
+                    updateLevelButtons();
+                    
+                    // Show level up message
+                    showLevelUpMessage(level);
+                }
+            });
+            
+            // Save unlocked levels to localStorage
+            localStorage.setItem('unlocked_levels', JSON.stringify(unlockedLevels));
+        }
+
+        // Update level buttons to reflect unlocked levels
+        function updateLevelButtons() {
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                const levelId = parseInt(btn.id.match(/level-(\d+)-btn/)[1]);
+                
+                if (unlockedLevels.includes(levelId) && btn.classList.contains('locked')) {
+                    btn.classList.remove('locked');
+                    btn.textContent = `Level ${levelId}: ${levels.find(l => l.id === levelId).name}`;
+                    
+                    // Add click event listener
+                    btn.addEventListener('click', () => selectLevel(levelId));
+                }
+            });
+        }
+
+        // Show level up message
+        function showLevelUpMessage(level) {
+            const modal = document.getElementById('level-up-modal');
+            const content = document.getElementById('level-up-content');
+            
+            content.innerHTML = `
+                <p>Congratulations! You've unlocked:</p>
+                <h3 style="color: ${level.color}; margin: 15px 0;">Level ${level.id}: ${level.name}</h3>
+                <p>${level.description}</p>
+                <div style="background-color: #f8f9fa; padding: 15px; border-radius: 10px; margin-top: 15px;">
+                    <p><strong>New rule:</strong> ${level.rule}</p>
+                </div>
+                <button class="btn" style="background-color: ${level.color}; color: ${level.textColor}; margin-top: 20px;" id="start-new-level-btn">Start New Level</button>
+            `;
+            
+            modal.style.display = 'block';
+            
+            // Add event listener to start new level button
+            document.getElementById('start-new-level-btn').addEventListener('click', () => {
+                hideLevelUpModal();
+                selectLevel(level.id);
+            });
+            
+            // Show character congratulations
+            showCharacterMessage('eddie', `Wow! You've unlocked Level ${level.id}: ${level.name}!`);
+        }
+
+        // Hide level up modal
+        function hideLevelUpModal() {
+            document.getElementById('level-up-modal').style.display = 'none';
+        }
+
+        // Show celebration animation
+        function showCelebration() {
+            const celebration = document.getElementById('celebration');
+            celebration.innerHTML = '';
+            celebration.style.display = 'block';
+            
+            // Create confetti
+            const colors = ['#ff5733', '#33ff57', '#3357ff', '#ff33f5', '#f5ff33'];
+            
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 10 + 5 + 'px';
+                confetti.style.animationDuration = Math.random() * 3 + 2 + 's';
+                
+                // Random shapes
+                const shapes = ['50%', '0']; // Circle or square
+                confetti.style.borderRadius = shapes[Math.floor(Math.random() * shapes.length)];
+                
+                celebration.appendChild(confetti);
+            }
+            
+            // Hide celebration after animation completes
+            setTimeout(() => {
+                celebration.style.display = 'none';
+            }, 5000);
+        }
+
+        // Show streak indicator
+        function showStreakIndicator() {
+            const indicator = document.getElementById('streak-indicator');
+            indicator.textContent = `Streak: ${streak}`;
+            indicator.style.opacity = 1;
+            
+            // Add animation class
+            indicator.classList.add('pulse');
+            
+            // Remove animation class after it completes
+            setTimeout(() => {
+                indicator.classList.remove('pulse');
+            }, 500);
+            
+            // Hide indicator after a few seconds
+            setTimeout(() => {
+                indicator.style.opacity = 0;
+            }, 3000);
+        }
+
+        // Check if any achievements have been earned
+        function checkAchievements(timeTaken) {
+            achievementsList.forEach(achievement => {
+                // Skip already unlocked achievements
+                if (achievements[achievement.id] && achievements[achievement.id].unlocked) {
+                    return;
+                }
+                
+                // Special case for speed achievement
+                if (achievement.id === 'speed_demon' && timeTaken < 10) {
+                    unlockAchievement(achievement.id);
+                    return;
+                }
+                
+                // Check other achievement conditions
+                if (achievement.condition()) {
+                    unlockAchievement(achievement.id);
+                }
+            });
+            
+            // Save achievements to localStorage
+            localStorage.setItem('achievements', JSON.stringify(achievements));
+        }
+
+        // Unlock an achievement
+        function unlockAchievement(achievementId) {
+            // Find the achievement
+            const achievement = achievementsList.find(a => a.id === achievementId);
+            
+            if (!achievement) return;
+            
+            // Update achievements object
+            achievements[achievementId] = {
+                unlocked: true,
+                date: new Date().toISOString()
+            };
+            
+            // Update UI
+            const achievementElement = document.getElementById(`achievement-${achievementId}`);
+            if (achievementElement) {
+                achievementElement.classList.add('unlocked');
+                
+                // Add bounce animation
+                achievementElement.classList.add('bounce');
+                setTimeout(() => {
+                    achievementElement.classList.remove('bounce');
+                }, 1000);
+            }
+            
+            // Show character message
+            showCharacterMessage('vicky', `Congratulations! You earned the "${achievement.name}" achievement!`);
+        }
+
+        // Create achievements display
+        function createAchievements() {
+            const achievementsGrid = document.getElementById('achievements-grid');
+            achievementsGrid.innerHTML = '';
+            
+            // Load achievements from localStorage
+            const savedAchievements = localStorage.getItem('achievements');
+            achievements = savedAchievements ? JSON.parse(savedAchievements) : {};
+            
+            achievementsList.forEach(achievement => {
+                const achievementElement = document.createElement('div');
+                achievementElement.className = 'achievement';
+                achievementElement.id = `achievement-${achievement.id}`;
+                
+                if (achievements[achievement.id] && achievements[achievement.id].unlocked) {
+                    achievementElement.classList.add('unlocked');
+                }
+                
+                achievementElement.innerHTML = `
+                    <div class="achievement-icon">${achievement.icon}</div>
+                    <div class="achievement-name">${achievement.name}</div>
+                `;
+                
+                // Add tooltip with description
+                achievementElement.title = achievement.description;
+                
+                achievementsGrid.appendChild(achievementElement);
+            });
+        }
+
+        // Update the progress bar
+        function updateProgress() {
+            const progressBar = document.getElementById('progress-bar');
+            const percentage = score.total > 0 ? (score.correct / score.total) * 100 : 0;
+            progressBar.style.width = `${percentage}%`;
+        }
+
+        // Show a random character message
+        function showRandomCharacterMessage() {
+            const characters = ['professor', 'vicky', 'eddie'];
+            const character = characters[Math.floor(Math.random() * characters.length)];
+            
+            // Only show message if help level is medium or maximum
+            if (helpLevel >= 2) {
+                showCharacterMessage(character);
+            }
+        }
+
+        // Show a message from a character
+        function showCharacterMessage(character, customMessage = null) {
+            let message = customMessage;
+            
+            if (!message) {
+                // Get level-specific messages if available
+                const levelSpecificMessages = characterMessages[character][`level${currentLevel}`];
+                const genericMessages = characterMessages[character].generic;
+                
+                const messages = levelSpecificMessages && levelSpecificMessages.length > 0 ? 
+                    levelSpecificMessages : genericMessages;
+                
+                message = messages[Math.floor(Math.random() * messages.length)];
+            }
+            
+            let speechBubble;
+            if (character === 'professor') {
+                speechBubble = document.getElementById('professor-speech');
+            } else if (character === 'vicky') {
+                speechBubble = document.getElementById('vicky-speech');
+            } else {
+                speechBubble = document.getElementById('eddie-speech');
+            }
+            
+            speechBubble.textContent = message;
+            speechBubble.style.opacity = 1;
+            
+            setTimeout(() => {
+                speechBubble.style.opacity = 0;
+            }, 5000);
+        }
+
+        // Show the character modal
+        function showCharactersModal() {
+            document.getElementById('characters-modal').style.display = 'block';
+        }
+
+        // Hide the character modal
+        function hideCharactersModal() {
+            document.getElementById('characters-modal').style.display = 'none';
+        }
+
+        // Clear the problem display
+        function clearProblemDisplay() {
+            document.getElementById('problem-display').innerHTML = 'Loading new problem...';
+            document.getElementById('answer-input').value = '';
+            document.getElementById('variable-buttons').innerHTML = '';
+            document.getElementById('operation-buttons').innerHTML = '';
+        }
+
+        // Save progress to localStorage
+        function saveProgress() {
+            localStorage.setItem('score', JSON.stringify(score));
+            localStorage.setItem('points', points);
+            localStorage.setItem('streak', streak);
+            localStorage.setItem('highest_streak', highestStreak);
+            localStorage.setItem('current_level', currentLevel);
+            localStorage.setItem('unlocked_levels', JSON.stringify(unlockedLevels));
+        }
+
+        // Load progress from localStorage
+        function loadProgress() {
+            // Load score
+            const savedScore = localStorage.getItem('score');
+            if (savedScore) {
+                score = JSON.parse(savedScore);
+                document.getElementById('correct-count').textContent = score.correct;
+                document.getElementById('total-count').textContent = score.total;
+            }
+            
+            // Load points
+            const savedPoints = localStorage.getItem('points');
+            if (savedPoints) {
+                points = parseInt(savedPoints);
+                document.getElementById('total-points').textContent = points;
+            }
+            
+            // Load streak info
+            const savedStreak = localStorage.getItem('streak');
+            if (savedStreak) {
+                streak = parseInt(savedStreak);
+                document.getElementById('current-streak').textContent = streak;
+            }
+            
+            const savedHighestStreak = localStorage.getItem('highest_streak');
+            if (savedHighestStreak) {
+                highestStreak = parseInt(savedHighestStreak);
+                document.getElementById('highest-streak').textContent = highestStreak;
+            }
+            
+            // Load current level
+            const savedLevel = localStorage.getItem('current_level');
+            if (savedLevel) {
+                currentLevel = parseInt(savedLevel);
+                document.getElementById('current-level').textContent = currentLevel;
+            }
+            
+            // Load unlocked levels
+            const savedUnlockedLevels = localStorage.getItem('unlocked_levels');
+            if (savedUnlockedLevels) {
+                unlockedLevels = JSON.parse(savedUnlockedLevels);
+            }
+            
+            // Update level buttons
+            updateLevelButtons();
+            
+            // Update progress bar
+            updateProgress();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,1311 @@
+<DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Explorer: Reading Adventure</title>
+    <style>
+:root {
+    --primary-color: #4a6ed0;
+    --secondary-color: #ff8a5c;
+    --tertiary-color: #8bd3e6;
+    --success-color: #76e383;
+    --background-color: #f9f7f3;
+    --text-color: #333;
+    --card-color: white;
+    --card-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    --font-main: 'Arial Rounded MT Bold', 'Century Gothic', 'Segoe UI', Arial, sans-serif;
+}
+        body {
+            font-family: var(--font-main);
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            color: var(--text-color);
+            transition: background-color 0.5s;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            flex: 1;
+        }
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 15px 0;
+            text-align: center;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 10;
+        }
+        h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            letter-spacing: 1px;
+        }
+        h2 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-top: 20px;
+        }
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+        .character-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .character {
+            font-size: 3rem;
+            animation: bounce 2s infinite;
+            cursor: pointer;
+            transition: transform 0.3s;
+            position: relative;
+        }
+        .character:hover {
+            transform: scale(1.2);
+        }
+        .character-speech {
+            position: absolute;
+            background-color: white;
+            border: 3px solid var(--primary-color);
+            border-radius: 15px;
+            padding: 10px;
+            width: 150px;
+            font-size: 0.8rem;
+            top: -90px;
+            left: -60px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+        }
+        .character-speech:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: var(--primary-color) transparent;
+            margin-left: -15px;
+        }
+        .character:hover .character-speech {
+            opacity: 1;
+        }
+        .flash-card {
+            background-color: var(--card-color);
+            border-radius: 20px;
+            box-shadow: var(--card-shadow);
+            padding: 30px;
+            text-align: center;
+            width: 100%;
+            max-width: 500px;
+            margin: 20px auto;
+            position: relative;
+            transition: transform 0.3s, box-shadow 0.3s;
+            overflow: hidden;
+        }
+        .flash-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+        .word-display {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin: 15px 0;
+            color: var(--primary-color);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+ECHO is off.
+        .word-image {
+            font-size: 4rem;
+            margin: 15px 0;
+        }
+        .phonetic {
+            font-size: 1.2rem;
+            color: #777;
+            margin: 10px 0;
+            font-style: italic;
+        }
+        .example-sentence {
+            font-size: 1.3rem;
+            margin: 15px 0;
+            color: #555;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-family: var(--font-main);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        button:hover {
+            background-color: #3756b5;
+            transform: scale(1.05);
+        }
+        button:active {
+            transform: scale(0.95);
+        }
+        .correct {
+            background-color: var(--success-color);
+        }
+        .incorrect {
+            background-color: #ff6961;
+        }
+        .speak-btn {
+            background-color: var(--tertiary-color);
+            font-size: 1.2rem;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .option {
+            background-color: var(--card-color);
+            border: 2px solid var(--tertiary-color);
+            border-radius: 15px;
+            padding: 15px 25px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+        }
+        .option:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+        }
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 20px;
+            margin: 20px 0;
+            height: 15px;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--success-color);
+            width: 0%;
+            transition: width 0.5s;
+            border-radius: 20px;
+        }
+        .progress-text {
+            text-align: center;
+            font-size: 1rem;
+            margin-top: 5px;
+        }
+        .settings-panel {
+            background-color: var(--card-color);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            margin: 20px 0;
+        }
+        .settings-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+        }
+        .settings-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s;
+        }
+        .settings-content.open {
+            max-height: 1000px;
+        }
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        .setting-label {
+            font-size: 1.1rem;
+        }
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.5s;
+            background-color: rgba(255,255,255,0.8);
+        }
+        .celebration.show {
+            opacity: 1;
+        }
+        .celebration-content {
+            text-align: center;
+            animation: celebrate 1s ease-in-out;
+        }
+        .emoji-rain {
+            position: absolute;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        .emoji {
+            position: absolute;
+            font-size: 2rem;
+            animation: fall 3s linear;
+            top: -50px;
+        }
+        .help-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: var(--tertiary-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.3s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .help-btn:hover {
+            transform: scale(1.1);
+        }
+        .help-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .help-modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .help-content {
+            background-color: var(--card-color);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            position: relative;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #777;
+            transition: color 0.3s;
+        }
+        .close-btn:hover {
+            color: var(--text-color);
+        }
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--tertiary-color);
+            color: white;
+            border-radius: 50px;
+            padding: 8px 15px;
+            font-size: 0.9rem;
+            margin: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .quiz-question {
+            font-size: 1.5rem;
+            margin: 15px 0;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            top: -10px;
+            animation: confetti-fall 4s linear forwards;
+        }
+        footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            border-top: 1px solid #ddd;
+            font-size: 0.9rem;
+            color: #777;
+        }
+        /* Animations */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        @keyframes celebrate {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0); opacity: 1; }
+            100% { transform: translateY(800px) rotate(360deg); opacity: 0; }
+        }
+        @keyframes confetti-fall {
+            0% { transform: translateY(0) rotate(0) scale(1); }
+            100% { transform: translateY(1000px) rotate(720deg) scale(0); }
+        }
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            h1 {
+                font-size: 2rem;
+            }
+            .flash-card {
+                padding: 20px;
+            }
+            .word-display {
+                font-size: 3rem;
+            }
+            .controls {
+                flex-wrap: wrap;
+            }
+        }
+        /* Dark mode */
+        .dark-mode {
+            --background-color: #222;
+            --text-color: #eee;
+            --card-color: #333;
+            --card-shadow: 0 8px 16px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Word Explorer 📚</h1>
+        <div class="help-btn">❓</div>
+    </header>
+    <div class="container">
+        <div class="character-container">
+            <div class="character">
+                🦊
+                <div class="character-speech">Hi I'll help you learn new words</div>
+            </div>
+            <div class="character">
+                🦉
+                <div class="character-speech">Hello Let's build your vocabulary</div>
+            </div>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+        <div class="progress-text">Level: <span id="level-display">Beginner</span> - Words Mastered: <span id="words-mastered">0</span></div>
+        <div class="settings-panel">
+            <div class="settings-heading">
+                <h3>Game Settings</h3>
+                <span>⚙️</span>
+            </div>
+            <div class="settings-content">
+                <div class="setting-row">
+                    <div class="setting-label">Word Difficulty</div>
+                    <div>
+                        <select id="difficulty-setting">
+                            <option value="beginner">Simple Words</option>
+                            <option value="preK">Pre-K Sight Words</option>
+                            <option value="kindergarten">Kindergarten Sight Words</option>
+                            <option value="firstGrade">1st Grade Sight Words</option>
+                            <option value="secondGrade">2nd Grade Sight Words</option>
+                            <option value="thirdGrade">3rd Grade Sight Words</option>
+                            <option value="easy">Easy Words</option>
+                            <option value="medium">Medium Words</option>
+                            <option value="advanced">Advanced Words</option>
+                            <option value="expert">Expert Words</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">Speech Speed</div>
+                    <div>
+                        <input type="range" id="speech-rate" min="0.5" max="1.5" step="0.1" value="1">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">Show Phonetics</div>
+                    <div>
+                        <input type="checkbox" id="show-phonetics" checked>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">Show Example Sentences</div>
+                    <div>
+                        <input type="checkbox" id="show-sentences" checked>
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <div class="setting-label">Dark Mode</div>
+                    <div>
+                        <input type="checkbox" id="dark-mode">
+                    </div>
+                </div>
+                <div class="setting-row">
+                    <button id="reset-progress">Reset Progress</button>
+                </div>
+            </div>
+        </div>
+        <div class="game-area">
+            <div class="flash-card">
+                <div class="word-image">🍎</div>
+                <div class="word-display">apple</div>
+                <div class="phonetic">/ˈæp.əl/</div>
+                <div class="example-sentence">I like to eat an apple for lunch.</div>
+                <div class="controls">
+                    <button class="speak-btn">🔊</button>
+                    <button id="know-btn">I Know This Word 👍</button>
+                    <button id="learning-btn">Still Learning 🤔</button>
+                    <button id="next-btn">Next Word ➡️</button>
+                </div>
+            </div>
+            <div id="quiz-container" style="display: none;">
+                <h2>Quick Quiz</h2>
+                <div class="flash-card">
+                    <div class="quiz-question">What word does this image show?</div>
+                    <div class="word-image">🍎</div>
+                    <div class="options">
+                        <div class="option">apple</div>
+                        <div class="option">banana</div>
+                        <div class="option">orange</div>
+                        <div class="option">carrot</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="help-modal">
+        <div class="help-content">
+            <button class="close-btn">×</button>
+            <h2>How to Play</h2>
+            <p>Welcome to Word Explorer This game will help you learn to read bigger and bigger words.</p>
+            <h3>Game Controls</h3>
+            <ul>
+                <li><strong>🔊 Button</strong> - Click to hear the word pronounced</li>
+                <li><strong>I Know This Word</strong> - Click if you can read the word easily</li>
+                <li><strong>Still Learning</strong> - Click if you need more practice with this word</li>
+                <li><strong>Next Word</strong> - Move to the next word</li>
+            </ul>
+            <h3>Game Features</h3>
+            <p>As you learn more words, you'll unlock harder words and earn badges</p>
+            <p>You can adjust the game settings to make it easier or more challenging.</p>
+            <h3>Tips for Parents</h3>
+            <p>Encourage your child to sound out the words phonetically.</p>
+            <p>Celebrate their progress, no matter how small</p>
+            <p>Practice regularly for the best results.</p>
+            <div style="display: flex; flex-wrap: wrap; margin-top: 20px;">
+                <div class="badge">Word Master 🏆</div>
+                <div class="badge">Reading Star ⭐</div>
+                <div class="badge">Vocabulary Hero 🦸</div>
+            </div>
+        </div>
+    </div>
+    <div class="celebration">
+        <div class="celebration-content">
+            <h2>Great Job 🎉</h2>
+            <p>You're learning so fast</p>
+            <div class="badge">New Badge Earned: Word Explorer 🔍</div>
+        </div>
+        <div class="emoji-rain"></div>
+    </div>
+    <footer>
+        Word Explorer: Reading Adventure | Created for Young Learners
+    </footer>
+    <script>
+        // Word database organized by difficulty levels
+        const wordDatabase = {
+    // Expanded beginner level words - 150 words
+    beginner: [
+        // Original 10 words
+        { word: "cat", image: "🐱", phonetic: "/kæt/", sentence: "The cat sleeps on the bed." },
+        { word: "dog", image: "🐶", phonetic: "/dɒɡ/", sentence: "The dog plays in the yard." },
+        { word: "sun", image: "☀️", phonetic: "/sʌn/", sentence: "The sun is bright today." },
+        { word: "hat", image: "🧢", phonetic: "/hæt/", sentence: "I wear a hat when it's sunny." },
+        { word: "bed", image: "🛏️", phonetic: "/bed/", sentence: "I sleep in my bed." },
+        { word: "cup", image: "🥤", phonetic: "/kʌp/", sentence: "I drink from my cup." },
+        { word: "ball", image: "⚽", phonetic: "/bɔːl/", sentence: "I kick the ball in the park." },
+        { word: "fish", image: "🐠", phonetic: "/fɪʃ/", sentence: "The fish swims in water." },
+        { word: "star", image: "⭐", phonetic: "/stɑːr/", sentence: "I see stars at night." },
+        { word: "book", image: "📕", phonetic: "/bʊk/", sentence: "I read a book before bed." },
+ECHO is off.
+        // Additional 140 beginner words
+        { word: "car", image: "🚗", phonetic: "/kɑːr/", sentence: "The car drives on the road." },
+        { word: "bird", image: "🐦", phonetic: "/bɜːrd/", sentence: "The bird sings in the tree." },
+        { word: "tree", image: "🌳", phonetic: "/triː/", sentence: "The tree is very tall." },
+        { word: "milk", image: "🥛", phonetic: "/mɪlk/", sentence: "I drink milk at breakfast." },
+        { word: "toy", image: "🧸", phonetic: "/tɔɪ/", sentence: "I play with my toy." },
+        { word: "red", image: "🔴", phonetic: "/red/", sentence: "The apple is red." },
+        { word: "blue", image: "🔵", phonetic: "/bluː/", sentence: "The sky is blue." },
+        { word: "rain", image: "🌧️", phonetic: "/reɪn/", sentence: "The rain falls from the sky." },
+        { word: "pig", image: "🐷", phonetic: "/pɪɡ/", sentence: "The pig lives on a farm." },
+        { word: "duck", image: "🦆", phonetic: "/dʌk/", sentence: "The duck swims in the pond." },
+        { word: "cow", image: "🐮", phonetic: "/kaʊ/", sentence: "The cow gives us milk." },
+        { word: "pen", image: "🖊️", phonetic: "/pen/", sentence: "I write with a pen." },
+        { word: "box", image: "📦", phonetic: "/bɒks/", sentence: "My toys are in the box." },
+        { word: "leg", image: "🦵", phonetic: "/leɡ/", sentence: "I have two legs." },
+        { word: "arm", image: "💪", phonetic: "/ɑːrm/", sentence: "I have two arms." },
+        { word: "eye", image: "👁️", phonetic: "/aɪ/", sentence: "I see with my eye." },
+        { word: "ear", image: "👂", phonetic: "/ɪər/", sentence: "I hear with my ear." },
+        { word: "nose", image: "👃", phonetic: "/noʊz/", sentence: "I smell with my nose." },
+        { word: "hand", image: "✋", phonetic: "/hænd/", sentence: "I hold things with my hand." },
+        { word: "foot", image: "👣", phonetic: "/fʊt/", sentence: "I have two feet." },
+        { word: "bus", image: "🚌", phonetic: "/bʌs/", sentence: "I ride the bus to school." },
+        { word: "boat", image: "🚢", phonetic: "/boʊt/", sentence: "The boat sails on water." },
+        { word: "moon", image: "🌙", phonetic: "/muːn/", sentence: "The moon shines at night." },
+        { word: "ant", image: "🐜", phonetic: "/ænt/", sentence: "The ant is very small." },
+        { word: "bee", image: "🐝", phonetic: "/biː/", sentence: "The bee makes honey." },
+        { word: "frog", image: "🐸", phonetic: "/frɒɡ/", sentence: "The frog jumps in the pond." },
+        { word: "lion", image: "🦁", phonetic: "/ˈlaɪən/", sentence: "The lion roars loudly." },
+        { word: "bear", image: "🐻", phonetic: "/beər/", sentence: "The bear eats honey." },
+        { word: "ring", image: "💍", phonetic: "/rɪŋ/", sentence: "I have a gold ring." },
+        { word: "door", image: "🚪", phonetic: "/dɔːr/", sentence: "Please close the door." },
+        { word: "pan", image: "🍳", phonetic: "/pæn/", sentence: "Mom cooks in a pan." },
+        { word: "sock", image: "🧦", phonetic: "/sɒk/", sentence: "I wear socks on my feet." },
+        { word: "shoe", image: "👞", phonetic: "/ʃuː/", sentence: "I tie my shoe laces." },
+        { word: "cake", image: "🎂", phonetic: "/keɪk/", sentence: "I eat cake on my birthday." },
+        { word: "pie", image: "🥧", phonetic: "/paɪ/", sentence: "Mom bakes an apple pie." },
+        { word: "ice", image: "🧊", phonetic: "/aɪs/", sentence: "The ice is cold." },
+        { word: "hot", image: "🔥", phonetic: "/hɒt/", sentence: "The soup is hot." },
+        { word: "cold", image: "❄️", phonetic: "/koʊld/", sentence: "The snow is cold." },
+        { word: "wet", image: "💦", phonetic: "/wet/", sentence: "My hair is wet after swimming." },
+        { word: "dry", image: "🏜️", phonetic: "/draɪ/", sentence: "The towel is dry now." },
+        { word: "big", image: "🐘", phonetic: "/bɪɡ/", sentence: "The elephant is big." },
+        { word: "small", image: "🐁", phonetic: "/smɔːl/", sentence: "The mouse is small." },
+        { word: "tall", image: "🦒", phonetic: "/tɔːl/", sentence: "The giraffe is tall." },
+        { word: "short", image: "🦔", phonetic: "/ʃɔːrt/", sentence: "The hedgehog is short." },
+        { word: "soft", image: "🧸", phonetic: "/sɒft/", sentence: "The pillow is soft." },
+        { word: "hard", image: "🪨", phonetic: "/hɑːrd/", sentence: "The rock is hard." },
+        { word: "loud", image: "📢", phonetic: "/laʊd/", sentence: "The drum is loud." },
+        { word: "quiet", image: "🤫", phonetic: "/ˈkwaɪət/", sentence: "We are quiet in the library." },
+        { word: "fast", image: "🏎️", phonetic: "/fæst/", sentence: "The race car is fast." },
+        { word: "slow", image: "🐌", phonetic: "/sloʊ/", sentence: "The snail is slow." },
+        { word: "hop", image: "🐇", phonetic: "/hɒp/", sentence: "Rabbits hop in the garden." },
+        { word: "run", image: "🏃", phonetic: "/rʌn/", sentence: "I run in the park." },
+        { word: "walk", image: "🚶", phonetic: "/wɔːk/", sentence: "I walk to school." },
+        { word: "jump", image: "🦘", phonetic: "/dʒʌmp/", sentence: "Kangaroos jump high." },
+        { word: "sit", image: "🪑", phonetic: "/sɪt/", sentence: "I sit on a chair." },
+        { word: "stand", image: "🧍", phonetic: "/stænd/", sentence: "I stand in line." },
+        { word: "eat", image: "🍽️", phonetic: "/iːt/", sentence: "I eat breakfast every morning." },
+        { word: "drink", image: "🥤", phonetic: "/drɪŋk/", sentence: "I drink water when I'm thirsty." },
+        { word: "sleep", image: "😴", phonetic: "/sliːp/", sentence: "I sleep at night." },
+        { word: "wake", image: "⏰", phonetic: "/weɪk/", sentence: "I wake up in the morning." },
+        { word: "wash", image: "🧼", phonetic: "/wɒʃ/", sentence: "I wash my hands before eating." },
+        { word: "clean", image: "🧹", phonetic: "/kliːn/", sentence: "I clean my room on weekends." },
+        { word: "give", image: "🎁", phonetic: "/ɡɪv/", sentence: "I give gifts on birthdays." },
+        { word: "take", image: "👐", phonetic: "/teɪk/", sentence: "I take the bus to school." },
+        { word: "open", image: "📭", phonetic: "/ˈoʊpən/", sentence: "I open the door." },
+        { word: "close", image: "📪", phonetic: "/kloʊz/", sentence: "Please close the window." },
+        { word: "push", image: "🔜", phonetic: "/pʊʃ/", sentence: "Push the door to open it." },
+        { word: "pull", image: "◀️", phonetic: "/pʊl/", sentence: "Pull the rope to ring the bell." },
+        { word: "love", image: "❤️", phonetic: "/lʌv/", sentence: "I love my family." },
+        { word: "like", image: "👍", phonetic: "/laɪk/", sentence: "I like ice cream." },
+        { word: "sad", image: "😢", phonetic: "/sæd/", sentence: "I feel sad when I lose my toy." },
+        { word: "mad", image: "😠", phonetic: "/mæd/", sentence: "The grumpy man is mad." },
+        { word: "glad", image: "😊", phonetic: "/ɡlæd/", sentence: "I am glad to see you." },
+        { word: "fog", image: "🌫️", phonetic: "/fɒɡ/", sentence: "The fog is thick this morning." },
+        { word: "log", image: "🪵", phonetic: "/lɒɡ/", sentence: "The log burns in the fire." },
+        { word: "bug", image: "🐛", phonetic: "/bʌɡ/", sentence: "I saw a bug in the garden." },
+        { word: "rug", image: "🧶", phonetic: "/rʌɡ/", sentence: "The cat sits on the rug." },
+        { word: "mug", image: "☕", phonetic: "/mʌɡ/", sentence: "I drink hot chocolate from a mug." },
+        { word: "hug", image: "🤗", phonetic: "/hʌɡ/", sentence: "I give my mom a hug." },
+        { word: "ten", image: "🔟", phonetic: "/ten/", sentence: "I can count to ten." },
+        { word: "hen", image: "🐔", phonetic: "/hen/", sentence: "The hen lays eggs." },
+        { word: "men", image: "👨‍👨‍👦", phonetic: "/men/", sentence: "The men work on the farm." },
+        { word: "pen", image: "🖊️", phonetic: "/pen/", sentence: "I write with a pen." },
+        { word: "den", image: "🦊", phonetic: "/den/", sentence: "The fox lives in a den." },
+        { word: "jet", image: "✈️", phonetic: "/dʒet/", sentence: "The jet flies high in the sky." },
+        { word: "net", image: "🥅", phonetic: "/net/", sentence: "The fish is caught in the net." },
+        { word: "pet", image: "🐈", phonetic: "/pet/", sentence: "My cat is my pet." },
+        { word: "wet", image: "💧", phonetic: "/wet/", sentence: "My clothes are wet from the rain." },
+        { word: "let", image: "👐", phonetic: "/let/", sentence: "Let me help you with that." },
+        { word: "bat", image: "🦇", phonetic: "/bæt/", sentence: "The bat flies at night." },
+        { word: "hat", image: "🎩", phonetic: "/hæt/", sentence: "I wear a hat in winter." },
+        { word: "fat", image: "🍔", phonetic: "/fæt/", sentence: "Too many sweets can make you fat." },
+        { word: "mat", image: "🧩", phonetic: "/mæt/", sentence: "We sit on the mat for story time." },
+        { word: "rat", image: "🐀", phonetic: "/ræt/", sentence: "The rat has a long tail." },
+        { word: "sat", image: "💺", phonetic: "/sæt/", sentence: "I sat on the chair." },
+        { word: "pot", image: "🍲", phonetic: "/pɒt/", sentence: "Mom cooks soup in a pot." },
+        { word: "hot", image: "🌡️", phonetic: "/hɒt/", sentence: "The tea is too hot to drink." },
+        { word: "dot", image: "⚫", phonetic: "/dɒt/", sentence: "I draw a dot on the paper." },
+        { word: "lot", image: "🅿️", phonetic: "/lɒt/", sentence: "There are a lot of cars in the parking lot." },
+        { word: "not", image: "🚫", phonetic: "/nɒt/", sentence: "This is not my book." },
+        { word: "got", image: "✅", phonetic: "/ɡɒt/", sentence: "I got a new toy." },
+        { word: "bug", image: "🪲", phonetic: "/bʌɡ/", sentence: "I saw a bug on the leaf." },
+        { word: "dug", image: "⛏️", phonetic: "/dʌɡ/", sentence: "The dog dug a hole in the garden." },
+        { word: "hug", image: "🫂", phonetic: "/hʌɡ/", sentence: "I give my friend a hug." },
+        { word: "jug", image: "🫖", phonetic: "/dʒʌɡ/", sentence: "The jug is full of juice." },
+        { word: "mug", image: "🍵", phonetic: "/mʌɡ/", sentence: "I drink tea from a mug." },
+        { word: "rug", image: "🧵", phonetic: "/rʌɡ/", sentence: "The rug is soft to touch." },
+        { word: "tug", image: "🔄", phonetic: "/tʌɡ/", sentence: "The dogs play tug of war with a rope." },
+        { word: "map", image: "🗺️", phonetic: "/mæp/", sentence: "I use a map to find my way." },
+        { word: "nap", image: "💤", phonetic: "/næp/", sentence: "I take a nap after lunch." },
+        { word: "cap", image: "🧢", phonetic: "/kæp/", sentence: "I wear a cap when it's sunny." },
+        { word: "lap", image: "🦵", phonetic: "/læp/", sentence: "The cat sits on my lap." },
+        { word: "sap", image: "🌳", phonetic: "/sæp/", sentence: "Sap flows from the tree." },
+        { word: "tap", image: "🚰", phonetic: "/tæp/", sentence: "Turn off the tap after washing hands." },
+        { word: "yap", image: "🐕", phonetic: "/jæp/", sentence: "The puppy yaps when excited." },
+        { word: "bag", image: "👜", phonetic: "/bæɡ/", sentence: "I put my books in my bag." },
+        { word: "tag", image: "🏷️", phonetic: "/tæɡ/", sentence: "The price tag shows how much it costs." },
+        { word: "wag", image: "🐕", phonetic: "/wæɡ/", sentence: "Dogs wag their tails when happy." },
+        { word: "rag", image: "🧹", phonetic: "/ræɡ/", sentence: "I clean with a rag." },
+        { word: "sag", image: "↘️", phonetic: "/sæɡ/", sentence: "The old bridge started to sag." },
+        { word: "jam", image: "🍓", phonetic: "/dʒæm/", sentence: "I like strawberry jam on toast." },
+        { word: "ham", image: "🍖", phonetic: "/hæm/", sentence: "I eat ham sandwiches for lunch." },
+        { word: "ram", image: "🐏", phonetic: "/ræm/", sentence: "The ram has big horns." },
+        { word: "Sam", image: "👦", phonetic: "/sæm/", sentence: "Sam is my friend at school." },
+        { word: "yam", image: "🍠", phonetic: "/jæm/", sentence: "Yam is a sweet potato." },
+        { word: "dam", image: "🦫", phonetic: "/dæm/", sentence: "Beavers build a dam on the river." },
+        { word: "fan", image: "🌬️", phonetic: "/fæn/", sentence: "The fan keeps me cool." },
+        { word: "man", image: "👨", phonetic: "/mæn/", sentence: "The man walks his dog." },
+        { word: "can", image: "🥫", phonetic: "/kæn/", sentence: "I open a can of soup." },
+        { word: "pan", image: "🥘", phonetic: "/pæn/", sentence: "I cook eggs in a pan." },
+        { word: "ran", image: "🏃", phonetic: "/ræn/", sentence: "I ran to catch the bus." },
+        { word: "tan", image: "👨‍🦰", phonetic: "/tæn/", sentence: "I got a tan at the beach." },
+        { word: "van", image: "🚐", phonetic: "/væn/", sentence: "The delivery van brings packages." }
+    ],
+ECHO is off.
+    // Expanded Pre-K sight words - 150 words
+    preK: [
+        // Original 20 words
+        { word: "a", image: "🅰️", phonetic: "/eɪ/", sentence: "I see a dog." },
+        { word: "I", image: "👤", phonetic: "/aɪ/", sentence: "I like to play." },
+        { word: "am", image: "🧍", phonetic: "/æm/", sentence: "I am happy." },
+        { word: "the", image: "👉", phonetic: "/ðə/", sentence: "The ball is red." },
+        { word: "and", image: "➕", phonetic: "/ænd/", sentence: "I have a cat and a dog." },
+        { word: "can", image: "💪", phonetic: "/kæn/", sentence: "I can jump high." },
+        { word: "is", image: "🟰", phonetic: "/ɪz/", sentence: "This is my toy." },
+        { word: "it", image: "🔍", phonetic: "/ɪt/", sentence: "It is a ball." },
+        { word: "me", image: "👈", phonetic: "/mi/", sentence: "Give it to me." },
+        { word: "my", image: "🤲", phonetic: "/maɪ/", sentence: "This is my book." },
+        { word: "no", image: "🚫", phonetic: "/noʊ/", sentence: "No, thank you." },
+        { word: "see", image: "👁️", phonetic: "/si/", sentence: "I see a cat." },
+        { word: "to", image: "➡️", phonetic: "/tu/", sentence: "I go to school." },
+        { word: "we", image: "👨‍👩‍👧‍👦", phonetic: "/wi/", sentence: "We play together." },
+        { word: "yes", image: "✅", phonetic: "/jes/", sentence: "Yes, I can help." },
+        { word: "you", image: "👉", phonetic: "/ju/", sentence: "You are my friend." },
+        { word: "go", image: "🚶", phonetic: "/ɡoʊ/", sentence: "Let's go to the park." },
+        { word: "like", image: "👍", phonetic: "/laɪk/", sentence: "I like ice cream." },
+        { word: "look", image: "👀", phonetic: "/lʊk/", sentence: "Look at the bird" },
+        { word: "play", image: "🎮", phonetic: "/pleɪ/", sentence: "I play with my toys." },
+ECHO is off.
+        // Additional 130 Pre-K words
+        { word: "at", image: "📍", phonetic: "/æt/", sentence: "I am at school." },
+        { word: "be", image: "🐝", phonetic: "/bi/", sentence: "I want to be a teacher." },
+        { word: "big", image: "🐘", phonetic: "/bɪɡ/", sentence: "The elephant is big." },
+        { word: "do", image: "🏃", phonetic: "/du/", sentence: "What do you like to do?" },
+        { word: "eat", image: "🍽️", phonetic: "/it/", sentence: "I eat breakfast every day." },
+        { word: "for", image: "🎁", phonetic: "/fɔr/", sentence: "This gift is for you." },
+        { word: "fun", image: "🎢", phonetic: "/fʌn/", sentence: "Playing games is fun." },
+        { word: "get", image: "👐", phonetic: "/ɡet/", sentence: "I will get the ball." },
+        { word: "has", image: "👜", phonetic: "/hæz/", sentence: "She has a new toy." },
+        { word: "he", image: "👨", phonetic: "/hi/", sentence: "He is my brother." },
+        { word: "help", image: "🆘", phonetic: "/help/", sentence: "Can you help me?" },
+        { word: "here", image: "📍", phonetic: "/hɪr/", sentence: "I am here now." },
+        { word: "his", image: "👨‍💼", phonetic: "/hɪz/", sentence: "This is his book." },
+        { word: "in", image: "📥", phonetic: "/ɪn/", sentence: "The toy is in the box." },
+        { word: "jump", image: "🦘", phonetic: "/dʒʌmp/", sentence: "I can jump high." },
+        { word: "little", image: "🐁", phonetic: "/ˈlɪtəl/", sentence: "The mouse is little." },
+        { word: "make", image: "🔨", phonetic: "/meɪk/", sentence: "Let's make a cake." },
+        { word: "new", image: "✨", phonetic: "/nu/", sentence: "I have a new toy." },
+        { word: "not", image: "🙅", phonetic: "/nɒt/", sentence: "This is not mine." },
+        { word: "on", image: "⬆️", phonetic: "/ɒn/", sentence: "The book is on the table." },
+        { word: "one", image: "1️⃣", phonetic: "/wʌn/", sentence: "I have one apple." },
+        { word: "our", image: "👨‍👩‍👧‍👦", phonetic: "/aʊr/", sentence: "This is our house." },
+        { word: "out", image: "🚪", phonetic: "/aʊt/", sentence: "Let's go out to play." },
+        { word: "red", image: "🔴", phonetic: "/red/", sentence: "The apple is red." },
+        { word: "run", image: "🏃", phonetic: "/rʌn/", sentence: "I run in the park." },
+        { word: "said", image: "💬", phonetic: "/sed/", sentence: "She said hello." },
+        { word: "she", image: "👩", phonetic: "/ʃi/", sentence: "She is my sister." },
+        { word: "sit", image: "🪑", phonetic: "/sɪt/", sentence: "Please sit down." },
+        { word: "so", image: "👍", phonetic: "/soʊ/", sentence: "I am so happy." },
+        { word: "that", image: "👉", phonetic: "/ðæt/", sentence: "That is a cat." },
+        { word: "them", image: "👥", phonetic: "/ðem/", sentence: "I gave them toys." },
+        { word: "they", image: "👨‍👩‍👧", phonetic: "/ðeɪ/", sentence: "They are my friends." },
+        { word: "this", image: "👇", phonetic: "/ðɪs/", sentence: "This is my toy." },
+        { word: "too", image: "➕", phonetic: "/tu/", sentence: "I like dogs too." },
+        { word: "up", image: "⬆️", phonetic: "/ʌp/", sentence: "Look up at the sky." },
+        { word: "want", image: "🙏", phonetic: "/wɒnt/", sentence: "I want some water." },
+        { word: "was", image: "⏮️", phonetic: "/wəz/", sentence: "I was at the park." },
+        { word: "what", image: "❓", phonetic: "/wɒt/", sentence: "What is your name?" },
+        { word: "when", image: "⏰", phonetic: "/wen/", sentence: "When is lunch time?" },
+        { word: "where", image: "🔍", phonetic: "/weər/", sentence: "Where is my book?" },
+        { word: "who", image: "👤", phonetic: "/hu/", sentence: "Who is at the door?" },
+        { word: "will", image: "🔮", phonetic: "/wɪl/", sentence: "I will help you." },
+        { word: "with", image: "🤝", phonetic: "/wɪð/", sentence: "I play with my friends." },
+        { word: "your", image: "👆", phonetic: "/jɔr/", sentence: "Is this your book?" },
+        { word: "blue", image: "🔵", phonetic: "/blu/", sentence: "The sky is blue." },
+        { word: "green", image: "🟢", phonetic: "/ɡrin/", sentence: "The grass is green." },
+        { word: "yellow", image: "🟡", phonetic: "/ˈjeloʊ/", sentence: "The sun is yellow." },
+        { word: "black", image: "⚫", phonetic: "/blæk/", sentence: "The cat is black." },
+        { word: "white", image: "⚪", phonetic: "/waɪt/", sentence: "The cloud is white." },
+        { word: "brown", image: "🟤", phonetic: "/braʊn/", sentence: "The dog is brown." },
+        { word: "pink", image: "🌸", phonetic: "/pɪŋk/", sentence: "The flower is pink." },
+        { word: "purple", image: "🟣", phonetic: "/ˈpɜrpəl/", sentence: "The grape is purple." },
+        { word: "orange", image: "🟠", phonetic: "/ˈɔrɪndʒ/", sentence: "The orange is orange." },
+        { word: "color", image: "🎨", phonetic: "/ˈkʌlər/", sentence: "What color is your shirt?" },
+        { word: "two", image: "2️⃣", phonetic: "/tu/", sentence: "I have two hands." },
+        { word: "three", image: "3️⃣", phonetic: "/θri/", sentence: "I see three birds." },
+        { word: "four", image: "4️⃣", phonetic: "/fɔr/", sentence: "I have four books." },
+        { word: "five", image: "5️⃣", phonetic: "/faɪv/", sentence: "I have five fingers." },
+        { word: "mom", image: "👩", phonetic: "/mɒm/", sentence: "My mom loves me." },
+        { word: "dad", image: "👨", phonetic: "/dæd/", sentence: "My dad reads to me." },
+        { word: "baby", image: "👶", phonetic: "/ˈbeɪbi/", sentence: "The baby is sleeping." },
+        { word: "boy", image: "👦", phonetic: "/bɔɪ/", sentence: "The boy plays football." },
+        { word: "girl", image: "👧", phonetic: "/ɡɜrl/", sentence: "The girl rides a bike." },
+        { word: "man", image: "👨", phonetic: "/mæn/", sentence: "The man is tall." },
+        { word: "woman", image: "👩", phonetic: "/ˈwʊmən/", sentence: "The woman bakes cookies." },
+        { word: "apple", image: "🍎", phonetic: "/ˈæpəl/", sentence: "I eat an apple." },
+        { word: "banana", image: "🍌", phonetic: "/bəˈnænə/", sentence: "Monkeys like bananas." },
+        { word: "milk", image: "🥛", phonetic: "/mɪlk/", sentence: "I drink milk." },
+        { word: "water", image: "💧", phonetic: "/ˈwɔtər/", sentence: "Please give me water." },
+        { word: "bread", image: "🍞", phonetic: "/bred/", sentence: "I eat bread for breakfast." },
+        { word: "cake", image: "🎂", phonetic: "/keɪk/", sentence: "We have cake on birthdays." },
+        { word: "house", image: "🏠", phonetic: "/haʊs/", sentence: "I live in a house." },
+        { word: "school", image: "🏫", phonetic: "/skul/", sentence: "I go to school." },
+        { word: "tree", image: "🌳", phonetic: "/tri/", sentence: "The bird sits in the tree." },
+        { word: "flower", image: "🌸", phonetic: "/ˈflaʊər/", sentence: "The flower smells nice." },
+        { word: "sun", image: "☀️", phonetic: "/sʌn/", sentence: "The sun is hot." },
+        { word: "moon", image: "🌙", phonetic: "/mun/", sentence: "I see the moon at night." },
+        { word: "star", image: "⭐", phonetic: "/stɑr/", sentence: "The star shines bright." },
+        { word: "rain", image: "🌧️", phonetic: "/reɪn/", sentence: "The rain makes puddles." },
+        { word: "snow", image: "❄️", phonetic: "/snoʊ/", sentence: "I play in the snow." },
+        { word: "dog", image: "🐶", phonetic: "/dɔɡ/", sentence: "The dog barks." },
+        { word: "cat", image: "🐱", phonetic: "/kæt/", sentence: "The cat meows." },
+        { word: "bird", image: "🐦", phonetic: "/bɜrd/", sentence: "The bird sings." },
+        { word: "fish", image: "🐠", phonetic: "/fɪʃ/", sentence: "The fish swims in water." },
+        { word: "day", image: "☀️", phonetic: "/deɪ/", sentence: "I go to school during the day." },
+        { word: "night", image: "🌙", phonetic: "/naɪt/", sentence: "I sleep at night." },
+        { word: "happy", image: "😊", phonetic: "/ˈhæpi/", sentence: "I am happy when I play." },
+        { word: "sad", image: "😢", phonetic: "/sæd/", sentence: "I feel sad when I fall." },
+        { word: "hot", image: "🔥", phonetic: "/hɒt/", sentence: "The soup is hot." },
+        { word: "cold", image: "❄️", phonetic: "/koʊld/", sentence: "Ice cream is cold." },
+        { word: "good", image: "👍", phonetic: "/ɡʊd/", sentence: "You did a good job" },
+        { word: "bad", image: "👎", phonetic: "/bæd/", sentence: "Hitting is bad." },
+        { word: "clean", image: "✨", phonetic: "/klin/", sentence: "My hands are clean." },
+        { word: "dirty", image: "💩", phonetic: "/ˈdɜrti/", sentence: "My shoes are dirty." },
+        { word: "old", image: "👵", phonetic: "/oʊld/", sentence: "My grandma is old." },
+        { word: "young", image: "👶", phonetic: "/jʌŋ/", sentence: "Babies are young." },
+        { word: "open", image: "📭", phonetic: "/ˈoʊpən/", sentence: "Please open the door." },
+        { word: "close", image: "📪", phonetic: "/kloʊz/", sentence: "Please close the window." },
+        { word: "stop", image: "🛑", phonetic: "/stɒp/", sentence: "Stop at the red light." },
+        { word: "go", image: "🚦", phonetic: "/ɡoʊ/", sentence: "Go when the light is green." },
+        { word: "hello", image: "👋", phonetic: "/həˈloʊ/", sentence: "I say hello to my friends." },
+        { word: "bye", image: "👋", phonetic: "/baɪ/", sentence: "I say bye when I leave." },
+        { word: "please", image: "🙏", phonetic: "/pliz/", sentence: "Please pass the milk." },
+        { word: "thank", image: "🙏", phonetic: "/θæŋk/", sentence: "Thank you for the gift." },
+        { word: "sorry", image: "😔", phonetic: "/ˈsɒri/", sentence: "I am sorry for the mistake." },
+        { word: "today", image: "📆", phonetic: "/təˈdeɪ/", sentence: "Today is sunny." },
+        { word: "now", image: "⏰", phonetic: "/naʊ/", sentence: "I want to play now." },
+        { word: "later", image: "⏳", phonetic: "/ˈleɪtər/", sentence: "We can go to the park later." },
+        { word: "soon", image: "🔜", phonetic: "/sun/", sentence: "Dinner will be ready soon." },
+        { word: "after", image: "⏩", phonetic: "/ˈæftər/", sentence: "We play after lunch." },
+        { word: "before", image: "⏪", phonetic: "/bɪˈfɔr/", sentence: "Wash hands before eating." },
+        { word: "first", image: "1️⃣", phonetic: "/fɜrst/", sentence: "First, we put on our shoes." },
+        { word: "last", image: "🔚", phonetic: "/læst/", sentence: "I was last in line." },
+        { word: "top", image: "⬆️", phonetic: "/tɒp/", sentence: "The ball is on top of the shelf." },
+        { word: "bottom", image: "⬇️", phonetic: "/ˈbɒtəm/", sentence: "My toy is at the bottom of the box." },
+        { word: "more", image: "➕", phonetic: "/mɔr/", sentence: "Can I have more juice?" },
+        { word: "some", image: "🔢", phonetic: "/sʌm/", sentence: "I have some cookies." },
+        { word: "all", image: "🌐", phonetic: "/ɔl/", sentence: "All my friends are here." },
+        { word: "none", image: "0️⃣", phonetic: "/nʌn/", sentence: "There are none left." },
+        { word: "other", image: "🔄", phonetic: "/ˈʌðər/", sentence: "I want the other toy." },
+        { word: "same", image: "🟰", phonetic: "/seɪm/", sentence: "We have the same book." },
+        { word: "different", image: "🚫", phonetic: "/ˈdɪfərənt/", sentence: "Our shoes are different." },
+        { word: "again", image: "🔄", phonetic: "/əˈɡen/", sentence: "Let's play again." },
+        { word: "then", image: "⏭️", phonetic: "/ðen/", sentence: "First eat lunch, then play." },
+        { word: "give", image: "🎁", phonetic: "/ɡɪv/", sentence: "Give me the ball, please." },
+        { word: "take", image: "🤲", phonetic: "/teɪk/", sentence: "Take your jacket." },
+        { word: "put", image: "📥", phonetic: "/pʊt/", sentence: "Put the toys away." },
+        { word: "find", image: "🔍", phonetic: "/faɪnd/", sentence: "Can you find your shoes?" },
+        { word: "made", image: "🔨", phonetic: "/meɪd/", sentence: "I made a drawing." },
+        { word: "draw", image: "🖍️", phonetic: "/drɔ/", sentence: "I draw pictures." },
+        { word: "write", image: "✏️", phonetic: "/raɪt/", sentence: "I write my name." },
+        { word: "read", image: "📖", phonetic: "/rid/", sentence: "I can read books." }
+    ],
+ECHO is off.
+    // Expanded Kindergarten sight words - 150 words
+    kindergarten: [
+        // Original 30 words
+        { word: "all", image: "🌐", phonetic: "/ɔːl/", sentence: "All the children are here." },
+        { word: "are", image: "🟰", phonetic: "/ɑr/", sentence: "We are happy." },
+        { word: "at", image: "📍", phonetic: "/æt/", sentence: "I am at school." },
+        { word: "be", image: "🧿", phonetic: "/bi/", sentence: "I will be careful." },
+        { word: "but", image: "🚧", phonetic: "/bʌt/", sentence: "I want to play, but it's raining." },
+        { word: "by", image: "🏠", phonetic: "/baɪ/", sentence: "The cat is by the door." },
+        { word: "come", image: "👋", phonetic: "/kʌm/", sentence: "Come to my house." },
+        { word: "day", image: "☀️", phonetic: "/deɪ/", sentence: "Today is a good day." },
+        { word: "did", image: "✅", phonetic: "/dɪd/", sentence: "I did my homework." },
+        { word: "do", image: "🔨", phonetic: "/du/", sentence: "What do you like?" },
+        { word: "down", image: "⬇️", phonetic: "/daʊn/", sentence: "The ball fell down." },
+        { word: "for", image: "🎁", phonetic: "/fɔr/", sentence: "This gift is for you." },
+        { word: "get", image: "🔄", phonetic: "/ɡet/", sentence: "I will get the book." },
+        { word: "had", image: "🕰️", phonetic: "/hæd/", sentence: "I had fun at the park." },
+        { word: "has", image: "✋", phonetic: "/hæz/", sentence: "She has a new toy." },
+        { word: "have", image: "👐", phonetic: "/hæv/", sentence: "I have two books." },
+        { word: "he", image: "👨", phonetic: "/hi/", sentence: "He is my brother." },
+        { word: "her", image: "👩", phonetic: "/hɜr/", sentence: "That is her ball." },
+        { word: "here", image: "📍", phonetic: "/hɪr/", sentence: "We are here now." },
+        { word: "him", image: "👨", phonetic: "/hɪm/", sentence: "I gave him a toy." },
+        { word: "his", image: "👨‍💼", phonetic: "/hɪz/", sentence: "This is his book." },
+        { word: "how", image: "❓", phonetic: "/haʊ/", sentence: "How are you today?" },
+        { word: "if", image: "🤔", phonetic: "/ɪf/", sentence: "If it rains, we'll stay inside." },
+        { word: "in", image: "📦", phonetic: "/ɪn/", sentence: "The toy is in the box." },
+        { word: "not", image: "🚫", phonetic: "/nɒt/", sentence: "This is not mine." },
+        { word: "of", image: "📊", phonetic: "/əv/", sentence: "This is a picture of my dog." },
+        { word: "on", image: "⬆️", phonetic: "/ɒn/", sentence: "The book is on the table." },
+        { word: "one", image: "1️⃣", phonetic: "/wʌn/", sentence: "I have one apple." },
+        { word: "or", image: "🔀", phonetic: "/ɔr/", sentence: "Do you want milk or juice?" },
+        { word: "out", image: "🚪", phonetic: "/aʊt/", sentence: "We went out to play." },
+ECHO is off.
+        // Additional 120 Kindergarten words
+        { word: "said", image: "💬", phonetic: "/sed/", sentence: "She said hello to me." },
+        { word: "saw", image: "👁️", phonetic: "/sɔ/", sentence: "I saw a bird in the tree." },
+        { word: "she", image: "👩", phonetic: "/ʃi/", sentence: "She likes to read books." },
+        { word: "so", image: "👍", phonetic: "/soʊ/", sentence: "The cake was so delicious." },
+        { word: "that", image: "👉", phonetic: "/ðæt/", sentence: "That is my favorite toy." },
+        { word: "them", image: "👥", phonetic: "/ðem/", sentence: "I gave them some cookies." },
+        { word: "then", image: "⏭️", phonetic: "/ðen/", sentence: "First we eat, then we play." },
+        { word: "there", image: "👉", phonetic: "/ðeər/", sentence: "Put the book over there." },
+        { word: "they", image: "👨‍👩‍👧‍👦", phonetic: "/ðeɪ/", sentence: "They are my friends." },
+        { word: "this", image: "👇", phonetic: "/ðɪs/", sentence: "This is my new toy." },
+        { word: "time", image: "⏰", phonetic: "/taɪm/", sentence: "It's time for lunch." },
+        { word: "too", image: "➕", phonetic: "/tuː/", sentence: "I want to go too." },
+        { word: "up", image: "⬆️", phonetic: "/ʌp/", sentence: "The balloon went up in the sky." },
+        { word: "use", image: "🔧", phonetic: "/juːz/", sentence: "I can use a pencil to write." },
+        { word: "very", image: "💯", phonetic: "/ˈveri/", sentence: "The ice cream is very cold." },
+        { word: "was", image: "⏮️", phonetic: "/wəz/", sentence: "Yesterday was sunny." },
+        { word: "we", image: "👨‍👩‍👧", phonetic: "/wi/", sentence: "We are in the same class." },
+        { word: "went", image: "🚶", phonetic: "/went/", sentence: "We went to the park." },
+        { word: "what", image: "❓", phonetic: "/wɒt/", sentence: "What is your favorite color?" },
+        { word: "where", image: "🔍", phonetic: "/weər/", sentence: "Where is my book?" },
+        { word: "who", image: "👤", phonetic: "/huː/", sentence: "Who wants to play with me?" },
+        { word: "will", image: "🔮", phonetic: "/wɪl/", sentence: "I will help you clean up." },
+        { word: "with", image: "🤝", phonetic: "/wɪð/", sentence: "I play with my friends." },
+        { word: "yes", image: "✅", phonetic: "/jes/", sentence: "Yes, I would like some water." },
+        { word: "your", image: "👆", phonetic: "/jɔr/", sentence: "Is this your backpack?" },
+        { word: "about", image: "💭", phonetic: "/əˈbaʊt/", sentence: "Let's talk about dinosaurs." },
+        { word: "after", image: "⏩", phonetic: "/ˈæftər/", sentence: "We have recess after math." },
+        { word: "again", image: "🔄", phonetic: "/əˈɡen/", sentence: "Let's read the story again." },
+        { word: "an", image: "🅰️", phonetic: "/æn/", sentence: "I saw an elephant at the zoo." },
+        { word: "any", image: "🎲", phonetic: "/ˈeni/", sentence: "Do you have any questions?" },
+        { word: "as", image: "🟰", phonetic: "/æz/", sentence: "I'm as tall as my friend." },
+        { word: "ask", image: "❓", phonetic: "/æsk/", sentence: "Ask your teacher for help." },
+        { word: "back", image: "↩️", phonetic: "/bæk/", sentence: "I'll be back soon." },
+        { word: "because", image: "🔍", phonetic: "/bɪˈkɔz/", sentence: "I'm happy because it's my birthday." },
+        { word: "before", image: "⏪", phonetic: "/bɪˈfɔr/", sentence: "Wash your hands before eating." },
+        { word: "big", image: "🐘", phonetic: "/bɪɡ/", sentence: "The elephant is very big." },
+        { word: "boy", image: "👦", phonetic: "/bɔɪ/", sentence: "The boy is riding his bike." },
+        { word: "call", image: "📞", phonetic: "/kɔl/", sentence: "I call my grandma every week." },
+        { word: "can", image: "💪", phonetic: "/kæn/", sentence: "I can count to twenty." },
+        { word: "came", image: "🚶", phonetic: "/keɪm/", sentence: "She came to my birthday party." },
+        { word: "could", image: "💭", phonetic: "/kʊd/", sentence: "I could see the rainbow." },
+        { word: "find", image: "🔍", phonetic: "/faɪnd/", sentence: "Can you find your shoes?" },
+        { word: "first", image: "1️⃣", phonetic: "/fɜrst/", sentence: "I was first in line." },
+        { word: "from", image: "📤", phonetic: "/frʌm/", sentence: "The letter is from my friend." },
+        { word: "give", image: "🎁", phonetic: "/ɡɪv/", sentence: "I give my mom flowers." },
+        { word: "girl", image: "👧", phonetic: "/ɡɜrl/", sentence: "The girl is playing jump rope." },
+        { word: "good", image: "👍", phonetic: "/ɡʊd/", sentence: "You did a good job" },
+        { word: "help", image: "🆘", phonetic: "/help/", sentence: "Can you help me tie my shoe?" },
+        { word: "into", image: "📥", phonetic: "/ˈɪntə/", sentence: "The frog jumped into the pond." },
+        { word: "its", image: "🐕", phonetic: "/ɪts/", sentence: "The dog wagged its tail." },
+        { word: "just", image: "✨", phonetic: "/dʒʌst/", sentence: "I just finished my snack." },
+        { word: "know", image: "🧠", phonetic: "/noʊ/", sentence: "I know how to count to 100." },
+        { word: "let", image: "👐", phonetic: "/let/", sentence: "Let me show you my drawing." },
+        { word: "little", image: "🐁", phonetic: "/ˈlɪtəl/", sentence: "The little mouse ate cheese." },
+        { word: "live", image: "🏠", phonetic: "/lɪv/", sentence: "I live with my family." },
+        { word: "long", image: "📏", phonetic: "/lɔŋ/", sentence: "The giraffe has a long neck." },
+        { word: "look", image: "👀", phonetic: "/lʊk/", sentence: "Look at the beautiful butterfly" },
+        { word: "made", image: "🔨", phonetic: "/meɪd/", sentence: "I made a castle with blocks." },
+        { word: "make", image: "🛠️", phonetic: "/meɪk/", sentence: "Let's make a paper airplane." },
+        { word: "many", image: "🔢", phonetic: "/ˈmeni/", sentence: "How many crayons do you have?" },
+        { word: "may", image: "🤔", phonetic: "/meɪ/", sentence: "May I go to the bathroom?" },
+        { word: "more", image: "➕", phonetic: "/mɔr/", sentence: "Can I have more apple juice?" },
+        { word: "much", image: "📈", phonetic: "/mʌtʃ/", sentence: "Thank you very much" },
+        { word: "must", image: "❗", phonetic: "/mʌst/", sentence: "You must raise your hand." },
+        { word: "new", image: "✨", phonetic: "/nu/", sentence: "I got a new backpack." },
+        { word: "no", image: "🚫", phonetic: "/noʊ/", sentence: "No, I don't want any more." },
+        { word: "now", image: "⏱️", phonetic: "/naʊ/", sentence: "We need to line up now." },
+        { word: "off", image: "📴", phonetic: "/ɔf/", sentence: "Take your hat off inside." },
+        { word: "old", image: "👵", phonetic: "/oʊld/", sentence: "My grandpa is old." },
+        { word: "only", image: "☝️", phonetic: "/ˈoʊnli/", sentence: "I have only one pencil." },
+        { word: "our", image: "👨‍👩‍👧‍👦", phonetic: "/aʊr/", sentence: "This is our classroom." },
+        { word: "over", image: "⤴️", phonetic: "/ˈoʊvər/", sentence: "The bird flew over the house." },
+        { word: "put", image: "📥", phonetic: "/pʊt/", sentence: "Put your toys away." },
+        { word: "play", image: "🎮", phonetic: "/pleɪ/", sentence: "Let's play a game together." },
+        { word: "please", image: "🙏", phonetic: "/pliz/", sentence: "Please pass the crayons." },
+        { word: "read", image: "📚", phonetic: "/rid/", sentence: "I can read this book." },
+        { word: "ride", image: "🚲", phonetic: "/raɪd/", sentence: "I like to ride my bike." },
+        { word: "right", image: "✅", phonetic: "/raɪt/", sentence: "You got the answer right" },
+        { word: "run", image: "🏃", phonetic: "/rʌn/", sentence: "I can run very fast." },
+        { word: "say", image: "🗣️", phonetic: "/seɪ/", sentence: "Can you say your ABC's?" },
+        { word: "see", image: "👁️", phonetic: "/si/", sentence: "I can see the rainbow." },
+        { word: "some", image: "🔢", phonetic: "/sʌm/", sentence: "Would you like some crackers?" },
+        { word: "soon", image: "🔜", phonetic: "/sun/", sentence: "Lunch will be ready soon." },
+        { word: "stop", image: "🛑", phonetic: "/stɒp/", sentence: "Stop at the red light." },
+        { word: "take", image: "👐", phonetic: "/teɪk/", sentence: "Take your lunch box." },
+        { word: "tell", image: "💬", phonetic: "/tel/", sentence: "Tell me about your weekend." },
+        { word: "thank", image: "🙏", phonetic: "/θæŋk/", sentence: "Thank you for helping me." },
+        { word: "these", image: "👇", phonetic: "/ðiz/", sentence: "These are my new shoes." },
+        { word: "those", image: "👉", phonetic: "/ðoʊz/", sentence: "Those books belong to the library." },
+        { word: "today", image: "📆", phonetic: "/təˈdeɪ/", sentence: "Today is Friday." },
+        { word: "together", image: "🤝", phonetic: "/təˈɡeðər/", sentence: "Let's sing together." },
+        { word: "try", image: "🔄", phonetic: "/traɪ/", sentence: "Try to write your name." },
+        { word: "under", image: "⬇️", phonetic: "/ˈʌndər/", sentence: "The cat is under the table." },
+        { word: "walk", image: "🚶", phonetic: "/wɔk/", sentence: "I walk to school with my sister." },
+        { word: "want", image: "🙏", phonetic: "/wɒnt/", sentence: "I want to play outside." },
+        { word: "warm", image: "🌡️", phonetic: "/wɔrm/", sentence: "The soup is warm." },
+        { word: "water", image: "💧", phonetic: "/ˈwɔtər/", sentence: "I drink water at lunch." },
+        { word: "way", image: "🛣️", phonetic: "/weɪ/", sentence: "Show me the way to the library." },
+        { word: "well", image: "👍", phonetic: "/wel/", sentence: "You did very well on your test." },
+        { word: "when", image: "⏰", phonetic: "/wen/", sentence: "When is snack time?" },
+        { word: "which", image: "🤔", phonetic: "/wɪtʃ/", sentence: "Which color do you like best?" },
+        { word: "why", image: "❓", phonetic: "/waɪ/", sentence: "Why is the sky blue?" },
+        { word: "would", image: "🤔", phonetic: "/wʊd/", sentence: "Would you like to share my crayons?" },
+        { word: "write", image: "✏️", phonetic: "/raɪt/", sentence: "I can write my name." },
+        { word: "you", image: "👉", phonetic: "/ju/", sentence: "You are my best friend." },
+        { word: "blue", image: "🔵", phonetic: "/blu/", sentence: "The sky is blue." },
+        { word: "red", image: "🔴", phonetic: "/red/", sentence: "The fire truck is red." },
+        { word: "green", image: "🟢", phonetic: "/ɡrin/", sentence: "The grass is green." },
+        { word: "yellow", image: "🟡", phonetic: "/ˈjeloʊ/", sentence: "The banana is yellow." },
+        { word: "black", image: "⚫", phonetic: "/blæk/", sentence: "The cat is black." },
+        { word: "white", image: "⚪", phonetic: "/waɪt/", sentence: "Snow is white." },
+        { word: "brown", image: "🟤", phonetic: "/braʊn/", sentence: "The bear is brown." },
+        { word: "orange", image: "🟠", phonetic: "/ˈɔrɪndʒ/", sentence: "The pumpkin is orange." },
+        { word: "purple", image: "🟣", phonetic: "/ˈpɜrpəl/", sentence: "The grapes are purple." },
+        { word: "pink", image: "🌸", phonetic: "/pɪŋk/", sentence: "The flower is pink." }
+    ],
+ECHO is off.
+    // Expanded First Grade sight words - 150 words
+    firstGrade: [
+        // Original 30 words
+        { word: "about", image: "💭", phonetic: "/əˈbaʊt/", sentence: "Let me tell you about my day." },
+        { word: "after", image: "⏩", phonetic: "/ˈæftər/", sentence: "We play after school." },
+        { word: "again", image: "🔄", phonetic: "/əˈɡen/", sentence: "Can we read it again?" },
+        { word: "an", image: "1️⃣", phonetic: "/æn/", sentence: "I saw an elephant at the zoo." },
+        { word: "any", image: "🎲", phonetic: "/ˈeni/", sentence: "Do you have any questions?" },
+        { word: "as", image: "🟰", phonetic: "/æz/", sentence: "The box is as big as the table." },
+        { word: "back", image: "↩️", phonetic: "/bæk/", sentence: "I came back from school." },
+        { word: "been", image: "⏱️", phonetic: "/bɪn/", sentence: "I have been to the beach." },
+        { word: "before", image: "⬅️", phonetic: "/bɪˈfɔr/", sentence: "Wash your hands before eating." },
+        { word: "big", image: "🐘", phonetic: "/bɪɡ/", sentence: "That is a big house." },
+        { word: "call", image: "📞", phonetic: "/kɔl/", sentence: "I will call you tomorrow." },
+        { word: "came", image: "🚶", phonetic: "/keɪm/", sentence: "She came to visit me." },
+        { word: "could", image: "💭", phonetic: "/kʊd/", sentence: "I could do it myself." },
+        { word: "from", image: "🏠", phonetic: "/frʌm/", sentence: "I am from Canada." },
+        { word: "good", image: "👍", phonetic: "/ɡʊd/", sentence: "You did a good job" },
+        { word: "has", image: "👐", phonetic: "/hæz/", sentence: "She has a new toy." },
+        { word: "into", image: "➡️", phonetic: "/ˈɪntə/", sentence: "The cat jumped into the box." },
+        { word: "just", image: "⏰", phonetic: "/dʒʌst/", sentence: "We just arrived." },
+        { word: "know", image: "🧠", phonetic: "/noʊ/", sentence: "I know the answer." },
+        { word: "little", image: "🐁", phonetic: "/ˈlɪtəl/", sentence: "The little mouse ran away." },
+        { word: "live", image: "🏠", phonetic: "/lɪv/", sentence: "We live in a blue house." },
+        { word: "long", image: "📏", phonetic: "/lɔŋ/", sentence: "The snake is very long." },
+        { word: "made", image: "🔨", phonetic: "/meɪd/", sentence: "I made a paper airplane." },
+        { word: "many", image: "🔢", phonetic: "/ˈmeni/", sentence: "How many books do you have?" },
+        { word: "may", image: "🤔", phonetic: "/meɪ/", sentence: "May I go to the bathroom?" },
+        { word: "more", image: "➕", phonetic: "/mɔr/", sentence: "Can I have more juice?" },
+        { word: "must", image: "❗", phonetic: "/mʌst/", sentence: "You must clean your room." },
+        { word: "new", image: "✨", phonetic: "/nu/", sentence: "I got a new toy." },
+        { word: "now", image: "⏱️", phonetic: "/naʊ/", sentence: "I want to go home now." },
+        { word: "off", image: "📴", phonetic: "/ɔf/", sentence: "Please turn off the light." },
+ECHO is off.
+        // Additional 120 First Grade words
+        { word: "old", image: "👵", phonetic: "/oʊld/", sentence: "My grandmother is very old." },
+        { word: "once", image: "1️⃣", phonetic: "/wʌns/", sentence: "I went to the museum once." },
+        { word: "only", image: "☝️", phonetic: "/ˈoʊnli/", sentence: "I am the only child in my family." },
+        { word: "other", image: "🔄", phonetic: "/ˈʌðər/", sentence: "Let's try the other way." },
+        { word: "our", image: "👨‍👩‍👧‍👦", phonetic: "/aʊr/", sentence: "This is our classroom." },
+        { word: "over", image: "⤴️", phonetic: "/ˈoʊvər/", sentence: "The bird flew over the house." },
+        { word: "people", image: "👥", phonetic: "/ˈpipəl/", sentence: "Many people attended the fair." },
+        { word: "pull", image: "🚪", phonetic: "/pʊl/", sentence: "Pull the door to open it." },
+        { word: "put", image: "📥", phonetic: "/pʊt/", sentence: "Put your books in your backpack." },
+        { word: "read", image: "📚", phonetic: "/rid/", sentence: "I like to read books about animals." },
+        { word: "right", image: "➡️", phonetic: "/raɪt/", sentence: "Turn right at the corner." },
+        { word: "round", image: "⭕", phonetic: "/raʊnd/", sentence: "The ball is round." },
+        { word: "same", image: "🟰", phonetic: "/seɪm/", sentence: "We have the same shirt." },
+        { word: "say", image: "🗣️", phonetic: "/seɪ/", sentence: "What did the teacher say?" },
+        { word: "show", image: "👉", phonetic: "/ʃoʊ/", sentence: "Show me your drawing." },
+        { word: "small", image: "🐜", phonetic: "/smɔl/", sentence: "The ant is very small." },
+        { word: "some", image: "🔢", phonetic: "/sʌm/", sentence: "I have some stickers to share." },
+        { word: "stop", image: "🛑", phonetic: "/stɒp/", sentence: "Stop when the light is red." },
+        { word: "take", image: "👐", phonetic: "/teɪk/", sentence: "Take your medicine after dinner." },
+        { word: "tell", image: "💬", phonetic: "/tel/", sentence: "Tell me a story, please." },
+        { word: "than", image: "⚖️", phonetic: "/ðæn/", sentence: "The elephant is bigger than the mouse." },
+        { word: "these", image: "👇", phonetic: "/ðiz/", sentence: "These cookies are for you." },
+        { word: "thing", image: "📦", phonetic: "/θɪŋ/", sentence: "What is that thing on the shelf?" },
+        { word: "think", image: "🤔", phonetic: "/θɪŋk/", sentence: "I think it will rain tomorrow." },
+        { word: "those", image: "👉", phonetic: "/ðoʊz/", sentence: "Those apples look delicious." },
+        { word: "thought", image: "💭", phonetic: "/θɔt/", sentence: "I thought you were coming later." },
+        { word: "three", image: "3️⃣", phonetic: "/θri/", sentence: "I have three sisters." },
+        { word: "through", image: "🚪", phonetic: "/θru/", sentence: "We walked through the park." },
+        { word: "today", image: "📆", phonetic: "/təˈdeɪ/", sentence: "Today is my birthday." },
+        { word: "together", image: "🤝", phonetic: "/təˈɡeðər/", sentence: "Let's work together." },
+        { word: "too", image: "➕", phonetic: "/tu/", sentence: "I want to go too." },
+        { word: "try", image: "🔄", phonetic: "/traɪ/", sentence: "Try to solve this problem." },
+        { word: "two", image: "2️⃣", phonetic: "/tu/", sentence: "I have two brothers." },
+        { word: "under", image: "⬇️", phonetic: "/ˈʌndər/", sentence: "The cat is hiding under the bed." },
+        { word: "until", image: "⏱️", phonetic: "/ənˈtɪl/", sentence: "Wait until the bus comes." },
+        { word: "up", image: "⬆️", phonetic: "/ʌp/", sentence: "The balloon floated up in the air." },
+        { word: "use", image: "🔧", phonetic: "/juz/", sentence: "Use a pencil to write your name." },
+        { word: "very", image: "💯", phonetic: "/ˈveri/", sentence: "The cake is very delicious." },
+        { word: "walk", image: "🚶", phonetic: "/wɔk/", sentence: "I walk to school every day." },
+        { word: "want", image: "🙏", phonetic: "/wɒnt/", sentence: "I want a new bicycle." },
+        { word: "warm", image: "🌡️", phonetic: "/wɔrm/", sentence: "Wear a coat to stay warm." },
+        { word: "was", image: "⏮️", phonetic: "/wəz/", sentence: "It was raining yesterday." },
+        { word: "water", image: "💧", phonetic: "/ˈwɔːtər/", sentence: "Plants need water to grow." },
+        { word: "way", image: "🛣️", phonetic: "/weɪ/", sentence: "This is the way to the library." },
+        { word: "we", image: "👨‍👩‍👧", phonetic: "/wi/", sentence: "We are going on a field trip." },
+        { word: "well", image: "👍", phonetic: "/wel/", sentence: "You did well on your test." },
+        { word: "went", image: "🚶", phonetic: "/went/", sentence: "We went to the zoo." },
+        { word: "were", image: "⏮️", phonetic: "/wɜr/", sentence: "You were very helpful." },
+        { word: "what", image: "❓", phonetic: "/wʌt/", sentence: "What time is lunch?" },
+        { word: "when", image: "⏰", phonetic: "/wen/", sentence: "When will we go home?" },
+        { word: "where", image: "🔍", phonetic: "/wer/", sentence: "Where is my backpack?" },
+        { word: "which", image: "🤔", phonetic: "/wɪtʃ/", sentence: "Which book do you want to read?" },
+        { word: "who", image: "👤", phonetic: "/hu/", sentence: "Who wants to be the line leader?" },
+        { word: "why", image: "❓", phonetic: "/waɪ/", sentence: "Why is the sky blue?" },
+        { word: "will", image: "🔮", phonetic: "/wɪl/", sentence: "I will help you with your work." },
+        { word: "with", image: "🤝", phonetic: "/wɪð/", sentence: "I play with my friends at recess." },
+        { word: "would", image: "🤔", phonetic: "/wʊd/", sentence: "Would you like a snack?" },
+        { word: "write", image: "✏️", phonetic: "/raɪt/", sentence: "I can write my full name." },
+        { word: "your", image: "👆", phonetic: "/jɔr/", sentence: "Is this your pencil?" },
+        { word: "add", image: "➕", phonetic: "/æd/", sentence: "Let's add these numbers." },
+        { word: "also", image: "➕", phonetic: "/ˈɔlsoʊ/", sentence: "I also like to draw." },
+        { word: "animal", image: "🦁", phonetic: "/ˈænəməl/", sentence: "My favorite animal is a lion." },
+        { word: "another", image: "➕", phonetic: "/əˈnʌðər/", sentence: "May I have another cookie?" },
+        { word: "answer", image: "✅", phonetic: "/ˈænsər/", sentence: "The answer to 2+2 is 4." },
+        { word: "away", image: "🚗", phonetic: "/əˈweɪ/", sentence: "My dad is away on a trip." },
+        { word: "begin", image: "🏁", phonetic: "/bɪˈɡɪn/", sentence: "Let's begin our math lesson." },
+        { word: "better", image: "📈", phonetic: "/ˈbetər/", sentence: "I feel better today." },
+        { word: "both", image: "2️⃣", phonetic: "/boʊθ/", sentence: "Both of my shoes are blue." },
+        { word: "bring", image: "🎒", phonetic: "/brɪŋ/", sentence: "Please bring your book tomorrow." },
+        { word: "brother", image: "👦", phonetic: "/ˈbrʌðər/", sentence: "My brother is older than me." },
+        { word: "care", image: "❤️", phonetic: "/ker/", sentence: "Take care of your pet." },
+        { word: "carry", image: "🛍️", phonetic: "/ˈkæri/", sentence: "I can carry my own backpack." },
+        { word: "clean", image: "🧹", phonetic: "/klin/", sentence: "Please clean your desk." },
+        { word: "color", image: "🎨", phonetic: "/ˈkʌlər/", sentence: "My favorite color is blue." },
+        { word: "cut", image: "✂️", phonetic: "/kʌt/", sentence: "Cut along the dotted line." },
+        { word: "done", image: "✅", phonetic: "/dʌn/", sentence: "I'm done with my homework." },
+        { word: "door", image: "🚪", phonetic: "/dɔr/", sentence: "Please close the door." },
+        { word: "draw", image: "🖌️", phonetic: "/drɔ/", sentence: "I like to draw pictures." },
+        { word: "drink", image: "🥛", phonetic: "/drɪŋk/", sentence: "I drink water when I'm thirsty." },
+        { word: "eight", image: "8️⃣", phonetic: "/eɪt/", sentence: "I am eight years old." },
+        { word: "every", image: "📆", phonetic: "/ˈevri/", sentence: "I brush my teeth every morning." },
+        { word: "eye", image: "👁️", phonetic: "/aɪ/", sentence: "The eye helps us see." },
+        { word: "fall", image: "🍂", phonetic: "/fɔl/", sentence: "Leaves fall in autumn." },
+        { word: "far", image: "🔭", phonetic: "/fɑr/", sentence: "The park is far from here." },
+        { word: "father", image: "👨", phonetic: "/ˈfɑðər/", sentence: "My father takes me to school." },
+        { word: "few", image: "🔢", phonetic: "/fju/", sentence: "I have a few markers." },
+        { word: "find", image: "🔍", phonetic: "/faɪnd/", sentence: "Let's find the missing piece." },
+        { word: "first", image: "1️⃣", phonetic: "/fɜrst/", sentence: "I came in first place in the race." },
+        { word: "five", image: "5️⃣", phonetic: "/faɪv/", sentence: "I have five fingers on each hand." },
+        { word: "food", image: "🍎", phonetic: "/fud/", sentence: "Healthy food makes us strong." },
+        { word: "found", image: "🔍", phonetic: "/faʊnd/", sentence: "I found my lost toy." },
+        { word: "four", image: "4️⃣", phonetic: "/fɔr/", sentence: "There are four seasons in a year." },
+        { word: "friend", image: "👭", phonetic: "/frend/", sentence: "She is my best friend." },
+        { word: "full", image: "🍽️", phonetic: "/fʊl/", sentence: "My glass is full of milk." },
+        { word: "funny", image: "😄", phonetic: "/ˈfʌni/", sentence: "The clown was very funny." },
+        { word: "gave", image: "🎁", phonetic: "/ɡeɪv/", sentence: "She gave me a present." },
+        { word: "give", image: "🎁", phonetic: "/ɡɪv/", sentence: "Give the book to your sister." },
+        { word: "goes", image: "➡️", phonetic: "/ɡoʊz/", sentence: "He goes to my school." },
+        { word: "going", image: "🚶", phonetic: "/ˈɡoʊɪŋ/", sentence: "I am going to the store." },
+        { word: "got", image: "👐", phonetic: "/ɡɒt/", sentence: "I got a new toy for my birthday." },
+        { word: "green", image: "🟢", phonetic: "/ɡrin/", sentence: "The grass is green." },
+        { word: "grow", image: "🌱", phonetic: "/ɡroʊ/", sentence: "Plants grow when we water them." },
+        { word: "hand", image: "✋", phonetic: "/hænd/", sentence: "Raise your hand if you know the answer." },
+        { word: "happy", image: "😊", phonetic: "/ˈhæpi/", sentence: "I am happy to see you." },
+        { word: "head", image: "👤", phonetic: "/hed/", sentence: "I bumped my head." },
+        { word: "heard", image: "👂", phonetic: "/hɜrd/", sentence: "I heard a loud noise." },
+        { word: "help", image: "🆘", phonetic: "/help/", sentence: "Can you help me with this?" },
+        { word: "here", image: "📍", phonetic: "/hɪr/", sentence: "Put the book here on the shelf." },
+        { word: "high", image: "⬆️", phonetic: "/haɪ/", sentence: "The bird flew high in the sky." },
+        { word: "hold", image: "✋", phonetic: "/hoʊld/", sentence: "Hold my hand when we cross the street." },
+        { word: "home", image: "🏠", phonetic: "/hoʊm/", sentence: "Let's go home now." },
+        { word: "house", image: "🏠", phonetic: "/haʊs/", sentence: "I live in a blue house." },
+        { word: "how", image: "❓", phonetic: "/haʊ/", sentence: "How do you spell your name?" },
+        { word: "kind", image: "❤️", phonetic: "/kaɪnd/", sentence: "Be kind to your friends." },
+        { word: "last", image: "🔚", phonetic: "/læst/", sentence: "I was the last one to finish." },
+        { word: "learn", image: "📚", phonetic: "/lɜrn/", sentence: "I want to learn how to ride a bike." },
+        { word: "leave", image: "🚪", phonetic: "/liv/", sentence: "Time to leave for school." },
+        { word: "left", image: "⬅️", phonetic: "/left/", sentence: "Turn left at the corner." },
+        { word: "let", image: "👐", phonetic: "/let/", sentence: "Let me help you with that." },
+        { word: "light", image: "💡", phonetic: "/laɪt/", sentence: "Turn on the light, please." }
+    ],
+ECHO is off.
+    // Expanded Second Grade sight words - 150 words
+    secondGrade: [
+        // Original 30 words
+        { word: "always", image: "🔄", phonetic: "/ˈɔlweɪz/", sentence: "I always brush my teeth." },
+        { word: "around", image: "🔄", phonetic: "/əˈraʊnd/", sentence: "The children ran around the playground." },
+        { word: "because", image: "🔍", phonetic: "/bɪˈkɔz/", sentence: "I'm happy because it's my birthday." },
+        { word: "been", image: "⏱️", phonetic: "/bɪn/", sentence: "We've been to the zoo before." },
+        { word: "before", image: "⬅️", phonetic: "/bɪˈfɔr/", sentence: "Let's eat breakfast before we go." },
+        { word: "best", image: "🏆", phonetic: "/best/", sentence: "She is my best friend." },
+        { word: "both", image: "👭", phonetic: "/boʊθ/", sentence: "Both of my shoes are red." },
+        { word: "buy", image: "🛒", phonetic: "/baɪ/", sentence: "I want to buy a new book." },
+        { word: "cold", image: "❄️", phonetic: "/koʊld/", sentence: "It's cold outside today." },
+        { word: "does", image: "❓", phonetic: "/dʌz/", sentence: "What does this word mean?" },
+        { word: "don't", image: "🚫", phonetic: "/doʊnt/", sentence: "Don't forget your lunch." },
+        { word: "fast", image: "🏃", phonetic: "/fæst/", sentence: "The cheetah runs very fast." },
+        { word: "first", image: "1️⃣", phonetic: "/fɜrst/", sentence: "I was first in line." },
+        { word: "five", image: "5️⃣", phonetic: "/faɪv/", sentence: "I have five fingers on each hand." },
+        { word: "found", image: "🔍", phonetic: "/faʊnd/", sentence: "I found my lost toy." },
+        { word: "gave", image: "🎁", phonetic: "/ɡeɪv/", sentence: "She gave me a present." },
+        { word: "goes", image: "➡️", phonetic: "/ɡoʊz/", sentence: "He goes to school every day." },
+        { word: "green", image: "🟢", phonetic: "/ɡrin/", sentence: "The grass is green." },
+        { word: "its", image: "🐶", phonetic: "/ɪts/", sentence: "The dog wagged its tail." },
+        { word: "laugh", image: "😄", phonetic: "/læf/", sentence: "The joke made me laugh." },
+        { word: "light", image: "💡", phonetic: "/laɪt/", sentence: "Turn on the light, please." },
+        { word: "made", image: "🔨", phonetic: "/meɪd/", sentence: "I made a card for Mom." },
+        { word: "might", image: "🤔", phonetic: "/maɪt/", sentence: "It might rain later." },
+        { word: "never", image: "❌", phonetic: "/ˈnevər/", sentence: "I never saw that movie." },
+        { word: "once", image: "1️⃣", phonetic: "/wʌns/", sentence: "I went there once before." },
+        { word: "pull", image: "🚪", phonetic: "/pʊl/", sentence: "Pull the door to open it." },
+        { word: "read", image: "📚", phonetic: "/rid/", sentence: "I like to read books." },
+        { word: "right", image: "➡️", phonetic: "/raɪt/", sentence: "Turn right at the corner." },
+        { word: "sing", image: "🎵", phonetic: "/sɪŋ/", sentence: "I like to sing songs." },
+        { word: "sit", image: "🪑", phonetic: "/sɪt/", sentence: "Please sit down." },
+ECHO is off.
+        // Additional 120 Second Grade words
+        { word: "sleep", image: "😴", phonetic: "/slip/", sentence: "I need to sleep eight hours every night." },
+        { word: "tell", image: "💬", phonetic: "/tel/", sentence: "Tell me about your day at school." },
+        { word: "their", image: "👥", phonetic: "/ðer/", sentence: "The children forgot their lunches." },
+        { word: "these", image: "👇", phonetic: "/ðiz/", sentence: "These cookies are delicious." },
+        { word: "those", image: "👉", phonetic: "/ðoʊz/", sentence: "Those books belong to the library." },
+        { word: "upon", image: "⬆️", phonetic: "/əˈpɒn/", sentence: "Once upon a time, there was a princess." },
+        { word: "us", image: "👨‍👩‍👧‍👦", phonetic: "/ʌs/", sentence: "The teacher read a story to us." },
+        { word: "use", image: "🔧", phonetic: "/juz/", sentence: "We use pencils to write." },
+        { word: "walk", image: "🚶", phonetic: "/wɔk/", sentence: "I walk to school every day." },
+        { word: "wash", image: "🧼", phonetic: "/wɒʃ/", sentence: "Wash your hands before eating." },
+        { word: "which", image: "🤔", phonetic: "/wɪtʃ/", sentence: "Which color do you like best?" },
+        { word: "why", image: "❓", phonetic: "/waɪ/", sentence: "Why is the sky blue?" },
+        { word: "wish", image: "🌠", phonetic: "/wɪʃ/", sentence: "I wish upon a star." },
+        { word: "work", image: "💼", phonetic: "/wɜrk/", sentence: "My dad goes to work every morning." },
+        { word: "would", image: "🤔", phonetic: "/wʊd/", sentence: "Would you like to play with me?" },
+        { word: "write", image: "✏️", phonetic: "/raɪt/", sentence: "I can write my full name." },
+        { word: "your", image: "👆", phonetic: "/jɔr/", sentence: "Is this your book?" },
+        { word: "above", image: "⬆️", phonetic: "/əˈbʌv/", sentence: "The stars are above us in the sky." },
+        { word: "across", image: "↔️", phonetic: "/əˈkrɔs/", sentence: "We walked across the bridge." },
+        { word: "add", image: "➕", phonetic: "/æd/", sentence: "We will add these numbers together." },
+        { word: "afraid", image: "😨", phonetic: "/əˈfreɪd/", sentence: "I am afraid of spiders." },
+        { word: "again", image: "🔄", phonetic: "/əˈɡen/", sentence: "Let's play that game again." },
+        { word: "against", image: "🆚", phonetic: "/əˈɡenst/", sentence: "Our team played against the Tigers." },
+        { word: "ago", image: "⏮️", phonetic: "/əˈɡoʊ/", sentence: "I visited my grandma two days ago." },
+        { word: "air", image: "💨", phonetic: "/er/", sentence: "We breathe air to live." },
+        { word: "almost", image: "🔄", phonetic: "/ˈɔlmoʊst/", sentence: "I almost finished my homework." },
+        { word: "along", image: "↔️", phonetic: "/əˈlɔŋ/", sentence: "We walked along the beach." },
+        { word: "also", image: "➕", phonetic: "/ˈɔlsoʊ/", sentence: "I also like to draw." },
+        { word: "another", image: "➕", phonetic: "/əˈnʌðər/", sentence: "Would you like another cookie?" },
+        { word: "answer", image: "✅", phonetic: "/ˈænsər/", sentence: "The answer to 3+5 is 8." },
+        { word: "any", image: "🎲", phonetic: "/ˈeni/", sentence: "Do you have any questions?" },
+        { word: "anyone", image: "👤", phonetic: "/ˈeniˌwʌn/", sentence: "Is anyone home?" },
+        { word: "anything", image: "📦", phonetic: "/ˈeniˌθɪŋ/", sentence: "Did you find anything interesting?" },
+        { word: "anyway", image: "🔄", phonetic: "/ˈeniˌweɪ/", sentence: "I'll try anyway, even if it's hard." },
+        { word: "area", image: "📐", phonetic: "/ˈeriə/", sentence: "The play area is behind the school." },
+        { word: "ask", image: "❓", phonetic: "/æsk/", sentence: "Ask your teacher if you need help." },
+        { word: "baby", image: "👶", phonetic: "/ˈbeɪbi/", sentence: "The baby is sleeping." },
+        { word: "ball", image: "⚽", phonetic: "/bɔl/", sentence: "Let's play ball at recess." },
+        { word: "beautiful", image: "🌹", phonetic: "/ˈbjutəfəl/", sentence: "What a beautiful flower" },
+        { word: "began", image: "🏁", phonetic: "/bɪˈɡæn/", sentence: "School began last week." },
+        { word: "behind", image: "↩️", phonetic: "/bɪˈhaɪnd/", sentence: "The ball rolled behind the couch." },
+        { word: "believe", image: "🧠", phonetic: "/bɪˈliv/", sentence: "I believe you can do it." },
+        { word: "better", image: "📈", phonetic: "/ˈbetər/", sentence: "I feel better today." },
+        { word: "between", image: "↔️", phonetic: "/bɪˈtwin/", sentence: "The book is between two toys." },
+        { word: "bird", image: "🐦", phonetic: "/bɜrd/", sentence: "The bird built a nest in the tree." },
+        { word: "black", image: "⚫", phonetic: "/blæk/", sentence: "My cat is black." },
+        { word: "blue", image: "🔵", phonetic: "/blu/", sentence: "The sky is blue today." },
+        { word: "book", image: "📕", phonetic: "/bʊk/", sentence: "I read a book every night." },
+        { word: "bring", image: "🎒", phonetic: "/brɪŋ/", sentence: "Please bring your library book tomorrow." },
+        { word: "brother", image: "👦", phonetic: "/ˈbrʌðər/", sentence: "My brother is in third grade." },
+        { word: "brown", image: "🟤", phonetic: "/braʊn/", sentence: "The tree trunk is brown." },
+        { word: "build", image: "🏗️", phonetic: "/bɪld/", sentence: "Let's build a sandcastle." },
+        { word: "busy", image: "⏰", phonetic: "/ˈbɪzi/", sentence: "My mom is busy cooking dinner." },
+        { word: "call", image: "📞", phonetic: "/kɔl/", sentence: "I'll call you after school." },
+        { word: "came", image: "🚶", phonetic: "/keɪm/", sentence: "My friend came to visit me." },
+        { word: "car", image: "🚗", phonetic: "/kɑr/", sentence: "We drive to school in our car." },
+        { word: "care", image: "❤️", phonetic: "/ker/", sentence: "Take care of your pet." },
+        { word: "carry", image: "🛍️", phonetic: "/ˈkæri/", sentence: "I can carry my own lunchbox." },
+        { word: "catch", image: "🧤", phonetic: "/kætʃ/", sentence: "Can you catch the ball?" },
+        { word: "caught", image: "👐", phonetic: "/kɔt/", sentence: "I caught the ball in my mitt." },
+        { word: "change", image: "🔄", phonetic: "/tʃeɪndʒ/", sentence: "The leaves change color in fall." },
+        { word: "children", image: "👧👦", phonetic: "/ˈtʃɪldrən/", sentence: "The children played at the park." },
+        { word: "city", image: "🏙️", phonetic: "/ˈsɪti/", sentence: "We visited the city on our field trip." },
+        { word: "clean", image: "🧹", phonetic: "/klin/", sentence: "Let's clean our desks." },
+        { word: "close", image: "📪", phonetic: "/kloʊz/", sentence: "Please close the door." },
+        { word: "clothes", image: "👕", phonetic: "/kloʊðz/", sentence: "I put on clean clothes every morning." },
+        { word: "color", image: "🎨", phonetic: "/ˈkʌlər/", sentence: "What color is your shirt?" },
+        { word: "come", image: "👋", phonetic: "/kʌm/", sentence: "Come to my birthday party." },
+        { word: "complete", image: "✅", phonetic: "/kəmˈplit/", sentence: "I need to complete my homework." },
+        { word: "continue", image: "▶️", phonetic: "/kənˈtɪnju/", sentence: "Let's continue reading this story." },
+        { word: "count", image: "🔢", phonetic: "/kaʊnt/", sentence: "I can count to one hundred." },
+        { word: "cover", image: "📔", phonetic: "/ˈkʌvər/", sentence: "The book has a colorful cover." },
+        { word: "cut", image: "✂️", phonetic: "/kʌt/", sentence: "Cut along the dotted line." },
+        { word: "dark", image: "🌑", phonetic: "/dɑrk/", sentence: "It gets dark early in winter." },
+        { word: "decide", image: "🤔", phonetic: "/dɪˈsaɪd/", sentence: "I need to decide which book to read." },
+        { word: "deep", image: "🌊", phonetic: "/dip/", sentence: "The ocean is very deep." },
+        { word: "difference", image: "≠", phonetic: "/ˈdɪfərəns/", sentence: "What's the difference between these shapes?" },
+        { word: "different", image: "🔄", phonetic: "/ˈdɪfərənt/", sentence: "We all like different foods." },
+        { word: "difficult", image: "🧩", phonetic: "/ˈdɪfəˌkʌlt/", sentence: "The math problem was difficult." },

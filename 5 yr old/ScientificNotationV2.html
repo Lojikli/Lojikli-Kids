@@ -31,12 +31,13 @@
             margin-bottom: 10px;
         }
         
-        /* Difficulty selector */
-        .difficulty {
+        /* Difficulty selector and options */
+        .difficulty, .game-options {
             display: flex;
             justify-content: center;
             gap: 20px;
             margin: 20px 0;
+            flex-wrap: wrap;
         }
         .difficulty button {
             padding: 8px 16px;
@@ -52,6 +53,26 @@
             background: #2563eb;
             color: white;
             transform: scale(1.05);
+        }
+        .game-options {
+            background-color: #e0f2fe;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        .option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .option input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .option label {
+            font-size: 14px;
+            color: #1e40af;
+            cursor: pointer;
         }
         
         /* Question area */
@@ -272,6 +293,57 @@
             background-color: #fee2e2;
         }
         
+        /* Confetti animation */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+            overflow: hidden;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 0;
+            transform: rotate(45deg);
+            animation: fall linear forwards;
+        }
+        @keyframes fall {
+            0% {
+                transform: translateY(-100px) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(calc(100vh + 150px)) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
+        /* Celebration effects */
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-20px);}
+            60% {transform: translateY(-10px);}
+        }
+        @keyframes pulse {
+            0% {transform: scale(1);}
+            50% {transform: scale(1.1);}
+            100% {transform: scale(1);}
+        }
+        @keyframes shake {
+            0%, 100% {transform: translateX(0);}
+            10%, 30%, 50%, 70%, 90% {transform: translateX(-5px);}
+            20%, 40%, 60%, 80% {transform: translateX(5px);}
+        }
+        .bounce {animation: bounce 1s;}
+        .pulse {animation: pulse 0.5s;}
+        .shake {animation: shake 0.5s;}
+        
         /* Mobile adjustments */
         @media (max-width: 480px) {
             .game-title {
@@ -300,6 +372,17 @@
             <button class="active" data-level="easy">Easy</button>
             <button data-level="medium">Medium</button>
             <button data-level="hard">Hard</button>
+        </div>
+        
+        <div class="game-options">
+            <div class="option">
+                <input type="checkbox" id="hideExponentCounter" />
+                <label for="hideExponentCounter">Hide Exponent Counter (Count on your own!)</label>
+            </div>
+            <div class="option">
+                <input type="checkbox" id="alwaysShowDecimalMover" checked />
+                <label for="alwaysShowDecimalMover">Always Show Decimal Mover</label>
+            </div>
         </div>
         
         <div class="question-container">
@@ -361,6 +444,9 @@
         <div class="feedback" id="feedback"></div>
     </div>
     
+    <!-- HTML structure for confetti container -->
+    <div class="confetti-container"></div>
+    
     <script>
         class ScientificNotationGame {
             constructor() {
@@ -411,6 +497,40 @@
                     });
                 });
                 
+                // Game options event listeners
+                document.getElementById('hideExponentCounter').addEventListener('change', () => {
+                    // Update the display when this option changes
+                    const hideExponentCounter = document.getElementById('hideExponentCounter').checked;
+                    if (hideExponentCounter) {
+                        this.elements.moverExponent.textContent = '?';
+                        this.elements.moverExponent.style.color = '#dc2626';
+                        this.elements.useExponent.style.display = 'none';
+                    } else {
+                        this.elements.moverExponent.textContent = this.moverExponentValue;
+                        this.elements.moverExponent.style.color = '#1e40af';
+                        this.elements.useExponent.style.display = 'block';
+                    }
+                });
+                
+                document.getElementById('alwaysShowDecimalMover').addEventListener('change', () => {
+                    // Update the display when this option changes
+                    const alwaysShowDecimalMover = document.getElementById('alwaysShowDecimalMover').checked;
+                    if (alwaysShowDecimalMover) {
+                        this.elements.decimalMover.style.display = 'flex';
+                        // Setup decimal mover for current question if needed
+                        if (this.questionType === 'fromScientific') {
+                            const { coefficient, exponent } = this.currentQuestion;
+                            const expandedNumber = coefficient * Math.pow(10, exponent);
+                            this.setupDecimalMover(expandedNumber);
+                        } else if (this.questionType === 'multiply' || this.questionType === 'divide') {
+                            const firstCoefficient = this.currentQuestion.num1.coefficient;
+                            this.setupDecimalMover(firstCoefficient);
+                        }
+                    } else if (this.questionType !== 'toScientific') {
+                        this.elements.decimalMover.style.display = 'none';
+                    }
+                });
+                
                 // Arrow key controls for decimal mover
                 this.elements.leftArrow.addEventListener('click', () => this.moveDecimalPoint('left'));
                 this.elements.rightArrow.addEventListener('click', () => this.moveDecimalPoint('right'));
@@ -418,6 +538,11 @@
                 // Use exponent button
                 this.elements.useExponent.addEventListener('click', () => {
                     this.elements.exponent.value = this.moverExponentValue;
+                    // Give feedback
+                    this.elements.useExponent.classList.add('pulse');
+                    setTimeout(() => {
+                        this.elements.useExponent.classList.remove('pulse');
+                    }, 300);
                 });
                 
                 // Keyboard events for decimal mover
@@ -479,7 +604,16 @@
                 // Clear previous content
                 this.elements.numberDisplay.innerHTML = '';
                 this.moverExponentValue = 0;
-                this.elements.moverExponent.textContent = '0';
+                
+                // Check if exponent counter should be hidden
+                const hideExponentCounter = document.getElementById('hideExponentCounter').checked;
+                if (hideExponentCounter) {
+                    this.elements.moverExponent.textContent = '?';
+                    this.elements.moverExponent.style.color = '#dc2626';
+                } else {
+                    this.elements.moverExponent.textContent = '0';
+                    this.elements.moverExponent.style.color = '#1e40af';
+                }
                 
                 // Add the decimal highlight element back
                 this.elements.numberDisplay.appendChild(this.elements.decimalHighlight);
@@ -523,6 +657,9 @@
                 
                 // Position the decimal highlight
                 this.updateDecimalHighlight();
+                
+                // Update the button visibility based on exponent counter setting
+                this.elements.useExponent.style.display = hideExponentCounter ? 'none' : 'block';
             }
             
             updateDecimalHighlight() {
@@ -560,7 +697,18 @@
                     
                     // Update the exponent value
                     this.moverExponentValue++;
-                    this.elements.moverExponent.textContent = this.moverExponentValue;
+                    
+                    // Only update display if not hidden
+                    const hideExponentCounter = document.getElementById('hideExponentCounter').checked;
+                    if (!hideExponentCounter) {
+                        this.elements.moverExponent.textContent = this.moverExponentValue;
+                    }
+                    
+                    // Give visual feedback on the movement
+                    this.elements.numberDisplay.classList.add('pulse');
+                    setTimeout(() => {
+                        this.elements.numberDisplay.classList.remove('pulse');
+                    }, 300);
                     
                 } else if (direction === 'right' && decimalIndex < elements.length - 2) {
                     // Swap decimal point with the digit to its right
@@ -576,7 +724,18 @@
                     
                     // Update the exponent value
                     this.moverExponentValue--;
-                    this.elements.moverExponent.textContent = this.moverExponentValue;
+                    
+                    // Only update display if not hidden
+                    const hideExponentCounter = document.getElementById('hideExponentCounter').checked;
+                    if (!hideExponentCounter) {
+                        this.elements.moverExponent.textContent = this.moverExponentValue;
+                    }
+                    
+                    // Give visual feedback on the movement
+                    this.elements.numberDisplay.classList.add('pulse');
+                    setTimeout(() => {
+                        this.elements.numberDisplay.classList.remove('pulse');
+                    }, 300);
                 }
                 
                 // Update the highlight position
@@ -626,21 +785,34 @@
                 const availableTypes = types[this.difficulty];
                 this.questionType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
                 
-                // Show/hide appropriate input fields and controls
+                // Show/hide appropriate input fields
                 if (this.questionType === 'fromScientific') {
                     this.elements.scientificInput.style.display = 'none';
                     this.elements.decimalInput.style.display = 'flex';
-                    this.elements.decimalMover.style.display = 'none';
                 } else {
                     this.elements.scientificInput.style.display = 'flex';
                     this.elements.decimalInput.style.display = 'none';
+                }
+                
+                // Check if decimal mover should be shown
+                const alwaysShowDecimalMover = document.getElementById('alwaysShowDecimalMover').checked;
+                
+                if (alwaysShowDecimalMover || this.questionType === 'toScientific') {
+                    this.elements.decimalMover.style.display = 'flex';
                     
-                    // Only show decimal mover for toScientific questions
-                    if (this.questionType === 'toScientific') {
-                        this.elements.decimalMover.style.display = 'flex';
-                    } else {
-                        this.elements.decimalMover.style.display = 'none';
+                    // Setup the appropriate number for the decimal mover
+                    if (this.questionType === 'fromScientific') {
+                        // For fromScientific, show the coefficient with the exponent applied
+                        const { coefficient, exponent } = this.currentQuestion;
+                        const expandedNumber = coefficient * Math.pow(10, exponent);
+                        this.setupDecimalMover(expandedNumber);
+                    } else if (this.questionType === 'multiply' || this.questionType === 'divide') {
+                        // For multiply/divide, show the first number
+                        const firstCoefficient = this.currentQuestion.num1.coefficient;
+                        this.setupDecimalMover(firstCoefficient);
                     }
+                } else {
+                    this.elements.decimalMover.style.display = 'none';
                 }
             }
             
@@ -850,14 +1022,29 @@
                 if (isCorrect) {
                     this.score++;
                     this.elements.score.textContent = this.score;
-                    this.elements.feedback.textContent = 'Correct! Great job! 🌟';
+                    
+                    // Create different victory messages for variety
+                    const victoryMessages = [
+                        'Correct! Great job! 🌟',
+                        'Amazing! You got it right! 🎉',
+                        'Fantastic work! That\'s correct! 🏆',
+                        'You\'re a scientific notation superstar! ⭐',
+                        'Perfect! Keep up the great work! 💯',
+                        'Wow! You really understand this! 🧠'
+                    ];
+                    const message = victoryMessages[Math.floor(Math.random() * victoryMessages.length)];
+                    
+                    this.elements.feedback.textContent = message;
                     this.elements.feedback.className = 'feedback correct';
                     
-                    // Add a celebratory animation
+                    // Add celebratory animations and effects
                     this.celebrate();
                 } else {
                     this.elements.feedback.textContent = 'Not quite. Try again or see the answer.';
                     this.elements.feedback.className = 'feedback incorrect';
+                    
+                    // Play error sound
+                    this.playSound('error');
                     
                     // Show the correct answer after a wrong attempt
                     if (this.questionType === 'fromScientific') {
@@ -865,6 +1052,15 @@
                     } else {
                         this.elements.feedback.textContent += ` The correct answer is ${this.correctAnswer.coefficient} × 10^${this.correctAnswer.exponent}.`;
                     }
+                    
+                    // Add a small shake animation to show something is wrong
+                    const inputToShake = this.questionType === 'fromScientific' ? 
+                        this.elements.decimal : this.elements.coefficient;
+                    
+                    inputToShake.classList.add('shake');
+                    setTimeout(() => {
+                        inputToShake.classList.remove('shake');
+                    }, 500);
                 }
                 
                 // Enable next question button, disable check answer
@@ -873,13 +1069,124 @@
             }
             
             celebrate() {
-                // Simple celebration animation
-                const container = document.querySelector('.container');
-                container.style.animation = 'pulse 0.5s';
+                // Create confetti
+                this.createConfetti();
                 
+                // Add celebration animations to various elements
+                const container = document.querySelector('.container');
+                container.classList.add('pulse');
+                
+                const question = document.querySelector('.question');
+                question.classList.add('bounce');
+                
+                const feedback = document.querySelector('.feedback');
+                feedback.classList.add('shake');
+                
+                // Play celebration sound (optional)
+                this.playSound('success');
+                
+                // Remove animations after they complete
                 setTimeout(() => {
-                    container.style.animation = '';
-                }, 500);
+                    container.classList.remove('pulse');
+                    question.classList.remove('bounce');
+                    feedback.classList.remove('shake');
+                }, 1000);
+            }
+            
+            createConfetti() {
+                // Create confetti container if it doesn't exist
+                let confettiContainer = document.querySelector('.confetti-container');
+                if (!confettiContainer) {
+                    confettiContainer = document.createElement('div');
+                    confettiContainer.className = 'confetti-container';
+                    document.body.appendChild(confettiContainer);
+                }
+                
+                // Clear any existing confetti
+                confettiContainer.innerHTML = '';
+                
+                // Generate confetti pieces
+                const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+                const confettiCount = 100;
+                
+                for (let i = 0; i < confettiCount; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    
+                    // Randomize confetti properties
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const left = Math.random() * 100; // Random position
+                    const size = Math.random() * 8 + 4; // Random size
+                    const duration = Math.random() * 3 + 2; // Random animation duration
+                    const delay = Math.random() * 0.5; // Random delay
+                    
+                    // Apply random styles
+                    confetti.style.backgroundColor = color;
+                    confetti.style.left = `${left}%`;
+                    confetti.style.width = `${size}px`;
+                    confetti.style.height = `${size}px`;
+                    confetti.style.animationDuration = `${duration}s`;
+                    confetti.style.animationDelay = `${delay}s`;
+                    
+                    // Add different shapes
+                    if (Math.random() > 0.6) {
+                        confetti.style.borderRadius = '50%'; // Circle
+                    } else if (Math.random() > 0.3) {
+                        confetti.style.borderRadius = '2px'; // Rounded square
+                    }
+                    
+                    confettiContainer.appendChild(confetti);
+                }
+                
+                // Remove confetti after animations finish
+                setTimeout(() => {
+                    confettiContainer.innerHTML = '';
+                }, 5000);
+            }
+            
+            playSound(type) {
+                // Simple audio feedback
+                const sounds = {
+                    success: [
+                        [659.25, 0.1],
+                        [659.25, 0.1],
+                        [659.25, 0.1],
+                        [698.46, 0.1],
+                        [783.99, 0.3]
+                    ],
+                    error: [
+                        [493.88, 0.1],
+                        [369.99, 0.3]
+                    ]
+                };
+                
+                // Skip if AudioContext is not supported
+                if (!window.AudioContext && !window.webkitAudioContext) return;
+                
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                const context = new AudioCtx();
+                
+                // Play sequence of tones
+                let time = context.currentTime;
+                sounds[type].forEach(([frequency, duration]) => {
+                    const oscillator = context.createOscillator();
+                    const gainNode = context.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = frequency;
+                    oscillator.connect(gainNode);
+                    gainNode.connect(context.destination);
+                    
+                    // Apply envelope
+                    gainNode.gain.setValueAtTime(0, time);
+                    gainNode.gain.linearRampToValueAtTime(0.1, time + 0.01);
+                    gainNode.gain.linearRampToValueAtTime(0, time + duration);
+                    
+                    oscillator.start(time);
+                    oscillator.stop(time + duration + 0.01);
+                    
+                    time += duration;
+                });
             }
         }
         

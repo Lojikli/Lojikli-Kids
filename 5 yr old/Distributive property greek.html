@@ -236,22 +236,61 @@
         const allVariables = [...englishVariables, ...greekVariables];
 
         function generateProblem() {
-            const a = Math.floor(Math.random() * 11) - 5;
-            const b = Math.floor(Math.random() * 3) + 1;
-            const c = Math.floor(Math.random() * 3) + 1;
-            const d = Math.floor(Math.random() * 3) + 1;
+    const a = Math.floor(Math.random() * 11) - 5; // -5 to 5 (excluding 0)
+    
+    // Generate random coefficients between -5 and 5 (excluding 0)
+    const b = Math.floor(Math.random() * 10) - 5;
+    const c = Math.floor(Math.random() * 10) - 5;
+    const d = Math.floor(Math.random() * 10) - 5;
+    
+    // Make sure none of the coefficients are 0
+    const nonZeroB = b === 0 ? 1 : b;
+    const nonZeroC = c === 0 ? 2 : c;
+    const nonZeroD = d === 0 ? 3 : d;
+    
+    const variables = getRandomVariables(3);
+    
+    // Format the terms with appropriate signs
+    const bTerm = formatTerm(nonZeroB, variables[0]);
+    const cTerm = formatTerm(nonZeroC, variables[1], true);
+    const dTerm = formatTerm(nonZeroD, variables[2], true);
+    
+    currentProblem.expression = `${a}(${bTerm}${cTerm}${dTerm}) = ?`;
+    
+    // Calculate the distributive property result
+    const resultB = a * nonZeroB;
+    const resultC = a * nonZeroC;
+    const resultD = a * nonZeroD;
+    
+    // Format the answer terms with appropriate signs
+    const answerBTerm = formatTerm(resultB, variables[0]);
+    const answerCTerm = formatTerm(resultC, variables[1], true);
+    const answerDTerm = formatTerm(resultD, variables[2], true);
+    
+    currentProblem.answer = `${answerBTerm}${answerCTerm}${answerDTerm}`;
+    
+    document.getElementById('problem').textContent = currentProblem.expression;
+    document.getElementById('answer').value = '';
+    document.getElementById('feedback').className = 'feedback';
+    
+    updateVariableButtons(variables);
+}
 
-            const variables = getRandomVariables(3);
-            
-            currentProblem.expression = `${a}(${b}${variables[0]} + ${c}${variables[1]} + ${d}${variables[2]}) = ?`;
-            currentProblem.answer = `${a * b}${variables[0]} + ${a * c}${variables[1]} + ${a * d}${variables[2]}`;
-            
-            document.getElementById('problem').textContent = currentProblem.expression;
-            document.getElementById('answer').value = '';
-            document.getElementById('feedback').className = 'feedback';
-            
-            updateVariableButtons(variables);
-        }
+// Helper function to format a term with appropriate sign
+function formatTerm(coefficient, variable, includeSign = false) {
+    if (coefficient === 0) return "";
+    
+    let term = "";
+    if (includeSign) {
+        // Include explicit + or - sign
+        term = coefficient > 0 ? ` + ${Math.abs(coefficient)}` : ` - ${Math.abs(coefficient)}`;
+    } else {
+        // First term doesn't need a + sign but does need a - if negative
+        term = coefficient > 0 ? `${coefficient}` : `-${Math.abs(coefficient)}`;
+    }
+    
+    return `${term}${variable}`;
+}
 
         function getRandomVariables(count) {
             const shuffled = [...allVariables].sort(() => 0.5 - Math.random());

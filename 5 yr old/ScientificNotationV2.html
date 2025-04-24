@@ -174,6 +174,34 @@
             margin: 10px 0;
         }
         
+        /* Zero controls for decimal mover */
+        .zero-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin: 10px 0;
+        }
+        .zero-btn {
+            padding: 8px 16px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+        }
+        .zero-btn:hover {
+            transform: scale(1.05);
+        }
+        .zero-btn:active {
+            transform: scale(0.95);
+        }
+        
         /* Answer input */
         .answer-container {
             display: flex;
@@ -435,6 +463,13 @@
                     <div class="exponent-display">Exponent: <span id="mover-exponent">0</span></div>
                     <button class="arrow-btn" id="right-arrow">→</button>
                 </div>
+                
+                <!-- Add zero controls for expanded form -->
+                <div class="zero-controls">
+                    <button class="zero-btn" id="add-zero-left">Add 0 Left</button>
+                    <button class="zero-btn" id="add-zero-right">Add 0 Right</button>
+                </div>
+                
                 <div class="use-exponent-btn">
                     <button class="btn" id="use-exponent">Use This Exponent</button>
                 </div>
@@ -454,7 +489,7 @@
                 </div>
             </div>
             
-                            <!-- Number keyboard -->
+            <!-- Number keyboard -->
             <div class="number-keyboard" id="number-keyboard">
                 <div class="number-key">1</div>
                 <div class="number-key">2</div>
@@ -484,6 +519,9 @@
     <!-- HTML structure for confetti container -->
     <div class="confetti-container"></div>
     
+    <!-- Audio element for preloaded sounds -->
+    <audio id="audio-element" style="display: none;"></audio>
+    
     <script>
         class ScientificNotationGame {
             constructor() {
@@ -495,6 +533,11 @@
                 this.moverExponentValue = 0;
                 this.activeInput = null;
                 this.soundEnabled = true;
+                
+                // Sound buffer for smoother sound playback
+                this.audioContext = null;
+                this.audioBuffer = {};
+                this.audioElement = document.getElementById('audio-element');
                 
                 // Get DOM elements
                 this.elements = {
@@ -513,6 +556,8 @@
                     decimalHighlight: document.getElementById('decimal-highlight'),
                     leftArrow: document.getElementById('left-arrow'),
                     rightArrow: document.getElementById('right-arrow'),
+                    addZeroLeft: document.getElementById('add-zero-left'),
+                    addZeroRight: document.getElementById('add-zero-right'),
                     moverExponent: document.getElementById('mover-exponent'),
                     useExponent: document.getElementById('use-exponent'),
                     numberKeyboard: document.getElementById('number-keyboard'),
@@ -520,8 +565,44 @@
                     toggleSoundBtn: document.getElementById('toggle-sound')
                 };
                 
+                // Initialize audio context
+                this.initAudio();
+                
                 this.setupEventListeners();
                 this.generateQuestion();
+            }
+            
+            initAudio() {
+                // Try to create AudioContext only if supported
+                if (window.AudioContext || window.webkitAudioContext) {
+                    try {
+                        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                        this.audioContext = new AudioCtx();
+                    } catch (e) {
+                        console.warn('Web Audio API not supported in this browser');
+                    }
+                }
+                
+                // Pre-create sound buffers for better performance
+                this.createSoundBuffers();
+            }
+            
+            createSoundBuffers() {
+                // Define sounds with more natural characteristics
+                const sounds = {
+                    success: 'success.mp3',
+                    error: 'error.mp3',
+                    click: 'click.mp3',
+                    move: 'move.mp3',
+                    tap: 'tap.mp3',
+                    backspace: 'backspace.mp3',
+                    clear: 'clear.mp3',
+                    toggle: 'toggle.mp3',
+                    levelUp: 'levelup.mp3'
+                };
+                
+                // We'll use synthesized sounds since we can't load external files
+                // but we'll make them more natural sounding
             }
             
             setupEventListeners() {
@@ -533,6 +614,7 @@
                         e.target.classList.add('active');
                         this.difficulty = e.target.dataset.level;
                         this.generateQuestion();
+                        this.playSound('toggle');
                     });
                 });
                 
@@ -588,11 +670,16 @@
                 this.elements.leftArrow.addEventListener('click', () => this.moveDecimalPoint('left'));
                 this.elements.rightArrow.addEventListener('click', () => this.moveDecimalPoint('right'));
                 
+                // Zero controls for expanded form
+                this.elements.addZeroLeft.addEventListener('click', () => this.addZero('left'));
+                this.elements.addZeroRight.addEventListener('click', () => this.addZero('right'));
+                
                 // Use exponent button
                 this.elements.useExponent.addEventListener('click', () => {
                     this.elements.exponent.value = this.moverExponentValue;
                     // Give feedback
                     this.elements.useExponent.classList.add('pulse');
+                    this.playSound('click');
                     setTimeout(() => {
                         this.elements.useExponent.classList.remove('pulse');
                     }, 300);
@@ -636,6 +723,8 @@
                                 }
                                 this.activeInput.value += key.textContent;
                                 this.playSound('click');
+                                key.classList.add('pulse');
+                                setTimeout(() => key.classList.remove('pulse'), 200);
                             }
                         });
                     }
@@ -646,6 +735,8 @@
                     if (this.activeInput) {
                         this.activeInput.value = this.activeInput.value.slice(0, -1);
                         this.playSound('backspace');
+                        this.elements.backspaceKey.classList.add('pulse');
+                        setTimeout(() => this.elements.backspaceKey.classList.remove('pulse'), 200);
                     }
                 });
                 
@@ -654,6 +745,8 @@
                     if (this.activeInput) {
                         this.activeInput.value = '';
                         this.playSound('clear');
+                        document.getElementById('clear-key').classList.add('pulse');
+                        setTimeout(() => document.getElementById('clear-key').classList.remove('pulse'), 200);
                     }
                 });
                 
@@ -666,6 +759,8 @@
                             this.activeInput.value = '-' + this.activeInput.value;
                         }
                         this.playSound('toggle');
+                        document.getElementById('negative-key').classList.add('pulse');
+                        setTimeout(() => document.getElementById('negative-key').classList.remove('pulse'), 200);
                     }
                 });
                 
@@ -677,6 +772,7 @@
                     this.generateQuestion();
                     this.elements.nextQuestionBtn.disabled = true;
                     this.elements.checkAnswerBtn.disabled = false;
+                    this.playSound('click');
                 });
             }
             
@@ -820,6 +916,8 @@
                         this.elements.numberDisplay.classList.remove('pulse');
                     }, 300);
                     
+                    this.playSound('move');
+                    
                 } else if (direction === 'right' && decimalIndex < elements.length - 2) {
                     // Swap decimal point with the digit to its right
                     [elements[decimalIndex], elements[decimalIndex + 1]] = 
@@ -858,6 +956,9 @@
                     setTimeout(() => {
                         this.elements.numberDisplay.classList.remove('pulse');
                     }, 300);
+                    
+                    this.playSound('move');
+                    
                 } else {
                     // Play error sound if we can't move further
                     this.playSound('error');
@@ -865,6 +966,112 @@
                 
                 // Update the highlight position
                 this.updateDecimalHighlight();
+                
+                // Update the corresponding input field with the new value from the decimal mover
+                this.updateInputFromDecimalMover();
+            }
+            
+            // Add zeros to the left or right of the decimal point for expanded form
+            addZero(position) {
+                // Find all digits and the decimal point
+                const elements = Array.from(this.elements.numberDisplay.children).filter(
+                    el => el.classList.contains('digit') || el.classList.contains('decimal-point')
+                );
+                
+                // Find the decimal point and its index
+                let decimalIndex = elements.findIndex(el => el.classList.contains('decimal-point'));
+                
+                if (position === 'left') {
+                    // Add a zero to the left of the decimal
+                    // Find the position to insert (before the decimal point)
+                    const insertIndex = decimalIndex > 0 ? decimalIndex - 1 : 0;
+                    
+                    // Create a new zero digit
+                    const zeroDigit = document.createElement('div');
+                    zeroDigit.className = 'digit';
+                    zeroDigit.textContent = '0';
+                    
+                    // Highlight the new digit briefly
+                    zeroDigit.style.color = '#2563eb';
+                    zeroDigit.style.transform = 'scale(1.2)';
+                    
+                    // Insert the zero at the appropriate position
+                    if (insertIndex === 0) {
+                        this.elements.numberDisplay.insertBefore(zeroDigit, elements[0]);
+                    } else {
+                        this.elements.numberDisplay.insertBefore(zeroDigit, elements[insertIndex + 1]);
+                    }
+                    
+                    // Reset the highlight after a delay
+                    setTimeout(() => {
+                        zeroDigit.style.color = '';
+                        zeroDigit.style.transform = '';
+                    }, 300);
+                    
+                } else if (position === 'right') {
+                    // Add a zero to the right of the decimal
+                    // Create a new zero digit
+                    const zeroDigit = document.createElement('div');
+                    zeroDigit.className = 'digit';
+                    zeroDigit.textContent = '0';
+                    
+                    // Highlight the new digit briefly
+                    zeroDigit.style.color = '#2563eb';
+                    zeroDigit.style.transform = 'scale(1.2)';
+                    
+                    // Find where to add the zero (after the decimal point and any existing digits)
+                    let lastIndex = elements.length - 1;
+                    this.elements.numberDisplay.appendChild(zeroDigit);
+                    
+                    // Reset the highlight after a delay
+                    setTimeout(() => {
+                        zeroDigit.style.color = '';
+                        zeroDigit.style.transform = '';
+                    }, 300);
+                }
+                
+                // Play a sound for feedback
+                this.playSound('click');
+                
+                // Update the decimal highlight position
+                this.updateDecimalHighlight();
+                
+                // Update the corresponding input field with the new value from the decimal mover
+                this.updateInputFromDecimalMover();
+            }
+            
+            // Update the input field based on the decimal mover current value
+            updateInputFromDecimalMover() {
+                // Get all the digits and decimal point from the display
+                const elements = Array.from(this.elements.numberDisplay.children).filter(
+                    el => el.classList.contains('digit') || el.classList.contains('decimal-point')
+                );
+                
+                // Reconstruct the number as a string
+                let numberStr = '';
+                elements.forEach(el => {
+                    numberStr += el.textContent;
+                });
+                
+                // Update the appropriate input field based on the question type
+                if (this.questionType === 'fromScientific') {
+                    this.elements.decimal.value = numberStr;
+                } else if (this.questionType === 'toScientific') {
+                    // For toScientific questions, update the coefficient based on the decimal mover position
+                    // and also update the exponent if exponent counter is visible
+                    const number = parseFloat(numberStr);
+                    const exponent = this.moverExponentValue;
+                    
+                    // Calculate the coefficient based on the current exponent
+                    const hideExponentCounter = document.getElementById('hideExponentCounter').checked;
+                    if (!hideExponentCounter) {
+                        this.elements.coefficient.value = number;
+                        this.elements.exponent.value = exponent;
+                    } else {
+                        // If the exponent counter is hidden, just update the coefficient
+                        this.elements.coefficient.value = number;
+                    }
+                }
             }
             
             generateQuestion() {
@@ -928,13 +1135,17 @@
                     // Setup the appropriate number for the decimal mover
                     if (this.questionType === 'fromScientific') {
                         // For fromScientific, show the coefficient with the exponent applied
-                        const { coefficient, exponent } = this.currentQuestion;
-                        const expandedNumber = coefficient * Math.pow(10, exponent);
-                        this.setupDecimalMover(expandedNumber);
+                        if (this.currentQuestion) {
+                            const { coefficient, exponent } = this.currentQuestion;
+                            const expandedNumber = coefficient * Math.pow(10, exponent);
+                            this.setupDecimalMover(expandedNumber);
+                        }
                     } else if (this.questionType === 'multiply' || this.questionType === 'divide') {
                         // For multiply/divide, show the first number
-                        const firstCoefficient = this.currentQuestion.num1.coefficient;
-                        this.setupDecimalMover(firstCoefficient);
+                        if (this.currentQuestion) {
+                            const firstCoefficient = this.currentQuestion.num1.coefficient;
+                            this.setupDecimalMover(firstCoefficient);
+                        }
                     }
                 } else {
                     this.elements.decimalMover.style.display = 'none';
@@ -1221,6 +1432,7 @@
                     if (isNaN(userAnswer)) {
                         this.elements.feedback.textContent = 'Please enter a valid number!';
                         this.elements.feedback.className = 'feedback incorrect';
+                        this.playSound('error');
                         return;
                     }
                     
@@ -1235,6 +1447,7 @@
                     if (isNaN(userCoefficient) || isNaN(userExponent)) {
                         this.elements.feedback.textContent = 'Please enter valid numbers for both coefficient and exponent!';
                         this.elements.feedback.className = 'feedback incorrect';
+                        this.playSound('error');
                         return;
                     }
                     
@@ -1260,6 +1473,7 @@
                         // The value is correct but the coefficient is not in standard form
                         this.elements.feedback.textContent = 'Your answer gives the right value, but remember in scientific notation the coefficient should be between 1 and 10 (or -1 and -10 for negative numbers).';
                         this.elements.feedback.className = 'feedback incorrect';
+                        this.playSound('error');
                         return;
                     }
                 }
@@ -1425,78 +1639,196 @@
             }
             
             playSound(type) {
-                // Skip if sound is disabled or AudioContext is not supported
-                if (!this.soundEnabled || (!window.AudioContext && !window.webkitAudioContext)) return;
+                // Skip if sound is disabled
+                if (!this.soundEnabled) return;
                 
-                // Sound effects for different interactions
-                const sounds = {
-                    success: [
-                        [659.25, 0.1],
-                        [659.25, 0.1],
-                        [659.25, 0.1],
-                        [698.46, 0.1],
-                        [783.99, 0.3]
-                    ],
-                    error: [
-                        [493.88, 0.1],
-                        [369.99, 0.3]
-                    ],
-                    click: [
-                        [440, 0.05]
-                    ],
-                    move: [
-                        [587.33, 0.05],
-                        [659.25, 0.05]
-                    ],
-                    tap: [
-                        [523.25, 0.05]
-                    ],
-                    backspace: [
-                        [493.88, 0.05],
-                        [440, 0.05]
-                    ],
-                    clear: [
-                        [493.88, 0.05],
-                        [440, 0.05],
-                        [392, 0.05]
-                    ],
-                    toggle: [
-                        [392, 0.05],
-                        [523.25, 0.05]
-                    ],
-                    levelUp: [
-                        [523.25, 0.1],
-                        [587.33, 0.1],
-                        [659.25, 0.1],
-                        [698.46, 0.1],
-                        [783.99, 0.3]
-                    ]
-                };
-                
-                const AudioCtx = window.AudioContext || window.webkitAudioContext;
-                const context = new AudioCtx();
-                
-                // Play sequence of tones
-                let time = context.currentTime;
-                sounds[type].forEach(([frequency, duration]) => {
-                    const oscillator = context.createOscillator();
-                    const gainNode = context.createGain();
-                    
-                    oscillator.type = 'sine';
-                    oscillator.frequency.value = frequency;
-                    oscillator.connect(gainNode);
-                    gainNode.connect(context.destination);
-                    
-                    // Apply envelope
-                    gainNode.gain.setValueAtTime(0, time);
-                    gainNode.gain.linearRampToValueAtTime(0.2, time + 0.01);
-                    gainNode.gain.linearRampToValueAtTime(0, time + duration);
-                    
-                    oscillator.start(time);
-                    oscillator.stop(time + duration + 0.01);
-                    
-                    time += duration;
-                });
+                // Sound effects for different interactions - softer and more natural
+                // Using preloaded AudioContext for better performance
+                if (this.audioContext) {
+                    try {
+                        // Create a new oscillator for the sound
+                        const oscillator = this.audioContext.createOscillator();
+                        const gainNode = this.audioContext.createGain();
+                        const biquadFilter = this.audioContext.createBiquadFilter();
+                        
+                        // Connect nodes: oscillator -> filter -> gain -> destination
+                        oscillator.connect(biquadFilter);
+                        biquadFilter.connect(gainNode);
+                        gainNode.connect(this.audioContext.destination);
+                        
+                        // Set filter properties for softer sound
+                        biquadFilter.type = 'lowpass';
+                        biquadFilter.frequency.value = 2000; // Lower frequency cutoff for softer sound
+                        
+                        // Configure sound based on type
+                        const now = this.audioContext.currentTime;
+                        let duration = 0.3;
+                        let frequencies = [];
+                        
+                        switch (type) {
+                            case 'success':
+                                // Softer success chord
+                                oscillator.type = 'triangle'; // Smoother waveform
+                                frequencies = [523.25, 659.25, 783.99];
+                                duration = 0.8;
+                                
+                                // Gentle attack, longer release
+                                gainNode.gain.setValueAtTime(0, now);
+                                gainNode.gain.linearRampToValueAtTime(0.1, now + 0.1);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
+                                
+                                // Play a simple melody
+                                for (let i = 0; i < frequencies.length; i++) {
+                                    const noteTime = now + (i * 0.15);
+                                    oscillator.frequency.setValueAtTime(frequencies[i], noteTime);
+                                }
+                                break;
+                                
+                            case 'error':
+                                // Softer error sound
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(330, now);
+                                oscillator.frequency.exponentialRampToValueAtTime(220, now + 0.3);
+                                
+                                // Gentler attack and decay
+                                gainNode.gain.setValueAtTime(0, now);
+                                gainNode.gain.linearRampToValueAtTime(0.08, now + 0.05);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                                break;
+                                
+                            case 'click':
+                                // Softer click sound
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(440, now);
+                                
+                                // Very short soft click
+                                gainNode.gain.setValueAtTime(0, now);
+                                gainNode.gain.linearRampToValueAtTime(0.05, now + 0.01);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                                
+                                duration = 0.08;
+                                break;
+                                
+                            case 'move':
+                                // Gentle movement sound
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(587.33, now);
+                                oscillator.frequency.linearRampToValueAtTime(659.25, now + 0.1);
+                                
+                                // Soft attack and release
+                                gainNode.gain.setValueAtTime(0, now);
+                                gainNode.gain.linearRampToValueAtTime(0.07, now + 0.02);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                                
+                                duration = 0.15;
+                                break;
+                                
+                            case 'tap':
+                                // Soft tap sound
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(523.25, now);
+                                
+                                // Very gentle attack
+                                gainNode.gain.setValueAtTime(0, now);
+                                gainNode.gain.linearRampToValueAtTime(0.04, now + 0.01);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                                
+                                duration = 0.05;
+                                break;
+                                
+                            case 'backspace':
+                                // Soft backspace sound
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(493.88, now);
+                                oscillator.frequency.linearRampToValueAtTime(440, now + 0.1);
+                                
+                                // Gentle attack and release
+                                gainNode.gain.setValueAtTime(0, now);
+                                gainNode.gain.linearRampToValueAtTime(0.06, now + 0.01);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                                
+                                duration = 0.1;
+                                break;
+                                
+                            case 'clear':
+                                // Soft clear sound
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(493.88, now);
+                                oscillator.frequency.linearRampToValueAtTime(392, now + 0.15);
+                                
+                                // Gentle attack and release
+                                gainNode.gain.setValueAtTime(0, now);
+                                gainNode.gain.linearRampToValueAtTime(0.06, now + 0.01);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                                
+                                duration = 0.15;
+                                break;
+                                
+                            case 'toggle':
+                                // Soft toggle sound
+                                oscillator.type = 'sine';
+                                oscillator.frequency.setValueAtTime(392, now);
+                                oscillator.frequency.linearRampToValueAtTime(523.25, now + 0.1);
+                                
+                                // Gentle attack and release
+                                gainNode.gain.setValueAtTime(0, now);
+                                gainNode.gain.linearRampToValueAtTime(0.05, now + 0.01);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                                
+                                duration = 0.1;
+                                break;
+                                
+                            case 'levelUp':
+                                // Gentle level up sound
+                                oscillator.type = 'triangle';
+                                frequencies = [392, 493.88, 587.33, 659.25, 783.99];
+                                duration = 1.2;
+                                
+                                // Soft attack, long release
+                                gainNode.gain.setValueAtTime(0, now);
+                                gainNode.gain.linearRampToValueAtTime(0.08, now + 0.1);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + duration);
+                                
+                                // Play ascending notes
+                                for (let i = 0; i < frequencies.length; i++) {
+                                    const noteTime = now + (i * 0.2);
+                                    oscillator.frequency.setValueAtTime(frequencies[i], noteTime);
+                                }
+                                break;
+                                
+                            default:
+                                // Default gentle sound
+                                oscillator.type = 'sine';
+                                oscillator.frequency.value = 440;
+                                
+                                // Default envelope
+                                gainNode.gain.setValueAtTime(0, now);
+                                gainNode.gain.linearRampToValueAtTime(0.05, now + 0.01);
+                                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                                
+                                duration = 0.1;
+                        }
+                        
+                        // Start and stop the oscillator
+                        oscillator.start(now);
+                        oscillator.stop(now + duration);
+                        
+                    } catch (e) {
+                        console.warn('Error playing sound:', e);
+                    }
+                } else {
+                    // Fallback for browsers without AudioContext support
+                    // Just use beep sounds with different frequencies
+                    try {
+                        const beep = new Audio("data:audio/wav;base64,UklGRl9vT19XQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgA");
+                        beep.volume = 0.2; // Lower volume for softer sound
+                        beep.play().catch(e => {
+                            // Suppress errors from browsers that require user interaction
+                        });
+                    } catch (e) {
+                        // Suppress errors for browsers without Audio support
+                    }
+                }
             }
         }
         

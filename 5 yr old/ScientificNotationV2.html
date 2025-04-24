@@ -618,10 +618,28 @@
                 // Add the decimal highlight element back
                 this.elements.numberDisplay.appendChild(this.elements.decimalHighlight);
                 
+                // Handle negative numbers by extracting the sign
+                let isNegative = false;
+                let absNumber = number;
+                
+                if (number < 0) {
+                    isNegative = true;
+                    absNumber = Math.abs(number);
+                }
+                
                 // Convert number to string and split into digits
-                const numberStr = number.toString();
+                const numberStr = absNumber.toString();
                 let digitPosition = 0;
                 let decimalPosition = -1;
+                
+                // Add negative sign if needed
+                if (isNegative) {
+                    const negativeSign = document.createElement('div');
+                    negativeSign.className = 'digit';
+                    negativeSign.textContent = '-';
+                    negativeSign.style.color = '#dc2626';
+                    this.elements.numberDisplay.appendChild(negativeSign);
+                }
                 
                 // Create digit elements
                 for (let i = 0; i < numberStr.length; i++) {
@@ -821,25 +839,45 @@
                 
                 switch (this.difficulty) {
                     case 'easy':
-                        // Simpler numbers for younger kids
-                        number = Math.floor(Math.random() * 999) + 1;
+                        // Simpler numbers for younger kids, including simple negative numbers
+                        if (Math.random() < 0.7) {
+                            number = Math.floor(Math.random() * 999) + 1;
+                        } else {
+                            number = -(Math.floor(Math.random() * 999) + 1);
+                        }
                         break;
                     case 'medium':
-                        // Include smaller numbers (negative exponents)
-                        if (Math.random() < 0.5) {
+                        // Include smaller numbers (negative exponents) and negative numbers
+                        if (Math.random() < 0.4) {
                             number = Math.floor(Math.random() * 9999) + 1;
-                        } else {
+                        } else if (Math.random() < 0.7) {
                             number = (Math.random() * 0.99) + 0.01;
                             number = parseFloat(number.toFixed(3)); // Limit decimal places
+                        } else {
+                            // Negative numbers
+                            if (Math.random() < 0.5) {
+                                number = -(Math.floor(Math.random() * 9999) + 1);
+                            } else {
+                                number = -((Math.random() * 0.99) + 0.01);
+                                number = parseFloat(number.toFixed(3)); // Limit decimal places
+                            }
                         }
                         break;
                     case 'hard':
-                        // Very large or very small numbers
-                        if (Math.random() < 0.5) {
+                        // Very large or very small numbers, including negative
+                        if (Math.random() < 0.3) {
                             number = Math.floor(Math.random() * 999999) + 1000;
-                        } else {
+                        } else if (Math.random() < 0.6) {
                             number = Math.random() * 0.001 + 0.0001;
                             number = parseFloat(number.toFixed(6)); // Limit decimal places
+                        } else {
+                            // Negative numbers
+                            if (Math.random() < 0.5) {
+                                number = -(Math.floor(Math.random() * 999999) + 1000);
+                            } else {
+                                number = -((Math.random() * 0.001) + 0.0001);
+                                number = parseFloat(number.toFixed(6)); // Limit decimal places
+                            }
                         }
                         break;
                 }
@@ -849,10 +887,13 @@
                 
                 // Calculate correct answer
                 const exponent = Math.floor(Math.log10(Math.abs(number)));
-                const coefficient = number / Math.pow(10, exponent);
+                let coefficient = number / Math.pow(10, exponent);
+                
+                // Keep the sign with the coefficient for negative numbers
+                coefficient = parseFloat(coefficient.toFixed(4));
                 
                 this.correctAnswer = {
-                    coefficient: parseFloat(coefficient.toFixed(4)),
+                    coefficient: coefficient,
                     exponent: exponent
                 };
                 
@@ -869,18 +910,33 @@
                         coefficient = Math.random() * 9 + 1;
                         coefficient = parseFloat(coefficient.toFixed(1));
                         exponent = Math.floor(Math.random() * 3); // 0 to 2
+                        
+                        // Add negative coefficients sometimes
+                        if (Math.random() < 0.3) {
+                            coefficient = -coefficient;
+                        }
                         break;
                     case 'medium':
                         // Include negative exponents
                         coefficient = Math.random() * 9 + 1;
                         coefficient = parseFloat(coefficient.toFixed(2));
                         exponent = Math.floor(Math.random() * 6) - 3; // -3 to 2
+                        
+                        // Add negative coefficients sometimes
+                        if (Math.random() < 0.4) {
+                            coefficient = -coefficient;
+                        }
                         break;
                     case 'hard':
                         // Larger range of exponents
                         coefficient = Math.random() * 9 + 1;
                         coefficient = parseFloat(coefficient.toFixed(2));
                         exponent = Math.floor(Math.random() * 10) - 5; // -5 to 4
+                        
+                        // Add negative coefficients sometimes
+                        if (Math.random() < 0.5) {
+                            coefficient = -coefficient;
+                        }
                         break;
                 }
                 
@@ -890,6 +946,12 @@
                 // Calculate correct answer
                 const standardForm = coefficient * Math.pow(10, exponent);
                 this.correctAnswer = standardForm;
+                
+                // If we're showing the decimal mover for all problems, set it up with the coefficient
+                const alwaysShowDecimalMover = document.getElementById('alwaysShowDecimalMover').checked;
+                if (alwaysShowDecimalMover) {
+                    this.setupDecimalMover(coefficient);
+                }
             }
             
             generateMultiplyQuestion() {
@@ -906,6 +968,15 @@
                         num2Coefficient = Math.random() * 9 + 1;
                         num2Coefficient = parseFloat(num2Coefficient.toFixed(1));
                         num2Exponent = Math.floor(Math.random() * 4) - 1; // -1 to 2
+                        
+                        // Add some negative coefficients
+                        if (Math.random() < 0.3) {
+                            if (Math.random() < 0.5) {
+                                num1Coefficient = -num1Coefficient;
+                            } else {
+                                num2Coefficient = -num2Coefficient;
+                            }
+                        }
                         break;
                     case 'hard':
                         // More complex multiplication
@@ -916,6 +987,15 @@
                         num2Coefficient = Math.random() * 9 + 1;
                         num2Coefficient = parseFloat(num2Coefficient.toFixed(2));
                         num2Exponent = Math.floor(Math.random() * 6) - 3; // -3 to 2
+                        
+                        // Add some negative coefficients
+                        if (Math.random() < 0.4) {
+                            if (Math.random() < 0.5) {
+                                num1Coefficient = -num1Coefficient;
+                            } else {
+                                num2Coefficient = -num2Coefficient;
+                            }
+                        }
                         break;
                     default:
                         // Default to medium
@@ -940,11 +1020,11 @@
                 let resultCoefficient = num1Coefficient * num2Coefficient;
                 let resultExponent = num1Exponent + num2Exponent;
                 
-                // Adjust if coefficient is not between 1 and 10
-                if (resultCoefficient >= 10) {
+                // Adjust if coefficient is not between 1 and 10 (or -1 and -10 for negative numbers)
+                if (Math.abs(resultCoefficient) >= 10) {
                     resultExponent += 1;
                     resultCoefficient /= 10;
-                } else if (resultCoefficient < 1 && resultCoefficient !== 0) {
+                } else if (Math.abs(resultCoefficient) < 1 && resultCoefficient !== 0) {
                     resultExponent -= 1;
                     resultCoefficient *= 10;
                 }
@@ -953,19 +1033,43 @@
                     coefficient: parseFloat(resultCoefficient.toFixed(4)),
                     exponent: resultExponent
                 };
+                
+                // If we're showing the decimal mover for all problems, set it up with the first coefficient
+                const alwaysShowDecimalMover = document.getElementById('alwaysShowDecimalMover').checked;
+                if (alwaysShowDecimalMover) {
+                    this.setupDecimalMover(num1Coefficient);
+                }
             }
             
             generateDivideQuestion() {
                 let num1Coefficient, num1Exponent, num2Coefficient, num2Exponent;
                 
                 // Generate two numbers in scientific notation for division
-                num1Coefficient = Math.random() * 9 + 1;
-                num1Coefficient = parseFloat(num1Coefficient.toFixed(1));
-                num1Exponent = Math.floor(Math.random() * 6) - 3; // -3 to 2
-                
-                num2Coefficient = Math.random() * 9 + 1;
-                num2Coefficient = parseFloat(num2Coefficient.toFixed(1));
-                num2Exponent = Math.floor(Math.random() * 6) - 3; // -3 to 2
+                // Avoid division by zero or very small numbers that could lead to extremely large results
+                do {
+                    num1Coefficient = Math.random() * 9 + 1;
+                    num1Coefficient = parseFloat(num1Coefficient.toFixed(1));
+                    num1Exponent = Math.floor(Math.random() * 6) - 3; // -3 to 2
+                    
+                    num2Coefficient = Math.random() * 9 + 1;
+                    num2Coefficient = parseFloat(num2Coefficient.toFixed(1));
+                    num2Exponent = Math.floor(Math.random() * 6) - 3; // -3 to 2
+                    
+                    // Add some negative coefficients
+                    if (Math.random() < 0.4) {
+                        if (Math.random() < 0.5) {
+                            num1Coefficient = -num1Coefficient;
+                        } else {
+                            num2Coefficient = -num2Coefficient;
+                        }
+                    }
+                    
+                    // Calculate to check if the result would be reasonable
+                    const resultCoefficient = num1Coefficient / num2Coefficient;
+                    const resultExponent = num1Exponent - num2Exponent;
+                    
+                } while (Math.abs(num2Coefficient) < 0.1 || // Avoid division by very small numbers
+                         Math.abs(num1Exponent - num2Exponent) > 10); // Avoid huge exponent differences
                 
                 this.currentQuestion = {
                     num1: { coefficient: num1Coefficient, exponent: num1Exponent },
@@ -979,11 +1083,11 @@
                 let resultCoefficient = num1Coefficient / num2Coefficient;
                 let resultExponent = num1Exponent - num2Exponent;
                 
-                // Adjust if coefficient is not between 1 and 10
-                if (resultCoefficient >= 10) {
+                // Adjust if coefficient is not between 1 and 10 (or -1 and -10 for negative numbers)
+                if (Math.abs(resultCoefficient) >= 10) {
                     resultExponent += 1;
                     resultCoefficient /= 10;
-                } else if (resultCoefficient < 1 && resultCoefficient !== 0) {
+                } else if (Math.abs(resultCoefficient) < 1 && resultCoefficient !== 0) {
                     resultExponent -= 1;
                     resultCoefficient *= 10;
                 }
@@ -992,6 +1096,12 @@
                     coefficient: parseFloat(resultCoefficient.toFixed(4)),
                     exponent: resultExponent
                 };
+                
+                // If we're showing the decimal mover for all problems, set it up with the first coefficient
+                const alwaysShowDecimalMover = document.getElementById('alwaysShowDecimalMover').checked;
+                if (alwaysShowDecimalMover) {
+                    this.setupDecimalMover(num1Coefficient);
+                }
             }
             
             checkAnswer() {
@@ -1001,21 +1111,49 @@
                     // Check decimal input
                     const userAnswer = parseFloat(this.elements.decimal.value.replace(/\s/g, ''));
                     
+                    if (isNaN(userAnswer)) {
+                        this.elements.feedback.textContent = 'Please enter a valid number!';
+                        this.elements.feedback.className = 'feedback incorrect';
+                        return;
+                    }
+                    
                     // Allow for floating point precision issues
-                    const tolerance = Math.abs(this.correctAnswer) * 0.0001;
+                    const tolerance = Math.max(Math.abs(this.correctAnswer) * 0.001, 0.0001);
                     isCorrect = Math.abs(userAnswer - this.correctAnswer) <= tolerance;
                 } else {
                     // Check scientific notation input
                     const userCoefficient = parseFloat(this.elements.coefficient.value);
                     const userExponent = parseInt(this.elements.exponent.value);
                     
-                    if (!isNaN(userCoefficient) && !isNaN(userExponent)) {
-                        // Allow for small rounding differences in coefficient
-                        const coefficientTolerance = 0.01;
-                        const coefficientCorrect = Math.abs(userCoefficient - this.correctAnswer.coefficient) <= coefficientTolerance;
-                        const exponentCorrect = userExponent === this.correctAnswer.exponent;
-                        
-                        isCorrect = coefficientCorrect && exponentCorrect;
+                    if (isNaN(userCoefficient) || isNaN(userExponent)) {
+                        this.elements.feedback.textContent = 'Please enter valid numbers for both coefficient and exponent!';
+                        this.elements.feedback.className = 'feedback incorrect';
+                        return;
+                    }
+                    
+                    // Allow for small rounding differences in coefficient
+                    const coefficientTolerance = 0.02;
+                    
+                    // For scientific notation, the answer is correct if:
+                    // 1. The coefficient is within 1-10 range (or -1 to -10 for negative)
+                    // 2. The exponent is correct
+                    // 3. The value representing by coefficient × 10^exponent equals the expected answer
+                    
+                    const userValue = userCoefficient * Math.pow(10, userExponent);
+                    const correctValue = this.correctAnswer.coefficient * Math.pow(10, this.correctAnswer.exponent);
+                    
+                    const valueCorrect = Math.abs(userValue - correctValue) <= Math.abs(correctValue) * 0.001;
+                    
+                    // Check if the coefficient is in the correct form (1 ≤ |coefficient| < 10)
+                    const coefficientInCorrectForm = (Math.abs(userCoefficient) >= 1 && Math.abs(userCoefficient) < 10);
+                    
+                    if (valueCorrect && coefficientInCorrectForm) {
+                        isCorrect = true;
+                    } else if (valueCorrect && !coefficientInCorrectForm) {
+                        // The value is correct but the coefficient is not in standard form
+                        this.elements.feedback.textContent = 'Your answer gives the right value, but remember in scientific notation the coefficient should be between 1 and 10 (or -1 and -10 for negative numbers).';
+                        this.elements.feedback.className = 'feedback incorrect';
+                        return;
                     }
                 }
                 

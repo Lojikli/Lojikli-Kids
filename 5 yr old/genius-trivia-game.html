@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genius Kids Trivia</title>
+    <style>
+        /* Base styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f9ff;
+            touch-action: manipulation;
+            color: #1e3a8a;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding-bottom: 80px;
+        }
+        
+        /* Game title and score */
+        .game-title {
+            text-align: center;
+            color: #1e40af;
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .score {
+            text-align: right;
+            color: #1e40af;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .streak {
+            color: #059669;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        /* Category selection */
+        .categories {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        .category-button {
+            padding: 10px 15px;
+            border-radius: 20px;
+            background: white;
+            border: 2px solid #3b82f6;
+            color: #1e40af;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .category-button:hover {
+            background: #dbeafe;
+        }
+        .category-button.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        /* Question container */
+        .question-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            min-height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .question {
+            font-size: 22px;
+            text-align: center;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        
+        /* Answer options */
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .option {
+            padding: 15px;
+            background: white;
+            border: 2px solid #3b82f6;
+            border-radius: 10px;
+            font-size: 18px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 60px;
+        }
+        .option:hover {
+            background: #dbeafe;
+        }
+        .option.correct {
+            background: #10b981;
+            color: white;
+            border-color: #059669;
+        }
+        .option.incorrect {
+            background: #ef4444;
+            color: white;
+            border-color: #dc2626;
+        }
+        
+        /* Hint and next buttons */
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .hint-btn, .next-btn {
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .hint-btn {
+            background: #fef3c7;
+            border: 2px solid #f59e0b;
+            color: #b45309;
+        }
+        .hint-btn:hover {
+            background: #fde68a;
+        }
+        .next-btn {
+            background: #bfdbfe;
+            border: 2px solid #3b82f6;
+            color: #1e40af;
+        }
+        .next-btn:hover {
+            background: #93c5fd;
+        }
+        .next-btn:disabled {
+            background: #e5e7eb;
+            border-color: #9ca3af;
+            color: #6b7280;
+            cursor: not-allowed;
+        }
+        
+        /* Hint display */
+        .hint-display {
+            margin-top: 15px;
+            padding: 15px;
+            background: #fef3c7;
+            border-radius: 8px;
+            border-left: 4px solid #f59e0b;
+            display: none;
+        }
+        
+        /* Feedback display */
+        .feedback {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 15px 0;
+            height: 30px;
+        }
+        .feedback.correct {
+            color: #059669;
+        }
+        .feedback.incorrect {
+            color: #dc2626;
+        }
+        
+        /* Confetti animation */
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #f00;
+            border-radius: 0;
+            animation: fall linear forwards;
+        }
+        @keyframes fall {
+            to {
+                transform: translateY(100vh) rotate(720deg);
+            }
+        }
+        
+        /* Responsive design */
+        @media (max-width: 600px) {
+            .question {
+                font-size: 20px;
+            }
+            .options-container {
+                grid-template-columns: 1fr;
+            }
+            .option {
+                font-size: 16px;
+                padding: 12px 10px;
+                min-height: 50px;
+            }
+            .controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            .hint-btn, .next-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-title">Genius Kids Trivia 🧠✨</div>
+        
+        <div class="score-container">
+            <div class="streak">Streak: <span id="streak">0</span> 🔥</div>
+            <div class="score">Score: <span id="score">0</span> 🏆</div>
+        </div>
+        
+        <div class="categories" id="categories">
+            <button class="category-button active" data-category="mixed">Mixed</button>
+            <button class="category-button" data-category="math">Numbers & Math</button>
+            <button class="category-button" data-category="science">Science</button>
+            <button class="category-button" data-category="nature">Nature & Animals</button>
+            <button class="category-button" data-category="space">Space</button>
+            <button class="category-button" data-category="geography">Geography</button>
+            <button class="category-button" data-category="history">History</button>
+            <button class="category-button" data-category="arts">Arts & Music</button>
+            <button class="category-button" data-category="logic">Logic & Puzzles</button>
+        </div>
+        
+        <div class="question-container">
+            <div class="question" id="question-text">Let's start the trivia adventure! Choose a category above or play mixed questions.</div>
+        </div>
+        
+        <div class="options-container" id="options-container">
+            <!-- Options will be populated by JavaScript -->
+        </div>
+        
+        <div class="hint-display" id="hint-display">
+            <!-- Hint will be displayed here -->
+        </div>
+        
+        <div class="feedback" id="feedback"></div>
+        
+        <div class="controls">
+            <button class="hint-btn" id="hint-btn">Show Hint 💡</button>
+            <button class="next-btn" id="next-btn">Start Game 🚀</button>
+        </div>
+        
+        <div class="confetti-container" id="confetti-container"></div>
+    </div>
+
+    <script>
+        class GeniusTrivia {
+            constructor() {
+                // Game state
+                this.score = 0;
+                this.streak = 0;
+                this.currentQuestion = null;
+                this.selectedCategory = 'mixed';
+                this.questionAnswered = false;
+                this.hasGameStarted = false;
+                
+                // DOM elements
+                this.elements = {
+                    questionText: document.getElementById('question-text'),
+                    optionsContainer: document.getElementById('options-container'),
+                    hintDisplay: document.getElementById('hint-display'),
+                    feedback: document.getElementById('feedback'),
+                    scoreDisplay: document.getElementById('score'),
+                    streakDisplay: document.getElementById('streak'),
+                    hintBtn: document.getElementById('hint-btn'),
+                    nextBtn: document.getElementById('next-btn'),
+                    categoryButtons: document.querySelectorAll('.category-button'),
+                    confettiContainer: document.getElementById('confetti-container')
+                };
+                
+                // Audio elements
+                this.sounds = {
+                    correct: new Audio('data:audio/mp3;base64,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'),
+                    incorrect: new Audio('data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAATAAADY29tbWVudABVbmtub3duAFRYWFgAAAARAAADYWxidW0AVW5rbm93bgBUWFhYAAAAEgAAA2dlbnJlAFVua25vd24AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uUcAAAFYBjxVBQAAMBDGqPAgAUSH7Dfh2AAA8P2G9DkAAAAAFr0mRoihCYhMDMWkP5zCyDKDwJnMsIFHkDnDmMrMsIsyAhB/B3MnJBigwAWDtDzPsNQMAIVDCDGFGMEGQFwMpMIIQcyTAgwODAhAEQBP4eCYAoxA5zFAcMAIcwHSgvB9GjmDIYIKAthkZiGkDGC2MKEIwwgQChQAoAAwCIYAIAQQAGZGvSMA4wAQvOF7lCDQOzABgJCBVMBYMDoQKQVTBSgBAABnFIGAIAOYGgBJgFAAmAeAoYBIAwIA6YLpRpiKCwmBoCAYCYAoQAaXWp/RQvWGCgBaEAASjJt0wVQAAMBoyBQDTAEAFMA0AUwCwCjADAGMAYAwcAamFeXzxKwwyYYMAuYUQFYQAOZCBhfAjAoDQ8A1OBKFBgYBgBC0CYM5cOBsDwFD4DpgLAKiQA5gOgGIIBEwEgGTAYALAgEQwCwCDBDKLMQk9MwUgQlOhGYqWETwPc+A0ABrwHEMDUDQwWhANUQAX0wlAMDIQD7MCwA4wDQAjCyKGMBsGUwRwWTA7AeEAETABALMAcAgwBgBQhMpjXjEmEcCKYERAgKYAYABgEACGAwACYZp25jIm8mgwCUYAQCIXAHMACmEoA4YAYCJgBACCABTUPCBIg2AwCJC1UwIQCDAdA7MCQAcwCgAjGODiMEIDYQAVMT11MhgFwMAbTBDAgoBRhiAImCMBuYBQDBgFgEGAiAIYDIAhk4v6m8yA0YEoJxgQgKBwACJqbLU4MRqMDsLQbLC4MYsYAKCvAA6MLtQMJMHwwHA+FjOYAYKICAPnSwwPxAwOg0wfgITBBAkMdA5MNcVw1/GYKjEEChEDxgAAZJJmYjYmUzU1MvpTEzOznZ0zFpIx+AMdADRjQy4GJbQqFEYYQkCQZkUYDBiA8YPXGYJjkEkAJAIDgcVGMNjDsCAAG5Vo8ZSIBwaYLJmKgZj8GdZqmfJhUSYfymLmBjcGZwjGIwZpOgZujGMGJiggYEAmDgRMKiDIcAwMDBYOlgEQgYhLmxA4LjMIQDASEJjBdoVVbf+7f+7P+9P+7v/+lKGhh/jEn//////////////////////////////////////////9f7///5N///////////////8+ZnSRtmBOYsKF1CMQAAAABPH5AAAAZTA4YcnZ/+5Rk34A5koiNsYd3sEnxEbYe7vYJECI0hB3ewRzERoDDu9gvIoTQNt3e89tUTw7OI2/qvdV/uu3////+1Xfe////9F3/TvXZPM+/6YxBTUUzLjEwMKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqo='),
+                    hint: new Audio('data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAATAAADY29tbWVudABVbmtub3duAFRYWFgAAAARAAADYWxidW0AVW5rbm93bgBUWFhYAAAAEgAAA2dlbnJlAFVua25vd24AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uUcAAAGAAnlaCCQEL1BPK0EEgAXMC+VwIMAAugF8rYQYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQAP/7lGQBj/AAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ=='),
+                    celebration: new Audio('data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAATAAADY29tbWVudABVbmtub3duAFRYWFgAAAARAAADYWxidW0AVW5rbm93bgBUWFhYAAAAEgAAA2dlbnJlAFVua25vd24AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uUcAAAGkAnlbBxAAMJBPK2DiAAAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==')
+                };
+                
+                // Initialize the question database
+                this.initQuestionDatabase();
+                
+                // Set up event listeners
+                this.setupEventListeners();
+            }
+            
+            setupEventListeners() {
+                // Next button
+                this.elements.nextBtn.addEventListener('click', () => {
+                    if (this.hasGameStarted) {
+                        if (this.questionAnswered) {
+                            this.loadQuestion();
+                        }
+                    } else {
+                        this.hasGameStarted = true;
+                        this.elements.nextBtn.textContent = 'Next Question ➡️';
+                        this.loadQuestion();
+                    }
+                });
+                
+                // Hint button
+                this.elements.hintBtn.addEventListener('click', () => {
+                    if (this.currentQuestion) {
+                        this.elements.hintDisplay.style.display = 'block';
+                        this.elements.hintDisplay.textContent = this.currentQuestion.hint;
+                        this.sounds.hint.play();
+                    }
+                });
+                
+                // Category buttons
+                this.elements.categoryButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        this.elements.categoryButtons.forEach(btn => btn.classList.remove('active'));
+                        button.classList.add('active');
+                        this.selectedCategory = button.dataset.category;
+                        
+                        if (this.hasGameStarted) {
+                            this.loadQuestion();
+                        }
+                    });
+                });
+            }
+            
+            initQuestionDatabase() {
+                // Create question database with 300+ questions across various categories
+                this.questions = {
+                    math: [
+                        {
+                            question: "What comes after the number 9?",
+                            options: ["10", "8", "11", "7"],
+                            answer: "10",
+                            hint: "It's a two-digit number."
+                        },
+                        {
+                            question: "If you have 3 apples 🍎 and get 2 more 🍎, how many do you have?",
+                            options: ["5", "3", "6", "4"],
+                            answer: "5",
+                            hint: "Count 3 and then add 2 more."
+                        },
+                        {
+                            question: "What shape has 3 sides?",
+                            options: ["Triangle", "Square", "Circle", "Rectangle"],
+                            answer: "Triangle",
+                            hint: "The name starts with 'T'."
+                        },
+                        {
+                            question: "Which number is larger: 15 or 51?",
+                            options: ["51", "15", "They're equal", "Neither"],
+                            answer: "51",
+                            hint: "Look at the tens place (first digit)."
+                        },
+                        {
+                            question: "What is half of 8?",
+                            options: ["4", "2", "6", "3"],
+                            answer: "4",
+                            hint: "Divide 8 into two equal parts."
+                        },
+                        {
+                            question: "How many sides does a hexagon have?",
+                            options: ["6", "5", "7", "8"],
+                            answer: "6",
+                            hint: "'Hex' means six in Greek."
+                        },
+                        {
+                            question: "What is 3+3+3?",
+                            options: ["9", "6", "3", "12"],
+                            answer: "9",
+                            hint: "Add all three numbers together."
+                        },
+                        {
+                            question: "If today is Monday, what day was yesterday?",
+                            options: ["Sunday", "Saturday", "Tuesday", "Friday"],
+                            answer: "Sunday",
+                            hint: "Monday is the first day of the week, so yesterday was the last day of the previous week."
+                        },
+                        {
+                            question: "What number is 1 less than 20?",
+                            options: ["19", "21", "18", "10"],
+                            answer: "19",
+                            hint: "Count backwards from 20."
+                        },
+                        {
+                            question: "If you have 10 fingers and count them all, what number do you end with?",
+                            options: ["10", "9", "8", "11"],
+                            answer: "10",
+                            hint: "Start counting from 1 until you've counted all your fingers."
+                        },
+                        {
+                            question: "Which shape rolls best? 🔄",
+                            options: ["Circle", "Square", "Triangle", "Rectangle"],
+                            answer: "Circle",
+                            hint: "It has no corners or edges."
+                        },
+                        {
+                            question: "What is 5+5?",
+                            options: ["10", "11", "9", "15"],
+                            answer: "10",
+                            hint: "Count 5 and then 5 more."
+                        },
+                        {
+                            question: "How many hours are in a day?",
+                            options: ["24", "12", "36", "60"],
+                            answer: "24",
+                            hint: "The clock goes around twice in a full day."
+                        },
+                        {
+                            question: "What is double 7?",
+                            options: ["14", "10", "17", "21"],
+                            answer: "14",
+                            hint: "Double means two times."
+                        },
+                        {
+                            question: "How many sides does a square have?",
+                            options: ["4", "3", "5", "6"],
+                            answer: "4",
+                            hint: "Count the lines around the shape."
+                        },
+                        {
+                            question: "Which number comes between 30 and 32?",
+                            options: ["31", "29", "33", "35"],
+                            answer: "31",
+                            hint: "Count up from 30."
+                        },
+                        {
+                            question: "If you have 6 flowers 🌸 and give away 2 🌸, how many do you have left?",
+                            options: ["4", "3", "5", "2"],
+                            answer: "4",
+                            hint: "Subtract 2 from 6."
+                        },
+                        {
+                            question: "What is 4 × 2?",
+                            options: ["8", "6", "10", "4"],
+                            answer: "8",
+                            hint: "4 added to itself 2 times."
+                        },
+                        {
+                            question: "What number is 10 more than 15?",
+                            options: ["25", "20", "26", "16"],
+                            answer: "25",
+                            hint: "Add 10 to 15."
+                        },
+                        {
+                            question: "Which fraction is bigger: 1/2 or 1/4?",
+                            options: ["1/2", "1/4", "They're equal", "Neither"],
+                            answer: "1/2",
+                            hint: "The smaller the denominator (bottom number), the bigger the piece."
+                        },
+                        {
+                            question: "What shape is a ⚽ ball most like?",
+                            options: ["Sphere", "Circle", "Oval", "Cylinder"],
+                            answer: "Sphere",
+                            hint: "It's a 3D shape that's round in all directions."
+                        },
+                        {
+                            question: "If a pizza 🍕 has 8 slices and you eat 3, how many are left?",
+                            options: ["5", "4", "6", "3"],
+                            answer: "5",
+                            hint: "Subtract 3 from 8."
+                        },
+                        {
+                            question: "What is the next number: 2, 4, 6, 8, __?",
+                            options: ["10", "9", "12", "7"],
+                            answer: "10",
+                            hint: "These are even numbers counting up by 2."
+                        },
+                        {
+                            question: "If you add 7+3, what do you get?",
+                            options: ["10", "9", "11", "13"],
+                            answer: "10",
+                            hint: "It's a number that comes after 9."
+                        },
+                        {
+                            question: "How many corners does a triangle have?",
+                            options: ["3", "2", "4", "6"],
+                            answer: "3",
+                            hint: "Count the points where the sides meet."
+                        },
+                        {
+                            question: "What is 20-5?",
+                            options: ["15", "25", "10", "5"],
+                            answer: "15",
+                            hint: "Take away 5 from 20."
+                        },
+                        {
+                            question: "If you have 4 groups of 3 stars ⭐, how many stars do you have in total?",
+                            options: ["12", "7", "10", "15"],
+                            answer: "12",
+                            hint: "Multiply 4 by 3."
+                        },
+                        {
+                            question: "What is half of 10?",
+                            options: ["5", "2", "4", "8"],
+                            answer: "5",
+                            hint: "Divide 10 into two equal parts."
+                        },
+                        {
+                            question: "Which is not a 3D shape?",
+                            options: ["Circle", "Cube", "Sphere", "Cylinder"],
+                            answer: "Circle",
+                            hint: "A 3D shape has depth, height, and width."
+                        },
+                        {
+                            question: "What is 9+9?",
+                            options: ["18", "16", "20", "81"],
+                            answer: "18",
+                            hint: "Add 9 to itself."
+                        },
+                        {
+                            question: "How many minutes are in an hour?",
+                            options: ["60", "30", "100", "24"],
+                            answer: "60",
+                            hint: "Look at a clock and count the minute marks."
+                        },
+                        {
+                            question: "What shape has 8 sides?",
+                            options: ["Octagon", "Hexagon", "Pentagon", "Decagon"],
+                            answer: "Octagon",
+                            hint: "'Oct' means eight, like October used to be the 8th month."
+                        },
+                        {
+                            question: "If you count by 5s, which number comes after 15?",
+                            options: ["20", "16", "25", "10"],
+                            answer: "20",
+                            hint: "Add 5 to 15."
+                        },
+                        {
+                            question: "What's the largest single-digit number?",
+                            options: ["9", "10", "8", "1"],
+                            answer: "9",
+                            hint: "It's the last number before we need two digits."
+                        },
+                        {
+                            question: "How many months have 31 days?",
+                            options: ["7", "6", "5", "12"],
+                            answer: "7",
+                            hint: "January, March, May, July, August, October, and December."
+                        },
+                        {
+                            question: "What is 6+7?",
+                            options: ["13", "12", "14", "11"],
+                            answer: "13",
+                            hint: "Count 6 and then 7 more."
+                        }
+                    ],
+                    science: [
+                        {
+                            question: "What do plants need to grow besides water and soil?",
+                            options: ["Sunlight", "Music", "Toys", "Books"],
+                            answer: "Sunlight",
+                            hint: "It comes from the sky during the day."
+                        },
+                        {
+                            question: "Which animal lays eggs? 🥚",
+                            options: ["Bird", "Dog", "Cow", "Lion"],
+                            answer: "Bird",
+                            hint: "It has feathers and wings."
+                        },
+                        {
+                            question: "What is the largest organ in the human body?",
+                            options: ["Skin", "Heart", "Brain", "Stomach"],
+                            answer: "Skin",
+                            hint: "It covers your entire body."
+                        },
+                        {
+                            question: "What do we call water when it turns into a gas?",
+                            options: ["Steam", "Ice", "Rain", "Snow"],
+                            answer: "Steam",
+                            hint: "You can see it rise from hot water."
+                        },
+                        {
+                            question: "What kind of energy comes from the sun?",
+                            options: ["Light and Heat", "Sound", "Wind", "Electricity"],
+                            answer: "Light and Heat",
+                            hint: "It helps us see and keeps us warm."
+                        },
+                        {
+                            question: "What do you call the force that pulls everything toward Earth?",
+                            options: ["Gravity", "Magnetism", "Electricity", "Wind"],
+                            answer: "Gravity",
+                            hint: "It's why things fall down instead of up."
+                        },
+                        {
+                            question: "Which part of a plant takes in water from the soil?",
+                            options: ["Roots", "Leaves", "Stem", "Flower"],
+                            answer: "Roots",
+                            hint: "They grow underground."
+                        },
+                        {
+                            question: "What is the name of our planet?",
+                            options: ["Earth", "Mars", "Jupiter", "Moon"],
+                            answer: "Earth",
+                            hint: "It's the third planet from the sun."
+                        },
+                        {
+                            question: "What gas do humans breathe in?",
+                            options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"],
+                            answer: "Oxygen",
+                            hint: "Plants produce this gas that we need to live."
+                        },
+                        {
+                            question: "Which sense lets you know if something is hot or cold?",
+                            options: ["Touch", "Taste", "Sight", "Hearing"],
+                            answer: "Touch",
+                            hint: "You use your skin for this sense."
+                        },
+                        {
+                            question: "What do we call a baby frog? 🐸",
+                            options: ["Tadpole", "Puppy", "Cub", "Chick"],
+                            answer: "Tadpole",
+                            hint: "It looks like a small fish with a tail."
+                        },
+                        {
+                            question: "What happens to water when it freezes?",
+                            options: ["It turns to ice", "It turns to steam", "It disappears", "It turns to soil"],
+                            answer: "It turns to ice",
+                            hint: "This happens when it gets very cold."
+                        },
+                        {
+                            question: "What do bees collect from flowers?",
+                            options: ["Nectar", "Water", "Sugar", "Salt"],
+                            answer: "Nectar",
+                            hint: "They use it to make honey."
+                        },
+                        {
+                            question: "Which animal can change the color of its skin to hide?",
+                            options: ["Chameleon", "Elephant", "Giraffe", "Zebra"],
+                            answer: "Chameleon",
+                            hint: "It's a small reptile with a long tongue."
+                        },
+                        {
+                            question: "What is the hardest natural material on Earth?",
+                            options: ["Diamond", "Rock", "Wood", "Metal"],
+                            answer: "Diamond",
+                            hint: "It's a sparkly gemstone that can cut glass."
+                        },
+                        {
+                            question: "What do plants release into the air that we breathe?",
+                            options: ["Oxygen", "Carbon Dioxide", "Water", "Smoke"],
+                            answer: "Oxygen",
+                            hint: "It's the gas humans need to survive."
+                        },
+                        {
+                            question: "What are the three states of matter?",
+                            options: ["Solid, Liquid, Gas", "Hot, Warm, Cold", "Big, Medium, Small", "Light, Medium, Heavy"],
+                            answer: "Solid, Liquid, Gas",
+                            hint: "Water can be all three: ice, water, and steam."
+                        },
+                        {
+                            question: "What do you call a scientist who studies space?",
+                            options: ["Astronomer", "Biologist", "Chemist", "Geologist"],
+                            answer: "Astronomer",
+                            hint: "They often use telescopes for their work."
+                        },
+                        {
+                            question: "What part of the plant makes food using sunlight?",
+                            options: ["Leaves", "Roots", "Stem", "Flower"],
+                            answer: "Leaves",
+                            hint: "They are usually green."
+                        },
+                        {
+                            question: "What makes sound?",
+                            options: ["Vibrations", "Light", "Heat", "Cold"],
+                            answer: "Vibrations",
+                            hint: "It's a rapid back and forth movement."
+                        },
+                        {
+                            question: "What helps birds fly?",
+                            options: ["Wings", "Tails", "Beaks", "Claws"],
+                            answer: "Wings",
+                            hint: "They flap these to move through the air."
+                        },
+                        {
+                            question: "Which part of your body pumps blood?",
+                            options: ["Heart", "Lungs", "Brain", "Stomach"],
+                            answer: "Heart",
+                            hint: "You can feel it beating in your chest."
+                        },
+                        {
+                            question: "What kind of animal is a dolphin?",
+                            options: ["Mammal", "Fish", "Reptile", "Amphibian"],
+                            answer: "Mammal",
+                            hint: "Like humans, it breathes air and feeds its babies milk."
+                        },
+                        {
+                            question: "Which of these is NOT a renewable resource?",
+                            options: ["Oil", "Wind", "Sunlight", "Water"],
+                            answer: "Oil",
+                            hint: "It takes millions of years to form and we can use it all up."
+                        },
+                        {
+                            question: "What do we call a group of stars that forms a pattern?",
+                            options: ["Constellation", "Galaxy", "Solar System", "Universe"],
+                            answer: "Constellation",
+                            hint: "Examples include the Big Dipper and Orion."
+                        },
+                        {
+                            question: "What causes day and night on Earth?",
+                            options: ["Earth's rotation", "Earth's orbit", "The Moon", "Clouds"],
+                            answer: "Earth's rotation",
+                            hint: "The Earth spins on its axis once every 24 hours."
+                        },
+                        {
+                            question: "Which insect makes honey? 🍯",
+                            options: ["Bee", "Ant", "Butterfly", "Spider"],
+                            answer: "Bee",
+                            hint: "It has black and yellow stripes and can sting."
+                        },
+                        {
+                            question: "What do you call the process when a caterpillar becomes a butterfly?",
+                            options: ["Metamorphosis", "Hibernation", "Photosynthesis", "Evaporation"],
+                            answer: "Metamorphosis",
+                            hint: "It's a complete change in form."
+                        },
+                        {
+                            question: "What is the main gas in Earth's atmosphere?",
+                            options: ["Nitrogen", "Oxygen", "Carbon Dioxide", "Hydrogen"],
+                            answer: "Nitrogen",
+                            hint: "It makes up about 78% of the air."
+                        },
+                        {
+                            question: "What do you call animals that eat only plants?",
+                            options: ["Herbivores", "Carnivores", "Omnivores", "Predators"],
+                            answer: "Herbivores",
+                            hint: "Cows, rabbits, and deer are examples."
+                        },
+                        {
+                            question: "Which of these animals is NOT a mammal?",
+                            options: ["Snake", "Dog", "Cat", "Monkey"],
+                            answer: "Snake",
+                            hint: "Mammals have fur or hair and feed their babies milk."
+                        },
+                        {
+                            question: "What do you call the process of water changing to a gas?",
+                            options: ["Evaporation", "Condensation", "Freezing", "Melting"],
+                            answer: "Evaporation",
+                            hint: "This happens when water gets heated up."
+                        },
+                        {
+                            question: "What is the closest star to Earth?",
+                            options: ["The Sun", "Alpha Centauri", "Sirius", "Polaris"],
+                            answer: "The Sun",
+                            hint: "We see it every day (unless it's cloudy)."
+                        },
+                        {
+                            question: "Which animal sleeps upside down? 🦇",
+                            options: ["Bat", "Lion", "Penguin", "Snake"],
+                            answer: "Bat",
+                            hint: "It uses echolocation to find food in the dark."
+                        }
+                    ],
+                    nature: [
+                        {
+                            question: "Which of these is NOT a season?",
+                            options: ["Monday", "Winter", "Spring", "Fall"],
+                            answer: "Monday",
+                            hint: "Seasons are times of the year with different weather patterns."
+                        },
+                        {
+                            question: "What animal has black and white stripes?",
+                            options: ["Zebra", "Lion", "Elephant", "Giraffe"],
+                            answer: "Zebra",
+                            hint: "It looks like a horse with stripes."
+                        },
+                        {
+                            question: "Where do polar bears live?",
+                            options: ["Arctic", "Jungle", "Desert", "Mountains"],
+                            answer: "Arctic",
+                            hint: "It's very cold and has lots of ice."
+                        },
+                        {
+                            question: "Which insect can light up in the dark? ✨",
+                            options: ["Firefly", "Ant", "Bee", "Spider"],
+                            answer: "Firefly",
+                            hint: "Its light helps it find a mate."
+                        },
+                        {
+                            question: "What do caterpillars turn into?",
+                            options: ["Butterflies", "Spiders", "Birds", "Frogs"],
+                            answer: "Butterflies",
+                            hint: "They go through metamorphosis in a cocoon."
+                        },
+                        {
+                            question: "What is the largest land animal?",
+                            options: ["Elephant", "Giraffe", "Rhinoceros", "Hippopotamus"],
+                            answer: "Elephant",
+                            hint: "It has a long trunk and big ears."
+                        },
+                        {
+                            question: "What color are most leaves in the spring?",
+                            options: ["Green", "Red", "Orange", "Brown"],
+                            answer: "Green",
+                            hint: "This is when they're growing and making food from sunlight."
+                        },
+                        {
+                            question: "Which bird cannot fly? 🐦",
+                            options: ["Penguin", "Eagle", "Sparrow", "Hummingbird"],
+                            answer: "Penguin",
+                            hint: "It's excellent at swimming instead."
+                        },
+                        {
+                            question: "What grows on top of a mushroom?",
+                            options: ["Cap", "Stem", "Leaves", "Branches"],
+                            answer: "Cap",
+                            hint: "It's the umbrella-shaped part."
+                        },
+                        {
+                            question: "What is the fastest land animal?",
+                            options: ["Cheetah", "Lion", "Horse", "Kangaroo"],
+                            answer: "Cheetah",
+                            hint: "It has spots and can run up to 70 mph."
+                        },
+                        {
+                            question: "Which of these animals hibernates in winter?",
+                            options: ["Bear", "Elephant", "Lion", "Monkey"],
+                            answer: "Bear",
+                            hint: "It sleeps through the cold months."
+                        },
+                        {
+                            question: "What type of tree stays green all year round?",
+                            options: ["Evergreen", "Maple", "Oak", "Birch"],
+                            answer: "Evergreen",
+                            hint: "Christmas trees are this type."
+                        },
+                        {
+                            question: "Which animal has a pouch to carry its babies? 🦘",
+                            options: ["Kangaroo", "Zebra", "Elephant", "Giraffe"],
+                            answer: "Kangaroo",
+                            hint: "It's from Australia and hops around."
+                        },
+                        {
+                            question: "What is a baby kangaroo called?",
+                            options: ["Joey", "Cub", "Puppy", "Kit"],
+                            answer: "Joey",
+                            hint: "It lives in its mother's pouch after birth."
+                        },
+                        {
+                            question: "Which animal is known as the 'king of the jungle'?",
+                            options: ["Lion", "Elephant", "Monkey", "Tiger"],
+                            answer: "Lion",
+                            hint: "Male lions have large manes around their heads."
+                        },
+                        {
+                            question: "What do you call a group of wolves?",
+                            options: ["Pack", "Herd", "Flock", "School"],
+                            answer: "Pack",
+                            hint: "They hunt together in this group."
+                        },
+                        {
+                            question: "Which natural event shakes the ground?",
+                            options: ["Earthquake", "Rainbow", "Sunset", "Snow"],
+                            answer: "Earthquake",
+                            hint: "It happens when tectonic plates move."
+                        },
+                        {
+                            question: "What is the largest type of big cat?",
+                            options: ["Tiger", "Lion", "Leopard", "Cheetah"],
+                            answer: "Tiger",
+                            hint: "It has orange fur with black stripes."
+                        },
+                        {
+                            question: "Which ocean is the largest?",
+                            options: ["Pacific", "Atlantic", "Indian", "Arctic"],
+                            answer: "Pacific",
+                            hint: "It covers about one-third of Earth's surface."
+                        },
+                        {
+                            question: "What causes thunder?",
+                            options: ["Lightning", "Rain", "Wind", "Clouds"],
+                            answer: "Lightning",
+                            hint: "The sound comes after you see the flash."
+                        },
+                        {
+                            question: "Which animal can live both in water and on land?",
+                            options: ["Frog", "Fish", "Bird", "Snake"],
+                            answer: "Frog",
+                            hint: "It starts life as a tadpole in water."
+                        },
+                        {
+                            question: "What is a baby horse called?",
+                            options: ["Foal", "Calf", "Kid", "Pup"],
+                            answer: "Foal",
+                            hint: "It can usually stand within an hour of being born."
+                        },
+                        {
+                            question: "What part of a tree are the leaves attached to?",
+                            options: ["Branches", "Trunk", "Roots", "Bark"],
+                            answer: "Branches",
+                            hint: "They grow out from the trunk."
+                        },
+                        {
+                            question: "Which animal is NOT a mammal?",
+                            options: ["Snake", "Tiger", "Whale", "Monkey"],
+                            answer: "Snake",
+                            hint: "Mammals have fur or hair and feed their babies milk."
+                        },
+                        {
+                            question: "What causes rainbows? 🌈",
+                            options: ["Sunlight and rain", "Wind", "Heat", "Snow"],
+                            answer: "Sunlight and rain",
+                            hint: "Light bends (refracts) through water droplets."
+                        },
+                        {
+                            question: "Which of these is a desert plant?",
+                            options: ["Cactus", "Palm tree", "Oak tree", "Fern"],
+                            answer: "Cactus",
+                            hint: "It stores water and has spines instead of leaves."
+                        },
+                        {
+                            question: "What covers most of Earth's surface?",
+                            options: ["Water", "Land", "Desert", "Forest"],
+                            answer: "Water",
+                            hint: "Oceans make up about 71% of our planet."
+                        },
+                        {
+                            question: "What kind of animal is a dolphin?",
+                            options: ["Mammal", "Fish", "Reptile", "Amphibian"],
+                            answer: "Mammal",
+                            hint: "It breathes air through a blowhole and feeds babies milk."
+                        },
+                        {
+                            question: "What is the tallest animal in the world? 🦒",
+                            options: ["Giraffe", "Elephant", "Whale", "Dinosaur"],
+                            answer: "Giraffe",
+                            hint: "It has a very long neck."
+                        },
+                        {
+                            question: "What covers a turtle's body?",
+                            options: ["Shell", "Fur", "Feathers", "Scales"],
+                            answer: "Shell",
+                            hint: "It's a hard protective covering on its back."
+                        },
+                        {
+                            question: "What do we call a place where many trees grow together?",
+                            options: ["Forest", "Desert", "Lake", "Mountain"],
+                            answer: "Forest",
+                            hint: "It's home to many plants and animals."
+                        },
+                        {
+                            question: "Which animal uses a web to catch food?",
+                            options: ["Spider", "Bee", "Ant", "Butterfly"],
+                            answer: "Spider",
+                            hint: "It has eight legs."
+                        },
+                        {
+                            question: "What do you call a large area of flat land with grass and few trees?",
+                            options: ["Prairie", "Mountain", "Desert", "Island"],
+                            answer: "Prairie",
+                            hint: "Bison used to roam these lands in North America."
+                        }
+                    ],
+                    space: [
+                        {
+                            question: "What is the name of our galaxy?",
+                            options: ["Milky Way", "Andromeda", "Solar System", "Jupiter"],
+                            answer: "Milky Way",
+                            hint: "On a clear night, it looks like a milky band across the sky."
+                        },
+                        {
+                            question: "Which planet is known for its beautiful rings? 💫",
+                            options: ["Saturn", "Earth", "Mars", "Venus"],
+                            answer: "Saturn",
+                            hint: "It's the sixth planet from the Sun."
+                        },
+                        {
+                            question: "What is the closest celestial body to Earth?",
+                            options: ["Moon", "Sun", "Mars", "Venus"],
+                            answer: "Moon",
+                            hint: "We can see it change shapes throughout the month."
+                        },
+                        {
+                            question: "Which planet is known as the Red Planet?",
+                            options: ["Mars", "Venus", "Mercury", "Jupiter"],
+                            answer: "Mars",
+                            hint: "It appears reddish because of iron oxide (rust) on its surface."
+                        },
+                        {
+                            question: "What is the largest planet in our solar system?",
+                            options: ["Jupiter", "Saturn", "Earth", "Neptune"],
+                            answer: "Jupiter",
+                            hint: "It has a Great Red Spot, which is actually a giant storm."
+                        },
+                        {
+                            question: "What gives stars their twinkle?",
+                            options: ["Earth's atmosphere", "Magic", "They're actually flashing", "Clouds"],
+                            answer: "Earth's atmosphere",
+                            hint: "As light passes through moving air, it bends slightly."
+                        },
+                        {
+                            question: "What is the name of the first man to walk on the moon?",
+                            options: ["Neil Armstrong", "Buzz Aldrin", "Yuri Gagarin", "John Glenn"],
+                            answer: "Neil Armstrong",
+                            hint: "He said, 'That's one small step for man, one giant leap for mankind.'"
+                        },
+                        {
+                            question: "What is the hottest planet in our solar system?",
+                            options: ["Venus", "Mercury", "Mars", "Jupiter"],
+                            answer: "Venus",
+                            hint: "Its thick atmosphere traps heat in a powerful greenhouse effect."
+                        },
+                        {
+                            question: "What is the Sun?",
+                            options: ["A star", "A planet", "A meteor", "A comet"],
+                            answer: "A star",
+                            hint: "It's a giant ball of hot gas that produces light and heat."
+                        },
+                        {
+                            question: "How many planets are in our solar system?",
+                            options: ["8", "9", "7", "10"],
+                            answer: "8",
+                            hint: "Pluto was reclassified as a dwarf planet in 2006."
+                        },
+                        {
+                            question: "What do we call a space rock that enters Earth's atmosphere and reaches the ground?",
+                            options: ["Meteorite", "Asteroid", "Comet", "Star"],
+                            answer: "Meteorite",
+                            hint: "Before it hits the ground, it's called a meteor."
+                        },
+                        {
+                            question: "What do astronomers use to study distant objects in space?",
+                            options: ["Telescope", "Microscope", "Binoculars", "Camera"],
+                            answer: "Telescope",
+                            hint: "It collects and magnifies light from far away."
+                        },
+                        {
+                            question: "Which planet has the Great Red Spot? 🔴",
+                            options: ["Jupiter", "Mars", "Venus", "Saturn"],
+                            answer: "Jupiter",
+                            hint: "It's a giant storm that has lasted for hundreds of years."
+                        },
+                        {
+                            question: "What is the path called that a planet takes around the Sun?",
+                            options: ["Orbit", "Circle", "Ring", "Route"],
+                            answer: "Orbit",
+                            hint: "Earth's takes 365 days to complete."
+                        },
+                        {
+                            question: "What is the coldest planet in our solar system?",
+                            options: ["Neptune", "Uranus", "Pluto", "Saturn"],
+                            answer: "Neptune",
+                            hint: "It's the eighth and most distant planet from the Sun."
+                        },
+                        {
+                            question: "What do we call a giant ball of ice and dust that travels around the Sun with a tail?",
+                            options: ["Comet", "Asteroid", "Meteor", "Planet"],
+                            answer: "Comet",
+                            hint: "Halley's is a famous one that returns every 76 years."
+                        },
+                        {
+                            question: "What causes the phases of the Moon we see from Earth?",
+                            options: ["The Moon's position relative to the Sun and Earth", "Clouds blocking our view", "The Moon changing shape", "Earth's shadow"],
+                            answer: "The Moon's position relative to the Sun and Earth",
+                            hint: "We see different amounts of the lit side as the Moon orbits Earth."
+                        },
+                        {
+                            question: "Which planet is closest to the Sun?",
+                            options: ["Mercury", "Venus", "Earth", "Mars"],
+                            answer: "Mercury",
+                            hint: "It's the smallest planet and very hot during the day."
+                        },
+                        {
+                            question: "Why can't we see stars during the day?",
+                            options: ["The Sun's light is too bright", "Stars sleep during the day", "Stars move away", "They only exist at night"],
+                            answer: "The Sun's light is too bright",
+                            hint: "They're still there, but sunlight makes the sky too bright to see them."
+                        },
+                        {
+                            question: "What was the first living creature sent to space?",
+                            options: ["A dog", "A monkey", "A human", "A cat"],
+                            answer: "A dog",
+                            hint: "Her name was Laika, sent by the Soviet Union in 1957."
+                        },
+                        {
+                            question: "What do you call the force that keeps planets orbiting the Sun?",
+                            options: ["Gravity", "Magnetism", "Electricity", "Wind"],
+                            answer: "Gravity",
+                            hint: "It's the same force that keeps your feet on the ground."
+                        },
+                        {
+                            question: "Which planet is known as Earth's 'sister planet' because of its similar size?",
+                            options: ["Venus", "Mars", "Mercury", "Neptune"],
+                            answer: "Venus",
+                            hint: "It's the second planet from the Sun."
+                        },
+                        {
+                            question: "What do we call a group of stars that forms a pattern in the sky?",
+                            options: ["Constellation", "Galaxy", "Nebula", "Asteroid belt"],
+                            answer: "Constellation",
+                            hint: "Examples include Orion and the Big Dipper."
+                        },
+                        {
+                            question: "What is an astronaut?",
+                            options: ["Someone who travels in space", "Someone who studies stars", "A type of star", "A space robot"],
+                            answer: "Someone who travels in space",
+                            hint: "They wear special suits to protect them in the vacuum of space."
+                        },
+                        {
+                            question: "What does ISS stand for in space exploration?",
+                            options: ["International Space Station", "Interstellar Space System", "Internal Solar Study", "Important Space Ship"],
+                            answer: "International Space Station",
+                            hint: "It's a large spacecraft where astronauts live and work while orbiting Earth."
+                        },
+                        {
+                            question: "Which of these is NOT a planet in our solar system?",
+                            options: ["Pluto", "Neptune", "Uranus", "Saturn"],
+                            answer: "Pluto",
+                            hint: "It was reclassified as a dwarf planet in 2006."
+                        },
+                        {
+                            question: "What makes a shooting star? ✨",
+                            options: ["A meteor burning up in our atmosphere", "A star falling from the sky", "A planet moving quickly", "A satellite"],
+                            answer: "A meteor burning up in our atmosphere",
+                            hint: "It's actually not a star at all!"
+                        },
+                        {
+                            question: "What planet do we live on?",
+                            options: ["Earth", "Mars", "Jupiter", "Venus"],
+                            answer: "Earth",
+                            hint: "It's the third planet from the Sun."
+                        },
+                        {
+                            question: "What does NASA stand for?",
+                            options: ["National Aeronautics and Space Administration", "National Astronomical Study Association", "New Astronaut Space Agency", "North American Space Alliance"],
+                            answer: "National Aeronautics and Space Administration",
+                            hint: "It's the U.S. government agency responsible for space exploration."
+                        },
+                        {
+                            question: "What is a black hole?",
+                            options: ["A region of space with gravity so strong nothing can escape", "A dark planet", "A hole in a space station", "An empty part of space"],
+                            answer: "A region of space with gravity so strong nothing can escape",
+                            hint: "Even light cannot escape once it passes the event horizon."
+                        },
+                        {
+                            question: "What shape is the Earth?",
+                            options: ["Spherical (ball-shaped)", "Flat", "Cube", "Pyramid"],
+                            answer: "Spherical (ball-shaped)",
+                            hint: "It's actually slightly flattened at the poles, making it an 'oblate spheroid.'"
+                        },
+                        {
+                            question: "What is the name of the galaxy closest to our Milky Way?",
+                            options: ["Andromeda", "Triangulum", "Whirlpool", "Sombrero"],
+                            answer: "Andromeda",
+                            hint: "It's on a collision course with our galaxy, but don't worry—it won't happen for billions of years."
+                        }
+                    ],
+                    geography: [
+                        {
+                            question: "What is the largest ocean on Earth?",
+                            options: ["Pacific Ocean", "Atlantic Ocean", "Indian Ocean", "Arctic Ocean"],
+                            answer: "Pacific Ocean",
+                            hint: "It covers about one-third of Earth's surface."
+                        },
+                        {
+                            question: "How many continents are there on Earth?",
+                            options: ["7", "5", "6", "8"],
+                            answer: "7",
+                            hint: "They are Africa, Antarctica, Asia, Australia, Europe, North America, and South America."
+                        },
+                        {
+                            question: "Which is the largest continent?",
+                            options: ["Asia", "Africa", "North America", "Europe"],
+                            answer: "Asia",
+                            hint: "China and India are countries in this continent."
+                        },
+                        {
+                            question: "What do we call the imaginary line that runs around the middle of the Earth?",
+                            options: ["Equator", "Prime Meridian", "Tropic of Cancer", "Horizon"],
+                            answer: "Equator",
+                            hint: "It divides the Earth into Northern and Southern Hemispheres."
+                        },
+                        {
+                            question: "Which of these is NOT a continent?",
+                            options: ["Arctic", "Asia", "Europe", "Africa"],
+                            answer: "Arctic",
+                            hint: "It's a polar region around the North Pole."
+                        },
+                        {
+                            question: "What is the largest desert in the world?",
+                            options: ["Antarctica", "Sahara", "Arabian", "Gobi"],
+                            answer: "Antarctica",
+                            hint: "A desert is defined by how little precipitation it gets, not by heat."
+                        },
+                        {
+                            question: "What is the capital city of the United States?",
+                            options: ["Washington D.C.", "New York City", "Los Angeles", "Chicago"],
+                            answer: "Washington D.C.",
+                            hint: "It's named after the first U.S. president."
+                        },
+                        {
+                            question: "Which country is shaped like a boot? 👢",
+                            options: ["Italy", "France", "Spain", "Greece"],
+                            answer: "Italy",
+                            hint: "It's famous for pizza and pasta."
+                        },
+                        {
+                            question: "What is the tallest mountain in the world?",
+                            options: ["Mount Everest", "K2", "Mount Kilimanjaro", "Mount Fuji"],
+                            answer: "Mount Everest",
+                            hint: "It's over 29,000 feet (8,800 meters) tall."
+                        },
+                        {
+                            question: "Which of these is NOT a direction on a compass?",
+                            options: ["Sideways", "North", "East", "West"],
+                            answer: "Sideways",
+                            hint: "The four main directions are North, South, East, and West."
+                        },
+                        {
+                            question: "What is the longest river in the world?",
+                            options: ["Nile", "Amazon", "Mississippi", "Yangtze"],
+                            answer: "Nile",
+                            hint: "It flows through Egypt and 10 other countries in Africa."
+                        },
+                        {
+                            question: "What continent is the country Australia on?",
+                            options: ["Australia", "Asia", "Europe", "Africa"],
+                            answer: "Australia",
+                            hint: "It's both a country and a continent."
+                        },
+                        {
+                            question: "What is the largest country in the world by land area?",
+                            options: ["Russia", "Canada", "China", "United States"],
+                            answer: "Russia",
+                            hint: "It spans across Eastern Europe and Northern Asia."
+                        },
+                        {
+                            question: "What do we call the outer layer of the Earth that we live on?",
+                            options: ["Crust", "Mantle", "Core", "Atmosphere"],
+                            answer: "Crust",
+                            hint: "It's like the shell of an egg compared to the whole Earth."
+                        },
+                        {
+                            question: "Which of these countries is in Africa?",
+                            options: ["Egypt", "Germany", "Japan", "Brazil"],
+                            answer: "Egypt",
+                            hint: "It's known for ancient pyramids and the Sphinx."
+                        },
+                        {
+                            question: "Which ocean is between North America and Europe?",
+                            options: ["Atlantic Ocean", "Pacific Ocean", "Indian Ocean", "Arctic Ocean"],
+                            answer: "Atlantic Ocean",
+                            hint: "Ships crossing from New York to London would sail across this ocean."
+                        },
+                        {
+                            question: "What is the capital of France?",
+                            options: ["Paris", "London", "Rome", "Berlin"],
+                            answer: "Paris",
+                            hint: "The Eiffel Tower is located here."
+                        },
+                        {
+                            question: "What's the name of the huge waterfall between the United States and Canada?",
+                            options: ["Niagara Falls", "Victoria Falls", "Angel Falls", "Iguazu Falls"],
+                            answer: "Niagara Falls",
+                            hint: "It's on the border between New York and Ontario."
+                        },
+                        {
+                            question: "Which country is home to the kangaroo? 🦘",
+                            options: ["Australia", "South Africa", "Brazil", "India"],
+                            answer: "Australia",
+                            hint: "It's also home to koalas and the Sydney Opera House."
+                        },
+                        {
+                            question: "What do we call a narrow strip of land connecting two larger pieces of land?",
+                            options: ["Isthmus", "Peninsula", "Island", "Canyon"],
+                            answer: "Isthmus",
+                            hint: "The Isthmus of Panama connects North and South America."
+                        },
+                        {
+                            question: "What is the capital of Japan?",
+                            options: ["Tokyo", "Beijing", "Seoul", "Bangkok"],
+                            answer: "Tokyo",
+                            hint: "It's the largest metropolitan area in the world."
+                        },
+                        {
+                            question: "Which of these is NOT a great lake in North America?",
+                            options: ["Lake Winnipeg", "Lake Superior", "Lake Michigan", "Lake Erie"],
+                            answer: "Lake Winnipeg",
+                            hint: "The five Great Lakes are Superior, Michigan, Huron, Erie, and Ontario."
+                        },
+                        {
+                            question: "What country has the most people?",
+                            options: ["China", "India", "United States", "Brazil"],
+                            answer: "China",
+                            hint: "It has over 1.4 billion people."
+                        },
+                        {
+                            question: "What is the driest continent on Earth?",
+                            options: ["Antarctica", "Africa", "Australia", "Asia"],
+                            answer: "Antarctica",
+                            hint: "Despite being covered in ice, it receives very little precipitation."
+                        },
+                        {
+                            question: "What is the smallest continent?",
+                            options: ["Australia", "Europe", "Antarctica", "South America"],
+                            answer: "Australia",
+                            hint: "It's surrounded entirely by water."
+                        },
+                        {
+                            question: "What is the largest type of big cat in the Americas?",
+                            options: ["Jaguar", "Lion", "Tiger", "Cheetah"],
+                            answer: "Jaguar",
+                            hint: "It lives mainly in the Amazon rainforest and has rosette spots."
+                        },
+                        {
+                            question: "Which of these cities is in England?",
+                            options: ["London", "Paris", "Rome", "Berlin"],
+                            answer: "London",
+                            hint: "It's where Big Ben and Buckingham Palace are located."
+                        },
+                        {
+                            question: "What is the capital of China?",
+                            options: ["Beijing", "Shanghai", "Tokyo", "Seoul"],
+                            answer: "Beijing",
+                            hint: "The Forbidden City and parts of the Great Wall are near this city."
+                        },
+                        {
+                            question: "What do we call a body of land with water all around it?",
+                            options: ["Island", "Peninsula", "Coast", "Mountain"],
+                            answer: "Island",
+                            hint: "Hawaii is an example of this."
+                        },
+                        {
+                            question: "Which country is home to the Great Barrier Reef? 🐠",
+                            options: ["Australia", "Mexico", "Thailand", "Brazil"],
+                            answer: "Australia",
+                            hint: "It's the world's largest coral reef system."
+                        },
+                        {
+                            question: "What's the name of the cold region around the North Pole?",
+                            options: ["Arctic", "Antarctic", "Equator", "Tropic"],
+                            answer: "Arctic",
+                            hint: "Polar bears live in this region."
+                        },
+                        {
+                            question: "What is the capital of Egypt?",
+                            options: ["Cairo", "Alexandria", "Nairobi", "Casablanca"],
+                            answer: "Cairo",
+                            hint: "It's near the ancient pyramids of Giza."
+                        }
+                    ],
+                    history: [
+                        {
+                            question: "Who was the first president of the United States?",
+                            options: ["George Washington", "Abraham Lincoln", "Thomas Jefferson", "John Adams"],
+                            answer: "George Washington",
+                            hint: "His face is on the one-dollar bill."
+                        },
+                        {
+                            question: "What ancient civilization built the pyramids in Egypt?",
+                            options: ["Ancient Egyptians", "Romans", "Greeks", "Mayans"],
+                            answer: "Ancient Egyptians",
+                            hint: "They lived along the Nile River thousands of years ago."
+                        },
+                        {
+                            question: "Who painted the Mona Lisa?",
+                            options: ["Leonardo da Vinci", "Pablo Picasso", "Vincent van Gogh", "Michelangelo"],
+                            answer: "Leonardo da Vinci",
+                            hint: "He was an Italian Renaissance artist, inventor, and scientist."
+                        },
+                        {
+                            question: "Who invented the light bulb? 💡",
+                            options: ["Thomas Edison", "Albert Einstein", "Benjamin Franklin", "Alexander Graham Bell"],
+                            answer: "Thomas Edison",
+                            hint: "He also invented the phonograph and motion picture camera."
+                        },
+                        {
+                            question: "What ancient wonder was a huge statue that stood at the entrance to a Greek harbor?",
+                            options: ["Colossus of Rhodes", "Pyramids of Giza", "Hanging Gardens of Babylon", "Lighthouse of Alexandria"],
+                            answer: "Colossus of Rhodes",
+                            hint: "It was a statue of the Greek god Helios."
+                        },
+                        {
+                            question: "Who was the first person to step on the moon?",
+                            options: ["Neil Armstrong", "Buzz Aldrin", "Yuri Gagarin", "Alan Shepard"],
+                            answer: "Neil Armstrong",
+                            hint: "He said, 'That's one small step for man, one giant leap for mankind.'"
+                        },
+                        {
+                            question: "Which of these was NOT an ancient civilization?",
+                            options: ["Vikings", "Egyptians", "Dinosaurs", "Romans"],
+                            answer: "Dinosaurs",
+                            hint: "These were animals that lived millions of years before humans existed."
+                        },
+                        {
+                            question: "Who was the famous Egyptian queen with a famous nose?",
+                            options: ["Cleopatra", "Nefertiti", "Hatshepsut", "Isis"],
+                            answer: "Cleopatra",
+                            hint: "She was the last active ruler of the Ptolemaic Kingdom of Egypt."
+                        },
+                        {
+                            question: "What famously sank on its first voyage in 1912?",
+                            options: ["Titanic", "Mayflower", "Santa Maria", "Queen Elizabeth"],
+                            answer: "Titanic",
+                            hint: "It was thought to be 'unsinkable' but hit an iceberg."
+                        },
+                        {
+                            question: "Who wrote 'Romeo and Juliet'?",
+                            options: ["William Shakespeare", "Charles Dickens", "Mark Twain", "Jane Austen"],
+                            answer: "William Shakespeare",
+                            hint: "He was an English playwright from the 16th century."
+                        },
+                        {
+                            question: "What was the first successful airplane made by?",
+                            options: ["Wright Brothers", "Thomas Edison", "Henry Ford", "Alexander Graham Bell"],
+                            answer: "Wright Brothers",
+                            hint: "Orville and Wilbur made their first flight at Kitty Hawk in 1903."
+                        },
+                        {
+                            question: "Who is known for his theory of relativity? 🧠",
+                            options: ["Albert Einstein", "Isaac Newton", "Galileo Galilei", "Stephen Hawking"],
+                            answer: "Albert Einstein",
+                            hint: "He had very wild white hair in his older years."
+                        },
+                        {
+                            question: "What ancient civilization built Machu Picchu in Peru?",
+                            options: ["Incas", "Aztecs", "Mayans", "Romans"],
+                            answer: "Incas",
+                            hint: "They created a vast empire in South America during the 15th century."
+                        },
+                        {
+                            question: "Who led the civil rights movement and had a famous 'I Have a Dream' speech?",
+                            options: ["Martin Luther King Jr.", "Malcolm X", "Rosa Parks", "Harriet Tubman"],
+                            answer: "Martin Luther King Jr.",
+                            hint: "He was a minister who advocated for non-violent protest."
+                        },
+                        {
+                            question: "What explorer is known for discovering America in 1492?",
+                            options: ["Christopher Columbus", "Ferdinand Magellan", "Vasco da Gama", "Marco Polo"],
+                            answer: "Christopher Columbus",
+                            hint: "He sailed with three ships: the Niña, the Pinta, and the Santa Maria."
+                        },
+                        {
+                            question: "Who was the first woman to fly solo across the Atlantic Ocean?",
+                            options: ["Amelia Earhart", "Harriet Quimby", "Bessie Coleman", "Jacqueline Cochran"],
+                            answer: "Amelia Earhart",
+                            hint: "She later disappeared while attempting to fly around the world."
+                        },
+                        {
+                            question: "What ancient civilization built the Great Wall of China?",
+                            options: ["Chinese", "Mongols", "Japanese", "Koreans"],
+                            answer: "Chinese",
+                            hint: "It was built to protect against invasions from the north."
+                        },
+                        {
+                            question: "Who was known as the 'Father of Modern Physics'?",
+                            options: ["Albert Einstein", "Isaac Newton", "Galileo Galilei", "Niels Bohr"],
+                            answer: "Albert Einstein",
+                            hint: "He developed the theory of relativity."
+                        },
+                        {
+                            question: "What was the name of the ship that the Pilgrims sailed to America on in 1620?",
+                            options: ["Mayflower", "Santa Maria", "Nina", "Titanic"],
+                            answer: "Mayflower",
+                            hint: "They landed at Plymouth Rock."
+                        },
+                        {
+                            question: "Who painted the ceiling of the Sistine Chapel?",
+                            options: ["Michelangelo", "Leonardo da Vinci", "Raphael", "Donatello"],
+                            answer: "Michelangelo",
+                            hint: "He was a Renaissance artist who painted 'The Creation of Adam' there."
+                        },
+                        {
+                            question: "What ancient Greek mathematician discovered that water displaces its own volume?",
+                            options: ["Archimedes", "Pythagoras", "Euclid", "Aristotle"],
+                            answer: "Archimedes",
+                            hint: "He supposedly shouted 'Eureka!' when he made this discovery."
+                        },
+                        {
+                            question: "Which queen ruled England for 63 years during the Victorian era?",
+                            options: ["Queen Victoria", "Queen Elizabeth I", "Queen Elizabeth II", "Queen Mary"],
+                            answer: "Queen Victoria",
+                            hint: "The period from 1837 to 1901 is named after her."
+                        },
+                        {
+                            question: "What was the name of the first artificial satellite launched into space?",
+                            options: ["Sputnik 1", "Explorer 1", "Apollo 11", "Hubble"],
+                            answer: "Sputnik 1",
+                            hint: "It was launched by the Soviet Union in 1957."
+                        },
+                        {
+                            question: "Who invented the telephone? ☎️",
+                            options: ["Alexander Graham Bell", "Thomas Edison", "Nikola Tesla", "Guglielmo Marconi"],
+                            answer: "Alexander Graham Bell",
+                            hint: "His first words on the device were: 'Mr. Watson, come here. I want to see you.'"
+                        },
+                        {
+                            question: "Which of these was NOT one of the Seven Wonders of the Ancient World?",
+                            options: ["Great Wall of China", "Pyramids of Giza", "Hanging Gardens of Babylon", "Colossus of Rhodes"],
+                            answer: "Great Wall of China",
+                            hint: "The Seven Wonders were all located around the Mediterranean region."
+                        },
+                        {
+                            question: "Who was the first female astronaut in space?",
+                            

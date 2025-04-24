@@ -244,6 +244,8 @@
         }
         .number-key:hover {
             background: #f0f9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .number-key:active {
             transform: scale(0.95);
@@ -252,6 +254,17 @@
         .action-key {
             background: #e0f2fe;
             font-size: 18px;
+        }
+        .negative-key {
+            background: #fee2e2;
+            color: #dc2626;
+            font-weight: bold;
+        }
+        #clear-key {
+            grid-column: span 3;
+            width: auto;
+            background: #ffe4e6;
+            color: #be123c;
         }
         
         /* Buttons */
@@ -344,6 +357,24 @@
         .pulse {animation: pulse 0.5s;}
         .shake {animation: shake 0.5s;}
         
+        /* Floating emojis animation */
+        .floating-emoji {
+            position: absolute;
+            animation: float-up 3s ease-out forwards;
+            z-index: 100;
+            pointer-events: none;
+        }
+        @keyframes float-up {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-200px) rotate(360deg);
+                opacity: 0;
+            }
+        }
+        
         /* Mobile adjustments */
         @media (max-width: 480px) {
             .game-title {
@@ -383,6 +414,10 @@
                 <input type="checkbox" id="alwaysShowDecimalMover" checked />
                 <label for="alwaysShowDecimalMover">Always Show Decimal Mover</label>
             </div>
+            <div class="option">
+                <input type="checkbox" id="toggle-sound" checked />
+                <label for="toggle-sound">Sound Effects</label>
+            </div>
         </div>
         
         <div class="question-container">
@@ -419,7 +454,7 @@
                 </div>
             </div>
             
-            <!-- Number keyboard -->
+                            <!-- Number keyboard -->
             <div class="number-keyboard" id="number-keyboard">
                 <div class="number-key">1</div>
                 <div class="number-key">2</div>
@@ -430,9 +465,11 @@
                 <div class="number-key">7</div>
                 <div class="number-key">8</div>
                 <div class="number-key">9</div>
-                <div class="number-key">.</div>
+                <div class="number-key negative-key" id="negative-key">±</div>
                 <div class="number-key">0</div>
+                <div class="number-key">.</div>
                 <div class="number-key action-key" id="backspace-key">⌫</div>
+                <div class="number-key action-key" id="clear-key">Clear</div>
             </div>
             
             <div class="buttons" style="text-align: center;">
@@ -457,6 +494,7 @@
                 this.correctAnswer = null;
                 this.moverExponentValue = 0;
                 this.activeInput = null;
+                this.soundEnabled = true;
                 
                 // Get DOM elements
                 this.elements = {
@@ -478,7 +516,8 @@
                     moverExponent: document.getElementById('mover-exponent'),
                     useExponent: document.getElementById('use-exponent'),
                     numberKeyboard: document.getElementById('number-keyboard'),
-                    backspaceKey: document.getElementById('backspace-key')
+                    backspaceKey: document.getElementById('backspace-key'),
+                    toggleSoundBtn: document.getElementById('toggle-sound')
                 };
                 
                 this.setupEventListeners();
@@ -505,16 +544,20 @@
                         this.elements.moverExponent.textContent = '?';
                         this.elements.moverExponent.style.color = '#dc2626';
                         this.elements.useExponent.style.display = 'none';
+                        this.playSound('toggle');
                     } else {
                         this.elements.moverExponent.textContent = this.moverExponentValue;
                         this.elements.moverExponent.style.color = '#1e40af';
                         this.elements.useExponent.style.display = 'block';
+                        this.playSound('toggle');
                     }
                 });
                 
                 document.getElementById('alwaysShowDecimalMover').addEventListener('change', () => {
                     // Update the display when this option changes
                     const alwaysShowDecimalMover = document.getElementById('alwaysShowDecimalMover').checked;
+                    this.playSound('toggle');
+                    
                     if (alwaysShowDecimalMover) {
                         this.elements.decimalMover.style.display = 'flex';
                         // Setup decimal mover for current question if needed
@@ -528,6 +571,16 @@
                         }
                     } else if (this.questionType !== 'toScientific') {
                         this.elements.decimalMover.style.display = 'none';
+                    }
+                });
+                
+                // Sound toggle
+                document.getElementById('toggle-sound').addEventListener('change', (e) => {
+                    this.soundEnabled = e.target.checked;
+                    
+                    // Play a sound to confirm if sound is enabled
+                    if (this.soundEnabled) {
+                        this.playSound('toggle');
                     }
                 });
                 
@@ -549,27 +602,32 @@
                 document.addEventListener('keydown', (e) => {
                     if (e.key === 'ArrowLeft') {
                         this.moveDecimalPoint('left');
+                        this.playSound('move');
                     } else if (e.key === 'ArrowRight') {
                         this.moveDecimalPoint('right');
+                        this.playSound('move');
                     }
                 });
                 
                 // Number keyboard 
                 this.elements.coefficient.addEventListener('focus', () => {
                     this.activeInput = this.elements.coefficient;
+                    this.playSound('tap');
                 });
                 
                 this.elements.exponent.addEventListener('focus', () => {
                     this.activeInput = this.elements.exponent;
+                    this.playSound('tap');
                 });
                 
                 this.elements.decimal.addEventListener('focus', () => {
                     this.activeInput = this.elements.decimal;
+                    this.playSound('tap');
                 });
                 
                 // Setup number keyboard buttons
                 document.querySelectorAll('.number-key').forEach(key => {
-                    if (key.id !== 'backspace-key') {
+                    if (key.id !== 'backspace-key' && key.id !== 'clear-key' && key.id !== 'negative-key') {
                         key.addEventListener('click', () => {
                             if (this.activeInput) {
                                 // If the key is a decimal point, check if one already exists
@@ -577,6 +635,7 @@
                                     return; // Don't add another decimal point
                                 }
                                 this.activeInput.value += key.textContent;
+                                this.playSound('click');
                             }
                         });
                     }
@@ -586,6 +645,27 @@
                 this.elements.backspaceKey.addEventListener('click', () => {
                     if (this.activeInput) {
                         this.activeInput.value = this.activeInput.value.slice(0, -1);
+                        this.playSound('backspace');
+                    }
+                });
+                
+                // Clear key
+                document.getElementById('clear-key').addEventListener('click', () => {
+                    if (this.activeInput) {
+                        this.activeInput.value = '';
+                        this.playSound('clear');
+                    }
+                });
+                
+                // Negative key
+                document.getElementById('negative-key').addEventListener('click', () => {
+                    if (this.activeInput) {
+                        if (this.activeInput.value.startsWith('-')) {
+                            this.activeInput.value = this.activeInput.value.substring(1);
+                        } else {
+                            this.activeInput.value = '-' + this.activeInput.value;
+                        }
+                        this.playSound('toggle');
                     }
                 });
                 
@@ -724,6 +804,18 @@
                     
                     // Give visual feedback on the movement
                     this.elements.numberDisplay.classList.add('pulse');
+                    
+                    // Add a subtle flash effect to the digit that moved
+                    const movedDigit = elements[decimalIndex - 1];
+                    if (movedDigit) {
+                        movedDigit.style.color = '#2563eb';
+                        movedDigit.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            movedDigit.style.color = '';
+                            movedDigit.style.transform = '';
+                        }, 300);
+                    }
+                    
                     setTimeout(() => {
                         this.elements.numberDisplay.classList.remove('pulse');
                     }, 300);
@@ -751,9 +843,24 @@
                     
                     // Give visual feedback on the movement
                     this.elements.numberDisplay.classList.add('pulse');
+                    
+                    // Add a subtle flash effect to the digit that moved
+                    const movedDigit = elements[decimalIndex + 1];
+                    if (movedDigit) {
+                        movedDigit.style.color = '#2563eb';
+                        movedDigit.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            movedDigit.style.color = '';
+                            movedDigit.style.transform = '';
+                        }, 300);
+                    }
+                    
                     setTimeout(() => {
                         this.elements.numberDisplay.classList.remove('pulse');
                     }, 300);
+                } else {
+                    // Play error sound if we can't move further
+                    this.playSound('error');
                 }
                 
                 // Update the highlight position
@@ -1220,8 +1327,18 @@
                 const feedback = document.querySelector('.feedback');
                 feedback.classList.add('shake');
                 
-                // Play celebration sound (optional)
+                // Create floating emojis
+                this.createFloatingEmojis();
+                
+                // Play celebration sound
                 this.playSound('success');
+                
+                // If score is divisible by 5, play a special level up sound
+                if (this.score % 5 === 0) {
+                    setTimeout(() => {
+                        this.playSound('levelUp');
+                    }, 500);
+                }
                 
                 // Remove animations after they complete
                 setTimeout(() => {
@@ -1229,6 +1346,31 @@
                     question.classList.remove('bounce');
                     feedback.classList.remove('shake');
                 }, 1000);
+            }
+            
+            createFloatingEmojis() {
+                // Create emojis that float up and fade out
+                const emojis = ['🌟', '🎉', '✨', '🚀', '💯', '👍', '🧠', '🔬'];
+                const container = document.querySelector('.container');
+                
+                for (let i = 0; i < 10; i++) {
+                    const emoji = document.createElement('div');
+                    emoji.className = 'floating-emoji';
+                    emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                    emoji.style.left = `${Math.random() * 80 + 10}%`;
+                    emoji.style.fontSize = `${Math.random() * 20 + 20}px`;
+                    emoji.style.animationDuration = `${Math.random() * 2 + 2}s`;
+                    emoji.style.animationDelay = `${Math.random() * 0.5}s`;
+                    
+                    container.appendChild(emoji);
+                    
+                    // Remove the emoji after animation completes
+                    setTimeout(() => {
+                        if (emoji && emoji.parentNode) {
+                            emoji.parentNode.removeChild(emoji);
+                        }
+                    }, 3000);
+                }
             }
             
             createConfetti() {
@@ -1283,7 +1425,10 @@
             }
             
             playSound(type) {
-                // Simple audio feedback
+                // Skip if sound is disabled or AudioContext is not supported
+                if (!this.soundEnabled || (!window.AudioContext && !window.webkitAudioContext)) return;
+                
+                // Sound effects for different interactions
                 const sounds = {
                     success: [
                         [659.25, 0.1],
@@ -1295,11 +1440,38 @@
                     error: [
                         [493.88, 0.1],
                         [369.99, 0.3]
+                    ],
+                    click: [
+                        [440, 0.05]
+                    ],
+                    move: [
+                        [587.33, 0.05],
+                        [659.25, 0.05]
+                    ],
+                    tap: [
+                        [523.25, 0.05]
+                    ],
+                    backspace: [
+                        [493.88, 0.05],
+                        [440, 0.05]
+                    ],
+                    clear: [
+                        [493.88, 0.05],
+                        [440, 0.05],
+                        [392, 0.05]
+                    ],
+                    toggle: [
+                        [392, 0.05],
+                        [523.25, 0.05]
+                    ],
+                    levelUp: [
+                        [523.25, 0.1],
+                        [587.33, 0.1],
+                        [659.25, 0.1],
+                        [698.46, 0.1],
+                        [783.99, 0.3]
                     ]
                 };
-                
-                // Skip if AudioContext is not supported
-                if (!window.AudioContext && !window.webkitAudioContext) return;
                 
                 const AudioCtx = window.AudioContext || window.webkitAudioContext;
                 const context = new AudioCtx();
@@ -1317,7 +1489,7 @@
                     
                     // Apply envelope
                     gainNode.gain.setValueAtTime(0, time);
-                    gainNode.gain.linearRampToValueAtTime(0.1, time + 0.01);
+                    gainNode.gain.linearRampToValueAtTime(0.2, time + 0.01);
                     gainNode.gain.linearRampToValueAtTime(0, time + duration);
                     
                     oscillator.start(time);

@@ -120,12 +120,27 @@
             align-items: center;
             position: relative;
             padding: 20px;
+            min-height: 400px;
+            min-width: 600px;
         }
 
         #game-canvas {
             box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
             border-radius: 15px;
             background-color: rgba(255, 255, 255, 0.95);
+            display: block; /* Remove any default inline spacing */
+        }
+
+        /* Make canvas display more consistently */
+        canvas {
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        /* Fix for P5 canvas position */
+        canvas.p5Canvas {
+            display: block !important;
+            margin: 0 auto !important;
         }
 
         #side-panel {
@@ -759,7 +774,7 @@
             width: 100%;
             height: 100%;
             position: relative;
-            display: none;
+            display: block; /* Override display: none */
         }
 
         #level-completion {
@@ -818,7 +833,7 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            z-index: 2000;
             transition: opacity 0.5s;
         }
 
@@ -846,22 +861,33 @@
             opacity: 0;
             transition: opacity 0.3s;
         }
-
-        .debug-overlay {
-            position: fixed;
-            bottom: 10px;
-            right: 10px;
-            background-color: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px;
-            font-family: monospace;
-            font-size: 12px;
-            border-radius: 5px;
-            z-index: 1000;
-            max-width: 300px;
-            max-height: 200px;
-            overflow: auto;
-            display: none;
+        
+        /* Responsive adjustments for small screens */
+        @media screen and (max-width: 768px) {
+            #canvas-container {
+                min-height: 300px;
+                min-width: auto;
+                padding: 10px;
+            }
+            
+            #side-panel {
+                width: 250px;
+                max-height: 80%;
+            }
+            
+            #game-title {
+                font-size: 1.8em;
+            }
+            
+            .nav-button {
+                padding: 8px 12px;
+                margin: 0 5px;
+                font-size: 0.9em;
+            }
+            
+            #character-container {
+                width: 280px;
+            }
         }
     </style>
 </head>
@@ -886,7 +912,7 @@
             </div>
 
             <div id="canvas-container">
-                <canvas id="game-canvas"></canvas>
+                <div id="game-canvas"></div>
                 
                 <div id="side-panel">
                     <button id="toggle-panel">≪</button>
@@ -1099,11 +1125,155 @@
     </div>
 
     <div class="tooltip" id="tooltip"></div>
-    <div class="debug-overlay" id="debug"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Load P5.js with integrity check for better security and reliability -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js" 
+            integrity="sha512-N4kV7GkNv7QR7RX9YF/olywyIgIwNvfEe2nZtfyj73HdjCUkAfOBDbcuJ/cTaN04JKRnw1YG1wnUyNKMsNgg3g==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+
+    <!-- Add a fallback for loading P5.js if the CDN fails -->
     <script>
+        // Check if P5.js loaded properly
+        window.addEventListener('load', function() {
+            if (typeof p5 === 'undefined') {
+                console.error('P5.js failed to load from CDN, attempting fallback...');
+                
+                // Create a new script element for fallback
+                const fallbackScript = document.createElement('script');
+                fallbackScript.src = 'https://cdn.jsdelivr.net/npm/p5@1.4.0/lib/p5.min.js';
+                fallbackScript.onload = function() {
+                    console.log('P5.js loaded from fallback CDN');
+                    if (window.initializeGame) {
+                        window.initializeGame();
+                    }
+                };
+                fallbackScript.onerror = function() {
+                    console.error('Failed to load P5.js from fallback CDN');
+                    alert('Failed to load required graphics library. Please check your internet connection and reload the page.');
+                };
+                
+                // Add fallback script to document
+                document.body.appendChild(fallbackScript);
+            }
+        });
+    </script>
+
+    <script>
+        // Debug flag - set to true during development
+        const DEBUG = true;
+
+        // Enhanced logging function
+        function debugLog(message, data) {
+            if (!DEBUG) return;
+            
+            if (data !== undefined) {
+                console.log(`%c[MathQuest Debug] ${message}`, 'color: #6a11cb; font-weight: bold;', data);
+            } else {
+                console.log(`%c[MathQuest Debug] ${message}`, 'color: #6a11cb; font-weight: bold;');
+            }
+        }
+
+        // Function to check if canvas is properly created
+        function checkCanvas() {
+            const canvas = document.querySelector('canvas');
+            if (!canvas) {
+                debugLog('ERROR: Canvas element not found!');
+                return false;
+            }
+            
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            if (width <= 0 || height <= 0) {
+                debugLog('ERROR: Canvas has invalid dimensions', { width, height });
+                return false;
+            }
+            
+            debugLog('Canvas check passed', { width, height });
+            return true;
+        }
+
+        // Function to check game state validity
+        function checkGameState() {
+            if (!gameState) {
+                debugLog('ERROR: gameState is undefined!');
+                return false;
+            }
+            
+            debugLog('Current game state', {
+                mode: gameState.mode,
+                areaParams: { ...gameState.areaParams },
+                slopeParams: { ...gameState.slopeParams }
+            });
+            
+            return true;
+        }
+
+        // Function to check if all required DOM elements exist
+        function checkElements() {
+            const requiredElements = [
+                'game-canvas',
+                'side-panel',
+                'area-controls',
+                'slope-controls',
+                'loading-screen'
+            ];
+            
+            const missingElements = [];
+            
+            requiredElements.forEach(id => {
+                if (!document.getElementById(id)) {
+                    missingElements.push(id);
+                }
+            });
+            
+            if (missingElements.length > 0) {
+                debugLog('ERROR: Missing required DOM elements', missingElements);
+                return false;
+            }
+            
+            debugLog('All required DOM elements found');
+            return true;
+        }
+
+        // Function to validate P5.js is loaded correctly
+        function checkP5() {
+            if (typeof p5 === 'undefined') {
+                debugLog('ERROR: P5.js library not loaded!');
+                return false;
+            }
+            
+            if (!window.p5Instance) {
+                debugLog('WARNING: P5 instance not created yet');
+            } else {
+                debugLog('P5 instance exists');
+            }
+            
+            return typeof p5 !== 'undefined';
+        }
+
+        // Run all checks at once
+        function runDiagnostics() {
+            debugLog('Running diagnostics...');
+            const results = {
+                elementsOK: checkElements(),
+                p5OK: checkP5(),
+                canvasOK: checkCanvas(),
+                gameStateOK: checkGameState()
+            };
+            
+            const allPassed = Object.values(results).every(result => result === true);
+            
+            if (allPassed) {
+                debugLog('All diagnostics passed! ✅');
+            } else {
+                debugLog('Some diagnostics failed! ❌', results);
+            }
+            
+            return results;
+        }
+
         /******************************************
          * GAME DATA AND STATE
          ******************************************/
@@ -1147,12 +1317,15 @@
             showingConfetti: false,
             panelMinimized: false,
             tooltipVisible: false,
-            debugMode: false,
             soundEnabled: true,
             currentSubmenu: null,
-            loadingComplete: false
+            loadingComplete: false,
+            audioInitialized: false
         };
 
+        // Simple audio context for sound effects
+        let audioContext;
+        
         // Quiz/challenge questions
         const challenges = {
             'area-basics': {
@@ -1462,17 +1635,38 @@
 
         // DOM Elements
         let elements = {};
-
-        // Sound system
-        let synth, reverb, pingPong, crusher;
         
+        // Add this to your document ready function
+        document.addEventListener('DOMContentLoaded', () => {
+            // Run initial diagnostics after a slight delay to let things initialize
+            setTimeout(runDiagnostics, 2000);
+            
+            // Add a global diagnostics command for the console
+            window.diagnose = runDiagnostics;
+            debugLog('Debugging initialized. Type "diagnose()" in console to run diagnostics.');
+        });
+
+        // Add error tracking for redraw calls
+        window.redraw = function() {
+            try {
+                debugLog('Redraw called');
+                if (window.p5Instance && window.p5Instance.redraw) {
+                    window.p5Instance.redraw();
+                } else if (typeof draw === 'function') {
+                    draw();
+                } else {
+                    throw new Error('No redraw method available');
+                }
+            } catch (error) {
+                debugLog('ERROR in redraw', error);
+                console.error(error);
+            }
+        };
+
         /******************************************
          * GAME INITIALIZATION
          ******************************************/
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize Tone.js
-            initAudio();
-            
             // Get DOM elements
             getElements();
             
@@ -1482,50 +1676,73 @@
             // Draw character
             drawCharacter();
             
-            // Show welcome modal
-            setTimeout(() => {
-                showModal('Welcome to MathQuest!', 
-                          'Embark on an exciting adventure through the world of calculus! You\'ll explore areas under curves with integrals, investigate slopes with derivatives, and solve challenging puzzles along the way.', 
-                          'Let\'s Go!');
+            // Try to initialize P5 instance before showing welcome (P5 is loaded from CDN)
+            if (typeof p5 !== 'undefined') {
+                // P5 is already loaded, initialize immediately
+                setTimeout(initializeGame, 1000);
                 
-                // Hide loading screen
-                document.getElementById('loading-screen').classList.add('hide');
-                gameState.loadingComplete = true;
-            }, 1500);
+                // Show welcome modal after initialization
+                setTimeout(() => {
+                    showModal('Welcome to MathQuest!', 
+                            'Embark on an exciting adventure through the world of calculus! You\'ll explore areas under curves with integrals, investigate slopes with derivatives, and solve challenging puzzles along the way.', 
+                            'Let\'s Go!');
+                }, 1500);
+            } else {
+                // P5 isn't loaded yet, wait a bit longer
+                console.warn("P5.js library not loaded yet, waiting...");
+                let checkCount = 0;
+                
+                const checkInterval = setInterval(() => {
+                    checkCount++;
+                    if (typeof p5 !== 'undefined') {
+                        clearInterval(checkInterval);
+                        console.log("P5.js library loaded successfully!");
+                        initializeGame();
+                        
+                        // Show welcome modal
+                        showModal('Welcome to MathQuest!', 
+                                'Embark on an exciting adventure through the world of calculus! You\'ll explore areas under curves with integrals, investigate slopes with derivatives, and solve challenging puzzles along the way.', 
+                                'Let\'s Go!');
+                    } else if (checkCount > 10) {
+                        // After 10 attempts (5 seconds), show error
+                        clearInterval(checkInterval);
+                        console.error("Failed to load P5.js library!");
+                        alert("Failed to load required graphics library. Please check your internet connection and reload the page.");
+                    }
+                }, 500);
+            }
+            
+            // Initialize audio on first user interaction
+            document.body.addEventListener('click', initAudio, { once: true });
         });
 
+        function initializeGame() {
+            // Ensure loading screen is properly hidden
+            document.getElementById('loading-screen').classList.add('hide');
+            gameState.loadingComplete = true;
+            
+            // Force a redraw to make sure graphs appear
+            if (window.redraw) {
+                window.redraw();
+            }
+            
+            // Make sure side panel displays correctly for current mode
+            switchMode(gameState.mode);
+        }
+
         function initAudio() {
-            // Create a reverb effect
-            reverb = new Tone.Reverb({
-                decay: 1.5,
-                wet: 0.5
-            }).toDestination();
+            // Only initialize once
+            if (gameState.audioInitialized) return;
             
-            // Create a ping pong delay
-            pingPong = new Tone.PingPongDelay({
-                delayTime: 0.25,
-                feedback: 0.2,
-                wet: 0.1
-            }).connect(reverb);
-            
-            // Create a bit crusher for retro effects
-            crusher = new Tone.BitCrusher({
-                bits: 4,
-                wet: 0.2
-            }).connect(pingPong);
-            
-            // Create a synth
-            synth = new Tone.PolySynth(Tone.Synth, {
-                oscillator: {
-                    type: 'triangle'
-                },
-                envelope: {
-                    attack: 0.02,
-                    decay: 0.1,
-                    sustain: 0.3,
-                    release: 1
-                }
-            }).connect(crusher);
+            try {
+                // Create audio context
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioContext();
+                gameState.audioInitialized = true;
+            } catch (e) {
+                console.warn('Web Audio API not supported in this browser');
+                gameState.soundEnabled = false;
+            }
         }
 
         function getElements() {
@@ -1617,7 +1834,7 @@
                 mapNodes: document.querySelectorAll('.map-node'),
                 challengeCards: document.querySelectorAll('.challenge-card'),
                 tooltip: document.getElementById('tooltip'),
-                debug: document.getElementById('debug')
+                confettiContainer: document.getElementById('confetti-container')
             };
         }
 
@@ -1642,6 +1859,7 @@
                 }
                 
                 playSound('slider');
+                redraw(); // Redraw the canvas
                 
                 // Check for challenge completion
                 if (gameState.mode === 'challenge' && gameState.challengeState.currentChallenge) {
@@ -1654,6 +1872,7 @@
                 updateFunctionParamDisplays();
                 updateCharacterSpeech(characterSpeeches.functionChange);
                 playSound('select');
+                redraw(); // Redraw the canvas
                 
                 // Check for challenge completion
                 if (gameState.mode === 'challenge' && gameState.challengeState.currentChallenge) {
@@ -1666,6 +1885,7 @@
                 elements.mParamValue.textContent = value;
                 gameState.areaParams.m = parseFloat(value);
                 playSound('slider');
+                redraw(); // Redraw the canvas
                 
                 // Check for challenge completion
                 if (gameState.mode === 'challenge' && gameState.challengeState.currentChallenge) {
@@ -1678,6 +1898,7 @@
                 elements.bParamValue.textContent = value;
                 gameState.areaParams.b = parseFloat(value);
                 playSound('slider');
+                redraw(); // Redraw the canvas
                 
                 // Check for challenge completion
                 if (gameState.mode === 'challenge' && gameState.challengeState.currentChallenge) {
@@ -1690,6 +1911,7 @@
                 elements.aParamValue.textContent = value;
                 gameState.areaParams.a = parseFloat(value);
                 playSound('slider');
+                redraw(); // Redraw the canvas
                 
                 // Check for challenge completion
                 if (gameState.mode === 'challenge' && gameState.challengeState.currentChallenge) {
@@ -1703,7 +1925,7 @@
                 elements.pointXValue.textContent = value;
                 gameState.slopeParams.x = parseFloat(value);
                 
-                // Calculate the derivative at this point
+                // Calculate the derivative at this point for speech updates
                 const x = map(parseFloat(value), 0, 1, -5, 5);
                 
                 let derivative;
@@ -1716,7 +1938,7 @@
                 } else if (gameState.slopeParams.functionType === 'sine') {
                     derivative = Math.cos(x) * 2;
                 } else if (gameState.slopeParams.functionType === 'exponential') {
-                    derivative = Math.exp(x);
+                    derivative = Math.exp(x / 2) * 0.5;
                 }
                 
                 // Update character speech based on slope
@@ -1727,6 +1949,7 @@
                 }
                 
                 playSound('slider');
+                redraw(); // Redraw the canvas
                 
                 // Check for challenge completion
                 if (gameState.mode === 'challenge' && gameState.challengeState.currentChallenge) {
@@ -1739,6 +1962,7 @@
                 updateDerivativeFunctionParamDisplays();
                 updateCharacterSpeech(characterSpeeches.functionChange);
                 playSound('select');
+                redraw(); // Redraw the canvas
                 
                 // Check for challenge completion
                 if (gameState.mode === 'challenge' && gameState.challengeState.currentChallenge) {
@@ -1751,6 +1975,7 @@
                 elements.slopeMParamValue.textContent = value;
                 gameState.slopeParams.m = parseFloat(value);
                 playSound('slider');
+                redraw(); // Redraw the canvas
                 
                 // Check for challenge completion
                 if (gameState.mode === 'challenge' && gameState.challengeState.currentChallenge) {
@@ -1763,6 +1988,7 @@
                 elements.slopeBParamValue.textContent = value;
                 gameState.slopeParams.b = parseFloat(value);
                 playSound('slider');
+                redraw(); // Redraw the canvas
                 
                 // Check for challenge completion
                 if (gameState.mode === 'challenge' && gameState.challengeState.currentChallenge) {
@@ -1775,6 +2001,7 @@
                 elements.slopeAParamValue.textContent = value;
                 gameState.slopeParams.a = parseFloat(value);
                 playSound('slider');
+                redraw(); // Redraw the canvas
                 
                 // Check for challenge completion
                 if (gameState.mode === 'challenge' && gameState.challengeState.currentChallenge) {
@@ -1891,17 +2118,6 @@
                 playSound('character');
             });
             
-            // Debug mode toggle (press D key)
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'd' && e.ctrlKey && e.shiftKey) {
-                    gameState.debugMode = !gameState.debugMode;
-                    elements.debug.style.display = gameState.debugMode ? 'block' : 'none';
-                    if (gameState.debugMode) {
-                        elements.debug.textContent = 'Debug mode activated';
-                    }
-                }
-            });
-            
             // Add hover sound to all buttons
             const buttons = document.querySelectorAll('button');
             buttons.forEach(button => {
@@ -1992,6 +2208,9 @@
             }
             
             playSound('mode');
+            
+            // Redraw canvas with the new mode
+            redraw();
         }
 
         function updateFunctionParamDisplays() {
@@ -2241,6 +2460,65 @@
             }
         }
 
+        function showConfetti() {
+            gameState.showingConfetti = true;
+            
+            // Clear any existing confetti
+            elements.confettiContainer.innerHTML = '';
+            
+            // Create and animate confetti particles
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement('div');
+                
+                // Random color
+                const hue = Math.floor(Math.random() * 360);
+                const color = `hsl(${hue}, 90%, 65%)`;
+                
+                // Random size and shape
+                const size = Math.random() * 10 + 5;
+                const shape = Math.random() > 0.5 ? '50%' : '0%';
+                
+                // Style the confetti
+                confetti.style.position = 'absolute';
+                confetti.style.backgroundColor = color;
+                confetti.style.width = `${size}px`;
+                confetti.style.height = `${size}px`;
+                confetti.style.borderRadius = shape;
+                confetti.style.top = '-20px';
+                confetti.style.left = `${Math.random() * 100}%`;
+                confetti.style.opacity = '1';
+                
+                // Add to container
+                elements.confettiContainer.appendChild(confetti);
+                
+                // Animate the confetti
+                const animationDuration = Math.random() * 3 + 2; // 2-5 seconds
+                const finalX = (Math.random() - 0.5) * 100; // -50% to 50% horizontal drift
+                const finalRotation = Math.random() * 720 - 360; // -360 to 360 degrees rotation
+                
+                confetti.animate([
+                    { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
+                    { transform: `translate(${finalX}px, ${window.innerHeight}px) rotate(${finalRotation}deg)`, opacity: 0 }
+                ], {
+                    duration: animationDuration * 1000,
+                    easing: 'cubic-bezier(0, 1, 1, 1)'
+                });
+                
+                // Remove confetti after animation
+                setTimeout(() => {
+                    confetti.remove();
+                }, animationDuration * 1000);
+            }
+            
+            // Play celebration sound
+            playSound('win');
+            
+            // Reset confetti state after animation
+            setTimeout(() => {
+                gameState.showingConfetti = false;
+            }, 5000);
+        }
+
         function checkChallengeQuizAnswer() {
             const challenge = challenges[gameState.challengeState.currentChallenge];
             const step = challenge.steps[gameState.challengeState.currentStep];
@@ -2278,7 +2556,7 @@
             
             // Show explanation
             elements.modalText.textContent = step.explanation;
-            elements.modalClose.textContent = 'Next Question';
+            elements.modalClose.textContent = 'Next';
             
             // Remove click handlers from options
             optionElements.forEach(option => {
@@ -2312,7 +2590,7 @@
             
             // Award stars based on performance
             let stars = 0;
-            const percentCorrect = (gameState.challengeState.score / (challenge.steps.length - 2)) * 100; // Exclude tutorial and success steps
+            const percentCorrect = (gameState.challengeState.score / (challenge.steps.filter(step => step.type === 'quiz').length)) * 100;
             
             if (percentCorrect >= 50) stars++;
             if (percentCorrect >= 75) stars++;
@@ -2390,9 +2668,6 @@
             // Update badge display
             updateBadgeDisplay();
             
-            // Play celebration sound
-            playSound('win');
-            
             // Show confetti
             showConfetti();
         }
@@ -2453,510 +2728,661 @@
         }
 
         function playSound(type) {
-            if (!gameState.soundEnabled) return;
+            if (!gameState.soundEnabled || !gameState.audioInitialized) return;
             
-            // Start audio context if it's suspended
-            if (Tone.context.state !== 'running') {
-                Tone.context.resume();
-            }
-            
-            switch (type) {
-                case 'click':
-                    synth.triggerAttackRelease('C5', '0.1');
-                    break;
-                case 'hover':
-                    synth.triggerAttackRelease('G4', '0.05');
-                    break;
-                case 'mode':
-                    synth.triggerAttackRelease(['C4', 'E4', 'G4'], '0.2');
-                    break;
-                case 'slider':
-                    synth.triggerAttackRelease('E5', '0.05');
-                    break;
-                case 'select':
-                    synth.triggerAttackRelease('A4', '0.1');
-                    break;
-                case 'correct':
-                    synth.triggerAttackRelease(['C5', 'E5', 'G5'], '0.2');
-                    break;
-                case 'wrong':
-                    synth.triggerAttackRelease(['E4', 'Eb4'], '0.2');
-                    break;
-                case 'success':
-                    synth.triggerAttackRelease(['C5', 'E5', 'G5', 'C6'], '0.3');
-                    break;
-                case 'error':
-                    synth.triggerAttackRelease(['E4', 'C4'], '0.2');
-                    break;
-                case 'win':
-                    // Play a victory arpeggio
-                    const now = Tone.now();
-                    synth.triggerAttackRelease('C5', '0.1', now);
-                    synth.triggerAttackRelease('E5', '0.1', now + 0.1);
-                    synth.triggerAttackRelease('G5', '0.1', now + 0.2);
-                    synth.triggerAttackRelease('C6', '0.3', now + 0.3);
-                    break;
-                case 'character':
-                    synth.triggerAttackRelease(['G4', 'B4', 'D5'], '0.2');
-                    break;
+            try {
+                // Only continue if audio context is available
+                if (!audioContext) return;
+                
+                // Create a gain node for volume control
+                const gainNode = audioContext.createGain();
+                gainNode.gain.value = 0.3; // Reduce volume to 30%
+                gainNode.connect(audioContext.destination);
+                
+                // Create oscillator
+                const oscillator = audioContext.createOscillator();
+                
+                // Configure sound based on type
+                switch (type) {
+                    case 'click':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 523.25; // C5
+                        playTone(oscillator, gainNode, 0.1);
+                        break;
+                    case 'hover':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 392.00; // G4
+                        playTone(oscillator, gainNode, 0.05);
+                        break;
+                    case 'mode':
+                        playChord([261.63, 329.63, 392.00], 0.2); // C4, E4, G4
+                        break;
+                    case 'slider':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 659.25; // E5
+                        playTone(oscillator, gainNode, 0.05);
+                        break;
+                    case 'select':
+                        oscillator.type = 'sine';
+                        oscillator.frequency.value = 440.00; // A4
+                        playTone(oscillator, gainNode, 0.1);
+                        break;
+                    case 'correct':
+                        playArpeggio([523.25, 659.25, 783.99], 0.15); // C5, E5, G5
+                        break;
+                    case 'wrong':
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.value = 196.00; // G3
+                        playTone(oscillator, gainNode, 0.2);
+                        setTimeout(() => {
+                            const osc2 = audioContext.createOscillator();
+                            osc2.type = 'sawtooth';
+                            osc2.frequency.value = 185.00; // F#3
+                            playTone(osc2, gainNode, 0.2);
+                        }, 200);
+                        break;
+                    case 'success':
+                        playArpeggio([523.25, 659.25, 783.99, 1046.50], 0.2); // C5, E5, G5, C6
+                        break;
+                    case 'error':
+                        oscillator.type = 'sawtooth';
+                        oscillator.frequency.value = 277.18; // C#4
+                        playTone(oscillator, gainNode, 0.1);
+                        setTimeout(() => {
+                            const osc2 = audioContext.createOscillator();
+                            osc2.type = 'sawtooth';
+                            osc2.frequency.value = 207.65; // G#3
+                            playTone(osc2, gainNode, 0.2);
+                        }, 100);
+                        break;
+                    case 'win':
+                        playFanfare();
+                        break;
+                    case 'character':
+                        playChord([392.00, 493.88, 587.33], 0.2); // G4, B4, D5
+                        break;
+                }
+            } catch (e) {
+                console.warn('Sound playback error:', e);
+                gameState.soundEnabled = false;
             }
         }
 
-        function showConfetti() {
-            gameState.showingConfetti = true;
+        function playTone(oscillator, gainNode, duration) {
+            oscillator.connect(gainNode);
+            oscillator.start();
             
-            // Create confetti container if it doesn't exist
-            const confettiContainer = document.getElementById('confetti-container');
-            confettiContainer.innerHTML = '';
+            // Fade out for smoother sound
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
             
-            // Add confetti particles
-            for (let i = 0; i < 100; i++) {
-                const confetti = document.createElement('div');
-                const color = `hsl(${Math.random() * 360}, 80%, 60%)`;
-                
-                confetti.style.position = 'absolute';
-                confetti.style.width = `${Math.random() * 10 + 5}px`;
-                confetti.style.height = `${Math.random() * 10 + 5}px`;
-                confetti.style.backgroundColor = color;
-                confetti.style.top = '0';
-                confetti.style.left = `${Math.random() * 100}%`;
-                confetti.style.transform = 'rotate(0deg)';
-                confetti.style.opacity = '1';
-                
-                confettiContainer.appendChild(confetti);
-                
-                // Animate confetti
-                const duration = Math.random() * 2000 + 1000;
-                const rotation = Math.random() * 360;
-                
-                confetti.animate([
-                    { transform: 'translateY(0) rotate(0deg)', opacity: 1 },
-                    { transform: `translateY(${window.innerHeight}px) rotate(${rotation}deg)`, opacity: 0 }
-                ], {
-                    duration: duration,
-                    easing: 'cubic-bezier(0.1, 0.8, 0.8, 1)'
-                });
-                
-                // Remove confetti after animation
-                setTimeout(() => {
-                    confetti.remove();
-                }, duration);
-            }
-            
+            // Stop after duration
             setTimeout(() => {
-                gameState.showingConfetti = false;
-            }, 3000);
+                oscillator.stop();
+            }, duration * 1000);
+        }
+
+        function playChord(frequencies, duration) {
+            if (!audioContext) return;
+            
+            const masterGain = audioContext.createGain();
+            masterGain.gain.value = 0.3;
+            masterGain.connect(audioContext.destination);
+            
+            frequencies.forEach(freq => {
+                const osc = audioContext.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                osc.connect(masterGain);
+                osc.start();
+                
+                setTimeout(() => {
+                    osc.stop();
+                }, duration * 1000);
+            });
+            
+            masterGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+        }
+
+        function playArpeggio(frequencies, noteDelay) {
+            if (!audioContext) return;
+            
+            const masterGain = audioContext.createGain();
+            masterGain.gain.value = 0.3;
+            masterGain.connect(audioContext.destination);
+            
+            frequencies.forEach((freq, index) => {
+                setTimeout(() => {
+                    const osc = audioContext.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.value = freq;
+                    osc.connect(masterGain);
+                    osc.start();
+                    
+                    setTimeout(() => {
+                        osc.stop();
+                    }, 300);
+                }, index * noteDelay * 1000);
+            });
+        }
+
+        function playFanfare() {
+            if (!audioContext) return;
+            
+            // Play a victory fanfare
+            const melody = [
+                { note: 523.25, duration: 0.2 },  // C5
+                { note: 659.25, duration: 0.2 },  // E5
+                { note: 783.99, duration: 0.2 },  // G5
+                { note: 1046.50, duration: 0.5 }, // C6
+            ];
+            
+            const masterGain = audioContext.createGain();
+            masterGain.gain.value = 0.3;
+            masterGain.connect(audioContext.destination);
+            
+            let timeOffset = 0;
+            melody.forEach(({ note, duration }) => {
+                setTimeout(() => {
+                    const osc = audioContext.createOscillator();
+                    const noteGain = audioContext.createGain();
+                    
+                    osc.type = 'triangle';
+                    osc.frequency.value = note;
+                    osc.connect(noteGain);
+                    noteGain.connect(masterGain);
+                    
+                    noteGain.gain.value = 0.5;
+                    osc.start();
+                    noteGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + duration);
+                    
+                    setTimeout(() => {
+                        osc.stop();
+                    }, duration * 1000);
+                }, timeOffset * 1000);
+                
+                timeOffset += duration;
+            });
+        }
+
+        // Helper math function for when p5.js map isn't available
+        function map(value, fromLow, fromHigh, toLow, toHigh) {
+            return toLow + (toHigh - toLow) * ((value - fromLow) / (fromHigh - fromLow));
         }
 
         /******************************************
          * P5.JS CANVAS RENDERING
          ******************************************/
-        let p5Instance;
-        
-        function setup() {
-            const canvasContainer = document.getElementById('canvas-container');
-            const w = canvasContainer.clientWidth * 0.8;
-            const h = canvasContainer.clientHeight * 0.7;
-            
-            p5Instance = createCanvas(w, h);
-            p5Instance.parent('game-canvas');
-            
-            frameRate(30);
-            colorMode(RGB, 255, 255, 255, 1);
-            textAlign(CENTER, CENTER);
-            textFont('Nunito, Arial, sans-serif');
-            
-            noLoop(); // Only draw when needed to save performance
-        }
+        // Create a namespace for our P5 instance
+        let sketch = function(p) {
+            // P5 setup function
+            p.setup = function() {
+                const canvasContainer = document.getElementById('canvas-container');
+                const canvasWidth = Math.min(canvasContainer.clientWidth - 100, 800);
+                const canvasHeight = Math.min(canvasContainer.clientHeight - 100, 600);
+                
+                p.createCanvas(canvasWidth, canvasHeight);
+                p.frameRate(30);
+                p.colorMode(p.RGB, 255, 255, 255, 1);
+                p.textAlign(p.CENTER, p.CENTER);
+                p.textFont('Nunito, Arial, sans-serif');
+                
+                p.noLoop(); // Only draw when needed
+                debugLog('Canvas created with dimensions:', { width: canvasWidth, height: canvasHeight });
+            };
 
-        function draw() {
-            background(255, 255, 255, 0.95);
-            
-            // Draw coordinate system
-            drawCoordinateSystem();
-            
-            // Draw different content based on the current mode
-            if (gameState.mode === 'area') {
-                drawAreaMode();
-            } else if (gameState.mode === 'slope') {
-                drawSlopeMode();
-            } else {
-                // Just show coordinate system for other modes
-                drawWelcomeText();
-            }
-        }
-
-        function drawCoordinateSystem() {
-            // Draw grid
-            stroke(230);
-            strokeWeight(1);
-            
-            // Vertical grid lines
-            const gridSpacingX = width / 10;
-            for (let x = 0; x <= width; x += gridSpacingX) {
-                line(x, 0, x, height);
-            }
-            
-            // Horizontal grid lines
-            const gridSpacingY = height / 10;
-            for (let y = 0; y <= height; y += gridSpacingY) {
-                line(0, y, width, y);
-            }
-            
-            // Draw axes
-            stroke(0);
-            strokeWeight(2);
-            
-            // x-axis
-            line(0, height/2, width, height/2);
-            
-            // y-axis
-            line(width/2, 0, width/2, height);
-            
-            // Add ticks and labels
-            textSize(12);
-            fill(0);
-            noStroke();
-            
-            // x-axis ticks
-            for (let x = width/2 + gridSpacingX; x < width; x += gridSpacingX) {
-                // Draw tick
-                stroke(0);
-                strokeWeight(1);
-                const tickValue = Math.round(map(x, width/2, width, 0, 5));
-                line(x, height/2 - 5, x, height/2 + 5);
+            // P5 draw function
+            p.draw = function() {
+                p.background(255, 255, 255, 0.95);
                 
-                // Draw label
-                noStroke();
-                text(tickValue, x, height/2 + 20);
-            }
-            
-            for (let x = width/2 - gridSpacingX; x > 0; x -= gridSpacingX) {
-                // Draw tick
-                stroke(0);
-                strokeWeight(1);
-                const tickValue = Math.round(map(x, width/2, 0, 0, -5));
-                line(x, height/2 - 5, x, height/2 + 5);
+                // Draw coordinate system
+                drawCoordinateSystem(p);
                 
-                // Draw label
-                noStroke();
-                text(tickValue, x, height/2 + 20);
-            }
-            
-            // y-axis ticks
-            for (let y = height/2 - gridSpacingY; y > 0; y -= gridSpacingY) {
-                // Draw tick
-                stroke(0);
-                strokeWeight(1);
-                const tickValue = Math.round(map(y, height/2, 0, 0, 5));
-                line(width/2 - 5, y, width/2 + 5, y);
-                
-                // Draw label
-                noStroke();
-                text(tickValue, width/2 - 20, y);
-            }
-            
-            for (let y = height/2 + gridSpacingY; y < height; y += gridSpacingY) {
-                // Draw tick
-                stroke(0);
-                strokeWeight(1);
-                const tickValue = Math.round(map(y, height/2, height, 0, -5));
-                line(width/2 - 5, y, width/2 + 5, y);
-                
-                // Draw label
-                noStroke();
-                text(tickValue, width/2 - 20, y);
-            }
-            
-            // Add axis labels
-            textSize(16);
-            text('x', width - 20, height/2 + 20);
-            text('y', width/2 - 20, 20);
-        }
-
-        function drawWelcomeText() {
-            fill(100, 100, 200);
-            textSize(24);
-            text('Choose a mode from the navigation bar!', width/2, height/2 - 30);
-            
-            textSize(16);
-            text('Area Explorer: Learn about integrals', width/2, height/2 + 20);
-            text('Slope Detective: Discover derivatives', width/2, height/2 + 50);
-        }
-
-        function drawAreaMode() {
-            const { shapeCount, functionType, m, b, a } = gameState.areaParams;
-            
-            // Draw the function curve
-            stroke(0, 100, 200, 0.8);
-            strokeWeight(3);
-            noFill();
-            
-            beginShape();
-            for (let px = 0; px <= width; px += 2) {
-                const x = map(px, 0, width, -5, 5);
-                let y;
-                
-                if (functionType === 'linear') {
-                    y = m * x + b;
-                } else if (functionType === 'quadratic') {
-                    y = a * x * x + b;
-                } else if (functionType === 'cubic') {
-                    y = a * x * x * x + b;
-                } else if (functionType === 'sine') {
-                    y = Math.sin(x) * 2 + b;
-                } else if (functionType === 'exponential') {
-                    y = Math.exp(x / 2) + b - 1;
-                }
-                
-                const py = map(y, 5, -5, 0, height);
-                vertex(px, py);
-            }
-            endShape();
-            
-            // Draw rectangles under the curve
-            const rectWidth = width / shapeCount;
-            
-            for (let i = 0; i < shapeCount; i++) {
-                const px = i * rectWidth;
-                const x = map(px + rectWidth/2, 0, width, -5, 5);
-                
-                let y;
-                if (functionType === 'linear') {
-                    y = m * x + b;
-                } else if (functionType === 'quadratic') {
-                    y = a * x * x + b;
-                } else if (functionType === 'cubic') {
-                    y = a * x * x * x + b;
-                } else if (functionType === 'sine') {
-                    y = Math.sin(x) * 2 + b;
-                } else if (functionType === 'exponential') {
-                    y = Math.exp(x / 2) + b - 1;
-                }
-                
-                const py = map(y, 5, -5, 0, height);
-                
-                fill(255, 100, 100, 0.5);
-                stroke(200, 50, 50, 0.8);
-                strokeWeight(1);
-                
-                if (y >= 0) {
-                    rect(px, py, rectWidth, height/2 - py);
+                // Draw based on current mode
+                if (gameState.mode === 'area') {
+                    drawAreaMode(p);
+                } else if (gameState.mode === 'slope') {
+                    drawSlopeMode(p);
                 } else {
-                    rect(px, height/2, rectWidth, py - height/2);
-                }
-            }
-            
-            // Draw area calculation text
-            textSize(18);
-            fill(50);
-            noStroke();
-            
-            let totalArea = 0;
-            const dx = 10 / shapeCount; // Width of domain is 10 (-5 to 5)
-            
-            for (let i = 0; i < shapeCount; i++) {
-                const x = map(i * rectWidth + rectWidth/2, 0, width, -5, 5);
-                
-                let y;
-                if (functionType === 'linear') {
-                    y = m * x + b;
-                } else if (functionType === 'quadratic') {
-                    y = a * x * x + b;
-                } else if (functionType === 'cubic') {
-                    y = a * x * x * x + b;
-                } else if (functionType === 'sine') {
-                    y = Math.sin(x) * 2 + b;
-                } else if (functionType === 'exponential') {
-                    y = Math.exp(x / 2) + b - 1;
+                    // Just show the coordinate system and welcome text for other modes
+                    drawWelcomeGraphics(p);
                 }
                 
-                totalArea += y * dx;
+                debugLog('Canvas rendered in mode:', gameState.mode);
+            };
+            
+            // Helper functions (all take p as first parameter)
+            function drawCoordinateSystem(p) {
+                // Draw grid
+                p.stroke(230);
+                p.strokeWeight(1);
+                
+                // Vertical grid lines
+                const gridSpacingX = p.width / 10;
+                for (let x = 0; x <= p.width; x += gridSpacingX) {
+                    p.line(x, 0, x, p.height);
+                }
+                
+                // Horizontal grid lines
+                const gridSpacingY = p.height / 10;
+                for (let y = 0; y <= p.height; y += gridSpacingY) {
+                    p.line(0, y, p.width, y);
+                }
+                
+                // Draw axes
+                p.stroke(80);
+                p.strokeWeight(2);
+                
+                // x-axis
+                p.line(0, p.height/2, p.width, p.height/2);
+                
+                // y-axis
+                p.line(p.width/2, 0, p.width/2, p.height);
+                
+                // Add ticks and labels
+                p.textSize(12);
+                p.fill(80);
+                p.noStroke();
+                
+                // x-axis ticks and labels
+                for (let i = -4; i <= 4; i++) {
+                    if (i === 0) continue; // Skip origin
+                    
+                    const x = p.width/2 + i * gridSpacingX;
+                    
+                    // Draw tick
+                    p.stroke(80);
+                    p.strokeWeight(1);
+                    p.line(x, p.height/2 - 5, x, p.height/2 + 5);
+                    
+                    // Draw label
+                    p.noStroke();
+                    p.text(i, x, p.height/2 + 20);
+                }
+                
+                // y-axis ticks and labels
+                for (let i = -4; i <= 4; i++) {
+                    if (i === 0) continue; // Skip origin
+                    
+                    const y = p.height/2 - i * gridSpacingY;
+                    
+                    // Draw tick
+                    p.stroke(80);
+                    p.strokeWeight(1);
+                    p.line(p.width/2 - 5, y, p.width/2 + 5, y);
+                    
+                    // Draw label
+                    p.noStroke();
+                    p.text(i, p.width/2 - 20, y);
+                }
+                
+                // Draw origin label
+                p.text("0", p.width/2 - 15, p.height/2 + 15);
+                
+                // Add axis labels
+                p.textSize(14);
+                p.textStyle(p.BOLD);
+                p.text("x", p.width - 15, p.height/2 + 25);
+                p.text("y", p.width/2 - 20, 15);
+                p.textStyle(p.NORMAL);
             }
-            
-            // Absolute value for the area
-            totalArea = Math.abs(totalArea);
-            
-            // Draw the exact area for simple functions when possible
-            let exactArea = null;
-            if (functionType === 'linear' && m !== 0) {
-                // Area of trapezoid for linear function over [-5, 5]
-                const y1 = m * (-5) + b;
-                const y2 = m * 5 + b;
-                exactArea = Math.abs((y1 + y2) * 10 / 2);
-            }
-            
-            text(`Approximate Area: ${totalArea.toFixed(2)} square units`, width/2, height - 70);
-            
-            if (exactArea !== null) {
-                text(`Exact Area: ${exactArea.toFixed(2)} square units`, width/2, height - 40);
-            }
-            
-            // Draw function equation
-            textSize(20);
-            fill(0, 100, 200);
-            noStroke();
-            
-            let equation;
-            if (functionType === 'linear') {
-                equation = `f(x) = ${m.toFixed(1)}x + ${b.toFixed(1)}`;
-            } else if (functionType === 'quadratic') {
-                equation = `f(x) = ${a.toFixed(1)}x² + ${b.toFixed(1)}`;
-            } else if (functionType === 'cubic') {
-                equation = `f(x) = ${a.toFixed(1)}x³ + ${b.toFixed(1)}`;
-            } else if (functionType === 'sine') {
-                equation = `f(x) = sin(x) * 2 + ${b.toFixed(1)}`;
-            } else if (functionType === 'exponential') {
-                equation = `f(x) = e^(x/2) + ${b.toFixed(1)} - 1`;
-            }
-            
-            text(equation, width/2, 30);
-            
-            // Draw integral notation
-            textSize(18);
-            fill(200, 50, 50);
-            text(`∫f(x)dx = Area under the curve`, width/2, 60);
-        }
 
-        function drawSlopeMode() {
-            const { x, functionType, m, b, a } = gameState.slopeParams;
-            
-            // Draw the function curve
-            stroke(0, 100, 200, 0.8);
-            strokeWeight(3);
-            noFill();
-            
-            beginShape();
-            for (let px = 0; px <= width; px += 2) {
-                const x = map(px, 0, width, -5, 5);
-                let y;
+            function drawWelcomeGraphics(p) {
+                // Draw a simple animated function
+                const time = p.millis() / 1000;
                 
-                if (functionType === 'linear') {
-                    y = m * x + b;
-                } else if (functionType === 'quadratic') {
-                    y = a * x * x + b;
-                } else if (functionType === 'cubic') {
-                    y = a * x * x * x + b;
-                } else if (functionType === 'sine') {
-                    y = Math.sin(x) * 2 + b;
-                } else if (functionType === 'exponential') {
-                    y = Math.exp(x / 2) + b - 1;
+                // Draw sinusoidal function
+                p.stroke(65, 105, 225); // Royal blue
+                p.strokeWeight(3);
+                p.noFill();
+                
+                p.beginShape();
+                for (let x = 0; x < p.width; x += 4) {
+                    const t = p.map(x, 0, p.width, -p.PI, p.PI);
+                    const y = p.height/2 - 80 * p.sin(t + time) * p.cos(t * 0.5);
+                    p.vertex(x, y);
+                }
+                p.endShape();
+                
+                // Draw a quadratic function
+                p.stroke(76, 175, 80); // Green
+                p.strokeWeight(3);
+                
+                p.beginShape();
+                for (let x = 0; x < p.width; x += 4) {
+                    const t = p.map(x, 0, p.width, -3, 3);
+                    const y = p.height/2 - 20 * t * t;
+                    p.vertex(x, y);
+                }
+                p.endShape();
+                
+                // Welcome text
+                p.textSize(24);
+                p.fill(80, 80, 80);
+                p.text("Welcome to MathQuest!", p.width/2, 60);
+                
+                p.textSize(18);
+                p.text("Choose a mode from the navigation bar to get started!", p.width/2, p.height - 40);
+                
+                // Mode explanations
+                p.textSize(14);
+                p.fill(65, 105, 225);
+                p.text("Area Explorer: Learn about integrals and the area under curves", p.width/2, p.height - 80);
+                
+                p.fill(76, 175, 80);
+                p.text("Slope Detective: Discover derivatives and the slope of functions", p.width/2, p.height - 60);
+            }
+
+            function drawAreaMode(p) {
+                const { shapeCount, functionType, m, b, a } = gameState.areaParams;
+                
+                // Define the domain and range for graphing
+                const xMin = -5;
+                const xMax = 5;
+                const yMin = -5;
+                const yMax = 5;
+                
+                // Function to convert from math coordinates to pixel coordinates
+                const toPixelX = x => p.map(x, xMin, xMax, 0, p.width);
+                const toPixelY = y => p.map(y, yMin, yMax, p.height, 0); // Flip y-axis
+                
+                // Function to evaluate the current function
+                const evaluateFunction = x => {
+                    switch (functionType) {
+                        case 'linear':
+                            return m * x + b;
+                        case 'quadratic':
+                            return a * x * x + b;
+                        case 'cubic':
+                            return a * x * x * x + b;
+                        case 'sine':
+                            return Math.sin(x) * 2 + b;
+                        case 'exponential':
+                            return Math.exp(x/2) + b - 1;
+                        default:
+                            return 0;
+                    }
+                };
+                
+                // Draw the function curve
+                p.stroke(65, 105, 225, 0.9); // Royal blue
+                p.strokeWeight(3);
+                p.noFill();
+                
+                p.beginShape();
+                for (let px = 0; px <= p.width; px += 2) {
+                    const x = p.map(px, 0, p.width, xMin, xMax);
+                    const y = evaluateFunction(x);
+                    
+                    // Check if y is within range to avoid drawing extreme values
+                    if (y >= yMin - 1 && y <= yMax + 1) {
+                        const py = toPixelY(y);
+                        p.vertex(px, py);
+                    }
+                }
+                p.endShape();
+                
+                // Draw rectangles under the curve
+                const rectWidth = p.width / shapeCount;
+                const dx = (xMax - xMin) / shapeCount;
+                let totalArea = 0;
+                
+                for (let i = 0; i < shapeCount; i++) {
+                    const x = xMin + (i + 0.5) * dx; // Sample at midpoint of each rectangle
+                    const y = evaluateFunction(x);
+                    
+                    // Convert to pixel coordinates
+                    const px = toPixelX(xMin + i * dx);
+                    const py = toPixelY(y);
+                    const originY = toPixelY(0);
+                    
+                    // Determine rectangle height and position
+                    const rectHeight = Math.abs(py - originY);
+                    
+                    // Draw the rectangle
+                    p.fill(255, 105, 97, 0.6); // Light red with transparency
+                    p.stroke(255, 65, 54, 0.8); // Red outline
+                    p.strokeWeight(1);
+                    
+                    if (y >= 0) {
+                        p.rect(px, py, rectWidth, originY - py);
+                        totalArea += y * dx;
+                    } else {
+                        p.rect(px, originY, rectWidth, py - originY);
+                        totalArea -= y * dx; // Negative y values give negative area
+                    }
                 }
                 
-                const py = map(y, 5, -5, 0, height);
-                vertex(px, py);
+                // Take absolute value of area for display
+                totalArea = Math.abs(totalArea);
+                
+                // Draw area calculation text
+                p.textSize(18);
+                p.fill(80);
+                p.noStroke();
+                
+                // Draw function equation
+                let equation;
+                switch (functionType) {
+                    case 'linear':
+                        equation = `f(x) = ${m.toFixed(1)}x + ${b.toFixed(1)}`;
+                        break;
+                    case 'quadratic':
+                        equation = `f(x) = ${a.toFixed(1)}x² + ${b.toFixed(1)}`;
+                        break;
+                    case 'cubic':
+                        equation = `f(x) = ${a.toFixed(1)}x³ + ${b.toFixed(1)}`;
+                        break;
+                    case 'sine':
+                        equation = `f(x) = sin(x) × 2 + ${b.toFixed(1)}`;
+                        break;
+                    case 'exponential':
+                        equation = `f(x) = e^(x/2) + ${b.toFixed(1)} - 1`;
+                        break;
+                }
+                
+                // Calculate exact area for simple functions when possible
+                let exactArea = null;
+                if (functionType === 'linear' && m !== 0) {
+                    // Area of trapezoid for linear function over [xMin, xMax]
+                    const y1 = m * xMin + b;
+                    const y2 = m * xMax + b;
+                    exactArea = Math.abs((y1 + y2) * (xMax - xMin) / 2);
+                }
+                
+                // Draw function equation and area information
+                p.fill(65, 105, 225);
+                p.textSize(20);
+                p.text(equation, p.width/2, 30);
+                
+                // Draw integral notation
+                p.fill(255, 65, 54);
+                p.textSize(16);
+                p.text(`∫f(x)dx = Area under the curve`, p.width/2, 60);
+                
+                // Draw area value
+                p.fill(80);
+                p.textSize(18);
+                p.text(`Approximate Area with ${shapeCount} rectangles: ${totalArea.toFixed(2)} square units`, p.width/2, p.height - 40);
+                
+                if (exactArea !== null) {
+                    p.text(`Exact Area: ${exactArea.toFixed(2)} square units`, p.width/2, p.height - 15);
+                }
             }
-            endShape();
-            
-            // Calculate the point on the curve
-            const px = map(x, 0, 1, 0, width);
-            const xValue = map(px, 0, width, -5, 5);
-            
-            let yValue;
-            if (functionType === 'linear') {
-                yValue = m * xValue + b;
-            } else if (functionType === 'quadratic') {
-                yValue = a * xValue * xValue + b;
-            } else if (functionType === 'cubic') {
-                yValue = a * xValue * xValue * xValue + b;
-            } else if (functionType === 'sine') {
-                yValue = Math.sin(xValue) * 2 + b;
-            } else if (functionType === 'exponential') {
-                yValue = Math.exp(xValue / 2) + b - 1;
-            }
-            
-            const py = map(yValue, 5, -5, 0, height);
-            
-            // Calculate the derivative at the point
-            let derivative;
-            if (functionType === 'linear') {
-                derivative = m;
-            } else if (functionType === 'quadratic') {
-                derivative = 2 * a * xValue;
-            } else if (functionType === 'cubic') {
-                derivative = 3 * a * xValue * xValue;
-            } else if (functionType === 'sine') {
-                derivative = Math.cos(xValue) * 2;
-            } else if (functionType === 'exponential') {
-                derivative = Math.exp(xValue / 2) * 0.5;
-            }
-            
-            // Draw the tangent line
-            stroke(200, 100, 50, 0.8);
-            strokeWeight(2);
-            
-            // Use inverse of derivative for slope in pixel space (since y is flipped)
-            const slopeInPixelSpace = -derivative * (height / 10) / (width / 10);
-            
-            // Extend tangent line across canvas
-            const x1 = 0;
-            const y1 = py - slopeInPixelSpace * (px - x1);
-            const x2 = width;
-            const y2 = py + slopeInPixelSpace * (x2 - px);
-            
-            line(x1, y1, x2, y2);
-            
-            // Draw the point on the curve
-            fill(255, 50, 50);
-            stroke(200, 50, 50);
-            strokeWeight(2);
-            ellipse(px, py, 10, 10);
-            
-            // Draw derivative value
-            textSize(18);
-            fill(50);
-            noStroke();
-            
-            text(`Slope at x = ${xValue.toFixed(2)}: ${derivative.toFixed(2)}`, width/2, height - 70);
-            text(`Point coordinates: (${xValue.toFixed(2)}, ${yValue.toFixed(2)})`, width/2, height - 40);
-            
-            // Draw function equation
-            textSize(20);
-            fill(0, 100, 200);
-            noStroke();
-            
-            let equation;
-            if (functionType === 'linear') {
-                equation = `f(x) = ${m.toFixed(1)}x + ${b.toFixed(1)}`;
-            } else if (functionType === 'quadratic') {
-                equation = `f(x) = ${a.toFixed(1)}x² + ${b.toFixed(1)}`;
-            } else if (functionType === 'cubic') {
-                equation = `f(x) = ${a.toFixed(1)}x³ + ${b.toFixed(1)}`;
-            } else if (functionType === 'sine') {
-                equation = `f(x) = sin(x) * 2 + ${b.toFixed(1)}`;
-            } else if (functionType === 'exponential') {
-                equation = `f(x) = e^(x/2) + ${b.toFixed(1)} - 1`;
-            }
-            
-            text(equation, width/2, 30);
-            
-            // Draw derivative notation
-            textSize(18);
-            fill(200, 100, 50);
-            
-            let derivativeEquation;
-            if (functionType === 'linear') {
-                derivativeEquation = `f'(x) = ${m.toFixed(1)}`;
-            } else if (functionType === 'quadratic') {
-                derivativeEquation = `f'(x) = ${(2 * a).toFixed(1)}x`;
-            } else if (functionType === 'cubic') {
-                derivativeEquation = `f'(x) = ${(3 * a).toFixed(1)}x²`;
-            } else if (functionType === 'sine') {
-                derivativeEquation = `f'(x) = 2cos(x)`;
-            } else if (functionType === 'exponential') {
-                derivativeEquation = `f'(x) = 0.5e^(x/2)`;
-            }
-            
-            text(`${derivativeEquation} = Slope of the tangent line`, width/2, 60);
-        }
 
-        function map(value, fromLow, fromHigh, toLow, toHigh) {
-            return toLow + (toHigh - toLow) * ((value - fromLow) / (fromHigh - fromLow));
-        }
-        
-        // Trigger p5.js setup and initial draw
-        window.setup = setup;
-        window.draw = draw;
+            function drawSlopeMode(p) {
+                const { x, functionType, m, b, a } = gameState.slopeParams;
+                
+                // Define the domain and range for graphing
+                const xMin = -5;
+                const xMax = 5;
+                const yMin = -5;
+                const yMax = 5;
+                
+                // Function to convert from math coordinates to pixel coordinates
+                const toPixelX = x => p.map(x, xMin, xMax, 0, p.width);
+                const toPixelY = y => p.map(y, yMin, yMax, p.height, 0); // Flip y-axis
+                
+                // Function to evaluate the current function
+                const evaluateFunction = x => {
+                    switch (functionType) {
+                        case 'linear':
+                            return m * x + b;
+                        case 'quadratic':
+                            return a * x * x + b;
+                        case 'cubic':
+                            return a * x * x * x + b;
+                        case 'sine':
+                            return Math.sin(x) * 2 + b;
+                        case 'exponential':
+                            return Math.exp(x/2) + b - 1;
+                        default:
+                            return 0;
+                    }
+                };
+                
+                // Function to evaluate the derivative
+                const evaluateDerivative = x => {
+                    switch (functionType) {
+                        case 'linear':
+                            return m;
+                        case 'quadratic':
+                            return 2 * a * x;
+                        case 'cubic':
+                            return 3 * a * x * x;
+                        case 'sine':
+                            return Math.cos(x) * 2;
+                        case 'exponential':
+                            return Math.exp(x/2) * 0.5;
+                        default:
+                            return 0;
+                    }
+                };
+                
+                // Draw the function curve
+                p.stroke(65, 105, 225, 0.9); // Royal blue
+                p.strokeWeight(3);
+                p.noFill();
+                
+                p.beginShape();
+                for (let px = 0; px <= p.width; px += 2) {
+                    const x = p.map(px, 0, p.width, xMin, xMax);
+                    const y = evaluateFunction(x);
+                    
+                    // Check if y is within range to avoid drawing extreme values
+                    if (y >= yMin - 1 && y <= yMax + 1) {
+                        const py = toPixelY(y);
+                        p.vertex(px, py);
+                    }
+                }
+                p.endShape();
+                
+                // Calculate the point on the curve
+                const xValue = p.map(x, 0, 1, xMin, xMax);
+                const yValue = evaluateFunction(xValue);
+                
+                // Convert to pixel coordinates
+                const px = toPixelX(xValue);
+                const py = toPixelY(yValue);
+                
+                // Calculate the derivative at this point
+                const derivative = evaluateDerivative(xValue);
+                
+                // Draw the tangent line
+                p.stroke(255, 140, 0, 0.9); // Orange
+                p.strokeWeight(2);
+                
+                // Calculate tangent line points
+                const tangentLength = p.width * 0.8; // Length of tangent line in pixels
+                const deltaX = tangentLength / 2;
+                const slope = -derivative * (p.height / (yMax - yMin)) / (p.width / (xMax - xMin));
+                
+                const x1 = px - deltaX;
+                const y1 = py - slope * deltaX;
+                const x2 = px + deltaX;
+                const y2 = py + slope * deltaX;
+                
+                // Draw the tangent line if it's within reasonable bounds
+                if (Math.abs(slope) < 50) {
+                    p.line(x1, y1, x2, y2);
+                } else {
+                    // Draw a more vertical line for very steep slopes
+                    const vertDelta = p.height * 0.4;
+                    p.line(px, py - vertDelta, px, py + vertDelta);
+                }
+                
+                // Draw the point on the curve
+                p.fill(255, 105, 97);
+                p.stroke(255, 65, 54);
+                p.strokeWeight(2);
+                p.ellipse(px, py, 12, 12);
+                
+                // Draw function equation and derivative info
+                p.fill(65, 105, 225);
+                p.textSize(20);
+                p.noStroke();
+                
+                let equation;
+                switch (functionType) {
+                    case 'linear':
+                        equation = `f(x) = ${m.toFixed(1)}x + ${b.toFixed(1)}`;
+                        break;
+                    case 'quadratic':
+                        equation = `f(x) = ${a.toFixed(1)}x² + ${b.toFixed(1)}`;
+                        break;
+                    case 'cubic':
+                        equation = `f(x) = ${a.toFixed(1)}x³ + ${b.toFixed(1)}`;
+                        break;
+                    case 'sine':
+                        equation = `f(x) = sin(x) × 2 + ${b.toFixed(1)}`;
+                        break;
+                    case 'exponential':
+                        equation = `f(x) = e^(x/2) + ${b.toFixed(1)} - 1`;
+                        break;
+                }
+                
+                p.text(equation, p.width/2, 30);
+                
+                // Draw derivative notation and value
+                p.fill(255, 140, 0);
+                p.textSize(16);
+                
+                let derivativeEquation;
+                switch (functionType) {
+                    case 'linear':
+                        derivativeEquation = `f'(x) = ${m.toFixed(1)}`;
+                        break;
+                    case 'quadratic':
+                        derivativeEquation = `f'(x) = ${(2 * a).toFixed(1)}x`;
+                        break;
+                    case 'cubic':
+                        derivativeEquation = `f'(x) = ${(3 * a).toFixed(1)}x²`;
+                        break;
+                    case 'sine':
+                        derivativeEquation = `f'(x) = 2cos(x)`;
+                        break;
+                    case 'exponential':
+                        derivativeEquation = `f'(x) = 0.5e^(x/2)`;
+                        break;
+                }
+                
+                p.text(`${derivativeEquation} = Slope of the tangent line`, p.width/2, 60);
+                
+                // Draw point and slope information
+                p.fill(80);
+                p.textSize(16);
+                p.text(`Point: (${xValue.toFixed(2)}, ${yValue.toFixed(2)})`, p.width/2, p.height - 40);
+                p.text(`Slope at this point: ${derivative.toFixed(2)}`, p.width/2, p.height - 15);
+            }
+        };
+
+        // Create the P5 instance once the document is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Create our P5 instance
+            window.p5Instance = new p5(sketch, 'game-canvas');
+            
+            // Store reference for global usage
+            debugLog('P5 instance created and attached to #game-canvas');
+        });
     </script>
 </body>
 </html>

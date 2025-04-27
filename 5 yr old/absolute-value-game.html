@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Absolute Value Adventure</title>
+    <style>
+        :root {
+            --primary: #4e54c8;
+            --secondary: #8f94fb;
+            --accent: #ff7676;
+            --background: #f9f9ff;
+            --text: #333333;
+            --success: #66bb6a;
+            --error: #ff5252;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial', sans-serif;
+        }
+        
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            padding: 15px 20px;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .main {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .game-area {
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            min-height: 400px;
+            position: relative;
+        }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 400px;
+            border-radius: 10px;
+            background-color: #f0f0f0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            background-color: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-group {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .control-group h3 {
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+        
+        .slider-container {
+            margin-bottom: 15px;
+        }
+        
+        .slider-container label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .slider-value {
+            display: inline-block;
+            margin-left: 10px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+        
+        button {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .character {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            width: 80px;
+            height: 80px;
+            transition: transform 0.3s;
+            z-index: 5;
+        }
+        
+        .character:hover {
+            transform: scale(1.1);
+        }
+        
+        .bubble {
+            position: absolute;
+            bottom: 95px;
+            right: 40px;
+            background-color: white;
+            border-radius: 20px;
+            padding: 12px;
+            max-width: 250px;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 5;
+        }
+        
+        .bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 30px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent;
+        }
+        
+        .scene-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            overflow: hidden;
+            border-radius: 10px;
+            background-color: #f0f0f0;
+        }
+        
+        .quiz-container {
+            padding: 20px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        
+        .quiz-option {
+            background-color: #f0f0f0;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quiz-option:hover {
+            background-color: #e6e6e6;
+            transform: translateY(-2px);
+        }
+        
+        .quiz-option.selected {
+            border-color: var(--primary);
+            background-color: rgba(78, 84, 200, 0.1);
+        }
+        
+        .quiz-option.correct {
+            border-color: var(--success);
+            background-color: rgba(102, 187, 106, 0.1);
+        }
+        
+        .quiz-option.incorrect {
+            border-color: var(--error);
+            background-color: rgba(255, 82, 82, 0.1);
+        }
+        
+        .feedback-container {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+        
+        .feedback-success {
+            background-color: rgba(102, 187, 106, 0.2);
+            color: var(--success);
+        }
+        
+        .feedback-error {
+            background-color: rgba(255, 82, 82, 0.2);
+            color: var(--error);
+        }
+        
+        .progress-container {
+            margin-top: 20px;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        .score-container {
+            margin-top: 15px;
+            text-align: right;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+            gap: 5px;
+        }
+        
+        .star {
+            font-size: 30px;
+            color: #ddd;
+        }
+        
+        .star.filled {
+            color: gold;
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        
+        .modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transform: scale(0.9);
+            transition: transform 0.3s;
+        }
+        
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+        
+        .modal h2 {
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .modal .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+        }
+        
+        .scene {
+            display: none;
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        .scene.active {
+            display: block;
+        }
+        
+        .number-line {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            height: 6px;
+            background-color: var(--text);
+            border-radius: 3px;
+        }
+        
+        .tick {
+            position: absolute;
+            top: 50%;
+            height: 16px;
+            width: 2px;
+            background-color: var(--text);
+            transform: translateY(-50%);
+        }
+        
+        .tick-label {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            margin-top: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .zero-mark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 16px;
+            height: 16px;
+            background-color: var(--accent);
+            border-radius: 50%;
+        }
+        
+        .number {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            z-index: 10;
+        }
+        
+        .number:hover {
+            transform: scale(1.1);
+        }
+        
+        .abs-value-indicator {
+            position: absolute;
+            height: 40px;
+            background-color: rgba(255, 118, 118, 0.3);
+            top: 50%;
+            transform: translate(0, -50%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .instructions {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            max-width: 60%;
+            z-index: 10;
+        }
+        
+        .graph-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            margin-top: 30px;
+        }
+        
+        .graph-x-axis {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: var(--text);
+        }
+        
+        .graph-y-axis {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 2px;
+            height: 100%;
+            background-color: var(--text);
+        }
+        
+        .graph-point {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background-color: var(--primary);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+        }
+        
+        .graph-line {
+            position: absolute;
+            width: 2px;
+            background-color: var(--primary);
+            transform-origin: top;
+        }
+        
+        .parameter-container {
+            display: none;
+            margin-top: 20px;
+        }
+        
+        .parameter-container.show {
+            display: block;
+        }
+        
+        .expression {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 15px 0;
+            color: var(--primary);
+        }
+        
+        .expression span {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        
+        .expression .abs-bars {
+            font-size: 28px;
+            color: var(--accent);
+            margin: 0 4px;
+        }
+        
+        #toggleSound {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: none;
+            box-shadow: none;
+            padding: 5px;
+            font-size: 24px;
+        }
+        
+        #toggleSound:hover {
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .celebration-emoji {
+            position: absolute;
+            font-size: 30px;
+            animation: float 3s ease-in-out infinite;
+            opacity: 0;
+        }
+        
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+            
+            .control-group {
+                min-width: 100%;
+            }
+            
+            .character {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .bubble {
+                max-width: 200px;
+                right: 40px;
+                bottom: 110px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>Absolute Value Adventure</h1>
+            <div class="stars-container">
+                <span class="star">★</span>
+                <span class="star">★</span>
+                <span class="star">★</span>
+            </div>
+        </header>
+        
+        <main class="main">
+            <div class="game-area">
+                <button id="toggleSound">🔊</button>
+                
+                <div class="scene-container">
+                    <!-- Introduction Scene -->
+                    <div class="scene" id="scene-intro">
+                        <div class="instructions">
+                            <h2>Welcome to Absolute Value Adventure!</h2>
+                            <p>Hi friend! I'm Professor Valor, and I'm going to teach you about absolute value!</p>
+                            <p>Absolute value is like measuring how far a number is from zero.</p>
+                            <p>Let's learn together and have fun!</p>
+                            <button id="start-btn" class="next-btn">Let's Go!</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Number Line Scene -->
+                    <div class="scene" id="scene-number-line">
+                        <div class="instructions">
+                            <h2>The Number Line</h2>
+                            <p>This is a number line. Zero is in the middle.</p>
+                            <p>Try clicking on different numbers and see what happens!</p>
+                            <button id="number-line-next" class="next-btn">Next</button>
+                        </div>
+                        <div class="number-line"></div>
+                        <div class="zero-mark"></div>
+                        <div class="abs-value-indicator"></div>
+                    </div>
+                    
+                    <!-- Absolute Value Definition Scene -->
+                    <div class="scene" id="scene-definition">
+                        <div class="instructions">
+                            <h2>What is Absolute Value?</h2>
+                            <p>The absolute value of a number is how far it is from zero.</p>
+                            <p>We write absolute value with two vertical lines: |x|</p>
+                            <p>For example:</p>
+                            <p>|5| = 5 because 5 is 5 steps from zero</p>
+                            <p>|-5| = 5 because -5 is also 5 steps from zero</p>
+                            <button id="definition-next" class="next-btn">Next</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Practice Scene -->
+                    <div class="scene" id="scene-practice">
+                        <div class="instructions">
+                            <h2>Practice Time!</h2>
+                            <p>Click on a number, and I'll show you its absolute value.</p>
+                            <p>Remember: Absolute value is always positive or zero!</p>
+                            <button id="practice-next" class="next-btn">Next</button>
+                        </div>
+                        <div class="number-line"></div>
+                        <div class="zero-mark"></div>
+                        <div class="abs-value-indicator"></div>
+                    </div>
+                    
+                    <!-- Absolute Value Expressions Scene -->
+                    <div class="scene" id="scene-expressions">
+                        <div class="instructions">
+                            <h2>Absolute Value Expressions</h2>
+                            <p>We can use absolute value in math expressions!</p>
+                            <p>For example: |x - 3| means "how far is x from 3"</p>
+                            <p>Use the slider to change the value of x and see what happens.</p>
+                            <div class="expression">
+                                |<span id="expr-x">4</span> - 3| = <span id="expr-result">1</span>
+                            </div>
+                            <input type="range" id="expr-slider" min="-10" max="10" value="4" step="1">
+                            <button id="expressions-next" class="next-btn">Next</button>
+                        </div>
+                        <div class="number-line"></div>
+                        <div class="zero-mark"></div>
+                        <div class="abs-value-indicator"></div>
+                    </div>
+                    
+                    <!-- Absolute Value Graphs Scene -->
+                    <div class="scene" id="scene-graphs">
+                        <div class="instructions">
+                            <h2>Absolute Value Graphs</h2>
+                            <p>When we graph y = |x|, it makes a V shape!</p>
+                            <p>The lowest point is at (0,0).</p>
+                            <p>Use the sliders to see how changing the formula changes the graph.</p>
+                            <div class="expression">
+                                y = <span id="graph-a">1</span>|x <span id="graph-h-sign">-</span> <span id="graph-h">0</span>| <span id="graph-k-sign">+</span> <span id="graph-k">0</span>
+                            </div>
+                            <div class="parameter-container show">
+                                <div class="slider-container">
+                                    <label for="graph-a-slider">a: <span id="graph-a-value">1</span></label>
+                                    <input type="range" id="graph-a-slider" min="0.5" max="2" value="1" step="0.1">
+                                </div>
+                                <div class="slider-container">
+                                    <label for="graph-h-slider">h: <span id="graph-h-value">0</span></label>
+                                    <input type="range" id="graph-h-slider" min="-5" max="5" value="0" step="1">
+                                </div>
+                                <div class="slider-container">
+                                    <label for="graph-k-slider">k: <span id="graph-k-value">0</span></label>
+                                    <input type="range" id="graph-k-slider" min="-5" max="5" value="0" step="1">
+                                </div>
+                            </div>
+                            <button id="graphs-next" class="next-btn">Next</button>
+                        </div>
+                        <div class="graph-container">
+                            <div class="graph-x-axis"></div>
+                            <div class="graph-y-axis"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quiz Scene -->
+                    <div class="scene" id="scene-quiz">
+                        <div class="instructions">
+                            <h2>Quiz Time!</h2>
+                            <p>Let's see what you've learned about absolute value!</p>
+                            <div id="question-container">
+                                <p id="question-text">Question 1: What is the absolute value of -7?</p>
+                                <div class="quiz-options" id="options-container">
+                                    <div class="quiz-option" data-value="7">7</div>
+                                    <div class="quiz-option" data-value="-7">-7</div>
+                                    <div class="quiz-option" data-value="0">0</div>
+                                </div>
+                                <div class="feedback-container" id="feedback"></div>
+                                <button id="submit-answer" class="next-btn">Submit Answer</button>
+                                <button id="next-question" class="next-btn" style="display: none;">Next Question</button>
+                            </div>
+                            <div class="progress-container">
+                                <div class="progress-bar" id="quiz-progress"></div>
+                            </div>
+                            <div class="score-container">
+                                Score: <span id="score">0</span>/<span id="total-questions">5</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Conclusion Scene -->
+                    <div class="scene" id="scene-conclusion">
+                        <div class="instructions">
+                            <h2>Congratulations!</h2>
+                            <p>You've completed the Absolute Value Adventure!</p>
+                            <p>You now know:</p>
+                            <ul>
+                                <li>What absolute value means</li>
+                                <li>How to calculate the absolute value of any number</li>
+                                <li>How absolute value expressions work</li>
+                                <li>What absolute value graphs look like</li>
+                            </ul>
+                            <p>You're a math superstar! ⭐</p>
+                            <button id="restart-btn" class="next-btn">Play Again</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Character and speech bubble -->
+                <div class="character">
+                    <svg width="150" height="150" viewBox="0 0 200 200">
+                        <!-- Professor Valor Character -->
+                        <circle cx="100" cy="70" r="50" fill="#8f94fb" />
+                        <circle cx="80" cy="60" r="10" fill="white" />
+                        <circle cx="120" cy="60" r="10" fill="white" />
+                        <circle cx="80" cy="60" r="5" fill="#333" />
+                        <circle cx="120" cy="60" r="5" fill="#333" />
+                        <path d="M 70 85 Q 100 105 130 85" stroke="#333" stroke-width="3" fill="none" />
+                        <rect x="70" y="30" width="60" height="10" fill="#333" />
+                        <rect x="85" y="10" width="30" height="20" fill="#333" />
+                        <path d="M 70 120 Q 100 140 130 120" fill="#4e54c8" />
+                    </svg>
+                </div>
+                <div class="bubble" id="character-bubble">
+                    Hi there! I'm Professor Valor. I'll help you learn about absolute value!
+                </div>
+            </div>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <h3>Game Settings</h3>
+                    <div class="slider-container">
+                        <label for="speed-slider">Game Speed: <span id="speed-value">5</span></label>
+                        <input type="range" id="speed-slider" min="1" max="10" value="5">
+                    </div>
+                    <div class="slider-container">
+                        <label for="difficulty-slider">Difficulty: <span id="difficulty-value">2</span></label>
+                        <input type="range" id="difficulty-slider" min="1" max="3" value="2">
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <h3>Customize Learning</h3>
+                    <div class="slider-container">
+                        <label for="number-range-slider">Number Range: <span id="number-range-value">10</span></label>
+                        <input type="range" id="number-range-slider" min="5" max="20" value="10">
+                    </div>
+                    <div class="slider-container">
+                        <label for="graph-complexity-slider">Graph Complexity: <span id="graph-complexity-value">1</span></label>
+                        <input type="range" id="graph-complexity-slider" min="1" max="3" value="1">
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <div class="modal" id="completion-modal">
+        <div class="modal-content">
+            <h2>Amazing Job!</h2>
+            <p>You've earned <span id="stars-earned">0</span> stars!</p>
+            <div class="stars-container" id="modal-stars">
+                <span class="star">★</span>
+                <span class="star">★</span>
+                <span class="star">★</span>
+            </div>
+            <p>You answered <span id="correct-answers">0</span> out of 5 questions correctly!</p>
+            <button id="continue-btn">Continue Learning</button>
+        </div>
+    </div>
+    
+    <script>
+        // Game state
+        const gameState = {
+            currentScene: 'scene-intro',
+            numberRange: 10,
+            difficulty: 2,
+            speed: 5,
+            graphComplexity: 1,
+            soundEnabled: true,
+            score: 0,
+            starsEarned: 0,
+            quizProgress: 0,
+            currentQuestion: 0,
+            totalQuestions: 5,
+            selectedOption: null,
+            quizCompleted: false,
+            graphParameters: {
+                a: 1,
+                h: 0,
+                k: 0
+            }
+        };
+        
+        // Audio context and sounds
+        let audioContext;
+        const sounds = {
+            click: null,
+            correct: null,
+            incorrect: null,
+            complete: null,
+            hover: null
+        };
+        
+        // DOM elements
+        const sceneElements = document.querySelectorAll('.scene');
+        const characterBubble = document.getElementById('character-bubble');
+        const toggleSoundBtn = document.getElementById('toggleSound');
+        
+        // Initialize the game
+        function initGame() {
+            initAudio();
+            initEventListeners();
+            updateSliderValues();
+            showScene(gameState.currentScene);
+            initNumberLine();
+            updateStars();
+        }
+        
+        // Initialize audio
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create sounds
+                sounds.click = createSound([261.63, 329.63], [0.1, 0], 0.1);
+                sounds.correct = createSound([523.25, 659.25, 783.99], [0, 0.1, 0.2], 0.3);
+                sounds.incorrect = createSound([196.00, 185.00], [0, 0.1], 0.3);
+                sounds.complete = createSound([523.25, 659.25, 783.99, 1046.50], [0, 0.1, 0.2, 0.3], 0.5);
+                sounds.hover = createSound([440.00], [0], 0.05);
+            } catch (e) {
+                console.error('Web Audio API is not supported in this browser');
+            }
+        }
+        
+        // Create a sound with given frequencies, start times, and duration
+        function createSound(frequencies, startTimes, duration) {
+            return function() {
+                if (!gameState.soundEnabled || !audioContext) return;
+                
+                frequencies.forEach((freq, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = freq;
+                    
+                    gainNode.gain.value = 0.2;
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + (startTimes[index] || 0));
+                    oscillator.stop(audioContext.currentTime + duration);
+                });
+            };
+        }
+        
+        // Initialize event listeners
+        function initEventListeners() {
+            // Toggle sound
+            toggleSoundBtn.addEventListener('click', () => {
+                gameState.soundEnabled = !gameState.soundEnabled;
+                toggleSoundBtn.textContent = gameState.soundEnabled ? '🔊' : '🔇';
+                playSound(sounds.click);
+            });
+            
+            // Scene navigation buttons
+            document.getElementById('start-btn').addEventListener('click', () => {
+                playSound(sounds.click);
+                showScene('scene-number-line');
+            });
+            
+            document.getElementById('number-line-next').addEventListener('click', () => {
+                playSound(sounds.click);
+                showScene('scene-definition');
+            });
+            
+            document.getElementById('definition-next').addEventListener('click', () => {
+                playSound(sounds.click);
+                showScene('scene-practice');
+            });
+            
+            document.getElementById('practice-next').addEventListener('click', () => {
+                playSound(sounds.click);
+                showScene('scene-expressions');
+            });
+            
+            document.getElementById('expressions-next').addEventListener('click', () => {
+                playSound(sounds.click);
+                showScene('scene-graphs');
+                initGraph();
+            });
+            
+            document.getElementById('graphs-next').addEventListener('click', () => {
+                playSound(sounds.click);
+                showScene('scene-quiz');
+                initQuiz();
+            });
+            
+            document.getElementById('restart-btn').addEventListener('click', () => {
+                playSound(sounds.click);
+                resetGame();
+            });
+            
+            // Expression scene slider
+            const exprSlider = document.getElementById('expr-slider');
+            exprSlider.addEventListener('input', () => {
+                const x = parseInt(exprSlider.value);
+                const result = Math.abs(x - 3);
+                document.getElementById('expr-x').textContent = x;
+                document.getElementById('expr-result').textContent = result;
+                
+                updateExpressionVisualization(x, 3);
+            });
+            
+            // Graph sliders
+            const graphASlider = document.getElementById('graph-a-slider');
+            const graphHSlider = document.getElementById('graph-h-slider');
+            const graphKSlider = document.getElementById('graph-k-slider');
+            
+            graphASlider.addEventListener('input', () => {
+                gameState.graphParameters.a = parseFloat(graphASlider.value);
+                document.getElementById('graph-a-value').textContent = gameState.graphParameters.a;
+                document.getElementById('graph-a').textContent = gameState.graphParameters.a;
+                updateGraph();
+            });
+            
+            graphHSlider.addEventListener('input', () => {
+                gameState.graphParameters.h = parseInt(graphHSlider.value);
+                document.getElementById('graph-h-value').textContent = Math.abs(gameState.graphParameters.h);
+                document.getElementById('graph-h').textContent = Math.abs(gameState.graphParameters.h);
+                document.getElementById('graph-h-sign').textContent = gameState.graphParameters.h >= 0 ? '-' : '+';
+                updateGraph();
+            });
+            
+            graphKSlider.addEventListener('input', () => {
+                gameState.graphParameters.k = parseInt(graphKSlider.value);
+                document.getElementById('graph-k-value').textContent = Math.abs(gameState.graphParameters.k);
+                document.getElementById('graph-k').textContent = Math.abs(gameState.graphParameters.k);
+                document.getElementById('graph-k-sign').textContent = gameState.graphParameters.k >= 0 ? '+' : '-';
+                updateGraph();
+            });
+            
+            // Game setting sliders
+            document.getElementById('speed-slider').addEventListener('input', (e) => {
+                gameState.speed = parseInt(e.target.value);
+                document.getElementById('speed-value').textContent = gameState.speed;
+            });
+            
+            document.getElementById('difficulty-slider').addEventListener('input', (e) => {
+                gameState.difficulty = parseInt(e.target.value);
+                document.getElementById('difficulty-value').textContent = gameState.difficulty;
+                updateDifficulty();
+            });
+            
+            document.getElementById('number-range-slider').addEventListener('input', (e) => {
+                gameState.numberRange = parseInt(e.target.value);
+                document.getElementById('number-range-value').textContent = gameState.numberRange;
+                initNumberLine();
+            });
+            
+            document.getElementById('graph-complexity-slider').addEventListener('input', (e) => {
+                gameState.graphComplexity = parseInt(e.target.value);
+                document.getElementById('graph-complexity-value').textContent = gameState.graphComplexity;
+                
+                // Update parameter container visibility based on complexity
+                const paramContainer = document.querySelector('.parameter-container');
+                paramContainer.classList.toggle('show', gameState.graphComplexity > 1);
+                
+                if (gameState.currentScene === 'scene-graphs') {
+                    updateGraph();
+                }
+            });
+            
+            // Quiz buttons
+            document.getElementById('submit-answer').addEventListener('click', checkAnswer);
+            document.getElementById('next-question').addEventListener('click', nextQuestion);
+            
+            // Continue button in completion modal
+            document.getElementById('continue-btn').addEventListener('click', () => {
+                playSound(sounds.click);
+                document.getElementById('completion-modal').classList.remove('show');
+                showScene('scene-conclusion');
+            });
+            
+            // Hover effects for buttons
+            document.querySelectorAll('button').forEach(button => {
+                button.addEventListener('mouseenter', () => {
+                    playSound(sounds.hover);
+                });
+            });
+        }
+        
+        // Show a scene
+        function showScene(sceneId) {
+            sceneElements.forEach(scene => {
+                scene.classList.remove('active');
+            });
+            
+            document.getElementById(sceneId).classList.add('active');
+            gameState.currentScene = sceneId;
+            
+            // Update character bubble text
+            updateCharacterBubble();
+            
+            // Initialize scene-specific elements
+            if (sceneId === 'scene-number-line' || sceneId === 'scene-practice') {
+                initNumberLine();
+            } else if (sceneId === 'scene-expressions') {
+                initExpressions();
+            } else if (sceneId === 'scene-graphs') {
+                initGraph();
+            } else if (sceneId === 'scene-quiz') {
+                initQuiz();
+            }
+        }
+        
+        // Update character bubble text
+        function updateCharacterBubble() {
+            let bubbleText = '';
+            
+            switch (gameState.currentScene) {
+                case 'scene-intro':
+                    bubbleText = "Hi there! I'm Professor Valor. Let's learn about absolute value!";
+                    break;
+                case 'scene-number-line':
+                    bubbleText = "This number line helps us see how far each number is from zero!";
+                    break;
+                case 'scene-definition':
+                    bubbleText = "Remember, absolute value is always positive or zero. It's like measuring distance!";
+                    break;
+                case 'scene-practice':
+                    bubbleText = "Try clicking on different numbers. See if you can figure out the pattern!";
+                    break;
+                case 'scene-expressions':
+                    bubbleText = "Absolute value expressions tell us how far one number is from another!";
+                    break;
+                case 'scene-graphs':
+                    bubbleText = "The absolute value graph makes a V shape. What happens when we change the formula?";
+                    break;
+                case 'scene-quiz':
+                    bubbleText = "Time to test what you've learned! I know you'll do great!";
+                    break;
+                case 'scene-conclusion':
+                    bubbleText = "You did it! You're an absolute value expert now. I'm so proud of you!";
+                    break;
+            }
+            
+            characterBubble.textContent = bubbleText;
+            characterBubble.style.opacity = '1';
+            
+            setTimeout(() => {
+                characterBubble.style.opacity = '0';
+            }, 5000);
+        }
+        
+        // Initialize the number line
+        function initNumberLine() {
+            const numberLine = document.querySelector(`#${gameState.currentScene} .number-line`);
+            const zeroMark = document.querySelector(`#${gameState.currentScene} .zero-mark`);
+            
+            // Clear previous numbers
+            const existingNumbers = document.querySelectorAll(`#${gameState.currentScene} .number`);
+            existingNumbers.forEach(num => num.remove());
+            
+            // Draw ticks
+            const ticksContainer = document.createElement('div');
+            ticksContainer.classList.add('ticks-container');
+            
+            for (let i = -gameState.numberRange; i <= gameState.numberRange; i++) {
+                const tick = document.createElement('div');
+                tick.classList.add('tick');
+                tick.style.left = `${50 + (i * (80 / (2 * gameState.numberRange)))}%`;
+                
+                const tickLabel = document.createElement('div');
+                tickLabel.classList.add('tick-label');
+                tickLabel.textContent = i;
+                
+                tick.appendChild(tickLabel);
+                numberLine.appendChild(tick);
+            }
+            
+            // Add interactive numbers
+            const numbersToShow = [];
+            const range = Math.min(10, gameState.numberRange);
+            
+            // Add some positive and negative numbers
+            for (let i = -range; i <= range; i++) {
+                if (i !== 0 && i % Math.ceil(range / 5) === 0) {
+                    numbersToShow.push(i);
+                }
+            }
+            
+            // Add random numbers based on difficulty
+            const extraNumbers = gameState.difficulty * 2;
+            for (let i = 0; i < extraNumbers; i++) {
+                const randomNum = Math.floor(Math.random() * (gameState.numberRange * 2)) - gameState.numberRange;
+                if (randomNum !== 0 && !numbersToShow.includes(randomNum)) {
+                    numbersToShow.push(randomNum);
+                }
+            }
+            
+            // Create number elements
+            numbersToShow.forEach(num => {
+                const numberElement = document.createElement('div');
+                numberElement.classList.add('number');
+                numberElement.textContent = num;
+                
+                // Position the number on the number line
+                const positionPercent = 50 + (num * (80 / (2 * gameState.numberRange)));
+                numberElement.style.left = `${positionPercent}%`;
+                numberElement.style.top = num % 2 === 0 ? '20%' : '80%';
+                
+                // Add click event
+                numberElement.addEventListener('click', () => {
+                    playSound(sounds.click);
+                    showAbsoluteValue(num);
+                });
+                
+                numberLine.appendChild(numberElement);
+            });
+        }
+        
+        // Show the absolute value of a number
+        function showAbsoluteValue(num) {
+            const absValue = Math.abs(num);
+            const absValueIndicator = document.querySelector(`#${gameState.currentScene} .abs-value-indicator`);
+            const zeroMark = document.querySelector(`#${gameState.currentScene} .zero-mark`);
+            
+            // Position and size the indicator to show distance from zero
+            const zeroPosition = 50; // Percentage
+            const numPosition = 50 + (num * (80 / (2 * gameState.numberRange)));
+            
+            const left = Math.min(zeroPosition, numPosition);
+            const width = Math.abs(numPosition - zeroPosition);
+            
+            absValueIndicator.style.left = `${left}%`;
+            absValueIndicator.style.width = `${width}%`;
+            absValueIndicator.textContent = `|${num}| = ${absValue}`;
+            absValueIndicator.style.opacity = '1';
+            
+            // Create celebration effect
+            createCelebration();
+            
+            // Update character bubble
+            characterBubble.textContent = num >= 0 ? 
+                `Great! |${num}| = ${absValue}. Since ${num} is positive, its absolute value is just ${num}!` :
+                `Excellent! |${num}| = ${absValue}. Even though ${num} is negative, its absolute value is positive!`;
+            characterBubble.style.opacity = '1';
+            
+            setTimeout(() => {
+                absValueIndicator.style.opacity = '0';
+                characterBubble.style.opacity = '0';
+            }, 3000);
+        }
+        
+        // Initialize expressions scene
+        function initExpressions() {
+            const exprSlider = document.getElementById('expr-slider');
+            const x = parseInt(exprSlider.value);
+            const result = Math.abs(x - 3);
+            document.getElementById('expr-x').textContent = x;
+            document.getElementById('expr-result').textContent = result;
+            
+            updateExpressionVisualization(x, 3);
+        }
+        
+        // Update expression visualization
+        function updateExpressionVisualization(x, anchor) {
+            const numberLine = document.querySelector('#scene-expressions .number-line');
+            const zeroMark = document.querySelector('#scene-expressions .zero-mark');
+            const absValueIndicator = document.querySelector('#scene-expressions .abs-value-indicator');
+            
+            // Position the anchor point (e.g., '3' in |x - 3|)
+            const anchorPosition = 50 + (anchor * (80 / (2 * gameState.numberRange)));
+            zeroMark.style.left = `${anchorPosition}%`;
+            
+            // Position and size the indicator to show distance
+            const xPosition = 50 + (x * (80 / (2 * gameState.numberRange)));
+            
+            const left = Math.min(anchorPosition, xPosition);
+            const width = Math.abs(xPosition - anchorPosition);
+            
+            absValueIndicator.style.left = `${left}%`;
+            absValueIndicator.style.width = `${width}%`;
+            absValueIndicator.textContent = `|${x} - ${anchor}| = ${Math.abs(x - anchor)}`;
+            absValueIndicator.style.opacity = '1';
+        }
+        
+        // Initialize graph scene
+        function initGraph() {
+            const graphContainer = document.querySelector('#scene-graphs .graph-container');
+            
+            // Clear previous graph points
+            const existingPoints = document.querySelectorAll('.graph-point, .graph-line');
+            existingPoints.forEach(point => point.remove());
+            
+            // Reset graph parameters
+            gameState.graphParameters = {
+                a: 1,
+                h: 0,
+                k: 0
+            };
+            
+            // Update inputs
+            document.getElementById('graph-a-slider').value = 1;
+            document.getElementById('graph-h-slider').value = 0;
+            document.getElementById('graph-k-slider').value = 0;
+            document.getElementById('graph-a-value').textContent = 1;
+            document.getElementById('graph-h-value').textContent = 0;
+            document.getElementById('graph-k-value').textContent = 0;
+            document.getElementById('graph-a').textContent = 1;
+            document.getElementById('graph-h').textContent = 0;
+            document.getElementById('graph-k').textContent = 0;
+            document.getElementById('graph-h-sign').textContent = '-';
+            document.getElementById('graph-k-sign').textContent = '+';
+            
+            // Draw the graph
+            updateGraph();
+        }
+        
+        // Update graph based on parameters
+        function updateGraph() {
+            const graphContainer = document.querySelector('#scene-graphs .graph-container');
+            const xAxis = document.querySelector('#scene-graphs .graph-x-axis');
+            const yAxis = document.querySelector('#scene-graphs .graph-y-axis');
+            
+            // Clear previous graph points and lines
+            const existingPoints = document.querySelectorAll('.graph-point, .graph-line');
+            existingPoints.forEach(point => point.remove());
+            
+            // Extract parameters
+            const { a, h, k } = gameState.graphParameters;
+            
+            // Calculate points
+            const points = [];
+            for (let x = -10; x <= 10; x += 0.5) {
+                const y = a * Math.abs(x - h) + k;
+                points.push({ x, y });
+            }
+            
+            // Convert to screen coordinates
+            const screenPoints = points.map(p => ({
+                x: (p.x + 10) * (graphContainer.offsetWidth / 20),
+                y: graphContainer.offsetHeight - ((p.y + 10) * (graphContainer.offsetHeight / 20))
+            }));
+            
+            // Draw points and connect them with lines
+            screenPoints.forEach((point, index) => {
+                if (index % 5 === 0 || index === 0 || index === screenPoints.length - 1) {
+                    const pointElement = document.createElement('div');
+                    pointElement.classList.add('graph-point');
+                    pointElement.style.left = `${point.x}px`;
+                    pointElement.style.top = `${point.y}px`;
+                    graphContainer.appendChild(pointElement);
+                }
+                
+                if (index < screenPoints.length - 1) {
+                    const nextPoint = screenPoints[index + 1];
+                    
+                    const lineLength = Math.sqrt(
+                        Math.pow(nextPoint.x - point.x, 2) + 
+                        Math.pow(nextPoint.y - point.y, 2)
+                    );
+                    
+                    const angle = Math.atan2(
+                        nextPoint.y - point.y,
+                        nextPoint.x - point.x
+                    );
+                    
+                    const lineElement = document.createElement('div');
+                    lineElement.classList.add('graph-line');
+                    lineElement.style.left = `${point.x}px`;
+                    lineElement.style.top = `${point.y}px`;
+                    lineElement.style.width = `${lineLength}px`;
+                    lineElement.style.transform = `rotate(${angle}rad)`;
+                    
+                    graphContainer.appendChild(lineElement);
+                }
+            });
+            
+            // Change styling for axes based on parameters
+            xAxis.style.top = `${graphContainer.offsetHeight - (10 + k) * (graphContainer.offsetHeight / 20)}px`;
+            yAxis.style.left = `${(10 + h) * (graphContainer.offsetWidth / 20)}px`;
+        }
+        
+        // Initialize quiz
+        function initQuiz() {
+            gameState.currentQuestion = 0;
+            gameState.score = 0;
+            gameState.quizProgress = 0;
+            gameState.quizCompleted = false;
+            
+            // Update quiz counters
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('total-questions').textContent = gameState.totalQuestions;
+            document.getElementById('quiz-progress').style.width = '0%';
+            
+            // Load first question
+            loadQuestion();
+        }
+        
+        // Quiz questions based on difficulty
+        function getQuizQuestions() {
+            const easyQuestions = [
+                {
+                    text: "What is the absolute value of -7?",
+                    options: [
+                        { text: "7", value: "7", correct: true },
+                        { text: "-7", value: "-7", correct: false },
+                        { text: "0", value: "0", correct: false }
+                    ]
+                },
+                {
+                    text: "What is the absolute value of 4?",
+                    options: [
+                        { text: "4", value: "4", correct: true },
+                        { text: "-4", value: "-4", correct: false },
+                        { text: "0", value: "0", correct: false }
+                    ]
+                },
+                {
+                    text: "What is |0|?",
+                    options: [
+                        { text: "0", value: "0", correct: true },
+                        { text: "1", value: "1", correct: false },
+                        { text: "-1", value: "-1", correct: false }
+                    ]
+                },
+                {
+                    text: "Which is larger: |-5| or |3|?",
+                    options: [
+                        { text: "|-5|", value: "|-5|", correct: true },
+                        { text: "|3|", value: "|3|", correct: false },
+                        { text: "They are equal", value: "equal", correct: false }
+                    ]
+                },
+                {
+                    text: "The absolute value of a number is always...",
+                    options: [
+                        { text: "Positive or zero", value: "positive_or_zero", correct: true },
+                        { text: "Negative", value: "negative", correct: false },
+                        { text: "The same as the original number", value: "same", correct: false }
+                    ]
+                }
+            ];
+            
+            const mediumQuestions = [
+                {
+                    text: "What is |3 - 5|?",
+                    options: [
+                        { text: "2", value: "2", correct: true },
+                        { text: "-2", value: "-2", correct: false },
+                        { text: "8", value: "8", correct: false }
+                    ]
+                },
+                {
+                    text: "What is |-4 - 3|?",
+                    options: [
+                        { text: "7", value: "7", correct: true },
+                        { text: "-7", value: "-7", correct: false },
+                        { text: "1", value: "1", correct: false }
+                    ]
+                },
+                {
+                    text: "If |x| = 6, what could x be?",
+                    options: [
+                        { text: "6 or -6", value: "both", correct: true },
+                        { text: "Only 6", value: "6", correct: false },
+                        { text: "Only -6", value: "-6", correct: false }
+                    ]
+                },
+                {
+                    text: "What does the absolute value measure?",
+                    options: [
+                        { text: "Distance from zero", value: "distance", correct: true },
+                        { text: "Whether a number is positive or negative", value: "sign", correct: false },
+                        { text: "Size of the number", value: "size", correct: false }
+                    ]
+                },
+                {
+                    text: "Which expression equals |x - 3|?",
+                    options: [
+                        { text: "Distance between x and 3", value: "distance", correct: true },
+                        { text: "x minus 3", value: "difference", correct: false },
+                        { text: "3 minus x", value: "reverse", correct: false }
+                    ]
+                }
+            ];
+            
+            const hardQuestions = [
+                {
+                    text: "The graph of y = |x| looks like a...",
+                    options: [
+                        { text: "V shape", value: "v", correct: true },
+                        { text: "Straight line", value: "line", correct: false },
+                        { text: "U shape", value: "u", correct: false }
+                    ]
+                },
+                {
+                    text: "In the equation y = a|x - h| + k, what does 'h' do to the graph?",
+                    options: [
+                        { text: "Shifts it left or right", value: "horizontal", correct: true },
+                        { text: "Shifts it up or down", value: "vertical", correct: false },
+                        { text: "Makes it steeper or flatter", value: "stretch", correct: false }
+                    ]
+                },
+                {
+                    text: "When solving |x| = 5, how many solutions are there?",
+                    options: [
+                        { text: "2", value: "2", correct: true },
+                        { text: "1", value: "1", correct: false },
+                        { text: "0", value: "0", correct: false }
+                    ]
+                },
+                {
+                    text: "What is the absolute value of the expression (3 - 7)?",
+                    options: [
+                        { text: "4", value: "4", correct: true },
+                        { text: "-4", value: "-4", correct: false },
+                        { text: "10", value: "10", correct: false }
+                    ]
+                },
+                {
+                    text: "In the graph of y = |x - 3| + 2, where is the lowest point?",
+                    options: [
+                        { text: "At x = 3", value: "x3", correct: true },
+                        { text: "At x = 0", value: "x0", correct: false },
+                        { text: "At x = 2", value: "x2", correct: false }
+                    ]
+                }
+            ];
+            
+            // Select questions based on difficulty
+            let questions = [];
+            
+            if (gameState.difficulty === 1) {
+                questions = [...easyQuestions];
+            } else if (gameState.difficulty === 2) {
+                questions = [...easyQuestions.slice(0, 2), ...mediumQuestions.slice(0, 3)];
+            } else {
+                questions = [...easyQuestions.slice(0, 1), ...mediumQuestions.slice(0, 2), ...hardQuestions.slice(0, 2)];
+            }
+            
+            // Randomize the order
+            return questions.sort(() => Math.random() - 0.5);
+        }
+        
+        // Load a question into the quiz
+        function loadQuestion() {
+            const questions = getQuizQuestions();
+            const currentQ = questions[gameState.currentQuestion];
+            
+            const questionText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            
+            // Update question text
+            questionText.textContent = `Question ${gameState.currentQuestion + 1}: ${currentQ.text}`;
+            
+            // Clear previous options
+            optionsContainer.innerHTML = '';
+            
+            // Add new options
+            currentQ.options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.classList.add('quiz-option');
+                optionElement.textContent = option.text;
+                optionElement.dataset.value = option.value;
+                optionElement.dataset.correct = option.correct;
+                
+                optionElement.addEventListener('click', () => {
+                    // Deselect all options
+                    document.querySelectorAll('.quiz-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // Select this option
+                    optionElement.classList.add('selected');
+                    gameState.selectedOption = optionElement;
+                    
+                    playSound(sounds.click);
+                });
+                
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Reset feedback
+            const feedback = document.getElementById('feedback');
+            feedback.textContent = '';
+            feedback.style.display = 'none';
+            
+            // Show/hide buttons
+            document.getElementById('submit-answer').style.display = 'block';
+            document.getElementById('next-question').style.display = 'none';
+            
+            // Update character bubble
+            updateCharacterBubble();
+        }
+        
+        // Check the answer
+        function checkAnswer() {
+            if (!gameState.selectedOption) {
+                return;
+            }
+            
+            const isCorrect = gameState.selectedOption.dataset.correct === 'true';
+            const feedback = document.getElementById('feedback');
+            
+            if (isCorrect) {
+                gameState.score++;
+                document.getElementById('score').textContent = gameState.score;
+                
+                feedback.textContent = "Correct! Great job!";
+                feedback.className = 'feedback-container feedback-success';
+                
+                gameState.selectedOption.classList.add('correct');
+                playSound(sounds.correct);
+                createCelebration();
+            } else {
+                feedback.textContent = "Not quite right. Try again next time!";
+                feedback.className = 'feedback-container feedback-error';
+                
+                gameState.selectedOption.classList.add('incorrect');
+                
+                // Highlight the correct answer
+                document.querySelectorAll('.quiz-option').forEach(option => {
+                    if (option.dataset.correct === 'true') {
+                        option.classList.add('correct');
+                    }
+                });
+                
+                playSound(sounds.incorrect);
+            }
+            
+            feedback.style.display = 'block';
+            
+            // Update buttons
+            document.getElementById('submit-answer').style.display = 'none';
+            document.getElementById('next-question').style.display = 'block';
+            
+            // Update character bubble
+            if (isCorrect) {
+                characterBubble.textContent = "Excellent! You got it right!";
+            } else {
+                characterBubble.textContent = "That's okay! We learn from our mistakes.";
+            }
+            characterBubble.style.opacity = '1';
+        }
+        
+        // Move to next question
+        function nextQuestion() {
+            gameState.currentQuestion++;
+            gameState.selectedOption = null;
+            
+            // Update progress
+            gameState.quizProgress = (gameState.currentQuestion / gameState.totalQuestions) * 100;
+            document.getElementById('quiz-progress').style.width = `${gameState.quizProgress}%`;
+            
+            if (gameState.currentQuestion < gameState.totalQuestions) {
+                loadQuestion();
+            } else {
+                completeQuiz();
+            }
+            
+            playSound(sounds.click);
+        }
+        
+        // Complete the quiz
+        function completeQuiz() {
+            gameState.quizCompleted = true;
+            
+            // Calculate stars
+            const scorePercentage = (gameState.score / gameState.totalQuestions) * 100;
+            
+            if (scorePercentage >= 80) {
+                gameState.starsEarned = 3;
+            } else if (scorePercentage >= 60) {
+                gameState.starsEarned = 2;
+            } else {
+                gameState.starsEarned = 1;
+            }
+            
+            // Update stars
+            updateStars();
+            
+            // Show completion modal
+            const modal = document.getElementById('completion-modal');
+            document.getElementById('stars-earned').textContent = gameState.starsEarned;
+            document.getElementById('correct-answers').textContent = gameState.score;
+            
+            const modalStars = document.getElementById('modal-stars').children;
+            for (let i = 0; i < modalStars.length; i++) {
+                modalStars[i].classList.toggle('filled', i < gameState.starsEarned);
+            }
+            
+            modal.classList.add('show');
+            
+            // Play completion sound and celebration
+            playSound(sounds.complete);
+            createCelebration(true);
+        }
+        
+        // Update slider values
+        function updateSliderValues() {
+            document.getElementById('speed-value').textContent = gameState.speed;
+            document.getElementById('difficulty-value').textContent = gameState.difficulty;
+            document.getElementById('number-range-value').textContent = gameState.numberRange;
+            document.getElementById('graph-complexity-value').textContent = gameState.graphComplexity;
+        }
+        
+        // Update difficulty related settings
+        function updateDifficulty() {
+            if (gameState.currentScene === 'scene-quiz') {
+                initQuiz();
+            }
+        }
+        
+        // Update stars display
+        function updateStars() {
+            const stars = document.querySelector('.header .stars-container').children;
+            
+            for (let i = 0; i < stars.length; i++) {
+                stars[i].classList.toggle('filled', i < gameState.starsEarned);
+            }
+        }
+        
+        // Reset game
+        function resetGame() {
+            gameState.currentScene = 'scene-intro';
+            gameState.score = 0;
+            gameState.currentQuestion = 0;
+            gameState.quizCompleted = false;
+            
+            showScene('scene-intro');
+        }
+        
+        // Create celebration effect
+        function createCelebration(isLarge = false) {
+            const gameArea = document.querySelector('.game-area');
+            const emojis = ['🎉', '⭐', '🌟', '✨', '👏', '🎊'];
+            
+            const count = isLarge ? 20 : 5;
+            
+            for (let i = 0; i < count; i++) {
+                const emoji = document.createElement('div');
+                emoji.classList.add('celebration-emoji');
+                emoji.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+                
+                // Random position
+                const left = Math.random() * 100;
+                const top = 70 + Math.random() * 20;
+                
+                emoji.style.left = `${left}%`;
+                emoji.style.top = `${top}%`;
+                
+                // Random animation duration
+                const duration = 1 + Math.random() * 2;
+                emoji.style.animationDuration = `${duration}s`;
+                
+                gameArea.appendChild(emoji);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    emoji.remove();
+                }, duration * 1000);
+            }
+        }
+        
+        // Play a sound
+        function playSound(sound) {
+            if (sound && gameState.soundEnabled) {
+                sound();
+            }
+        }
+        
+        // Start the game
+        window.addEventListener('DOMContentLoaded', initGame);
+    </script>
+</body>
+</html>

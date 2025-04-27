@@ -1,0 +1,2421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exponential Explorer: The Doubling Adventure</title>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            max-height: 800px;
+            background: #fff;
+            border-radius: 24px;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            text-align: center;
+            background-color: #fff;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            color: #6a11cb;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2575fc;
+            margin-bottom: 1.5rem;
+        }
+
+        p {
+            font-size: 1.3rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            max-width: 700px;
+        }
+
+        button {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Character styles */
+        .character {
+            width: 200px;
+            height: 260px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .professor {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .professor-body {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 150px;
+            background-color: #e67e22;
+            border-radius: 60px 60px 40px 40px;
+        }
+
+        .professor-head {
+            position: absolute;
+            bottom: 130px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 100px;
+            background-color: #ffdab9;
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .professor-hair {
+            position: absolute;
+            bottom: 190px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 50px;
+            background-color: #7f8c8d;
+            border-radius: 50% 50% 0 0;
+            z-index: 1;
+        }
+
+        .professor-eye {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            bottom: 180px;
+            z-index: 3;
+        }
+
+        .professor-eye.left {
+            left: calc(50% - 25px);
+        }
+
+        .professor-eye.right {
+            left: calc(50% + 5px);
+        }
+
+        .professor-pupil {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #333;
+            border-radius: 50%;
+            z-index: 4;
+        }
+
+        .professor-pupil.left {
+            bottom: 185px;
+            left: calc(50% - 20px);
+        }
+
+        .professor-pupil.right {
+            bottom: 185px;
+            left: calc(50% + 10px);
+        }
+
+        .professor-mouth {
+            position: absolute;
+            width: 40px;
+            height: 15px;
+            border-bottom: 3px solid #333;
+            border-radius: 10px;
+            bottom: 155px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+        }
+
+        .professor-glasses {
+            position: absolute;
+            width: 80px;
+            height: 25px;
+            border: 2px solid #333;
+            border-radius: 15px;
+            bottom: 175px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+        }
+
+        .professor-glasses:before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background-color: #333;
+            top: 10px;
+            left: -20px;
+        }
+
+        .professor-glasses:after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background-color: #333;
+            top: 10px;
+            right: -20px;
+        }
+
+        .professor-arm {
+            position: absolute;
+            width: 20px;
+            height: 80px;
+            background-color: #e67e22;
+            border-radius: 10px;
+            bottom: 70px;
+        }
+
+        .professor-arm.left {
+            left: 40px;
+            transform: rotate(20deg);
+        }
+
+        .professor-arm.right {
+            right: 40px;
+            transform: rotate(-20deg);
+        }
+        
+        /* Speech bubble */
+        .speech-bubble {
+            position: relative;
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px;
+            font-size: 1.2rem;
+            line-height: 1.5;
+            max-width: 500px;
+            margin: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border: 3px solid #6a11cb;
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+            border-right-color: #6a11cb;
+            border-left: 0;
+            margin-top: -15px;
+            margin-left: -15px;
+        }
+
+        /* Bacteria container and visualization */
+        .bacteria-container {
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            background-color: #f5f7fa;
+            border-radius: 15px;
+            border: 3px solid #6a11cb;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bacteria {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+            transform: translate(-50%, -50%);
+        }
+
+        /* Controls and parameters */
+        .controls {
+            width: 100%;
+            max-width: 500px;
+            margin: 20px 0;
+        }
+
+        .parameter-control {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+        }
+
+        .parameter-control label {
+            flex: 1;
+            text-align: right;
+            padding-right: 15px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #333;
+        }
+
+        .parameter-control input[type="range"] {
+            flex: 2;
+            -webkit-appearance: none;
+            width: 100%;
+            height: 10px;
+            background: #e0e7ff;
+            border-radius: 5px;
+            outline: none;
+        }
+
+        .parameter-control input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #6a11cb;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .parameter-control .value {
+            flex: 0.5;
+            text-align: left;
+            padding-left: 15px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #6a11cb;
+        }
+
+        /* Quiz system */
+        .quiz-container {
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .quiz-option {
+            display: block;
+            width: 100%;
+            text-align: left;
+            padding: 15px 20px;
+            margin: 10px 0;
+            background-color: #e0e7ff;
+            border-radius: 15px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quiz-option:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0%;
+            height: 100%;
+            background-color: rgba(106, 17, 203, 0.1);
+            transition: width 0.3s ease;
+            z-index: 0;
+        }
+
+        .quiz-option:hover:before {
+            width: 100%;
+        }
+
+        .quiz-option.selected {
+            background-color: #6a11cb;
+            color: white;
+            transform: scale(1.02);
+        }
+
+        .quiz-option.correct {
+            background-color: #10b981;
+            color: white;
+        }
+
+        .quiz-option.incorrect {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        /* Graph container and visualization */
+        .graph-container {
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            background-color: #f5f7fa;
+            border-radius: 15px;
+            border: 3px solid #6a11cb;
+            margin: 20px 0;
+            position: relative;
+            overflow: hidden;
+            padding: 20px;
+        }
+
+        .graph-axes {
+            position: absolute;
+            bottom: 40px;
+            left: 60px;
+            width: calc(100% - 80px);
+            height: calc(100% - 60px);
+        }
+
+        .graph-axis {
+            position: absolute;
+            background-color: #333;
+        }
+
+        .graph-x-axis {
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+        }
+
+        .graph-y-axis {
+            bottom: 0;
+            left: 0;
+            width: 2px;
+            height: 100%;
+        }
+
+        .graph-point {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #6a11cb;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+        }
+
+        .graph-line {
+            position: absolute;
+            height: 2px;
+            background-color: #6a11cb;
+            transform-origin: left center;
+            z-index: 0;
+        }
+
+        /* Game HUD */
+        .hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        .level-indicator, .score-indicator {
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            color: #6a11cb;
+            pointer-events: auto;
+        }
+
+        .buttons-container {
+            display: flex;
+            pointer-events: auto;
+        }
+
+        .icon-button {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-left: 10px;
+            cursor: pointer;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            font-size: 1.2rem;
+            color: #6a11cb;
+        }
+
+        /* Panels */
+        .panel {
+            position: absolute;
+            top: 70px;
+            right: 20px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 200;
+            max-width: 300px;
+            display: none;
+        }
+
+        .panel.show {
+            display: block;
+        }
+
+        /* Progress bar */
+        .progress-bar {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            right: 15px;
+            height: 10px;
+            background-color: #e0e7ff;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #6a11cb;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        /* Level select */
+        .level-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .level-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.3rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+        }
+
+        .level-button.unlocked {
+            background-color: #c4b5fd;
+            color: #4c1d95;
+        }
+
+        .level-button.current {
+            background-color: #6a11cb;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        }
+
+        .level-button.locked {
+            background-color: #e5e7eb;
+            color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .level-button:hover:not(.locked) {
+            transform: scale(1.1);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.2);
+        }
+
+        /* Achievements */
+        .achievement {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 10px;
+            background-color: #f5f7fa;
+        }
+
+        .achievement-icon {
+            width: 40px;
+            height: 40px;
+            margin-right: 15px;
+            background-color: #6a11cb;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .achievement.locked .achievement-icon {
+            background-color: #e5e7eb;
+            color: #9ca3af;
+        }
+
+        .achievement-text {
+            flex: 1;
+        }
+
+        .achievement-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 3px;
+        }
+
+        .achievement-description {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        /* Level complete screen */
+        .stars-container {
+            display: flex;
+            margin: 15px 0;
+        }
+
+        .star {
+            font-size: 3rem;
+            color: #f59e0b;
+            margin: 0 5px;
+            text-shadow: 0 3px 5px rgba(0,0,0,0.2);
+        }
+
+        /* Feedback and notifications */
+        .answer-feedback {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 4rem;
+            font-weight: 800;
+            padding: 20px 40px;
+            border-radius: 20px;
+            z-index: 1000;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            text-shadow: 0 3px 5px rgba(0,0,0,0.3);
+        }
+
+        .answer-feedback.correct {
+            color: #10b981;
+        }
+
+        .answer-feedback.incorrect {
+            color: #ef4444;
+        }
+
+        .answer-feedback.show {
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background-color: #6a11cb;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        .notification.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* Animations and effects */
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(3); opacity: 0; }
+        }
+
+        .pulse {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: rgba(106, 17, 203, 0.3);
+            transform: translate(-50%, -50%);
+            animation: pulse 1s infinite;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg) scale(1); }
+            50% { transform: rotate(180deg) scale(1.5); }
+            100% { transform: rotate(360deg) scale(1); }
+        }
+
+        .celebration-star {
+            position: absolute;
+            color: gold;
+            font-size: 50px;
+            animation: spin 2s linear infinite;
+            transform-origin: center;
+            z-index: 1000;
+            pointer-events: none;
+        }
+
+        /* Loading screen */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-screen h1 {
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .loading-screen p {
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .loading-bar {
+            width: 300px;
+            height: 20px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .loading-progress {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
+            transition: width 0.3s ease;
+        }
+
+        .bakterio {
+            position: relative;
+            width: 60px;
+            height: 60px;
+            background-color: #c4b5fd;
+            border-radius: 50%;
+            margin-bottom: 30px;
+            animation: bakterioPulse 1s infinite alternate;
+        }
+
+        @keyframes bakterioPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.2); }
+        }
+
+        .bakterio:before, .bakterio:after {
+            content: '';
+            position: absolute;
+            width: 25px;
+            height: 25px;
+            background-color: #c4b5fd;
+            border-radius: 50%;
+        }
+
+        .bakterio:before {
+            top: -10px;
+            left: -5px;
+        }
+
+        .bakterio:after {
+            top: -10px;
+            right: -5px;
+        }
+
+        /* Audio controls */
+        .audio-controls {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 50px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+
+        .mute-button {
+            width: 40px;
+            height: 40px;
+            background-color: #6a11cb;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            h2 {
+                font-size: 1.8rem;
+            }
+
+            p {
+                font-size: 1.1rem;
+            }
+
+            .bacteria-container, .graph-container {
+                height: 250px;
+            }
+
+            .character {
+                width: 150px;
+                height: 200px;
+            }
+
+            .speech-bubble {
+                font-size: 1rem;
+                padding: 15px;
+            }
+
+            .quiz-option {
+                font-size: 1rem;
+                padding: 12px 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            p {
+                font-size: 1rem;
+            }
+
+            .bacteria-container, .graph-container {
+                height: 200px;
+            }
+
+            .character {
+                width: 120px;
+                height: 160px;
+            }
+
+            .speech-bubble {
+                margin: 10px;
+                padding: 10px;
+            }
+
+            .level-button {
+                width: 50px;
+                height: 50px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="loading-screen" id="loading-screen">
+        <h1>Exponential Explorer</h1>
+        <div class="bakterio"></div>
+        <p>Loading your doubling adventure...</p>
+        <div class="loading-bar">
+            <div class="loading-progress" id="loading-progress"></div>
+        </div>
+    </div>
+
+    <div id="game-container">
+        <!-- HUD - Always visible UI elements -->
+        <div class="hud">
+            <div class="level-indicator" id="level-indicator">Level 1</div>
+            <div class="buttons-container">
+                <div class="icon-button" id="achievements-button" title="Achievements">🏆</div>
+                <div class="icon-button" id="settings-button" title="Settings">⚙️</div>
+            </div>
+            <div class="score-indicator" id="score-indicator">Score: 0</div>
+        </div>
+
+        <!-- Settings Panel -->
+        <div class="panel" id="settings-panel">
+            <h3>Settings</h3>
+            <div class="parameter-control">
+                <label for="volume-slider">Volume:</label>
+                <input type="range" id="volume-slider" min="0" max="1" step="0.1" value="0.5">
+                <div class="value" id="volume-value">50%</div>
+            </div>
+            <button id="reset-progress-button">Reset Progress</button>
+            <button id="close-settings-button">Close</button>
+        </div>
+
+        <!-- Achievements Panel -->
+        <div class="panel" id="achievements-panel">
+            <h3>Achievements</h3>
+            <div id="achievements-list">
+                <!-- Achievements will be added here dynamically -->
+            </div>
+            <button id="close-achievements-button">Close</button>
+        </div>
+
+        <!-- Start Screen -->
+        <div class="screen active" id="start-screen">
+            <h1>Exponential Explorer</h1>
+            <h2>The Doubling Adventure!</h2>
+            
+            <div class="character">
+                <div class="professor">
+                    <div class="professor-hair"></div>
+                    <div class="professor-head"></div>
+                    <div class="professor-eye left"></div>
+                    <div class="professor-eye right"></div>
+                    <div class="professor-pupil left"></div>
+                    <div class="professor-pupil right"></div>
+                    <div class="professor-glasses"></div>
+                    <div class="professor-mouth"></div>
+                    <div class="professor-body"></div>
+                    <div class="professor-arm left"></div>
+                    <div class="professor-arm right"></div>
+                </div>
+            </div>
+
+            <div class="speech-bubble">
+                Hi there, young scientist! I'm Professor Doubler! Are you ready to discover the amazing world of exponential growth?
+            </div>
+            
+            <button id="start-game-button">Start Adventure!</button>
+        </div>
+
+        <!-- Introduction Screen -->
+        <div class="screen" id="intro-screen">
+            <h2>What is Exponential Growth?</h2>
+            
+            <div class="character">
+                <div class="professor">
+                    <div class="professor-hair"></div>
+                    <div class="professor-head"></div>
+                    <div class="professor-eye left"></div>
+                    <div class="professor-eye right"></div>
+                    <div class="professor-pupil left"></div>
+                    <div class="professor-pupil right"></div>
+                    <div class="professor-glasses"></div>
+                    <div class="professor-mouth"></div>
+                    <div class="professor-body"></div>
+                    <div class="professor-arm left"></div>
+                    <div class="professor-arm right"></div>
+                </div>
+            </div>
+
+            <div class="speech-bubble">
+                Exponential growth is when something doubles or multiplies by the same amount over and over again. It grows faster and faster!
+            </div>
+            
+            <p>If we start with 1 bacteria that doubles every hour, after 1 hour we have 2 bacteria, after 2 hours we have 4, after 3 hours we have 8, and it keeps growing!</p>
+            
+            <button id="show-demo-button">Show Me!</button>
+        </div>
+
+        <!-- Demo Screen -->
+        <div class="screen" id="demo-screen">
+            <h2>Watch Bacteria Grow!</h2>
+            
+            <div class="bacteria-container" id="bacteria-container">
+                <!-- Bacteria will be added here dynamically -->
+            </div>
+            
+            <div class="controls">
+                <div class="parameter-control">
+                    <label for="growth-rate-slider">Growth Rate:</label>
+                    <input type="range" id="growth-rate-slider" min="1.5" max="3" step="0.1" value="2">
+                    <div class="value" id="growth-rate-value">2x</div>
+                </div>
+                
+                <div class="parameter-control">
+                    <label for="time-speed-slider">Time Speed:</label>
+                    <input type="range" id="time-speed-slider" min="1" max="5" step="0.5" value="1">
+                    <div class="value" id="time-speed-value">1x</div>
+                </div>
+            </div>
+            
+            <p id="bacteria-count">Bacteria Count: 1</p>
+            
+            <div>
+                <button id="reset-demo-button">Reset</button>
+                <button id="continue-to-quiz-button">Continue to Quiz</button>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div class="screen" id="quiz-screen">
+            <h2 id="quiz-question">Question</h2>
+            
+            <div class="quiz-container" id="quiz-options-container">
+                <!-- Quiz options will be added here dynamically -->
+            </div>
+            
+            <p id="quiz-explanation" style="display: none; font-weight: bold;"></p>
+            
+            <button id="submit-answer-button" disabled>Submit Answer</button>
+            <button id="next-question-button" style="display: none;">Next Question</button>
+        </div>
+
+        <!-- Experiment Screen -->
+        <div class="screen" id="experiment-screen">
+            <h2>Experiment With Exponential Growth</h2>
+            
+            <div class="graph-container" id="graph-container">
+                <div class="graph-axes">
+                    <div class="graph-axis graph-x-axis"></div>
+                    <div class="graph-axis graph-y-axis"></div>
+                </div>
+                <!-- Graph will be drawn here dynamically -->
+            </div>
+            
+            <div class="controls">
+                <div class="parameter-control">
+                    <label for="initial-value-slider">Starting Amount:</label>
+                    <input type="range" id="initial-value-slider" min="1" max="10" step="1" value="1">
+                    <div class="value" id="initial-value-value">1</div>
+                </div>
+                
+                <div class="parameter-control">
+                    <label for="growth-factor-slider">Growth Factor:</label>
+                    <input type="range" id="growth-factor-slider" min="1.1" max="3" step="0.1" value="2">
+                    <div class="value" id="growth-factor-value">2x</div>
+                </div>
+                
+                <div class="parameter-control">
+                    <label for="time-periods-slider">Time Periods:</label>
+                    <input type="range" id="time-periods-slider" min="1" max="10" step="1" value="5">
+                    <div class="value" id="time-periods-value">5</div>
+                </div>
+            </div>
+            
+            <p id="formula-display">Formula: y = 1 × 2^t</p>
+            <p id="final-value-display">Final Value: 32</p>
+            
+            <div>
+                <button id="update-graph-button">Update Graph</button>
+                <button id="continue-to-level-button">Continue</button>
+            </div>
+        </div>
+
+        <!-- Level Select Screen -->
+        <div class="screen" id="level-select-screen">
+            <h2>Select a Level</h2>
+            
+            <div class="level-buttons" id="level-buttons-container">
+                <!-- Level buttons will be added here dynamically -->
+            </div>
+            
+            <p>Complete levels to unlock more challenges!</p>
+            <button id="go-to-main-menu-button">Main Menu</button>
+        </div>
+
+        <!-- Level Complete Screen -->
+        <div class="screen" id="level-complete-screen">
+            <h1>Level Complete!</h1>
+            <p id="level-complete-message">You've mastered the basics of exponential growth!</p>
+            <p id="level-score-display">Score: 0</p>
+            
+            <div class="stars-container" id="stars-container">
+                <!-- Stars will be added here dynamically -->
+            </div>
+            
+            <div>
+                <button id="next-level-button">Next Level</button>
+                <button id="replay-level-button">Replay Level</button>
+                <button id="return-to-level-select-button">Level Select</button>
+            </div>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Feedback and Notification Elements -->
+    <div class="answer-feedback" id="answer-feedback"></div>
+    <div class="notification" id="notification"></div>
+
+    <!-- Audio Elements -->
+    <audio id="background-music" loop>
+        <source src="Jazzy synth.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="correct-sound" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAeAAAmcAAREREaGhojIyMrKyszMzM8PDxERERNTU1VVVVeXl5mZmZvb294eHiAgICJiYmRkZGampqioqKrq6uzs7O8vLzExMTNzc3V1dXe3t7m5ubu7u729vb+/v4AAAA8TEFNRTMuMTAwAc0AAAAAAAAAABQgJAUHQQAB9gAAJnBNiCsJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UEAAAAjIU2yBTBAIzQz4gIzwIEgYNDgQJAAIolc9pIlLY8qQMlFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB//tQQAAACAhJYPt6aBEeJ+3+f0sKGnVVc+9ZgAEwobQ4/jAAsavBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUEAeQ=="></audio>
+    <audio id="incorrect-sound" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAeAAAmcAAREREaGhojIyMrKyszMzM8PDxERERNTU1VVVVeXl5mZmZvb294eHiAgICJiYmRkZGampqioqKrq6uzs7O8vLzExMTNzc3V1dXe3t7m5ubu7u729vb+/v4AAAA8TEFNRTMuMTAwAc0AAAAAAAAAABQgJAUHQQAB9gAAJnBNiCsJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UEAAAAfgXW3lKSAQtYuxsKYMADN4FsASEAAGZgCYAkIAAVTxQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB//tQQAAACBZfZ/EsYAEULCy+JSwAINGNn8SxgARTMbP4ljAAqO8FBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFAAA="></audio>
+    <audio id="level-complete-sound" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAeAAAmcAAREREaGhojIyMrKyszMzM8PDxERERNTU1VVVVeXl5mZmZvb294eHiAgICJiYmRkZGampqioqKrq6uzs7O8vLzExMTNzc3V1dXe3t7m5ubu7u729vb+/v4AAAA8TEFNRTMuMTAwAc0AAAAAAAAAABQgJAUHQQAB9gAAJnBNiCsJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UEAAAAjgT2P4eRgA6QpuPVHiAAWoJVXktIAAS4SisPJaAAD2oKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCg//tQQAAACI5FXegYeAAjCRrOCwZAALUE9eaHp4ALWCqz0PDwAQoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoAAAQ="></audio>
+    <audio id="achievement-sound" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAeAAAmcAAREREaGhojIyMrKyszMzM8PDxERERNTU1VVVVeXl5mZmZvb294eHiAgICJiYmRkZGampqioqKrq6uzs7O8vLzExMTNzc3V1dXe3t7m5ubu7u729vb+/v4AAAA8TEFNRTMuMTAwAc0AAAAAAAAAABQgJAUHQQAB9gAAJnBNiCsJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UEAAAAjIU2P4eRgI2gpuPnCKAAVgIUDgQJAAsYQoHAgSABP8FBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFP/7UEAAAAkEYWR0AIAJGoqr7oAQADKBPW/h5GAEJiav+9owAOQ7/BQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUAADAA"></audio>
+    <audio id="click-sound" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAAeAAAmcAAREREaGhojIyMrKyszMzM8PDxERERNTU1VVVVeXl5mZmZvb294eHiAgICJiYmRkZGampqioqKrq6uzs7O8vLzExMTNzc3V1dXe3t7m5ubu7u729vb+/v4AAAA8TEFNRTMuMTAwAc0AAAAAAAAAABQgJAUHQQAB9gAAJnBNiCsJAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UEAAAAewU2HlCGAAyYpsAJEwAAwATYAEEAABkgmwAIIAAIe+CgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoK//tQQAAAB9RhY/AkSAD0C61+BIkAFMFti6CRIAKCLrVwEiQAHi/wUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFAAA=="></audio>
+
+    <script>
+        // Game state
+        let gameState = {
+            currentScreen: 'start-screen',
+            score: 0,
+            currentLevel: 1,
+            maxLevel: 10,
+            unlockedLevels: 1,
+            bacteriaCount: 1,
+            growthRate: 2,
+            timeSpeed: 1,
+            initialValue: 1,
+            growthFactor: 2,
+            timePeriods: 5,
+            currentQuestionIndex: 0,
+            selectedAnswer: null,
+            correctAnswers: 0,
+            achievements: [
+                { id: 1, title: "First Steps", description: "Complete level 1", unlocked: false, icon: "🔬" },
+                { id: 2, title: "Growing Knowledge", description: "Answer 10 questions correctly", unlocked: false, icon: "📚" },
+                { id: 3, title: "Math Wizard", description: "Complete level 5", unlocked: false, icon: "🧙" },
+                { id: 4, title: "Perfect Score", description: "Get all answers correct in a level", unlocked: false, icon: "⭐" },
+                { id: 5, title: "Exponential Master", description: "Complete all levels", unlocked: false, icon: "🏆" }
+            ],
+            volume: 0.5,
+            isMuted: false
+        };
+
+        // Quiz questions by level
+        const quizQuestions = [
+            // Level 1 - Basic Understanding
+            [
+                {
+                    question: "If 1 bacteria doubles every hour, how many bacteria will there be after 3 hours?",
+                    options: ["3", "6", "8", "12"],
+                    correctAnswer: 2,
+                    explanation: "Starting with 1, after 1 hour we have 2, after 2 hours we have 4, and after 3 hours we have 8."
+                },
+                {
+                    question: "In exponential growth, what happens to the numbers as time goes on?",
+                    options: ["They grow by the same amount each time", "They grow faster and faster", "They grow slower over time", "They stay the same"],
+                    correctAnswer: 1,
+                    explanation: "In exponential growth, the numbers grow faster and faster over time, not by a constant amount."
+                },
+                {
+                    question: "What is 2 raised to the power of 4 (2^4)?",
+                    options: ["4", "8", "12", "16"],
+                    correctAnswer: 3,
+                    explanation: "2^4 = 2×2×2×2 = 16"
+                }
+            ],
+            // Level 2 - Powers and Doubling
+            [
+                {
+                    question: "If you start with $5 and it doubles every day, how much money will you have after 4 days?",
+                    options: ["$20", "$40", "$80", "$160"],
+                    correctAnswer: 2,
+                    explanation: "Starting with $5, after 1 day: $10, after 2 days: $20, after 3 days: $40, after 4 days: $80"
+                },
+                {
+                    question: "What does 2^5 equal?",
+                    options: ["10", "25", "32", "64"],
+                    correctAnswer: 2,
+                    explanation: "2^5 = 2×2×2×2×2 = 32"
+                },
+                {
+                    question: "If bacteria population starts at 100 and triples every hour, what is the population after 2 hours?",
+                    options: ["300", "600", "900", "9000"],
+                    correctAnswer: 2,
+                    explanation: "Starting with 100, after 1 hour: 300, after 2 hours: 900"
+                }
+            ],
+            // Level 3 - Formula Understanding
+            [
+                {
+                    question: "In the formula y = a × b^t, what does 'a' represent?",
+                    options: ["Time", "Growth factor", "Starting value", "Final value"],
+                    correctAnswer: 2,
+                    explanation: "In y = a × b^t, 'a' is the starting value or initial amount."
+                },
+                {
+                    question: "In the formula y = a × b^t, what does 'b' represent?",
+                    options: ["Time", "Growth factor", "Starting value", "Final value"],
+                    correctAnswer: 1,
+                    explanation: "In y = a × b^t, 'b' is the growth factor or multiplier."
+                },
+                {
+                    question: "If y = 10 × 2^t and t = 3, what is y?",
+                    options: ["60", "80", "160", "320"],
+                    correctAnswer: 1,
+                    explanation: "y = 10 × 2^3 = 10 × 8 = 80"
+                }
+            ],
+            // Level 4 - Real-world Applications
+            [
+                {
+                    question: "If a city's population is 100,000 and grows by 5% each year, which formula shows its population after t years?",
+                    options: ["100,000 × (1 + 0.05)^t", "100,000 × 0.05^t", "100,000 × 5^t", "100,000 + 5,000t"],
+                    correctAnswer: 0,
+                    explanation: "For percentage growth, we use the formula: Initial value × (1 + growth rate)^time"
+                },
+                {
+                    question: "If you invest $1000 with 8% annual compound interest, how much will you have after 2 years?",
+                    options: ["$1080", "$1160", "$1166.40", "$1172.80"],
+                    correctAnswer: 2,
+                    explanation: "$1000 × (1.08)^2 = $1000 × 1.1664 = $1166.40"
+                },
+                {
+                    question: "In a pandemic, if cases double every 3 days and we start with 100 cases, how many cases will there be after 9 days?",
+                    options: ["200", "400", "800", "1600"],
+                    correctAnswer: 2,
+                    explanation: "After 3 days: 200 cases, after 6 days: 400 cases, after 9 days: 800 cases"
+                }
+            ],
+            // Level 5 - Advanced Concepts
+            [
+                {
+                    question: "What happens to the original amount when something grows exponentially for 10 doublings?",
+                    options: ["It becomes 10 times larger", "It becomes 20 times larger", "It becomes 100 times larger", "It becomes 1024 times larger"],
+                    correctAnswer: 3,
+                    explanation: "After 10 doublings: 2^10 = 1024, so the original amount becomes 1024 times larger."
+                },
+                {
+                    question: "If bacteria divide every 20 minutes, starting with 1 bacterium, how many will there be after 2 hours?",
+                    options: ["6", "12", "64", "625"],
+                    correctAnswer: 2,
+                    explanation: "In 2 hours, there are 6 periods of 20 minutes. So we have 2^6 = 64 bacteria."
+                },
+                {
+                    question: "If $100 grows at 7% compound interest, approximately how many years will it take to double?",
+                    options: ["7 years", "10 years", "14 years", "100 years"],
+                    correctAnswer: 1,
+                    explanation: "Using the Rule of 72, we can estimate the doubling time as 72 ÷ 7 = approximately 10 years."
+                }
+            ],
+            // Level 6 - Comparing Growth Types
+            [
+                {
+                    question: "Which grows faster over time: linear growth (add 10 each time) or exponential growth (double each time)?",
+                    options: ["Linear growth", "Exponential growth", "They grow at the same rate", "It depends on the starting value"],
+                    correctAnswer: 1,
+                    explanation: "Exponential growth (doubling) will always overtake linear growth (adding) given enough time."
+                },
+                {
+                    question: "After how many steps will doubling from 1 exceed adding 10 each time from 1?",
+                    options: ["After 4 steps", "After 5 steps", "After 6 steps", "After 7 steps"],
+                    correctAnswer: 3,
+                    explanation: "Adding 10: 1,11,21,31,41,51,61,71. Doubling: 1,2,4,8,16,32,64,128. Doubling exceeds after 7 steps."
+                },
+                {
+                    question: "Which formula represents exponential decay?",
+                    options: ["y = a × b^t where b > 1", "y = a × b^t where 0 < b < 1", "y = a × t^b where b > 0", "y = a - b × t where b > 0"],
+                    correctAnswer: 1,
+                    explanation: "Exponential decay occurs when we multiply by a factor between 0 and 1 repeatedly."
+                }
+            ],
+            // Level 7 - Rate of Change
+            [
+                {
+                    question: "In exponential growth, the percentage growth rate remains _____ over time.",
+                    options: ["increasing", "decreasing", "constant", "variable"],
+                    correctAnswer: 2,
+                    explanation: "In exponential growth, the percentage growth rate stays constant, but the absolute amount grows larger."
+                },
+                {
+                    question: "If a population grows 5% annually, by approximately what factor will it multiply after 20 years?",
+                    options: ["1.5", "2", "2.5", "3"],
+                    correctAnswer: 2,
+                    explanation: "Using the Rule of 72, the population doubles in 72/5 ≈ 14.4 years. So after 20 years, it's a bit less than 3 times larger, or about 2.5 times."
+                },
+                {
+                    question: "What is the approximate doubling time for money growing at 6% compound interest?",
+                    options: ["6 years", "10 years", "12 years", "18 years"],
+                    correctAnswer: 2,
+                    explanation: "Using the Rule of 72: 72 ÷ 6 = 12 years to double."
+                }
+            ],
+            // Level 8 - History and Legends
+            [
+                {
+                    question: "The legend of the chess board and rice grains is about:",
+                    options: ["Linear growth", "Polynomial growth", "Exponential growth", "Logarithmic growth"],
+                    correctAnswer: 2,
+                    explanation: "The legend involves doubling rice grains on each square, demonstrating exponential growth."
+                },
+                {
+                    question: "On the last (64th) square of the chessboard, how many grains of rice would be placed if doubling on each square?",
+                    options: ["About 1 million", "About 1 billion", "About 1 trillion", "About 9 quintillion"],
+                    correctAnswer: 3,
+                    explanation: "On the 64th square there would be 2^63 grains (about 9.22 quintillion)."
+                },
+                {
+                    question: "What natural phenomenon most closely resembles exponential growth?",
+                    options: ["River flow", "Mountain height", "Unchecked bacterial growth", "Plant height"],
+                    correctAnswer: 2,
+                    explanation: "Bacteria reproduce by division, creating exponential growth when unchecked by resources or space."
+                }
+            ],
+            // Level 9 - Logarithms and Exponentials
+            [
+                {
+                    question: "Logarithms are the inverse of:",
+                    options: ["Addition", "Multiplication", "Exponents", "Square roots"],
+                    correctAnswer: 2,
+                    explanation: "Logarithms are the inverse operations of exponents."
+                },
+                {
+                    question: "If a quantity doubles every 10 years, what is its approximate annual growth rate?",
+                    options: ["5%", "7%", "10%", "20%"],
+                    correctAnswer: 1,
+                    explanation: "Using the Rule of 72: 72 ÷ 10 = 7.2%, so approximately 7%."
+                },
+                {
+                    question: "The time it takes for a growing quantity to double is called:",
+                    options: ["Half-life", "Doubling constant", "Doubling time", "Growth factor"],
+                    correctAnswer: 2,
+                    explanation: "The doubling time is how long it takes for an exponentially growing quantity to double in value."
+                }
+            ],
+            // Level 10 - Limits to Growth
+            [
+                {
+                    question: "What typically limits exponential growth in natural systems?",
+                    options: ["Government regulations", "Resource limitations", "Change in the growth rate", "None of these"],
+                    correctAnswer: 1,
+                    explanation: "In natural systems, resource limitations (food, space, etc.) typically limit exponential growth."
+                },
+                {
+                    question: "When exponential growth meets resource limits, the resulting curve shape is often called:",
+                    options: ["Bell curve", "Linear curve", "S-curve or logistic curve", "J-curve"],
+                    correctAnswer: 2,
+                    explanation: "When resources limit growth, we get an S-shaped or logistic curve as growth slows down."
+                },
+                {
+                    question: "In human population growth, what factors have historically limited exponential growth?",
+                    options: ["Food availability, disease, and natural disasters", "Government policies only", "Technology advances only", "None, human population grows exponentially forever"],
+                    correctAnswer: 0,
+                    explanation: "Human population growth has historically been limited by food availability, disease, and natural disasters, among other factors."
+                }
+            ]
+        ];
+
+        // DOM Elements
+        const loadingScreen = document.getElementById('loading-screen');
+        const loadingProgress = document.getElementById('loading-progress');
+        const gameContainer = document.getElementById('game-container');
+        const startGameButton = document.getElementById('start-game-button');
+        const showDemoButton = document.getElementById('show-demo-button');
+        const resetDemoButton = document.getElementById('reset-demo-button');
+        const continueToQuizButton = document.getElementById('continue-to-quiz-button');
+        const bacteriaContainer = document.getElementById('bacteria-container');
+        const bacteriaCountDisplay = document.getElementById('bacteria-count');
+        const growthRateSlider = document.getElementById('growth-rate-slider');
+        const growthRateValue = document.getElementById('growth-rate-value');
+        const timeSpeedSlider = document.getElementById('time-speed-slider');
+        const timeSpeedValue = document.getElementById('time-speed-value');
+        const submitAnswerButton = document.getElementById('submit-answer-button');
+        const nextQuestionButton = document.getElementById('next-question-button');
+        const quizQuestion = document.getElementById('quiz-question');
+        const quizOptionsContainer = document.getElementById('quiz-options-container');
+        const quizExplanation = document.getElementById('quiz-explanation');
+        const initialValueSlider = document.getElementById('initial-value-slider');
+        const initialValueValue = document.getElementById('initial-value-value');
+        const growthFactorSlider = document.getElementById('growth-factor-slider');
+        const growthFactorValue = document.getElementById('growth-factor-value');
+        const timePeriodsSlider = document.getElementById('time-periods-slider');
+        const timePeriodsValue = document.getElementById('time-periods-value');
+        const formulaDisplay = document.getElementById('formula-display');
+        const finalValueDisplay = document.getElementById('final-value-display');
+        const updateGraphButton = document.getElementById('update-graph-button');
+        const continueToLevelButton = document.getElementById('continue-to-level-button');
+        const graphContainer = document.getElementById('graph-container');
+        const levelButtonsContainer = document.getElementById('level-buttons-container');
+        const goToMainMenuButton = document.getElementById('go-to-main-menu-button');
+        const nextLevelButton = document.getElementById('next-level-button');
+        const replayLevelButton = document.getElementById('replay-level-button');
+        const returnToLevelSelectButton = document.getElementById('return-to-level-select-button');
+        const levelCompleteMessage = document.getElementById('level-complete-message');
+        const levelScoreDisplay = document.getElementById('level-score-display');
+        const starsContainer = document.getElementById('stars-container');
+        const progressFill = document.getElementById('progress-fill');
+        const levelIndicator = document.getElementById('level-indicator');
+        const scoreIndicator = document.getElementById('score-indicator');
+        const settingsButton = document.getElementById('settings-button');
+        const settingsPanel = document.getElementById('settings-panel');
+        const closeSettingsButton = document.getElementById('close-settings-button');
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeValue = document.getElementById('volume-value');
+        const resetProgressButton = document.getElementById('reset-progress-button');
+        const answerFeedback = document.getElementById('answer-feedback');
+        const achievementsButton = document.getElementById('achievements-button');
+        const achievementsPanel = document.getElementById('achievements-panel');
+        const achievementsList = document.getElementById('achievements-list');
+        const closeAchievementsButton = document.getElementById('close-achievements-button');
+        const notification = document.getElementById('notification');
+
+        // Audio elements
+        const backgroundMusic = document.getElementById('background-music');
+        const correctSound = document.getElementById('correct-sound');
+        const incorrectSound = document.getElementById('incorrect-sound');
+        const levelCompleteSound = document.getElementById('level-complete-sound');
+        const achievementSound = document.getElementById('achievement-sound');
+        const clickSound = document.getElementById('click-sound');
+
+        // Helper Functions
+        
+        // Load saved game data from localStorage if available
+        function loadGameData() {
+            const savedData = localStorage.getItem('exponentialExplorerSaveData');
+            if (savedData) {
+                const parsedData = JSON.parse(savedData);
+                gameState = { ...gameState, ...parsedData };
+            }
+            updateUI();
+        }
+
+        // Save game data to localStorage
+        function saveGameData() {
+            localStorage.setItem('exponentialExplorerSaveData', JSON.stringify({
+                score: gameState.score,
+                currentLevel: gameState.currentLevel,
+                unlockedLevels: gameState.unlockedLevels,
+                achievements: gameState.achievements,
+                volume: gameState.volume,
+                isMuted: gameState.isMuted
+            }));
+        }
+
+        // Set the volume for all audio elements
+        function setVolume(volume) {
+            gameState.volume = volume;
+            backgroundMusic.volume = volume;
+            correctSound.volume = volume;
+            incorrectSound.volume = volume;
+            levelCompleteSound.volume = volume;
+            achievementSound.volume = volume;
+            clickSound.volume = volume;
+            volumeValue.textContent = `${Math.round(volume * 100)}%`;
+            saveGameData();
+        }
+
+        // Toggle mute for all audio elements
+        function toggleMute() {
+            gameState.isMuted = !gameState.isMuted;
+            backgroundMusic.muted = gameState.isMuted;
+            correctSound.muted = gameState.isMuted;
+            incorrectSound.muted = gameState.isMuted;
+            levelCompleteSound.muted = gameState.isMuted;
+            achievementSound.muted = gameState.isMuted;
+            clickSound.muted = gameState.isMuted;
+            saveGameData();
+        }
+
+        // Play a sound effect
+        function playSound(sound) {
+            if (sound && !gameState.isMuted) {
+                sound.currentTime = 0;
+                sound.play().catch(e => console.log("Audio play error:", e));
+            }
+        }
+
+        // Show a screen by id and hide all others
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+            gameState.currentScreen = screenId;
+        }
+
+        // Update UI elements based on game state
+        function updateUI() {
+            levelIndicator.textContent = `Level ${gameState.currentLevel}`;
+            scoreIndicator.textContent = `Score: ${gameState.score}`;
+            growthRateValue.textContent = `${gameState.growthRate}x`;
+            timeSpeedValue.textContent = `${gameState.timeSpeed}x`;
+            initialValueValue.textContent = gameState.initialValue;
+            growthFactorValue.textContent = `${gameState.growthFactor}x`;
+            timePeriodsValue.textContent = gameState.timePeriods;
+            formulaDisplay.textContent = `Formula: y = ${gameState.initialValue} × ${gameState.growthFactor}^t`;
+            
+            const finalValue = gameState.initialValue * Math.pow(gameState.growthFactor, gameState.timePeriods);
+            finalValueDisplay.textContent = `Final Value: ${finalValue.toFixed(0)}`;
+            
+            volumeSlider.value = gameState.volume;
+            volumeValue.textContent = `${Math.round(gameState.volume * 100)}%`;
+        }
+
+        // Generate bacteria visualization
+        let bacteriaInterval;
+        function startBacteriaSimulation() {
+            clearInterval(bacteriaInterval);
+            resetBacteriaSimulation();
+            
+            let time = 0;
+            
+            bacteriaInterval = setInterval(() => {
+                time += 0.1 * gameState.timeSpeed;
+                gameState.bacteriaCount = Math.pow(gameState.growthRate, time);
+                bacteriaCountDisplay.textContent = `Bacteria Count: ${Math.round(gameState.bacteriaCount)}`;
+                
+                updateBacteriaVisualization();
+            }, 100);
+        }
+
+        function resetBacteriaSimulation() {
+            bacteriaContainer.innerHTML = '';
+            gameState.bacteriaCount = 1;
+            bacteriaCountDisplay.textContent = `Bacteria Count: 1`;
+            updateBacteriaVisualization();
+        }
+
+        function updateBacteriaVisualization() {
+            bacteriaContainer.innerHTML = '';
+            
+            const maxBacteria = 100; // Limit for performance
+            const visibleBacteria = Math.min(Math.round(gameState.bacteriaCount), maxBacteria);
+            
+            for (let i = 0; i < visibleBacteria; i++) {
+                const bacterium = document.createElement('div');
+                bacterium.classList.add('bacteria');
+                
+                // Size decreases as count increases (to fit more)
+                const size = Math.max(30 - Math.log2(visibleBacteria) * 2, 5);
+                bacterium.style.width = `${size}px`;
+                bacterium.style.height = `${size}px`;
+                
+                // Random position within container
+                const x = Math.random() * (bacteriaContainer.offsetWidth - size);
+                const y = Math.random() * (bacteriaContainer.offsetHeight - size);
+                bacterium.style.left = `${x}px`;
+                bacterium.style.top = `${y}px`;
+                
+                bacteriaContainer.appendChild(bacterium);
+            }
+        }
+
+        // Draw exponential growth graph
+        function drawGraph() {
+            // Clear previous graph
+            const graphAxes = graphContainer.querySelector('.graph-axes');
+            const points = document.querySelectorAll('.graph-point, .graph-line');
+            points.forEach(point => point.remove());
+            
+            // Calculate points
+            const dataPoints = [];
+            const maxValue = gameState.initialValue * Math.pow(gameState.growthFactor, gameState.timePeriods);
+            
+            for (let t = 0; t <= gameState.timePeriods; t++) {
+                const value = gameState.initialValue * Math.pow(gameState.growthFactor, t);
+                dataPoints.push({ t, value });
+            }
+            
+            // Draw grid lines and labels
+            const gridLinesX = document.querySelectorAll('.grid-line-x');
+            const gridLinesY = document.querySelectorAll('.grid-line-y');
+            
+            gridLinesX.forEach(line => line.remove());
+            gridLinesY.forEach(line => line.remove());
+            
+            // Draw x-axis grid lines and labels
+            for (let t = 0; t <= gameState.timePeriods; t++) {
+                const x = (t / gameState.timePeriods) * 100;
+                
+                // Grid line
+                const gridLine = document.createElement('div');
+                gridLine.className = 'grid-line-x';
+                gridLine.style.position = 'absolute';
+                gridLine.style.left = `${x}%`;
+                gridLine.style.top = '0';
+                gridLine.style.bottom = '0';
+                gridLine.style.width = '1px';
+                gridLine.style.backgroundColor = 'rgba(0,0,0,0.1)';
+                graphAxes.appendChild(gridLine);
+                
+                // Label
+                const label = document.createElement('div');
+                label.style.position = 'absolute';
+                label.style.left = `${x}%`;
+                label.style.top = '100%';
+                label.style.transform = 'translateX(-50%)';
+                label.style.fontSize = '0.8rem';
+                label.style.marginTop = '5px';
+                label.textContent = t;
+                graphAxes.appendChild(label);
+            }
+            
+            // Draw y-axis grid lines and labels
+            for (let i = 0; i <= 5; i++) {
+                const value = (maxValue / 5) * i;
+                const y = 100 - (value / maxValue) * 100;
+                
+                // Grid line
+                const gridLine = document.createElement('div');
+                gridLine.className = 'grid-line-y';
+                gridLine.style.position = 'absolute';
+                gridLine.style.left = '0';
+                gridLine.style.right = '0';
+                gridLine.style.top = `${y}%`;
+                gridLine.style.height = '1px';
+                gridLine.style.backgroundColor = 'rgba(0,0,0,0.1)';
+                graphAxes.appendChild(gridLine);
+                
+                // Label
+                const label = document.createElement('div');
+                label.style.position = 'absolute';
+                label.style.right = '100%';
+                label.style.top = `${y}%`;
+                label.style.transform = 'translateY(-50%)';
+                label.style.fontSize = '0.8rem';
+                label.style.marginRight = '5px';
+                label.textContent = Math.round(value);
+                graphAxes.appendChild(label);
+            }
+            
+            // Draw axis labels
+            const xLabel = document.createElement('div');
+            xLabel.style.position = 'absolute';
+            xLabel.style.bottom = '-30px';
+            xLabel.style.left = '50%';
+            xLabel.style.transform = 'translateX(-50%)';
+            xLabel.style.fontSize = '0.9rem';
+            xLabel.style.fontWeight = 'bold';
+            xLabel.textContent = 'Time';
+            graphAxes.appendChild(xLabel);
+            
+            const yLabel = document.createElement('div');
+            yLabel.style.position = 'absolute';
+            yLabel.style.top = '50%';
+            yLabel.style.left = '-30px';
+            yLabel.style.transform = 'translateY(-50%) rotate(-90deg)';
+            yLabel.style.fontSize = '0.9rem';
+            yLabel.style.fontWeight = 'bold';
+            yLabel.textContent = 'Value';
+            graphAxes.appendChild(yLabel);
+            
+            // Draw points and lines
+            for (let i = 0; i < dataPoints.length; i++) {
+                const point = dataPoints[i];
+                const x = (point.t / gameState.timePeriods) * 100;
+                const y = 100 - (point.value / maxValue) * 100;
+                
+                // Create point
+                const pointElement = document.createElement('div');
+                pointElement.className = 'graph-point';
+                pointElement.style.left = `${x}%`;
+                pointElement.style.top = `${y}%`;
+                
+                // Add tooltip on hover
+                pointElement.title = `Time: ${point.t}, Value: ${point.value.toFixed(1)}`;
+                
+                graphAxes.appendChild(pointElement);
+                
+                // Draw line to next point
+                if (i < dataPoints.length - 1) {
+                    const nextPoint = dataPoints[i + 1];
+                    const nextX = (nextPoint.t / gameState.timePeriods) * 100;
+                    const nextY = 100 - (nextPoint.value / maxValue) * 100;
+                    
+                    const dx = nextX - x;
+                    const dy = nextY - y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const angle = Math.atan2(dy, dx);
+                    
+                    const lineElement = document.createElement('div');
+                    lineElement.className = 'graph-line';
+                    lineElement.style.left = `${x}%`;
+                    lineElement.style.top = `${y}%`;
+                    lineElement.style.width = `${distance}%`;
+                    lineElement.style.transform = `rotate(${angle}rad)`;
+                    
+                    graphAxes.appendChild(lineElement);
+                }
+            }
+        }
+
+        // Show quiz question
+        function showQuizQuestion() {
+            // Get current question
+            const questions = quizQuestions[gameState.currentLevel - 1];
+            const question = questions[gameState.currentQuestionIndex];
+            
+            // Update question text
+            quizQuestion.textContent = question.question;
+            
+            // Clear previous options
+            quizOptionsContainer.innerHTML = '';
+            quizExplanation.style.display = 'none';
+            quizExplanation.textContent = '';
+            
+            // Add options
+            question.options.forEach((option, index) => {
+                const optionButton = document.createElement('button');
+                optionButton.className = 'quiz-option';
+                optionButton.textContent = option;
+                optionButton.dataset.index = index;
+                
+                optionButton.addEventListener('click', () => {
+                    // Deselect all options
+                    document.querySelectorAll('.quiz-option').forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    
+                    // Select this option
+                    optionButton.classList.add('selected');
+                    gameState.selectedAnswer = index;
+                    
+                    // Enable submit button
+                    submitAnswerButton.disabled = false;
+                });
+                
+                quizOptionsContainer.appendChild(optionButton);
+            });
+            
+            // Reset UI elements
+            submitAnswerButton.style.display = 'block';
+            submitAnswerButton.disabled = true;
+            nextQuestionButton.style.display = 'none';
+            gameState.selectedAnswer = null;
+        }
+
+        // Show level selection screen
+        function showLevelSelection() {
+            levelButtonsContainer.innerHTML = '';
+            
+            for (let i = 1; i <= gameState.maxLevel; i++) {
+                const levelButton = document.createElement('div');
+                levelButton.className = 'level-button';
+                
+                if (i <= gameState.unlockedLevels) {
+                    levelButton.classList.add(i === gameState.currentLevel ? 'current' : 'unlocked');
+                } else {
+                    levelButton.classList.add('locked');
+                }
+                
+                levelButton.textContent = i;
+                
+                if (i <= gameState.unlockedLevels) {
+                    levelButton.addEventListener('click', () => {
+                        playSound(clickSound);
+                        gameState.currentLevel = i;
+                        startLevel();
+                    });
+                }
+                
+                levelButtonsContainer.appendChild(levelButton);
+            }
+        }
+
+        // Start a level
+        function startLevel() {
+            gameState.currentQuestionIndex = 0;
+            gameState.correctAnswers = 0;
+            showScreen('quiz-screen');
+            showQuizQuestion();
+            levelIndicator.textContent = `Level ${gameState.currentLevel}`;
+            updateProgressBar();
+        }
+
+        // Update progress bar
+        function updateProgressBar() {
+            const questions = quizQuestions[gameState.currentLevel - 1];
+            const progress = (gameState.currentQuestionIndex / questions.length) * 100;
+            progressFill.style.width = `${progress}%`;
+        }
+
+        // Show answer feedback
+        function showAnswerFeedback(isCorrect) {
+            answerFeedback.textContent = isCorrect ? 'Correct!' : 'Try Again!';
+            answerFeedback.className = 'answer-feedback';
+            answerFeedback.classList.add(isCorrect ? 'correct' : 'incorrect');
+            answerFeedback.classList.add('show');
+            
+            setTimeout(() => {
+                answerFeedback.classList.remove('show');
+            }, 1500);
+        }
+
+        // Show notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Create particles for celebration effect
+        function createParticles(x, y, count, colors) {
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Random color
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                particle.style.backgroundColor = color;
+                
+                // Random size
+                const size = Math.random() * 10 + 5;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random shape
+                if (Math.random() > 0.5) {
+                    particle.style.borderRadius = '50%';
+                } else {
+                    particle.style.transform = `rotate(${Math.random() * 360}deg)`;
+                }
+                
+                // Position
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                
+                document.body.appendChild(particle);
+                
+                // Animation
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = Math.random() * 5 + 2;
+                const vx = Math.cos(angle) * velocity;
+                const vy = Math.sin(angle) * velocity - 5; // Initial upward velocity
+                
+                let posX = x;
+                let posY = y;
+                let gravity = 0.2;
+                let opacity = 1;
+                
+                const animate = () => {
+                    posX += vx;
+                    posY += vy;
+                    vy += gravity;
+                    opacity -= 0.02;
+                    
+                    particle.style.left = `${posX}px`;
+                    particle.style.top = `${posY}px`;
+                    particle.style.opacity = opacity;
+                    
+                    // Remove if off screen or faded out
+                    if (posY > window.innerHeight || opacity <= 0) {
+                        particle.remove();
+                        return;
+                    }
+                    
+                    requestAnimationFrame(animate);
+                };
+                
+                requestAnimationFrame(animate);
+            }
+        }
+
+        // Create stars for celebration effect
+        function createStars(count) {
+            for (let i = 0; i < count; i++) {
+                const star = document.createElement('div');
+                star.className = 'celebration-star';
+                star.textContent = '★';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight * 0.5;
+                star.style.left = `${x}px`;
+                star.style.top = `${y}px`;
+                
+                // Random delay
+                star.style.animationDelay = `${Math.random() * 2}s`;
+                
+                document.body.appendChild(star);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    star.remove();
+                }, 4000);
+            }
+        }
+
+        // Check if achievement is unlocked and show notification
+        function checkAchievements() {
+            let newAchievementUnlocked = false;
+            
+            // Check level completion achievements
+            if (gameState.currentLevel >= 1 && !gameState.achievements[0].unlocked) {
+                gameState.achievements[0].unlocked = true;
+                showAchievementNotification("First Steps", "Achievement Unlocked!");
+                newAchievementUnlocked = true;
+            }
+            
+            if (gameState.currentLevel >= 5 && !gameState.achievements[2].unlocked) {
+                gameState.achievements[2].unlocked = true;
+                showAchievementNotification("Math Wizard", "Achievement Unlocked!");
+                newAchievementUnlocked = true;
+            }
+            
+            if (gameState.currentLevel >= 10 && !gameState.achievements[4].unlocked) {
+                gameState.achievements[4].unlocked = true;
+                showAchievementNotification("Exponential Master", "Achievement Unlocked!");
+                newAchievementUnlocked = true;
+            }
+            
+            // Check perfect score achievement
+            if (gameState.correctAnswers === quizQuestions[gameState.currentLevel - 1].length && !gameState.achievements[3].unlocked) {
+                gameState.achievements[3].unlocked = true;
+                showAchievementNotification("Perfect Score", "Achievement Unlocked!");
+                newAchievementUnlocked = true;
+            }
+            
+            // Count total correct answers
+            const correctAnswersCount = quizQuestions.slice(0, gameState.currentLevel).reduce((total, level, index) => {
+                if (index === gameState.currentLevel - 1) {
+                    return total + gameState.correctAnswers;
+                }
+                return total + level.length;
+            }, 0);
+            
+            if (correctAnswersCount >= 10 && !gameState.achievements[1].unlocked) {
+                gameState.achievements[1].unlocked = true;
+                showAchievementNotification("Growing Knowledge", "Achievement Unlocked!");
+                newAchievementUnlocked = true;
+            }
+            
+            // Update achievements panel
+            updateAchievementsPanel();
+            
+            // Save game data
+            saveGameData();
+            
+            return newAchievementUnlocked;
+        }
+
+        // Show achievement notification
+        function showAchievementNotification(title, subtitle) {
+            playSound(achievementSound);
+            
+            // Create celebration effects
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+            createParticles(centerX, centerY, 50, ['#ff9a9e', '#fad0c4', '#c4b5fd', '#6a11cb', '#2575fc']);
+            createStars(5);
+            
+            // Show notification
+            showNotification(`${subtitle} ${title}`);
+        }
+
+        // Update achievements panel
+        function updateAchievementsPanel() {
+            achievementsList.innerHTML = '';
+            
+            gameState.achievements.forEach(achievement => {
+                const achievementElement = document.createElement('div');
+                achievementElement.className = 'achievement';
+                
+                if (!achievement.unlocked) {
+                    achievementElement.classList.add('locked');
+                }
+                
+                const iconElement = document.createElement('div');
+                iconElement.className = 'achievement-icon';
+                iconElement.textContent = achievement.icon;
+                
+                const textElement = document.createElement('div');
+                textElement.className = 'achievement-text';
+                
+                const titleElement = document.createElement('div');
+                titleElement.className = 'achievement-title';
+                titleElement.textContent = achievement.unlocked ? achievement.title : '???';
+                
+                const descriptionElement = document.createElement('div');
+                descriptionElement.className = 'achievement-description';
+                descriptionElement.textContent = achievement.unlocked ? achievement.description : 'Keep playing to unlock this achievement!';
+                
+                textElement.appendChild(titleElement);
+                textElement.appendChild(descriptionElement);
+                
+                achievementElement.appendChild(iconElement);
+                achievementElement.appendChild(textElement);
+                
+                achievementsList.appendChild(achievementElement);
+            });
+        }
+
+        // Event Listeners
+        
+        // Start game button
+        startGameButton.addEventListener('click', () => {
+            playSound(clickSound);
+            showScreen('intro-screen');
+        });
+
+        // Show demo button
+        showDemoButton.addEventListener('click', () => {
+            playSound(clickSound);
+            showScreen('demo-screen');
+            startBacteriaSimulation();
+        });
+
+        // Reset demo button
+        resetDemoButton.addEventListener('click', () => {
+            playSound(clickSound);
+            resetBacteriaSimulation();
+            startBacteriaSimulation();
+        });
+
+        // Continue to quiz button
+        continueToQuizButton.addEventListener('click', () => {
+            playSound(clickSound);
+            clearInterval(bacteriaInterval);
+            showScreen('quiz-screen');
+            showQuizQuestion();
+        });
+
+        // Growth rate slider
+        growthRateSlider.addEventListener('input', () => {
+            gameState.growthRate = parseFloat(growthRateSlider.value);
+            growthRateValue.textContent = `${gameState.growthRate}x`;
+        });
+
+        // Time speed slider
+        timeSpeedSlider.addEventListener('input', () => {
+            gameState.timeSpeed = parseFloat(timeSpeedSlider.value);
+            timeSpeedValue.textContent = `${gameState.timeSpeed}x`;
+        });
+
+        // Submit answer button
+        submitAnswerButton.addEventListener('click', () => {
+            playSound(clickSound);
+            
+            const questions = quizQuestions[gameState.currentLevel - 1];
+            const question = questions[gameState.currentQuestionIndex];
+            
+            const isCorrect = gameState.selectedAnswer === question.correctAnswer;
+            
+            if (isCorrect) {
+                playSound(correctSound);
+                gameState.score += 100;
+                gameState.correctAnswers++;
+                scoreIndicator.textContent = `Score: ${gameState.score}`;
+                
+                // Celebration effect
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                createParticles(centerX, centerY, 20, ['#10b981', '#34d399', '#6ee7b7']);
+            } else {
+                playSound(incorrectSound);
+                
+                // Negative effect
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                createParticles(centerX, centerY, 10, ['#ef4444', '#f87171', '#fca5a5']);
+            }
+            
+            // Show feedback
+            showAnswerFeedback(isCorrect);
+            
+            // Mark correct and incorrect options
+            document.querySelectorAll('.quiz-option').forEach((option, index) => {
+                option.disabled = true;
+                
+                if (index === question.correctAnswer) {
+                    option.classList.add('correct');
+                } else if (index === gameState.selectedAnswer && !isCorrect) {
+                    option.classList.add('incorrect');
+                }
+            });
+            
+            // Show explanation
+            quizExplanation.textContent = question.explanation;
+            quizExplanation.style.display = 'block';
+            
+            // Show next button and hide submit button
+            submitAnswerButton.style.display = 'none';
+            nextQuestionButton.style.display = 'block';
+        });
+
+        // Next question button
+        nextQuestionButton.addEventListener('click', () => {
+            playSound(clickSound);
+            
+            gameState.currentQuestionIndex++;
+            const questions = quizQuestions[gameState.currentLevel - 1];
+            
+            if (gameState.currentQuestionIndex < questions.length) {
+                showQuizQuestion();
+                updateProgressBar();
+            } else {
+                // Level complete
+                playSound(levelCompleteSound);
+                
+                // Update level progress
+                if (gameState.currentLevel === gameState.unlockedLevels && gameState.unlockedLevels < gameState.maxLevel) {
+                    gameState.unlockedLevels++;
+                }
+                
+                // Set level completion message
+                const stars = gameState.correctAnswers === questions.length ? 3 : 
+                             gameState.correctAnswers >= questions.length * 0.7 ? 2 : 1;
+                
+                levelCompleteMessage.textContent = stars === 3 ? 
+                    "Amazing! You've mastered exponential growth at this level!" :
+                    stars === 2 ? 
+                    "Great job! You understand exponential growth well!" :
+                    "Good start! Keep practicing to improve your score!";
+                
+                levelScoreDisplay.textContent = `Score: ${gameState.score}`;
+                
+                // Show stars
+                starsContainer.innerHTML = '';
+                for (let i = 0; i < 3; i++) {
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    star.textContent = i < stars ? '★' : '☆';
+                    starsContainer.appendChild(star);
+                }
+                
+                // Show level complete screen
+                showScreen('level-complete-screen');
+                
+                // Create celebration effects
+                const centerX = window.innerWidth / 2;
+                const centerY = window.innerHeight / 2;
+                createParticles(centerX, centerY, 50, ['#ff9a9e', '#fad0c4', '#c4b5fd', '#6a11cb', '#2575fc']);
+                createStars(stars * 3);
+                
+                // Check for achievements
+                checkAchievements();
+                
+                // Save game data
+                saveGameData();
+                
+                // Show experiment screen after a delay
+                setTimeout(() => {
+                    showScreen('experiment-screen');
+                    drawGraph();
+                }, 5000);
+            }
+        });
+
+        // Initial value slider
+        initialValueSlider.addEventListener('input', () => {
+            gameState.initialValue = parseInt(initialValueSlider.value);
+            initialValueValue.textContent = gameState.initialValue;
+            formulaDisplay.textContent = `Formula: y = ${gameState.initialValue} × ${gameState.growthFactor}^t`;
+            
+            const finalValue = gameState.initialValue * Math.pow(gameState.growthFactor, gameState.timePeriods);
+            finalValueDisplay.textContent = `Final Value: ${finalValue.toFixed(0)}`;
+        });
+
+        // Growth factor slider
+        growthFactorSlider.addEventListener('input', () => {
+            gameState.growthFactor = parseFloat(growthFactorSlider.value);
+            growthFactorValue.textContent = `${gameState.growthFactor}x`;
+            formulaDisplay.textContent = `Formula: y = ${gameState.initialValue} × ${gameState.growthFactor}^t`;
+            
+            const finalValue = gameState.initialValue * Math.pow(gameState.growthFactor, gameState.timePeriods);
+            finalValueDisplay.textContent = `Final Value: ${finalValue.toFixed(0)}`;
+        });
+
+        // Time periods slider
+        timePeriodsSlider.addEventListener('input', () => {
+            gameState.timePeriods = parseInt(timePeriodsSlider.value);
+            timePeriodsValue.textContent = gameState.timePeriods;
+            
+            const finalValue = gameState.initialValue * Math.pow(gameState.growthFactor, gameState.timePeriods);
+            finalValueDisplay.textContent = `Final Value: ${finalValue.toFixed(0)}`;
+        });
+
+        // Update graph button
+        updateGraphButton.addEventListener('click', () => {
+            playSound(clickSound);
+            drawGraph();
+        });
+
+        // Continue to level button
+        continueToLevelButton.addEventListener('click', () => {
+            playSound(clickSound);
+            showScreen('level-select-screen');
+            showLevelSelection();
+        });
+
+        // Go to main menu button
+        goToMainMenuButton.addEventListener('click', () => {
+            playSound(clickSound);
+            showScreen('start-screen');
+        });
+
+        // Next level button
+        nextLevelButton.addEventListener('click', () => {
+            playSound(clickSound);
+            if (gameState.currentLevel < gameState.maxLevel) {
+                gameState.currentLevel++;
+                startLevel();
+            } else {
+                showNotification("You've completed all levels!");
+                showScreen('level-select-screen');
+                showLevelSelection();
+            }
+        });
+
+        // Replay level button
+        replayLevelButton.addEventListener('click', () => {
+            playSound(clickSound);
+            startLevel();
+        });
+
+        // Return to level select button
+        returnToLevelSelectButton.addEventListener('click', () => {
+            playSound(clickSound);
+            showScreen('level-select-screen');
+            showLevelSelection();
+        });
+
+        // Settings button
+        settingsButton.addEventListener('click', () => {
+            playSound(clickSound);
+            settingsPanel.classList.toggle('show');
+            achievementsPanel.classList.remove('show');
+        });
+
+        // Close settings button
+        closeSettingsButton.addEventListener('click', () => {
+            playSound(clickSound);
+            settingsPanel.classList.remove('show');
+        });
+
+        // Volume slider
+        volumeSlider.addEventListener('input', () => {
+            setVolume(parseFloat(volumeSlider.value));
+        });
+
+        // Reset progress button
+        resetProgressButton.addEventListener('click', () => {
+            playSound(clickSound);
+            
+            if (confirm("Are you sure you want to reset your progress? This will erase all your achievements and level progress.")) {
+                gameState.score = 0;
+                gameState.currentLevel = 1;
+                gameState.unlockedLevels = 1;
+                gameState.achievements.forEach(achievement => {
+                    achievement.unlocked = false;
+                });
+                
+                saveGameData();
+                updateUI();
+                showNotification("Progress has been reset!");
+                settingsPanel.classList.remove('show');
+            }
+        });
+
+        // Achievements button
+        achievementsButton.addEventListener('click', () => {
+            playSound(clickSound);
+            updateAchievementsPanel();
+            achievementsPanel.classList.toggle('show');
+            settingsPanel.classList.remove('show');
+        });
+
+        // Close achievements button
+        closeAchievementsButton.addEventListener('click', () => {
+            playSound(clickSound);
+            achievementsPanel.classList.remove('show');
+        });
+
+        // Initialize the game
+        function initGame() {
+            // Simulate loading progress
+            let progress = 0;
+            const loadingInterval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(loadingInterval);
+                    
+                    // Load game data
+                    loadGameData();
+                    
+                    // Start background music
+                    setVolume(gameState.volume);
+                    backgroundMusic.muted = gameState.isMuted;
+                    
+                    // Try to play background music (might be blocked by browser)
+                    backgroundMusic.play().catch(error => {
+                        console.log("Audio autoplay was prevented:", error);
+                        
+                        // Create a play music button
+                        const musicButton = document.createElement('button');
+                        musicButton.textContent = "🎵 Play Music";
+                        musicButton.style.position = "fixed";
+                        musicButton.style.bottom = "20px";
+                        musicButton.style.right = "20px";
+                        musicButton.style.zIndex = "1000";
+                        musicButton.style.padding = "10px 20px";
+                        musicButton.style.background = "linear-gradient(135deg, #6a11cb 0%, #2575fc 100%)";
+                        musicButton.style.color = "white";
+                        musicButton.style.border = "none";
+                        musicButton.style.borderRadius = "50px";
+                        musicButton.style.boxShadow = "0 4px 10px rgba(0,0,0,0.2)";
+                        musicButton.style.cursor = "pointer";
+                        
+                        musicButton.addEventListener('click', () => {
+                            backgroundMusic.play();
+                            musicButton.remove();
+                        });
+                        
+                        document.body.appendChild(musicButton);
+                    });
+                    
+                    // Draw initial graph
+                    drawGraph();
+                    
+                    // Hide loading screen with smooth transition
+                    loadingScreen.style.opacity = "0";
+                    setTimeout(() => {
+                        loadingScreen.style.display = "none";
+                    }, 500);
+                }
+                
+                loadingProgress.style.width = `${progress}%`;
+            }, 100);
+            
+            // Add ripple effect to buttons
+            document.querySelectorAll('button').forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const x = e.clientX - e.target.getBoundingClientRect().left;
+                    const y = e.clientY - e.target.getBoundingClientRect().top;
+                    
+                    const ripple = document.createElement('span');
+                    ripple.style.position = 'absolute';
+                    ripple.style.width = '1px';
+                    ripple.style.height = '1px';
+                    ripple.style.backgroundColor = 'rgba(255, 255, 255, 0.7)';
+                    ripple.style.borderRadius = '50%';
+                    ripple.style.transform = 'translate(-50%, -50%)';
+                    ripple.style.left = `${x}px`;
+                    ripple.style.top = `${y}px`;
+                    ripple.style.animation = 'ripple 0.6s linear';
+                    
+                    this.appendChild(ripple);
+                    
+                    setTimeout(() => {
+                        ripple.remove();
+                    }, 600);
+                });
+            });
+            
+            // Add ripple effect animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes ripple {
+                    0% {
+                        width: 0;
+                        height: 0;
+                        opacity: 0.5;
+                    }
+                    100% {
+                        width: 500px;
+                        height: 500px;
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Preload sound effects
+            [correctSound, incorrectSound, levelCompleteSound, achievementSound, clickSound].forEach(sound => {
+                sound.load();
+            });
+        }
+
+        // Start the game when the page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

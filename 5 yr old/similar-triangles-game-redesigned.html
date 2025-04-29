@@ -1,0 +1,2246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Triangle Friends Adventure</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+            background: linear-gradient(to bottom, #c4e0f9, #e0f7fa);
+            overflow: hidden;
+            touch-action: manipulation;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #game-canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .game-ui {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 24px;
+            color: #4a6fa5;
+            border: 3px solid #92c9ff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            pointer-events: auto;
+        }
+        #level-display {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .star {
+            display: inline-block;
+            color: #ffd700;
+            font-size: 28px;
+            text-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+        }
+        .game-btn {
+            background-color: #ff9800;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 22px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 30px;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+            transition: transform 0.2s, background-color 0.3s;
+            box-shadow: 0 6px 0 #e68a00, 0 8px 10px rgba(0, 0, 0, 0.2);
+            pointer-events: auto;
+        }
+        .game-btn:hover {
+            background-color: #ffa726;
+            transform: translateY(-3px);
+        }
+        .game-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #e68a00, 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        #next-btn {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4CAF50;
+            box-shadow: 0 6px 0 #2E7D32, 0 8px 10px rgba(0, 0, 0, 0.2);
+        }
+        #help-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #9c27b0;
+            box-shadow: 0 6px 0 #7B1FA2, 0 8px 10px rgba(0, 0, 0, 0.2);
+        }
+        #settings-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 20px;
+            border: 3px solid #92c9ff;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+            display: none;
+            pointer-events: auto;
+        }
+        #settings-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: #2196F3;
+            box-shadow: 0 6px 0 #0b7dda, 0 8px 10px rgba(0, 0, 0, 0.2);
+        }
+        .slider-container {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        .slider-container label {
+            font-size: 18px;
+            margin-right: 10px;
+            color: #4a6fa5;
+        }
+        .slider-container input[type="range"] {
+            width: 150px;
+            height: 25px;
+            -webkit-appearance: none;
+            background: #e0f7fa;
+            border-radius: 10px;
+            outline: none;
+            margin: 0 10px;
+        }
+        .slider-container input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 30px;
+            height: 30px;
+            background: #ff9800;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        .sound-toggle {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .sound-toggle label {
+            font-size: 18px;
+            margin-right: 10px;
+            color: #4a6fa5;
+        }
+        #modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            pointer-events: auto;
+        }
+        #modal-content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 20px;
+            max-width: 80%;
+            max-height: 80%;
+            overflow-y: auto;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            position: relative;
+            font-size: 20px;
+            border: 5px solid #92c9ff;
+        }
+        #modal-content h2 {
+            color: #4a6fa5;
+            margin-top: 0;
+            font-size: 28px;
+            text-align: center;
+        }
+        #modal-content p, #modal-content li {
+            font-size: 20px;
+            line-height: 1.5;
+            color: #333;
+        }
+        #close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 32px;
+            cursor: pointer;
+            color: #ff9800;
+            border: none;
+            background: none;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+        #close-modal:hover {
+            background-color: rgba(255, 152, 0, 0.2);
+        }
+        #continue-btn {
+            display: block;
+            margin: 20px auto 0;
+            padding: 15px 30px;
+            font-size: 24px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Arial Rounded MT Bold', sans-serif;
+            box-shadow: 0 6px 0 #2E7D32;
+            transition: transform 0.2s;
+        }
+        #continue-btn:hover {
+            transform: translateY(-3px);
+        }
+        #continue-btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 0 #2E7D32;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 18px;
+            z-index: 100;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            max-width: 300px;
+            text-align: center;
+        }
+        .confetti {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: #f00;
+            z-index: 90;
+        }
+        @keyframes float {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes rainbow {
+            0% { background-color: #ff5757; }
+            20% { background-color: #ffbd59; }
+            40% { background-color: #88ff59; }
+            60% { background-color: #59ffbd; }
+            80% { background-color: #59b4ff; }
+            100% { background-color: #ff59f8; }
+        }
+        .speech-bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            font-size: 20px;
+            max-width: 250px;
+            z-index: 95;
+            pointer-events: none;
+        }
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+        }
+        .speech-bubble.left:after {
+            left: -30px;
+            top: 50%;
+            margin-top: -15px;
+            border-right-color: white;
+        }
+        .speech-bubble.right:after {
+            right: -30px;
+            top: 50%;
+            margin-top: -15px;
+            border-left-color: white;
+        }
+        .speech-bubble.top:after {
+            top: -30px;
+            left: 50%;
+            margin-left: -15px;
+            border-bottom-color: white;
+        }
+        .speech-bubble.bottom:after {
+            bottom: -30px;
+            left: 50%;
+            margin-left: -15px;
+            border-top-color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div class="game-ui">
+            <div id="score-display">
+                <div>Score: <span id="score-value">0</span></div>
+                <div id="level-display">Level: <span id="level-value">1</span> <span class="stars"></span></div>
+            </div>
+            <button id="next-btn" class="game-btn">Next Question</button>
+            <button id="help-btn" class="game-btn">Help</button>
+            <button id="settings-btn" class="game-btn">Settings</button>
+            <div id="settings-panel">
+                <h2 style="margin-top: 0; color: #4a6fa5;">Settings</h2>
+                <div class="slider-container">
+                    <label for="difficulty-slider">Difficulty:</label>
+                    <input type="range" id="difficulty-slider" min="1" max="3" value="1" step="1">
+                    <span id="difficulty-value">Easy</span>
+                </div>
+                <div class="slider-container">
+                    <label for="num-triangles-slider">Triangles:</label>
+                    <input type="range" id="num-triangles-slider" min="2" max="5" value="3" step="1">
+                    <span id="num-triangles-value">3</span>
+                </div>
+                <div class="sound-toggle">
+                    <label for="sound-toggle">Sound:</label>
+                    <input type="checkbox" id="sound-toggle" checked>
+                    <span>ON</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-overlay">
+        <div id="modal-content">
+            <button id="close-modal">&times;</button>
+            <div id="modal-text"></div>
+        </div>
+    </div>
+
+    <div class="tooltip" id="tooltip"></div>
+
+    <script>
+        // Game state
+        const gameState = {
+            score: 0,
+            level: 1,
+            triangles: [],
+            targetTriangle: null,
+            correctTriangles: [],
+            incorrectGuesses: [],
+            selectedTriangle: null,
+            gamePhase: 'question', // question, celebration, explanation
+            characters: [],
+            particles: [],
+            confetti: [],
+            soundEnabled: true,
+            difficulty: 1,
+            numTriangles: 3,
+            sizeRange: 1.5,
+            lastUpdateTime: 0,
+            deltaTime: 0,
+            canvas: null,
+            ctx: null,
+            width: 0,
+            height: 0,
+            audioContext: null,
+            audioInitialized: false
+        };
+
+        // DOM Elements
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        gameState.canvas = canvas;
+        gameState.ctx = ctx;
+
+        const scoreValue = document.getElementById('score-value');
+        const levelValue = document.getElementById('level-value');
+        const starsContainer = document.querySelector('.stars');
+        const nextBtn = document.getElementById('next-btn');
+        const helpBtn = document.getElementById('help-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsPanel = document.getElementById('settings-panel');
+        const difficultySlider = document.getElementById('difficulty-slider');
+        const difficultyValue = document.getElementById('difficulty-value');
+        const numTrianglesSlider = document.getElementById('num-triangles-slider');
+        const numTrianglesValue = document.getElementById('num-triangles-value');
+        const soundToggle = document.getElementById('sound-toggle');
+        
+        const modalOverlay = document.getElementById('modal-overlay');
+        const modalContent = document.getElementById('modal-content');
+        const modalText = document.getElementById('modal-text');
+        const closeModal = document.getElementById('close-modal');
+        const tooltip = document.getElementById('tooltip');
+
+        // Character definitions
+        const CHARACTER_TYPES = {
+            TEACHER: {
+                name: 'Professor Tri',
+                color: '#6200ea',
+                size: 80,
+                eyeColor: '#ffffff',
+                accessories: 'glasses',
+                messages: [
+                    "Similar triangles have the same shape!",
+                    "Look at the numbers on each side!",
+                    "If the sides grow the same way, they're similar!",
+                    "Remember, similar triangles are like family!",
+                    "Great job finding similar triangles!"
+                ]
+            },
+            FRIEND: {
+                name: 'Tiny',
+                color: '#00c853',
+                size: 50,
+                eyeColor: '#ffffff',
+                accessories: 'bow',
+                messages: [
+                    "You're doing amazing!",
+                    "Can you find the matching triangles?",
+                    "The numbers can help you!",
+                    "You're so smart!",
+                    "High five! That's right!"
+                ]
+            }
+        };
+
+        // Simple Color Palette
+        const COLORS = {
+            target: '#9c27b0',  // Purple
+            correct: '#4caf50', // Green
+            incorrect: '#f44336', // Red
+            neutral: ['#2196f3', '#ff9800', '#3f51b5', '#009688', '#ff5722']
+        };
+
+        // Initialize the game
+        function init() {
+            // Set up canvas
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Initialize audio context on user interaction
+            document.addEventListener('click', initAudio, { once: true });
+            document.addEventListener('touchstart', initAudio, { once: true });
+            
+            // Set up event listeners
+            canvas.addEventListener('click', handleCanvasClick);
+            canvas.addEventListener('touchstart', handleCanvasTouchStart, { passive: false });
+            
+            nextBtn.addEventListener('click', generateNewQuestion);
+            helpBtn.addEventListener('click', showHelp);
+            settingsBtn.addEventListener('click', toggleSettings);
+            closeModal.addEventListener('click', () => {
+                modalOverlay.style.display = 'none';
+            });
+
+            // Settings listeners
+            difficultySlider.addEventListener('input', updateDifficulty);
+            numTrianglesSlider.addEventListener('input', updateNumTriangles);
+            soundToggle.addEventListener('change', updateSoundSettings);
+            
+            // Create characters
+            createCharacters();
+            
+            // Start the game
+            resetGame();
+            
+            // Start animation loop
+            gameState.lastUpdateTime = performance.now();
+            requestAnimationFrame(gameLoop);
+            
+            // Show welcome message after a short delay
+            setTimeout(showWelcomeMessage, 500);
+        }
+
+        // Initialize Audio Context
+        function initAudio() {
+            if (gameState.audioInitialized) return;
+            
+            try {
+                gameState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                gameState.audioInitialized = true;
+            } catch (e) {
+                console.warn('Web Audio API not supported');
+                gameState.soundEnabled = false;
+                soundToggle.checked = false;
+            }
+        }
+
+        // Update difficulty setting
+        function updateDifficulty() {
+            gameState.difficulty = parseInt(difficultySlider.value);
+            const difficultyLabels = ['Easy', 'Medium', 'Hard'];
+            difficultyValue.textContent = difficultyLabels[gameState.difficulty - 1];
+        }
+
+        // Update number of triangles setting
+        function updateNumTriangles() {
+            gameState.numTriangles = parseInt(numTrianglesSlider.value);
+            numTrianglesValue.textContent = gameState.numTriangles;
+        }
+
+        // Update sound settings
+        function updateSoundSettings() {
+            gameState.soundEnabled = soundToggle.checked;
+            soundToggle.nextElementSibling.textContent = gameState.soundEnabled ? 'ON' : 'OFF';
+        }
+
+        // Toggle settings panel
+        function toggleSettings() {
+            if (settingsPanel.style.display === 'block') {
+                settingsPanel.style.display = 'none';
+            } else {
+                settingsPanel.style.display = 'block';
+            }
+        }
+
+        // Welcome message
+        function showWelcomeMessage() {
+            modalText.innerHTML = `
+                <h2>Welcome to Triangle Friends Adventure!</h2>
+                <div style="text-align: center; margin: 20px 0;">
+                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxnPgogICAgICAgIDxwb2x5Z29uIHBvaW50cz0iMTUwLDMwIDI1MCwxNzAgNTAsMTcwIiBmaWxsPSIjOWMyN2IwIiBzdHJva2U9IiM3YjFmYTIiIHN0cm9rZS13aWR0aD0iNSIvPgogICAgICAgIDx0ZXh0IHg9IjE1MCIgeT0iMTIwIiBmb250LWZhbWlseT0iQ29taWMgU2FucyBNUyIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjM8L3RleHQ+CiAgICAgICAgPHRleHQgeD0iMTUwIiB5PSIxNzAiIGZvbnQtZmFtaWx5PSJDb21pYyBTYW5zIE1TIiBmb250LXNpemU9IjI0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSI+NjwvdGV4dD4KICAgICAgICA8dGV4dCB4PSIxNTAiIHk9IjgwIiBmb250LWZhbWlseT0iQ29taWMgU2FucyBNUyIgZm9udC1zaXplPSIyNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPjY8L3RleHQ+CiAgICA8L2c+Cjwvc3ZnPg==" alt="Triangle" width="300" height="200">
+                </div>
+                <p>Hi there, genius! I'm <strong>Professor Tri</strong>, and this is my friend <strong>Tiny</strong>. We're going to learn about <strong>similar triangles</strong> today!</p>
+                <p>Similar triangles are like triangle twins! They have the <strong>same shape</strong> but can be <strong>different sizes</strong>.</p>
+                <p>In this game:</p>
+                <ul>
+                    <li>Look at the <strong>purple triangle</strong> at the top</li>
+                    <li>Find other triangles that have the <strong>same shape</strong></li>
+                    <li>Check the <strong>numbers</strong> on the sides to help you!</li>
+                </ul>
+                <p>When triangles are similar, their side lengths grow by the <strong>same amount</strong>. Like if one triangle has sides 1, 2, and 3, a similar triangle might have sides 2, 4, and 6!</p>
+                <p>Ready to play? Let's go!</p>
+                <button id="continue-btn">Start Adventure!</button>
+            `;
+            
+            modalOverlay.style.display = 'flex';
+            document.getElementById('continue-btn').addEventListener('click', () => {
+                modalOverlay.style.display = 'none';
+                showCharacterIntro();
+            });
+        }
+
+        // Show character introduction
+        function showCharacterIntro() {
+            const professor = gameState.characters[0];
+            const tiny = gameState.characters[1];
+            
+            professor.showSpeechBubble("Hi! I'm Professor Tri! I'll help you learn about similar triangles!", 4);
+            
+            setTimeout(() => {
+                tiny.showSpeechBubble("And I'm Tiny! I'll cheer you on! You can do it!", 4);
+            }, 4000);
+        }
+
+        // Show help modal
+        function showHelp() {
+            modalText.innerHTML = `
+                <h2>How to Find Similar Triangles</h2>
+                <div style="display: flex; justify-content: center; margin: 20px 0;">
+                    <div style="text-align: center; margin: 0 20px;">
+                        <svg width="150" height="150">
+                            <polygon points="75,25 120,125 30,125" fill="#9c27b0" stroke="#7b1fa2" stroke-width="4"/>
+                            <text x="75" y="60" font-family="Arial" font-size="16" fill="white" text-anchor="middle">3</text>
+                            <text x="30" y="125" font-family="Arial" font-size="16" fill="white" text-anchor="middle">4</text>
+                            <text x="120" y="125" font-family="Arial" font-size="16" fill="white" text-anchor="middle">5</text>
+                        </svg>
+                        <p style="margin-top: 10px;">Triangle A</p>
+                    </div>
+                    <div style="text-align: center; margin: 0 20px;">
+                        <svg width="150" height="150">
+                            <polygon points="75,50 100,100 50,100" fill="#4caf50" stroke="#2e7d32" stroke-width="4"/>
+                            <text x="75" y="70" font-family="Arial" font-size="16" fill="white" text-anchor="middle">6</text>
+                            <text x="50" y="100" font-family="Arial" font-size="16" fill="white" text-anchor="middle">8</text>
+                            <text x="100" y="100" font-family="Arial" font-size="16" fill="white" text-anchor="middle">10</text>
+                        </svg>
+                        <p style="margin-top: 10px;">Triangle B</p>
+                    </div>
+                </div>
+                <p>These triangles are <strong>similar</strong> because:</p>
+                <ul>
+                    <li>They have the same shape</li>
+                    <li>Their sides grow by the same amount - everything is doubled!</li>
+                    <li>Triangle A: 3, 4, 5</li>
+                    <li>Triangle B: 6, 8, 10 (each side is 2 times bigger)</li>
+                </ul>
+                <h3>How to Play:</h3>
+                <ul>
+                    <li>Look at the purple target triangle at the top</li>
+                    <li>Click on any triangle that has the same shape</li>
+                    <li>Check the numbers on the sides to help you decide</li>
+                    <li>If the numbers grow by the same amount, the triangles are similar!</li>
+                </ul>
+                <button id="continue-btn">Got it!</button>
+            `;
+            
+            modalOverlay.style.display = 'flex';
+            document.getElementById('continue-btn').addEventListener('click', () => {
+                modalOverlay.style.display = 'none';
+            });
+        }
+
+        // Create game characters
+        function createCharacters() {
+            // Create Professor Triangle
+            gameState.characters.push({
+                type: CHARACTER_TYPES.TEACHER,
+                x: gameState.width * 0.85,
+                y: gameState.height * 0.3,
+                targetX: gameState.width * 0.85,
+                targetY: gameState.height * 0.3,
+                vx: 0,
+                vy: 0,
+                scale: 1,
+                rotation: 0,
+                speechBubble: null,
+                speechTimer: 0,
+                animationPhase: 0,
+                showSpeechBubble: function(text, duration = 3) {
+                    this.speechBubble = {
+                        text: text,
+                        direction: 'left'
+                    };
+                    this.speechTimer = duration;
+                }
+            });
+            
+            // Create Tiny assistant
+            gameState.characters.push({
+                type: CHARACTER_TYPES.FRIEND,
+                x: gameState.width * 0.15,
+                y: gameState.height * 0.7,
+                targetX: gameState.width * 0.15,
+                targetY: gameState.height * 0.7,
+                vx: 0,
+                vy: 0,
+                scale: 1,
+                rotation: 0,
+                speechBubble: null,
+                speechTimer: 0,
+                animationPhase: Math.PI,
+                showSpeechBubble: function(text, duration = 3) {
+                    this.speechBubble = {
+                        text: text,
+                        direction: 'right'
+                    };
+                    this.speechTimer = duration;
+                }
+            });
+        }
+
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gameState.width = canvas.width;
+            gameState.height = canvas.height;
+            
+            // Reposition characters if they exist
+            if (gameState.characters.length > 0) {
+                gameState.characters[0].targetX = gameState.width * 0.85;
+                gameState.characters[0].targetY = gameState.height * 0.3;
+                gameState.characters[1].targetX = gameState.width * 0.15;
+                gameState.characters[1].targetY = gameState.height * 0.7;
+            }
+        }
+
+        // Reset game
+        function resetGame() {
+            gameState.score = 0;
+            gameState.level = 1;
+            updateScoreDisplay();
+            updateStars();
+            generateNewQuestion();
+        }
+
+        // Generate new question
+        function generateNewQuestion() {
+            // Hide settings panel if open
+            settingsPanel.style.display = 'none';
+            
+            // Reset game state for new question
+            gameState.triangles = [];
+            gameState.correctTriangles = [];
+            gameState.incorrectGuesses = [];
+            gameState.selectedTriangle = null;
+            gameState.gamePhase = 'question';
+            
+            // Clear particles and confetti
+            gameState.particles = [];
+            gameState.confetti = [];
+            
+            // Generate base triangle (reference for similarity)
+            const baseTriangle = generateBaseTriangle();
+            
+            // Create target triangle (always similar to the base)
+            const targetScaleFactor = 2; // Make the target triangle 2x the base size for clarity
+            gameState.targetTriangle = scaleTriangle(baseTriangle, targetScaleFactor);
+            
+            // Position the target triangle at the top center
+            const targetX = gameState.width * 0.5;
+            const targetY = gameState.height * 0.25;
+            moveTriangle(gameState.targetTriangle, targetX, targetY);
+            
+            // Set target triangle properties
+            gameState.targetTriangle.color = COLORS.target;
+            gameState.targetTriangle.isTarget = true;
+            gameState.targetTriangle.scale = 1;
+            gameState.targetTriangle.rotation = 0;
+            
+            // Simplified side values for target triangle
+            simplifyTriangleSides(gameState.targetTriangle);
+            
+            // Generate triangles for the quiz based on settings
+            const numTriangles = gameState.numTriangles;
+            const numSimilar = Math.max(1, Math.min(2, Math.floor(numTriangles / 3))); // 1-2 similar triangles
+            
+            // Create triangles
+            for (let i = 0; i < numTriangles; i++) {
+                let triangle;
+                const isSimilar = i < numSimilar;
+                
+                if (isSimilar) {
+                    // Create a similar triangle with different scale
+                    const scaleFactor = 1 + Math.random() * gameState.sizeRange;
+                    triangle = scaleTriangle(baseTriangle, scaleFactor);
+                    gameState.correctTriangles.push(triangle);
+                } else {
+                    // Create a non-similar triangle
+                    triangle = generateRandomTriangle(80 + Math.random() * 40);
+                    
+                    // As difficulty increases, make non-similar triangles more similar-looking
+                    if (gameState.difficulty > 1) {
+                        const similarityFactor = 1 - (0.3 * (gameState.difficulty - 1));
+                        makeTriangleSomewhatSimilar(triangle, baseTriangle, similarityFactor);
+                    }
+                }
+                
+                // Assign random color from neutral palette
+                const colorIndex = Math.floor(Math.random() * COLORS.neutral.length);
+                triangle.color = COLORS.neutral[colorIndex];
+                triangle.isSimilar = isSimilar;
+                triangle.isSelected = false;
+                triangle.scale = 1;
+                triangle.targetScale = 1;
+                triangle.rotation = Math.random() * Math.PI / 4 - Math.PI / 8; // Slight random rotation
+                
+                // Simplify side values for easy comparison
+                simplifyTriangleSides(triangle);
+                
+                // Position triangles in a semi-circular pattern in the bottom half
+                const spread = Math.min(gameState.width * 0.8, 800);
+                const radius = Math.min(gameState.width, gameState.height) * 0.25;
+                const angle = (Math.PI / (numTriangles + 1)) * (i + 1);
+                const x = gameState.width / 2 + Math.cos(angle) * spread / 2 - spread / 2;
+                const y = gameState.height * 0.6;
+                
+                moveTriangle(triangle, x, y);
+                gameState.triangles.push(triangle);
+            }
+            
+            // Character messages for new question
+            const professor = gameState.characters[0];
+            const tiny = gameState.characters[1];
+            
+            const professorMessages = [
+                "Find the triangles that are similar to the purple one!",
+                "Look for triangles with the same shape!",
+                "Check the numbers on the sides!",
+                "Remember, similar triangles are like family!"
+            ];
+            
+            professor.showSpeechBubble(professorMessages[Math.floor(Math.random() * professorMessages.length)], 4);
+        }
+
+        // Generate base triangle with simple integer ratios
+        function generateBaseTriangle() {
+            // Use Pythagorean triples or simple integer ratios for sides
+            const simpleTriangles = [
+                {sides: [3, 4, 5]},    // Classic 3-4-5 triangle
+                {sides: [5, 12, 13]},  // 5-12-13 Pythagorean triple
+                {sides: [2, 3, 4]},    // Simple scalene
+                {sides: [2, 2, 3]},    // Isosceles
+                {sides: [3, 5, 7]}     // Another simple scalene
+            ];
+            
+            const selectedTriangle = simpleTriangles[Math.floor(Math.random() * simpleTriangles.length)];
+            const sides = selectedTriangle.sides;
+            
+            // Convert sides to points (using the law of cosines)
+            const points = [];
+            
+            // First point at origin
+            points.push({x: 0, y: 0});
+            
+            // Second point at (sides[0], 0)
+            points.push({x: sides[0], y: 0});
+            
+            // Calculate the third point using the law of cosines
+            const a = sides[0];
+            const b = sides[1];
+            const c = sides[2];
+            
+            // Calculate angle C using law of cosines
+            const cosC = (a*a + b*b - c*c) / (2 * a * b);
+            const angleC = Math.acos(cosC);
+            
+            // Third point
+            points.push({x: b * Math.cos(angleC), y: b * Math.sin(angleC)});
+            
+            // Create the triangle
+            const triangle = {
+                points: points,
+                sides: sides,
+                color: '#3498db',
+                centerX: 0,
+                centerY: 0
+            };
+            
+            // Center the triangle
+            centerTriangle(triangle);
+            return triangle;
+        }
+
+        // Center a triangle around its centroid
+        function centerTriangle(triangle) {
+            // Calculate centroid
+            let cx = 0, cy = 0;
+            for (const point of triangle.points) {
+                cx += point.x;
+                cy += point.y;
+            }
+            cx /= triangle.points.length;
+            cy /= triangle.points.length;
+            
+            // Move all points so the centroid is at origin
+            for (const point of triangle.points) {
+                point.x -= cx;
+                point.y -= cy;
+            }
+            
+            // Set center
+            triangle.centerX = 0;
+            triangle.centerY = 0;
+        }
+
+        // Generate a random triangle
+        function generateRandomTriangle(avgSize) {
+            // Generate random points in a triangular arrangement
+            const angle1 = Math.random() * Math.PI * 2;
+            const angle2 = angle1 + (Math.PI * 2/3) + (Math.random() * Math.PI/3 - Math.PI/6);
+            const angle3 = angle2 + (Math.PI * 2/3) + (Math.random() * Math.PI/3 - Math.PI/6);
+            
+            const dist1 = avgSize * (0.8 + Math.random() * 0.4);
+            const dist2 = avgSize * (0.8 + Math.random() * 0.4);
+            const dist3 = avgSize * (0.8 + Math.random() * 0.4);
+            
+            const points = [
+                {x: Math.cos(angle1) * dist1, y: Math.sin(angle1) * dist1},
+                {x: Math.cos(angle2) * dist2, y: Math.sin(angle2) * dist2},
+                {x: Math.cos(angle3) * dist3, y: Math.sin(angle3) * dist3}
+            ];
+            
+            // Create triangle
+            const triangle = {
+                points: points,
+                color: '#3498db',
+                centerX: 0,
+                centerY: 0
+            };
+            
+            // Calculate sides
+            const sides = calculateTriangleSides(triangle);
+            triangle.sides = sides;
+            
+            return triangle;
+        }
+
+        // Make a triangle somewhat similar to a reference triangle
+        function makeTriangleSomewhatSimilar(triangle, referenceTriangle, similarityFactor) {
+            // Clone the reference triangle and apply a random transformation
+            const similarTriangle = scaleTriangle(referenceTriangle, 1 + Math.random() * 0.5);
+            rotateTriangle(similarTriangle, Math.random() * Math.PI * 2);
+            
+            // Blend between random and similar triangle
+            for (let i = 0; i < triangle.points.length; i++) {
+                triangle.points[i].x = triangle.points[i].x * (1 - similarityFactor) + similarTriangle.points[i].x * similarityFactor;
+                triangle.points[i].y = triangle.points[i].y * (1 - similarityFactor) + similarTriangle.points[i].y * similarityFactor;
+            }
+            
+            // Recalculate sides
+            triangle.sides = calculateTriangleSides(triangle);
+        }
+
+        // Calculate the side lengths of a triangle
+        function calculateTriangleSides(triangle) {
+            const sides = [];
+            for (let i = 0; i < triangle.points.length; i++) {
+                const nextIndex = (i + 1) % triangle.points.length;
+                const dx = triangle.points[nextIndex].x - triangle.points[i].x;
+                const dy = triangle.points[nextIndex].y - triangle.points[i].y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                sides.push(length);
+            }
+            return sides;
+        }
+
+        // Simplify triangle sides to easier numbers
+        function simplifyTriangleSides(triangle) {
+            // Calculate actual side lengths
+            const actualSides = calculateTriangleSides(triangle);
+            
+            // If the triangle already has simplified sides, use those
+            if (!triangle.sides) {
+                triangle.sides = actualSides;
+            }
+            
+            // Simplify the sides to whole numbers with a common scale
+            const minSide = Math.min(...triangle.sides);
+            let scaleFactor;
+            
+            // Scale based on difficulty and size to keep numbers manageable
+            if (gameState.difficulty === 1) {
+                // Easy: simple whole numbers 1-10
+                scaleFactor = Math.max(1, Math.min(10, Math.round(5 / minSide)));
+            } else if (gameState.difficulty === 2) {
+                // Medium: whole numbers with slightly larger range
+                scaleFactor = Math.max(1, Math.min(10, Math.round(8 / minSide)));
+            } else {
+                // Hard: can include some decimals or larger numbers
+                scaleFactor = Math.max(1, Math.min(15, Math.round(10 / minSide)));
+            }
+            
+            // Apply scaling and rounding based on difficulty
+            const simplifiedSides = [];
+            for (let i = 0; i < triangle.sides.length; i++) {
+                let value;
+                if (gameState.difficulty === 1) {
+                    // Easy: round to nearest whole number
+                    value = Math.round(triangle.sides[i] * scaleFactor);
+                } else if (gameState.difficulty === 2) {
+                    // Medium: round to nearest whole number or half
+                    value = Math.round(triangle.sides[i] * scaleFactor * 2) / 2;
+                } else {
+                    // Hard: round to nearest tenth
+                    value = Math.round(triangle.sides[i] * scaleFactor * 10) / 10;
+                }
+                
+                // Ensure no zero values
+                value = Math.max(1, value);
+                
+                simplifiedSides.push(value);
+            }
+            
+            // Store simplified sides for display
+            triangle.simplifiedSides = simplifiedSides;
+        }
+
+        // Scale a triangle by a factor
+        function scaleTriangle(triangle, scaleFactor) {
+            const newTriangle = {
+                points: [],
+                color: triangle.color,
+                centerX: triangle.centerX,
+                centerY: triangle.centerY
+            };
+            
+            // Scale points
+            for (let i = 0; i < triangle.points.length; i++) {
+                newTriangle.points.push({
+                    x: triangle.points[i].x * scaleFactor,
+                    y: triangle.points[i].y * scaleFactor
+                });
+            }
+            
+            // If the original triangle has sides, scale those too
+            if (triangle.sides) {
+                newTriangle.sides = triangle.sides.map(side => side * scaleFactor);
+            }
+            
+            return newTriangle;
+        }
+
+        // Rotate a triangle around its center
+        function rotateTriangle(triangle, angle) {
+            for (let i = 0; i < triangle.points.length; i++) {
+                const x = triangle.points[i].x;
+                const y = triangle.points[i].y;
+                
+                triangle.points[i].x = x * Math.cos(angle) - y * Math.sin(angle);
+                triangle.points[i].y = x * Math.sin(angle) + y * Math.cos(angle);
+            }
+        }
+
+        // Move a triangle to a new center position
+        function moveTriangle(triangle, newCenterX, newCenterY) {
+            const dx = newCenterX - triangle.centerX;
+            const dy = newCenterY - triangle.centerY;
+            
+            for (let i = 0; i < triangle.points.length; i++) {
+                triangle.points[i].x += dx;
+                triangle.points[i].y += dy;
+            }
+            
+            triangle.centerX = newCenterX;
+            triangle.centerY = newCenterY;
+        }
+
+        // Game loop
+        function gameLoop(timestamp) {
+            // Calculate delta time
+            gameState.deltaTime = (timestamp - gameState.lastUpdateTime) / 1000;
+            gameState.lastUpdateTime = timestamp;
+            
+            // Limit delta time to avoid large jumps
+            gameState.deltaTime = Math.min(gameState.deltaTime, 0.1);
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update and draw
+            update(gameState.deltaTime);
+            draw();
+            
+            // Continue loop
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Update game state
+        function update(deltaTime) {
+            updateTriangles(deltaTime);
+            updateCharacters(deltaTime);
+            updateParticles(deltaTime);
+            updateConfetti(deltaTime);
+            
+            // Check if all similar triangles have been found
+            if (gameState.gamePhase === 'question' && areAllSimilarTrianglesFound()) {
+                startCelebration();
+            }
+        }
+
+        // Update triangles
+        function updateTriangles(deltaTime) {
+            // Target triangle floating animation
+            if (gameState.targetTriangle) {
+                const floatAmount = Math.sin(performance.now() / 1000) * 10;
+                moveTriangle(
+                    gameState.targetTriangle,
+                    gameState.targetTriangle.centerX,
+                    gameState.height * 0.25 + floatAmount
+                );
+            }
+            
+            // Other triangles
+            for (const triangle of gameState.triangles) {
+                // Scale animation
+                if (triangle.targetScale && triangle.targetScale !== triangle.scale) {
+                    triangle.scale += (triangle.targetScale - triangle.scale) * 5 * deltaTime;
+                }
+                
+                // Rotation animation
+                if (triangle.isSelected) {
+                    triangle.rotation += deltaTime * 2; // Spin when selected
+                }
+                
+                // Hovering animation
+                if (triangle === gameState.hoveredTriangle && !triangle.isSelected) {
+                    triangle.scale = 1 + 0.1 * Math.sin(performance.now() / 300);
+                }
+            }
+        }
+
+        // Update characters
+        function updateCharacters(deltaTime) {
+            for (const character of gameState.characters) {
+                // Move towards target position
+                character.x += (character.targetX - character.x) * 5 * deltaTime;
+                character.y += (character.targetY - character.y) * 5 * deltaTime;
+                
+                // Animation phase
+                character.animationPhase += deltaTime;
+                
+                // Update speech bubble timer
+                if (character.speechTimer > 0) {
+                    character.speechTimer -= deltaTime;
+                    if (character.speechTimer <= 0) {
+                        character.speechBubble = null;
+                    }
+                }
+            }
+        }
+
+        // Update particles
+        function updateParticles(deltaTime) {
+            for (let i = gameState.particles.length - 1; i >= 0; i--) {
+                const particle = gameState.particles[i];
+                
+                // Update position
+                particle.x += particle.vx * deltaTime;
+                particle.y += particle.vy * deltaTime;
+                
+                // Apply gravity
+                particle.vy += 500 * deltaTime;
+                
+                // Update lifetime
+                particle.lifetime -= deltaTime;
+                
+                // Remove if expired
+                if (particle.lifetime <= 0) {
+                    gameState.particles.splice(i, 1);
+                }
+            }
+        }
+
+        // Update confetti
+        function updateConfetti(deltaTime) {
+            for (let i = gameState.confetti.length - 1; i >= 0; i--) {
+                const confetti = gameState.confetti[i];
+                
+                // Update position
+                confetti.x += confetti.vx * deltaTime;
+                confetti.y += confetti.vy * deltaTime;
+                
+                // Apply gravity and air resistance
+                confetti.vy += 200 * deltaTime;
+                confetti.vx *= 0.99;
+                confetti.vy *= 0.99;
+                
+                // Update rotation
+                confetti.rotation += confetti.rotationSpeed * deltaTime;
+                
+                // Update lifetime
+                confetti.lifetime -= deltaTime;
+                
+                // Remove if expired
+                if (confetti.lifetime <= 0) {
+                    gameState.confetti.splice(i, 1);
+                }
+            }
+        }
+
+        // Draw all game elements
+        function draw() {
+            drawBackground();
+            drawConfetti();
+            drawTriangles();
+            drawCharacters();
+            drawParticles();
+        }
+
+        // Draw background
+        function drawBackground() {
+            // Clear
+            ctx.fillStyle = gameState.gamePhase === 'celebration' 
+                ? `hsl(${Math.floor(performance.now() / 50) % 360}, 80%, 95%)` 
+                : 'linear-gradient(to bottom, #c4e0f9, #e0f7fa)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+            ctx.lineWidth = 2;
+            
+            const gridSize = 50;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        // Draw triangles
+        function drawTriangles() {
+            // Draw all unselected triangles first
+            for (const triangle of gameState.triangles) {
+                if (!triangle.isSelected) {
+                    drawTriangle(triangle);
+                }
+            }
+            
+            // Draw target triangle with highlight
+            if (gameState.targetTriangle) {
+                drawTriangle(gameState.targetTriangle);
+                
+                // Target label
+                ctx.font = '24px "Comic Sans MS", "Chalkboard SE", sans-serif';
+                ctx.fillStyle = COLORS.target;
+                ctx.textAlign = 'center';
+                ctx.fillText("Target Triangle", gameState.targetTriangle.centerX, gameState.targetTriangle.centerY - 80);
+                ctx.fillText("Find similar triangles!", gameState.targetTriangle.centerX, gameState.targetTriangle.centerY - 50);
+            }
+            
+            // Draw selected triangles on top
+            for (const triangle of gameState.triangles) {
+                if (triangle.isSelected) {
+                    drawTriangle(triangle);
+                }
+            }
+        }
+
+        // Draw a single triangle
+        function drawTriangle(triangle) {
+            ctx.save();
+            
+            // Transform
+            ctx.translate(triangle.centerX, triangle.centerY);
+            ctx.scale(triangle.scale || 1, triangle.scale || 1);
+            ctx.rotate(triangle.rotation || 0);
+            ctx.translate(-triangle.centerX, -triangle.centerY);
+            
+            // Draw triangle
+            ctx.beginPath();
+            ctx.moveTo(triangle.points[0].x, triangle.points[0].y);
+            for (let i = 1; i < triangle.points.length; i++) {
+                ctx.lineTo(triangle.points[i].x, triangle.points[i].y);
+            }
+            ctx.closePath();
+            
+            // Fill
+            ctx.fillStyle = triangle.color;
+            ctx.fill();
+            
+            // Stroke
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.3)';
+            ctx.stroke();
+            
+            // Highlight for target and selected
+            if (triangle.isTarget) {
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = COLORS.target;
+                ctx.stroke();
+                
+                // Pulsing effect for target
+                const pulseTime = performance.now() % 2000 / 2000;
+                const pulseSize = 1 + 0.1 * Math.sin(pulseTime * Math.PI * 2);
+                
+                ctx.beginPath();
+                ctx.arc(triangle.centerX, triangle.centerY, 60 * pulseSize, 0, Math.PI * 2);
+                ctx.strokeStyle = `rgba(156, 39, 176, ${0.3 + 0.2 * Math.sin(pulseTime * Math.PI * 2)})`;
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+            
+            if (triangle.isSelected) {
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = triangle.isSimilar ? COLORS.correct : COLORS.incorrect;
+                ctx.stroke();
+            } else if (triangle === gameState.hoveredTriangle) {
+                // Hover effect
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = 'rgba(255, 215, 0, 0.7)';
+                ctx.stroke();
+            }
+            
+            // Draw side lengths
+            if (triangle.simplifiedSides) {
+                drawSimplifiedSideLengths(triangle);
+            }
+            
+            ctx.restore();
+        }
+
+        // Draw simplified side lengths
+        function drawSimplifiedSideLengths(triangle) {
+            ctx.save();
+            
+            ctx.font = 'bold 20px "Comic Sans MS", "Chalkboard SE", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            for (let i = 0; i < triangle.points.length; i++) {
+                const nextIndex = (i + 1) % triangle.points.length;
+                const p1 = triangle.points[i];
+                const p2 = triangle.points[nextIndex];
+                
+                // Find midpoint of the side
+                const midX = (p1.x + p2.x) / 2;
+                const midY = (p1.y + p2.y) / 2;
+                
+                // Calculate perpendicular offset
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const length = Math.sqrt(dx * dx + dy * dy);
+                const offsetX = -dy / length * 25;
+                const offsetY = dx / length * 25;
+                
+                // Position for text
+                const textX = midX + offsetX;
+                const textY = midY + offsetY;
+                
+                // Format the side length
+                let sideText = triangle.simplifiedSides[i].toString();
+                if (Number.isInteger(triangle.simplifiedSides[i])) {
+                    sideText = Math.round(triangle.simplifiedSides[i]).toString();
+                }
+                
+                // Background
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                const textWidth = ctx.measureText(sideText).width;
+                ctx.fillRect(textX - textWidth/2 - 5, textY - 15, textWidth + 10, 30);
+                
+                // Text
+                ctx.fillStyle = triangle.isTarget ? COLORS.target : 
+                               (triangle.isSelected ? (triangle.isSimilar ? COLORS.correct : COLORS.incorrect) : '#333');
+                ctx.fillText(sideText, textX, textY);
+            }
+            
+            ctx.restore();
+        }
+
+        // Draw characters
+        function drawCharacters() {
+            for (const character of gameState.characters) {
+                drawCharacter(character);
+            }
+        }
+
+        // Draw a single character
+        function drawCharacter(character) {
+            const { x, y, type, animationPhase } = character;
+            const floatOffset = Math.sin(animationPhase * 2) * 10;
+            
+            ctx.save();
+            
+            // Shadow
+            ctx.beginPath();
+            ctx.ellipse(x, y + type.size/2 + 10, type.size/2, type.size/6, 0, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.fill();
+            
+            // Body (triangle)
+            ctx.beginPath();
+            ctx.moveTo(x, y - type.size/2 + floatOffset);
+            ctx.lineTo(x - type.size/2, y + type.size/2 + floatOffset);
+            ctx.lineTo(x + type.size/2, y + type.size/2 + floatOffset);
+            ctx.closePath();
+            
+            // Fill with gradient
+            const gradient = ctx.createLinearGradient(
+                x - type.size/2, 
+                y - type.size/2 + floatOffset, 
+                x + type.size/2, 
+                y + type.size/2 + floatOffset
+            );
+            gradient.addColorStop(0, type.color);
+            gradient.addColorStop(1, adjustColor(type.color, 30));
+            
+            ctx.fillStyle = gradient;
+            ctx.fill();
+            
+            ctx.lineWidth = 4;
+            ctx.strokeStyle = adjustColor(type.color, -30);
+            ctx.stroke();
+            
+            // Eyes
+            const eyeSize = type.size / 6;
+            const eyeOffsetX = type.size / 5;
+            const eyeOffsetY = floatOffset;
+            
+            // Blinking animation
+            const blinkState = Math.sin(animationPhase * 3) > 0.95 ? 0 : 1;
+            
+            if (blinkState > 0) {
+                // Left eye
+                ctx.beginPath();
+                ctx.arc(x - eyeOffsetX, y + eyeOffsetY, eyeSize, 0, Math.PI * 2);
+                ctx.fillStyle = type.eyeColor;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#333';
+                ctx.stroke();
+                
+                // Right eye
+                ctx.beginPath();
+                ctx.arc(x + eyeOffsetX, y + eyeOffsetY, eyeSize, 0, Math.PI * 2);
+                ctx.fillStyle = type.eyeColor;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = '#333';
+                ctx.stroke();
+                
+                // Pupils with movement based on game state
+                const lookDirX = gameState.targetTriangle ? 
+                    (gameState.targetTriangle.centerX - x) / gameState.width * 3 : 0;
+                const lookDirY = gameState.targetTriangle ? 
+                    (gameState.targetTriangle.centerY - y) / gameState.height * 3 : 0;
+                
+                const pupilSize = eyeSize / 2;
+                const maxPupilOffset = eyeSize / 3;
+                const pupilOffsetX = lookDirX * maxPupilOffset;
+                const pupilOffsetY = lookDirY * maxPupilOffset;
+                
+                // Left pupil
+                ctx.beginPath();
+                ctx.arc(
+                    x - eyeOffsetX + pupilOffsetX, 
+                    y + eyeOffsetY + pupilOffsetY, 
+                    pupilSize, 0, Math.PI * 2
+                );
+                ctx.fillStyle = '#333';
+                ctx.fill();
+                
+                // Right pupil
+                ctx.beginPath();
+                ctx.arc(
+                    x + eyeOffsetX + pupilOffsetX, 
+                    y + eyeOffsetY + pupilOffsetY, 
+                    pupilSize, 0, Math.PI * 2
+                );
+                ctx.fillStyle = '#333';
+                ctx.fill();
+                
+                // Catchlights (reflection highlights)
+                ctx.beginPath();
+                ctx.arc(
+                    x - eyeOffsetX + pupilOffsetX + pupilSize/3, 
+                    y + eyeOffsetY + pupilOffsetY - pupilSize/3, 
+                    pupilSize/3, 0, Math.PI * 2
+                );
+                ctx.fillStyle = 'white';
+                ctx.fill();
+                
+                ctx.beginPath();
+                ctx.arc(
+                    x + eyeOffsetX + pupilOffsetX + pupilSize/3, 
+                    y + eyeOffsetY + pupilOffsetY - pupilSize/3, 
+                    pupilSize/3, 0, Math.PI * 2
+                );
+                ctx.fillStyle = 'white';
+                ctx.fill();
+            } else {
+                // Closed eyes (blink)
+                ctx.lineWidth = 3;
+                ctx.strokeStyle = '#333';
+                
+                ctx.beginPath();
+                ctx.moveTo(x - eyeOffsetX - eyeSize, y + eyeOffsetY);
+                ctx.lineTo(x - eyeOffsetX + eyeSize, y + eyeOffsetY);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(x + eyeOffsetX - eyeSize, y + eyeOffsetY);
+                ctx.lineTo(x + eyeOffsetX + eyeSize, y + eyeOffsetY);
+                ctx.stroke();
+            }
+            
+            // Accessories
+            if (type.accessories === 'glasses') {
+                // Glasses
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 3;
+                
+                // Left lens
+                ctx.beginPath();
+                ctx.arc(x - eyeOffsetX, y + eyeOffsetY, eyeSize * 1.5, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Right lens
+                ctx.beginPath();
+                ctx.arc(x + eyeOffsetX, y + eyeOffsetY, eyeSize * 1.5, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Bridge
+                ctx.beginPath();
+                ctx.moveTo(x - eyeOffsetX + eyeSize, y + eyeOffsetY);
+                ctx.lineTo(x + eyeOffsetX - eyeSize, y + eyeOffsetY);
+                ctx.stroke();
+                
+                // Earpieces
+                ctx.beginPath();
+                ctx.moveTo(x - eyeOffsetX - eyeSize * 1.5, y + eyeOffsetY);
+                ctx.lineTo(x - eyeOffsetX - eyeSize * 2, y + eyeOffsetY + eyeSize);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(x + eyeOffsetX + eyeSize * 1.5, y + eyeOffsetY);
+                ctx.lineTo(x + eyeOffsetX + eyeSize * 2, y + eyeOffsetY + eyeSize);
+                ctx.stroke();
+            } else if (type.accessories === 'bow') {
+                // Bow
+                const bowX = x;
+                const bowY = y - type.size * 0.6 + floatOffset;
+                const bowSize = type.size * 0.3;
+                
+                // Bow center
+                ctx.beginPath();
+                ctx.arc(bowX, bowY, bowSize * 0.3, 0, Math.PI * 2);
+                ctx.fillStyle = '#ff5252';
+                ctx.fill();
+                ctx.strokeStyle = '#d32f2f';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Left loop
+                ctx.beginPath();
+                ctx.ellipse(
+                    bowX - bowSize * 0.5, 
+                    bowY - bowSize * 0.2, 
+                    bowSize * 0.5, 
+                    bowSize * 0.8, 
+                    -Math.PI/4, 
+                    0, Math.PI * 2
+                );
+                ctx.fillStyle = '#ff5252';
+                ctx.fill();
+                ctx.strokeStyle = '#d32f2f';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Right loop
+                ctx.beginPath();
+                ctx.ellipse(
+                    bowX + bowSize * 0.5, 
+                    bowY - bowSize * 0.2, 
+                    bowSize * 0.5, 
+                    bowSize * 0.8, 
+                    Math.PI/4, 
+                    0, Math.PI * 2
+                );
+                ctx.fillStyle = '#ff5252';
+                ctx.fill();
+                ctx.strokeStyle = '#d32f2f';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Ribbon tails
+                ctx.beginPath();
+                ctx.moveTo(bowX - bowSize * 0.3, bowY + bowSize * 0.2);
+                ctx.quadraticCurveTo(
+                    bowX - bowSize * 0.6, 
+                    bowY + bowSize * 1.2, 
+                    bowX - bowSize * 0.2, 
+                    bowY + bowSize * 1.5
+                );
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = '#ff5252';
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(bowX + bowSize * 0.3, bowY + bowSize * 0.2);
+                ctx.quadraticCurveTo(
+                    bowX + bowSize * 0.6, 
+                    bowY + bowSize * 1.2, 
+                    bowX + bowSize * 0.2, 
+                    bowY + bowSize * 1.5
+                );
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = '#ff5252';
+                ctx.stroke();
+            }
+            
+            // Mouth
+            const mouthWidth = type.size / 3;
+            const mouthHeight = type.size / 10;
+            
+            // Smile (more pronounced during celebration)
+            const smileFactor = gameState.gamePhase === 'celebration' ? 1.5 : 1;
+            
+            ctx.beginPath();
+            ctx.moveTo(x - mouthWidth/2, y + type.size/4 + floatOffset);
+            ctx.quadraticCurveTo(
+                x, y + type.size/4 + mouthHeight * smileFactor + floatOffset,
+                x + mouthWidth/2, y + type.size/4 + floatOffset
+            );
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+            
+            // Name
+            ctx.font = '18px "Comic Sans MS", "Chalkboard SE", sans-serif';
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(type.name, x, y - type.size * 0.6 + floatOffset);
+            
+            // Speech bubble
+            if (character.speechBubble) {
+                drawSpeechBubble(
+                    character.speechBubble.text,
+                    x,
+                    y - type.size,
+                    character.speechBubble.direction
+                );
+            }
+            
+            ctx.restore();
+        }
+
+        // Draw speech bubble
+        function drawSpeechBubble(text, x, y, direction = 'top') {
+            ctx.save();
+            
+            // Measure text for bubble size
+            ctx.font = '20px "Comic Sans MS", "Chalkboard SE", sans-serif';
+            const metrics = ctx.measureText(text);
+            const textWidth = metrics.width;
+            
+            // Split text into lines if too long
+            const maxWidth = 200;
+            let lines = [];
+            let currentLine = '';
+            let words = text.split(' ');
+            
+            for (let i = 0; i < words.length; i++) {
+                let testLine = currentLine + words[i] + ' ';
+                let testWidth = ctx.measureText(testLine).width;
+                
+                if (testWidth > maxWidth) {
+                    lines.push(currentLine);
+                    currentLine = words[i] + ' ';
+                } else {
+                    currentLine = testLine;
+                }
+            }
+            lines.push(currentLine);
+            
+            // Calculate bubble dimensions
+            const lineHeight = 25;
+            const bubbleWidth = Math.min(maxWidth + 40, textWidth + 40);
+            const bubbleHeight = lines.length * lineHeight + 20;
+            
+            // Bubble position
+            let bubbleX, bubbleY, pointX, pointY, pointDir;
+            
+            if (direction === 'top') {
+                bubbleX = x - bubbleWidth / 2;
+                bubbleY = y - bubbleHeight - 30;
+                pointX = x;
+                pointY = bubbleY + bubbleHeight;
+                pointDir = 'bottom';
+            } else if (direction === 'bottom') {
+                bubbleX = x - bubbleWidth / 2;
+                bubbleY = y + 30;
+                pointX = x;
+                pointY = bubbleY;
+                pointDir = 'top';
+            } else if (direction === 'left') {
+                bubbleX = x - bubbleWidth - 30;
+                bubbleY = y - bubbleHeight / 2;
+                pointX = bubbleX + bubbleWidth;
+                pointY = y;
+                pointDir = 'right';
+            } else { // right
+                bubbleX = x + 30;
+                bubbleY = y - bubbleHeight / 2;
+                pointX = bubbleX;
+                pointY = y;
+                pointDir = 'left';
+            }
+            
+            // Keep bubble on screen
+            bubbleX = Math.max(20, Math.min(gameState.width - bubbleWidth - 20, bubbleX));
+            bubbleY = Math.max(20, Math.min(gameState.height - bubbleHeight - 20, bubbleY));
+            
+            // Draw bubble
+            ctx.fillStyle = 'white';
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            
+            // Bubble body with rounded corners
+            ctx.beginPath();
+            ctx.roundRect(bubbleX, bubbleY, bubbleWidth, bubbleHeight, 15);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Pointer
+            ctx.beginPath();
+            if (pointDir === 'bottom') {
+                ctx.moveTo(pointX - 15, pointY - 15);
+                ctx.lineTo(pointX, pointY);
+                ctx.lineTo(pointX + 15, pointY - 15);
+            } else if (pointDir === 'top') {
+                ctx.moveTo(pointX - 15, pointY + 15);
+                ctx.lineTo(pointX, pointY);
+                ctx.lineTo(pointX + 15, pointY + 15);
+            } else if (pointDir === 'left') {
+                ctx.moveTo(pointX + 15, pointY - 15);
+                ctx.lineTo(pointX, pointY);
+                ctx.lineTo(pointX + 15, pointY + 15);
+            } else { // right
+                ctx.moveTo(pointX - 15, pointY - 15);
+                ctx.lineTo(pointX, pointY);
+                ctx.lineTo(pointX - 15, pointY + 15);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Text
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            for (let i = 0; i < lines.length; i++) {
+                ctx.fillText(
+                    lines[i], 
+                    bubbleX + bubbleWidth / 2, 
+                    bubbleY + 20 + i * lineHeight
+                );
+            }
+            
+            ctx.restore();
+        }
+
+        // Draw particles
+        function drawParticles() {
+            for (const particle of gameState.particles) {
+                ctx.save();
+                
+                ctx.globalAlpha = particle.lifetime / particle.maxLifetime;
+                ctx.fillStyle = particle.color;
+                
+                if (particle.type === 'star') {
+                    drawStar(particle.x, particle.y, particle.size);
+                } else if (particle.type === 'circle') {
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+        }
+
+        // Draw confetti
+        function drawConfetti() {
+            for (const confetti of gameState.confetti) {
+                ctx.save();
+                
+                ctx.translate(confetti.x, confetti.y);
+                ctx.rotate(confetti.rotation);
+                
+                ctx.globalAlpha = confetti.lifetime / confetti.maxLifetime;
+                ctx.fillStyle = confetti.color;
+                
+                if (confetti.shape === 'rect') {
+                    ctx.fillRect(-confetti.size/2, -confetti.size/2, confetti.size, confetti.size/2);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, confetti.size/2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                ctx.restore();
+            }
+        }
+
+        // Draw a star shape
+        function drawStar(x, y, size) {
+            ctx.save();
+            
+            ctx.beginPath();
+            for (let i = 0; i < 5; i++) {
+                const outerAngle = i * Math.PI * 2 / 5 - Math.PI / 2;
+                const innerAngle = outerAngle + Math.PI / 5;
+                
+                if (i === 0) {
+                    ctx.moveTo(
+                        x + Math.cos(outerAngle) * size,
+                        y + Math.sin(outerAngle) * size
+                    );
+                } else {
+                    ctx.lineTo(
+                        x + Math.cos(outerAngle) * size,
+                        y + Math.sin(outerAngle) * size
+                    );
+                }
+                
+                ctx.lineTo(
+                    x + Math.cos(innerAngle) * size / 2.5,
+                    y + Math.sin(innerAngle) * size / 2.5
+                );
+            }
+            ctx.closePath();
+            ctx.fill();
+            
+            ctx.restore();
+        }
+
+        // Handle canvas click
+        function handleCanvasClick(e) {
+            if (gameState.gamePhase !== 'question') return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            handleTriangleSelection(x, y);
+        }
+
+        // Handle touch start
+        function handleCanvasTouchStart(e) {
+            e.preventDefault(); // Prevent scrolling
+            if (gameState.gamePhase !== 'question') return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const x = touch.clientX - rect.left;
+            const y = touch.clientY - rect.top;
+            
+            handleTriangleSelection(x, y);
+        }
+
+        // Handle triangle selection
+        function handleTriangleSelection(x, y) {
+            // Check if a triangle was clicked
+            for (const triangle of gameState.triangles) {
+                if (!triangle.isSelected && isPointInTriangle(x, y, triangle)) {
+                    selectTriangle(triangle);
+                    break;
+                }
+            }
+        }
+
+        // Select a triangle
+        function selectTriangle(triangle) {
+            // Set as selected
+            triangle.isSelected = true;
+            gameState.selectedTriangle = triangle;
+            triangle.targetScale = 1.2;
+            
+            // Play sound
+            playSound('click');
+            
+            // Check if the selected triangle is similar to the target
+            if (triangle.isSimilar) {
+                // Correct selection
+                triangle.color = COLORS.correct;
+                updateScore(10);
+                
+                // Character feedback
+                const tiny = gameState.characters[1];
+                const celebrationMessages = [
+                    "Great job! That's right!",
+                    "Perfect! You found a similar triangle!",
+                    "Wow! You're a geometry genius!",
+                    "That's correct! Amazing work!"
+                ];
+                
+                tiny.showSpeechBubble(celebrationMessages[Math.floor(Math.random() * celebrationMessages.length)], 3);
+                
+                // Create particles
+                createParticlesAt(triangle.centerX, triangle.centerY, 'correct');
+                
+                // Play sound
+                playSound('correct');
+            } else {
+                // Incorrect selection
+                triangle.color = COLORS.incorrect;
+                
+                // Add to incorrect guesses
+                gameState.incorrectGuesses.push(triangle);
+                
+                // Character feedback
+                const tiny = gameState.characters[1];
+                const incorrectMessages = [
+                    "Not quite! Try checking the numbers.",
+                    "Hmm, look more carefully at the sides.",
+                    "That's not similar. Keep trying!",
+                    "Check if the sides grow by the same amount."
+                ];
+                
+                tiny.showSpeechBubble(incorrectMessages[Math.floor(Math.random() * incorrectMessages.length)], 3);
+                
+                // Play sound
+                playSound('wrong');
+            }
+        }
+
+        // Check if all similar triangles have been found
+        function areAllSimilarTrianglesFound() {
+            for (const triangle of gameState.correctTriangles) {
+                if (!triangle.isSelected) {
+                    return false;
+                }
+            }
+            return gameState.correctTriangles.length > 0;
+        }
+
+        // Start celebration
+        function startCelebration() {
+            gameState.gamePhase = 'celebration';
+            
+            // Increase level
+            gameState.level++;
+            updateScoreDisplay();
+            updateStars();
+            
+            // Bonus points based on incorrect guesses
+            const incorrectPenalty = gameState.incorrectGuesses.length * 3;
+            const bonus = Math.max(0, 20 - incorrectPenalty);
+            updateScore(bonus);
+            
+            // Character celebration
+            const professor = gameState.characters[0];
+            const tiny = gameState.characters[1];
+            
+            professor.showSpeechBubble(`Excellent job! You found all similar triangles!`, 5);
+            tiny.showSpeechBubble(`Level ${gameState.level-1} complete! +${bonus} bonus points!`, 5);
+            
+            // Create celebration effects
+            createConfetti();
+            
+            // Play celebration sound
+            playSound('celebration');
+            
+            // Show explanation modal after a short delay
+            setTimeout(showLevelCompleteModal, 2000);
+        }
+
+        // Show level complete explanation modal
+        function showLevelCompleteModal() {
+            // Get examples from the current level
+            const targetTriangle = gameState.targetTriangle;
+            const correctTriangle = gameState.correctTriangles[0];
+            
+            // Calculate scale factor (simplified for display)
+            const scaleFactor = Math.round((correctTriangle.simplifiedSides[0] / targetTriangle.simplifiedSides[0]) * 10) / 10;
+            
+            modalText.innerHTML = `
+                <h2>🎉 Level ${gameState.level-1} Complete! 🎉</h2>
+                <p>Great job finding the similar triangles!</p>
+                
+                <h3>Why are these triangles similar?</h3>
+                <ul>
+                    <li>The sides of similar triangles grow by the <strong>same amount</strong></li>
+                    <li>All sides are multiplied by the same number (scale factor)</li>
+                </ul>
+                
+                <div style="background-color: #f5f5f5; padding: 15px; border-radius: 10px; margin: 15px 0;">
+                    <p style="font-weight: bold; text-align: center;">In this level:</p>
+                    <p>The purple triangle had sides: <strong>${targetTriangle.simplifiedSides.join(', ')}</strong></p>
+                    <p>The similar triangle had sides: <strong>${correctTriangle.simplifiedSides.join(', ')}</strong></p>
+                    <p>The scale factor was <strong>${scaleFactor}</strong></p>
+                </div>
+                
+                <p>Remember: For triangles to be similar, <strong>all angles must be the same</strong> and <strong>all sides must grow by the same amount</strong>.</p>
+                
+                <button id="continue-btn">Continue to Level ${gameState.level}</button>
+            `;
+            
+            modalOverlay.style.display = 'flex';
+            
+            // Add event listener to continue button
+            document.getElementById('continue-btn').addEventListener('click', () => {
+                modalOverlay.style.display = 'none';
+                generateNewQuestion();
+            });
+        }
+
+        // Update score
+        function updateScore(points) {
+            gameState.score += points;
+            updateScoreDisplay();
+            
+            // Score animation
+            const scoreElem = document.getElementById('score-value');
+            scoreElem.style.animation = 'none';
+            void scoreElem.offsetWidth; // Trigger reflow
+            scoreElem.style.animation = 'pulse 0.5s';
+        }
+
+        // Update score display
+        function updateScoreDisplay() {
+            scoreValue.textContent = gameState.score;
+            levelValue.textContent = gameState.level;
+        }
+
+        // Update level stars
+        function updateStars() {
+            starsContainer.innerHTML = '';
+            for (let i = 0; i < gameState.level; i++) {
+                if (i < 5) { // Limit to 5 visible stars
+                    starsContainer.innerHTML += '<span class="star">★</span>';
+                }
+            }
+        }
+
+        // Create particles at a position
+        function createParticlesAt(x, y, type) {
+            if (type === 'correct') {
+                // Create stars and circles
+                for (let i = 0; i < 20; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = 100 + Math.random() * 300;
+                    
+                    gameState.particles.push({
+                        x: x,
+                        y: y,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed - 200, // Initial upward velocity
+                        size: 8 + Math.random() * 15,
+                        color: getRandomBrightColor(),
+                        type: Math.random() > 0.5 ? 'star' : 'circle',
+                        lifetime: 1 + Math.random(),
+                        maxLifetime: 1 + Math.random()
+                    });
+                }
+            }
+        }
+
+        // Create confetti for celebration
+        function createConfetti() {
+            for (let i = 0; i < 100; i++) {
+                const x = Math.random() * gameState.width;
+                const y = -50 - Math.random() * 100; // Start above the screen
+                
+                gameState.confetti.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 200,
+                    vy: 200 + Math.random() * 200,
+                    size: 10 + Math.random() * 15,
+                    color: getRandomBrightColor(),
+                    shape: Math.random() > 0.5 ? 'rect' : 'circle',
+                    rotation: Math.random() * Math.PI * 2,
+                    rotationSpeed: (Math.random() - 0.5) * 10,
+                    lifetime: 3 + Math.random() * 2,
+                    maxLifetime: 3 + Math.random() * 2
+                });
+            }
+        }
+
+        // Play sound
+        function playSound(type) {
+            if (!gameState.soundEnabled || !gameState.audioContext) return;
+            
+            // Create oscillator
+            const oscillator = gameState.audioContext.createOscillator();
+            const gainNode = gameState.audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(gameState.audioContext.destination);
+            
+            if (type === 'click') {
+                // Soft click sound
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(500, gameState.audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(400, gameState.audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(0.2, gameState.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.1);
+                
+                oscillator.start();
+                oscillator.stop(gameState.audioContext.currentTime + 0.1);
+            } else if (type === 'correct') {
+                // Happy correct sound
+                playMultiToneSound([523.25, 659.25, 783.99], 0.15, 'triangle');
+            } else if (type === 'wrong') {
+                // Gentle wrong sound
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(350, gameState.audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(250, gameState.audioContext.currentTime + 0.2);
+                
+                gainNode.gain.setValueAtTime(0.15, gameState.audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.2);
+                
+                oscillator.start();
+                oscillator.stop(gameState.audioContext.currentTime + 0.2);
+            } else if (type === 'celebration') {
+                // Fun celebration sounds
+                playMultiToneSound([523.25, 659.25, 783.99, 1046.50], 0.2, 'sawtooth');
+                
+                // Add drum-like sounds after a short delay
+                setTimeout(() => {
+                    const drumOsc = gameState.audioContext.createOscillator();
+                    const drumGain = gameState.audioContext.createGain();
+                    
+                    drumOsc.connect(drumGain);
+                    drumGain.connect(gameState.audioContext.destination);
+                    
+                    drumOsc.type = 'sine';
+                    drumOsc.frequency.setValueAtTime(150, gameState.audioContext.currentTime);
+                    drumOsc.frequency.exponentialRampToValueAtTime(80, gameState.audioContext.currentTime + 0.3);
+                    
+                    drumGain.gain.setValueAtTime(0.3, gameState.audioContext.currentTime);
+                    drumGain.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + 0.3);
+                    
+                    drumOsc.start();
+                    drumOsc.stop(gameState.audioContext.currentTime + 0.3);
+                }, 200);
+            }
+        }
+
+        // Play a sequence of tones
+        function playMultiToneSound(frequencies, duration, waveType = 'sine') {
+            if (!gameState.soundEnabled || !gameState.audioContext) return;
+            
+            frequencies.forEach((freq, index) => {
+                const oscillator = gameState.audioContext.createOscillator();
+                const gainNode = gameState.audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(gameState.audioContext.destination);
+                
+                oscillator.type = waveType;
+                oscillator.frequency.setValueAtTime(freq, gameState.audioContext.currentTime + index * 0.08);
+                
+                gainNode.gain.setValueAtTime(0, gameState.audioContext.currentTime + index * 0.08);
+                gainNode.gain.linearRampToValueAtTime(0.2, gameState.audioContext.currentTime + index * 0.08 + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, gameState.audioContext.currentTime + index * 0.08 + duration);
+                
+                oscillator.start(gameState.audioContext.currentTime + index * 0.08);
+                oscillator.stop(gameState.audioContext.currentTime + index * 0.08 + duration);
+            });
+        }
+
+        // Utility Functions
+        
+        // Check if a point is inside a triangle
+        function isPointInTriangle(x, y, triangle) {
+            // Apply scale and rotation to check
+            const scale = triangle.scale || 1;
+            const rotation = triangle.rotation || 0;
+            
+            // Transform the point to account for triangle's scale and rotation
+            const translatedX = x - triangle.centerX;
+            const translatedY = y - triangle.centerY;
+            
+            // Rotate point
+            const rotatedX = translatedX * Math.cos(-rotation) - translatedY * Math.sin(-rotation);
+            const rotatedY = translatedX * Math.sin(-rotation) + translatedY * Math.cos(-rotation);
+            
+            // Scale point
+            const scaledX = rotatedX / scale;
+            const scaledY = rotatedY / scale;
+            
+            // Translate back
+            const finalX = scaledX + triangle.centerX;
+            const finalY = scaledY + triangle.centerY;
+            
+            // Convert triangle points to array for calculation
+            const points = [
+                { x: triangle.points[0].x, y: triangle.points[0].y },
+                { x: triangle.points[1].x, y: triangle.points[1].y },
+                { x: triangle.points[2].x, y: triangle.points[2].y }
+            ];
+            
+            return pointInTriangle(finalX, finalY, points);
+        }
+        
+        // Point in triangle calculation using barycentric coordinates
+        function pointInTriangle(px, py, points) {
+            const p1 = points[0];
+            const p2 = points[1];
+            const p3 = points[2];
+            
+            const A = 1/2 * (-p2.y * p3.x + p1.y * (-p2.x + p3.x) + p1.x * (p2.y - p3.y) + p2.x * p3.y);
+            const sign = A < 0 ? -1 : 1;
+            
+            const s = (p1.y * p3.x - p1.x * p3.y + (p3.y - p1.y) * px + (p1.x - p3.x) * py) * sign;
+            const t = (p1.x * p2.y - p1.y * p2.x + (p1.y - p2.y) * px + (p2.x - p1.x) * py) * sign;
+            
+            return s > 0 && t > 0 && (s + t) < 2 * A * sign;
+        }
+        
+        // Get a random bright color
+        function getRandomBrightColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 80%, 60%)`;
+        }
+        
+        // Adjust color brightness
+// Adjust color brightness
+// Adjust color brightness
+function adjustColor(color, amount) {
+            // Convert hex to RGB
+            let hex = color;
+            if (hex.startsWith('#')) {
+                hex = hex.slice(1);
+            }
+            
+            // Handle both 3 and 6 digit hex
+            let r, g, b;
+            
+            // Parse the color components
+            if (hex.length === 3) {
+                r = parseInt(hex[0] + hex[0], 16);
+                g = parseInt(hex[1] + hex[1], 16);
+                b = parseInt(hex[2] + hex[2], 16);
+            } else {
+                r = parseInt(hex.slice(0, 2), 16);
+                g = parseInt(hex.slice(2, 4), 16);
+                b = parseInt(hex.slice(4, 6), 16);
+            }
+            
+            // Adjust brightness
+            r = Math.max(0, Math.min(255, r + amount));
+            g = Math.max(0, Math.min(255, g + amount));
+            b = Math.max(0, Math.min(255, b + amount));
+            
+            // Convert back to hex
+            return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+        }
+        
+        // Polyfill for roundRect if not available
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+                if (width < 2 * radius) radius = width / 2;
+                if (height < 2 * radius) radius = height / 2;
+                
+                this.beginPath();
+                this.moveTo(x + radius, y);
+                this.arcTo(x + width, y, x + width, y + height, radius);
+                this.arcTo(x + width, y + height, x, y + height, radius);
+                this.arcTo(x, y + height, x, y, radius);
+                this.arcTo(x, y, x + width, y, radius);
+                this.closePath();
+                
+                return this;
+            };
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

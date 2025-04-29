@@ -1,0 +1,3821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buggy FOIL Adventure</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.3/howler.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Comic Neue', cursive;
+            margin: 0;
+            padding: 0;
+            background-color: #e8f5e9;
+            overflow-x: hidden;
+            font-size: 18px;
+        }
+        
+        #game-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .header {
+            text-align: center;
+            color: #2e7d32;
+            padding: 15px;
+            background-color: rgba(255, 255, 255, 0.7);
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .game-section {
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .characters-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .character {
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            width: 200px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .character:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .character-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 10px;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .character h3 {
+            margin: 10px 0 5px;
+            color: #333;
+        }
+        
+        .character p {
+            margin: 5px 0;
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .settings-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .setting-group {
+            flex: 1;
+            min-width: 200px;
+            background-color: #f1f8e9;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+        
+        button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 5px;
+            transition: all 0.3s;
+            box-shadow: 0 3px 5px rgba(0, 0, 0, 0.1);
+            font-family: 'Comic Neue', cursive;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background-color: #388e3c;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        input[type="range"] {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            -webkit-appearance: none;
+            background: #dcedc8;
+            outline: none;
+        }
+        
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4caf50;
+            cursor: pointer;
+        }
+        
+        select, input {
+            padding: 10px;
+            border-radius: 50px;
+            border: 2px solid #aed581;
+            font-size: 16px;
+            margin-top: 5px;
+            width: 100%;
+            font-family: 'Comic Neue', cursive;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        
+        select:focus, input:focus {
+            border-color: #4caf50;
+        }
+        
+        .canvas-container {
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            position: relative;
+        }
+        
+        #garden-canvas {
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quiz-container {
+            background-color: #f9fbe7;
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quiz-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .quiz-option {
+            background-color: #e8f5e9;
+            padding: 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            text-align: center;
+            transition: all 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 2px solid transparent;
+        }
+        
+        .quiz-option:hover {
+            background-color: #c8e6c9;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quiz-option.selected {
+            background-color: #a5d6a7;
+            border-color: #4caf50;
+        }
+        
+        .feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+            animation: fadeIn 0.5s;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .correct {
+            background-color: #dff2bf;
+            color: #4f8a10;
+            border: 2px solid #4f8a10;
+        }
+        
+        .incorrect {
+            background-color: #ffbaba;
+            color: #d8000c;
+            border: 2px solid #d8000c;
+        }
+        
+        .explanation-panel {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #e1f5fe;
+            border-radius: 15px;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+            animation: slideDown 0.5s;
+            border-left: 5px solid #29b6f6;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .explanation-panel h3 {
+            color: #0288d1;
+            margin-top: 0;
+        }
+        
+        #advanced-explanation {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #b3e5fc;
+        }
+        
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+        }
+        
+        .step {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background-color: #ddd;
+            margin: 0 8px;
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .step:after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 100%;
+            height: 4px;
+            width: 16px;
+            background: #ddd;
+            transform: translateY(-50%);
+        }
+        
+        .step:last-child:after {
+            display: none;
+        }
+        
+        .step.active {
+            background-color: #4caf50;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+        
+        .step.completed {
+            background-color: #81c784;
+        }
+        
+        .step.completed:after {
+            background-color: #81c784;
+        }
+        
+        .character-speech {
+            background-color: white;
+            border: 3px solid #aaa;
+            border-radius: 25px;
+            padding: 15px;
+            margin-top: 15px;
+            position: relative;
+            display: none;
+            animation: pop 0.5s;
+            max-width: 80%;
+            margin: 20px auto;
+            font-size: 18px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .character-speech:before {
+            content: "";
+            position: absolute;
+            top: -15px;
+            left: 30px;
+            border-width: 0 15px 15px;
+            border-style: solid;
+            border-color: #aaa transparent;
+        }
+        
+        .character-speech:after {
+            content: "";
+            position: absolute;
+            top: -11px;
+            left: 33px;
+            border-width: 0 12px 12px;
+            border-style: solid;
+            border-color: white transparent;
+        }
+        
+        #help-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 100;
+            max-width: 80%;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
+            animation: zoomIn 0.4s;
+        }
+        
+        @keyframes zoomIn {
+            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+        
+        #overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 99;
+            display: none;
+            backdrop-filter: blur(3px);
+        }
+        
+        .score-container {
+            text-align: center;
+            padding: 10px;
+            background-color: #e8f5e9;
+            border-radius: 15px;
+            margin: 10px 0;
+            font-size: 20px;
+            font-weight: bold;
+            color: #2e7d32;
+            border: 2px dashed #81c784;
+        }
+        
+        .bug-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .bug-button {
+            width: 130px;
+            text-align: center;
+            padding: 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+            border: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: 'Comic Neue', cursive;
+            font-weight: bold;
+            color: white;
+        }
+        
+        .bug-button.frankie {
+            background-color: #ffcdd2;
+            color: #b71c1c;
+        }
+        
+        .bug-button.ollie {
+            background-color: #fff9c4;
+            color: #f57f17;
+        }
+        
+        .bug-button.izzy {
+            background-color: #c8e6c9;
+            color: #1b5e20;
+        }
+        
+        .bug-button.lenny {
+            background-color: #bbdefb;
+            color: #0d47a1;
+        }
+        
+        .bug-button:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .bug-icon {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 8px;
+        }
+        
+        .bug-button:disabled {
+            opacity: 0.6;
+            transform: none;
+            cursor: not-allowed;
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background-color: var(--color);
+            animation: confetti 5s ease-in-out forwards;
+            opacity: 0;
+        }
+        
+        .progress-bar {
+            height: 12px;
+            background-color: #e0e0e0;
+            border-radius: 6px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #4caf50;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        #streak-counter {
+            font-size: 16px;
+            text-align: center;
+            color: #388e3c;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+        
+        .combo-multiplier {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #ff9800;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            display: none;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .star-container {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        
+        .star {
+            width: 30px;
+            height: 30px;
+            margin: 0 5px;
+            fill: #e0e0e0;
+            transition: fill 0.3s;
+        }
+        
+        .star.filled {
+            fill: #ffc107;
+            filter: drop-shadow(0 0 5px rgba(255, 193, 7, 0.7));
+        }
+        
+        .arrow {
+            position: absolute;
+            opacity: 0;
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            transition: opacity 0.3s;
+            z-index: 10;
+            filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.7));
+        }
+        
+        .arrow.visible {
+            opacity: 1;
+            animation: drawArrow 1.5s forwards;
+        }
+        
+        @keyframes drawArrow {
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+        
+        .highlight {
+            animation: highlight 2s ease-in-out;
+        }
+        
+        @keyframes highlight {
+            0%, 100% { box-shadow: 0 0 0 transparent; }
+            50% { box-shadow: 0 0 20px rgba(255, 255, 0, 0.8); }
+        }
+        
+        .badge {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(45deg, #ff9800, #f44336);
+            color: white;
+            padding: 30px;
+            border-radius: 50%;
+            width: 200px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 200;
+            opacity: 0;
+            transition: transform 0.5s, opacity 0.5s;
+            pointer-events: none;
+        }
+        
+        .badge.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            animation: badgePulse 1s infinite alternate;
+        }
+        
+        @keyframes badgePulse {
+            0% { box-shadow: 0 0 20px rgba(255, 152, 0, 0.7); }
+            100% { box-shadow: 0 0 40px rgba(255, 152, 0, 0.9); }
+        }
+        
+        .problem-display {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            margin: 15px 0;
+            font-size: 28px;
+            text-align: center;
+            min-height: 50px;
+        }
+        
+        .term {
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin: 5px;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+        
+        .term.highlight {
+            transform: scale(1.1);
+        }
+        
+        .term.first {
+            background-color: rgba(255, 205, 210, 0.5);
+        }
+        
+        .term.outer {
+            background-color: rgba(255, 249, 196, 0.5);
+        }
+        
+        .term.inner {
+            background-color: rgba(200, 230, 201, 0.5);
+        }
+        
+        .term.last {
+            background-color: rgba(187, 222, 251, 0.5);
+        }
+        
+        .next-level-banner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(76, 175, 80, 0.9);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 200;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+        
+        .next-level-banner h2 {
+            margin-top: 0;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .bug-buttons {
+                gap: 8px;
+            }
+            
+            .bug-button {
+                width: 110px;
+                padding: 8px;
+            }
+            
+            .bug-icon {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .quiz-options {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+        }
+        
+        #loading-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #ddd;
+            border-top-color: #4caf50;
+            border-radius: 50%;
+            animation: spin 1s infinite linear;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .loading-text {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div id="loading-indicator">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading garden adventure...</div>
+    </div>
+
+    <div id="game-container">
+        <div class="header">
+            <h1>Buggy FOIL Adventure</h1>
+            <p>Learn to multiply binomials with our garden bug friends!</p>
+        </div>
+        
+        <div class="game-section">
+            <h2>Meet Your Bug Helpers</h2>
+            <div class="characters-container">
+                <div class="character">
+                    <div class="character-icon" style="background-color: #ffcdd2;">
+                        <svg viewBox="0 0 100 100" width="100" height="100">
+                            <!-- Frankie First (Butterfly) -->
+                            <circle cx="50" cy="50" r="18" fill="#ef9a9a"/>
+                            <ellipse cx="30" cy="40" rx="22" ry="17" fill="#ffcdd2" transform="rotate(-20, 30, 40)"/>
+                            <ellipse cx="70" cy="40" rx="22" ry="17" fill="#ffcdd2" transform="rotate(20, 70, 40)"/>
+                            <path d="M50 60 L45 70 L55 70 Z" fill="#ef9a9a"/>
+                            <circle cx="45" cy="45" r="3" fill="black"/>
+                            <circle cx="55" cy="45" r="3" fill="black"/>
+                            <path d="M45 55 Q50 60 55 55" fill="none" stroke="black" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h3>Frankie First</h3>
+                    <p>"First things first!"</p>
+                    <p>Flies from the first term to the first term</p>
+                </div>
+                <div class="character">
+                    <div class="character-icon" style="background-color: #fff9c4;">
+                        <svg viewBox="0 0 100 100" width="100" height="100">
+                            <!-- Ollie Outer (Bee) -->
+                            <ellipse cx="50" cy="50" rx="20" ry="15" fill="#ffeb3b"/>
+                            <ellipse cx="50" cy="60" rx="15" ry="15" fill="#ffeb3b"/>
+                            <rect x="45" y="38" width="10" height="28" fill="black"/>
+                            <rect x="39" y="42" width="22" height="4" fill="black"/>
+                            <rect x="39" y="52" width="22" height="4" fill="black"/>
+                            <circle cx="70" cy="45" r="10" fill="#fff9c4" stroke="black" stroke-width="1"/>
+                            <circle cx="30" cy="45" r="10" fill="#fff9c4" stroke="black" stroke-width="1"/>
+                            <circle cx="40" cy="35" r="3" fill="black"/>
+                            <circle cx="60" cy="35" r="3" fill="black"/>
+                            <path d="M45 45 Q50 48 55 45" fill="none" stroke="black" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h3>Ollie Outer</h3>
+                    <p>"Outside circles!"</p>
+                    <p>Flies from first term to last term</p>
+                </div>
+                <div class="character">
+                    <div class="character-icon" style="background-color: #c8e6c9;">
+                        <svg viewBox="0 0 100 100" width="100" height="100">
+                            <!-- Izzy Inner (Ant) -->
+                            <ellipse cx="50" cy="40" rx="10" ry="8" fill="#4caf50"/>
+                            <ellipse cx="50" cy="55" rx="15" ry="12" fill="#4caf50"/>
+                            <ellipse cx="50" cy="73" rx="12" ry="10" fill="#4caf50"/>
+                            <line x1="30" y1="40" x2="20" y2="25" stroke="#4caf50" stroke-width="2"/>
+                            <line x1="70" y1="40" x2="80" y2="25" stroke="#4caf50" stroke-width="2"/>
+                            <line x1="30" y1="45" x2="15" y2="45" stroke="#4caf50" stroke-width="2"/>
+                            <line x1="70" y1="45" x2="85" y2="45" stroke="#4caf50" stroke-width="2"/>
+                            <line x1="30" y1="50" x2="20" y2="65" stroke="#4caf50" stroke-width="2"/>
+                            <line x1="70" y1="50" x2="80" y2="65" stroke="#4caf50" stroke-width="2"/>
+                            <circle cx="45" cy="38" r="2" fill="black"/>
+                            <circle cx="55" cy="38" r="2" fill="black"/>
+                            <path d="M48 42 Q50 44 52 42" fill="none" stroke="black" stroke-width="1"/>
+                        </svg>
+                    </div>
+                    <h3>Izzy Inner</h3>
+                    <p>"Inner connections!"</p>
+                    <p>Crawls through grass from last to first term</p>
+                </div>
+                <div class="character">
+                    <div class="character-icon" style="background-color: #bbdefb;">
+                        <svg viewBox="0 0 100 100" width="100" height="100">
+                            <!-- Lenny Last (Ladybug) -->
+                            <circle cx="50" cy="50" r="25" fill="#e53935"/>
+                            <path d="M50 25 C 30 30, 30 70, 50 75" fill="black"/>
+                            <circle cx="40" cy="40" r="5" fill="black"/>
+                            <circle cx="60" cy="40" r="5" fill="black"/>
+                            <circle cx="35" cy="55" r="5" fill="black"/>
+                            <circle cx="50" cy="60" r="5" fill="black"/>
+                            <circle cx="65" cy="55" r="5" fill="black"/>
+                            <circle cx="45" cy="35" r="2" fill="white"/>
+                            <circle cx="65" cy="35" r="2" fill="white"/>
+                            <path d="M45 70 Q50 75 55 70" fill="none" stroke="black" stroke-width="2"/>
+                        </svg>
+                    </div>
+                    <h3>Lenny Last</h3>
+                    <p>"Last but not least!"</p>
+                    <p>Walks or flies from last to last term</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="game-section">
+            <h2>Garden Settings</h2>
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <h3>Garden Difficulty</h3>
+                    <label for="difficulty">Choose your level:</label>
+                    <select id="difficulty">
+                        <option value="1">Level 1: Simple Numbers</option>
+                        <option value="2">Level 2: Mixed Numbers</option>
+                        <option value="3">Level 3: Negative Numbers</option>
+                        <option value="4">Level 4: Variables (x,y)</option>
+                        <option value="5">Level 5: Mixed Variables</option>
+                    </select>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>Animation Speed</h3>
+                    <label for="speed">Adjust speed:</label>
+                    <input type="range" id="speed" min="1" max="5" value="3">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>Slower</span>
+                        <span>Faster</span>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <h3>Explanation Level</h3>
+                    <label for="explanation">How detailed:</label>
+                    <select id="explanation">
+                        <option value="basic">Simple (Age 5-6)</option>
+                        <option value="medium">Medium (Age 7-9)</option>
+                        <option value="advanced">Advanced (Age 10+)</option>
+                        <option value="expert">Expert (PhD Level Simplified)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <button id="start-button">Start Garden Adventure</button>
+                <button id="help-button">How To Play</button>
+            </div>
+        </div>
+        
+        <div class="game-section" id="main-game" style="display: none;">
+            <div class="score-container">
+                <div>Score: <span id="score">0</span></div>
+                <div id="streak-counter">Streak: 0</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="level-progress"></div>
+                </div>
+                <div class="star-container">
+                    <svg class="star" viewBox="0 0 24 24">
+                        <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" />
+                    </svg>
+                    <svg class="star" viewBox="0 0 24 24">
+                        <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" />
+                    </svg>
+                    <svg class="star" viewBox="0 0 24 24">
+                        <path d="M12,17.27L18.18,21L16.54,13.97L22,9.24L14.81,8.62L12,2L9.19,8.62L2,9.24L7.45,13.97L5.82,21L12,17.27Z" />
+                    </svg>
+                </div>
+            </div>
+            
+            <h2>Binomial Garden</h2>
+            <div class="step-indicator">
+                <div class="step active" data-step="intro"></div>
+                <div class="step" data-step="first"></div>
+                <div class="step" data-step="outer"></div>
+                <div class="step" data-step="inner"></div>
+                <div class="step" data-step="last"></div>
+                <div class="step" data-step="result"></div>
+            </div>
+            
+            <div id="current-problem">
+                <h3>Current Binomial Multiplication:</h3>
+                <div id="problem-display" class="problem-display">
+                    Let's start our garden adventure!
+                </div>
+            </div>
+            
+            <div id="character-message" class="character-speech">
+                Welcome to the Binomial Garden! I'll guide you through multiplying these special plant boxes!
+            </div>
+            
+            <div class="bug-buttons">
+                <button class="bug-button frankie" id="frankie-button" disabled>
+                    <svg class="bug-icon" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="18" fill="#ef9a9a"/>
+                        <ellipse cx="30" cy="40" rx="22" ry="17" fill="#ffcdd2" transform="rotate(-20, 30, 40)"/>
+                        <ellipse cx="70" cy="40" rx="22" ry="17" fill="#ffcdd2" transform="rotate(20, 70, 40)"/>
+                        <path d="M50 60 L45 70 L55 70 Z" fill="#ef9a9a"/>
+                        <circle cx="45" cy="45" r="3" fill="black"/>
+                        <circle cx="55" cy="45" r="3" fill="black"/>
+                        <path d="M45 55 Q50 60 55 55" fill="none" stroke="black" stroke-width="2"/>
+                    </svg>
+                    Frankie First
+                </button>
+                <button class="bug-button ollie" id="ollie-button" disabled>
+                    <svg class="bug-icon" viewBox="0 0 100 100">
+                        <ellipse cx="50" cy="50" rx="20" ry="15" fill="#ffeb3b"/>
+                        <ellipse cx="50" cy="60" rx="15" ry="15" fill="#ffeb3b"/>
+                        <rect x="45" y="38" width="10" height="28" fill="black"/>
+                        <rect x="39" y="42" width="22" height="4" fill="black"/>
+                        <rect x="39" y="52" width="22" height="4" fill="black"/>
+                        <circle cx="70" cy="45" r="10" fill="#fff9c4" stroke="black" stroke-width="1"/>
+                        <circle cx="30" cy="45" r="10" fill="#fff9c4" stroke="black" stroke-width="1"/>
+                        <circle cx="40" cy="35" r="3" fill="black"/>
+                        <circle cx="60" cy="35" r="3" fill="black"/>
+                        <path d="M45 45 Q50 48 55 45" fill="none" stroke="black" stroke-width="2"/>
+                    </svg>
+                    Ollie Outer
+                </button>
+                <button class="bug-button izzy" id="izzy-button" disabled>
+                    <svg class="bug-icon" viewBox="0 0 100 100">
+                        <ellipse cx="50" cy="40" rx="10" ry="8" fill="#4caf50"/>
+                        <ellipse cx="50" cy="55" rx="15" ry="12" fill="#4caf50"/>
+                        <ellipse cx="50" cy="73" rx="12" ry="10" fill="#4caf50"/>
+                        <line x1="30" y1="40" x2="20" y2="25" stroke="#4caf50" stroke-width="2"/>
+                        <line x1="70" y1="40" x2="80" y2="25" stroke="#4caf50" stroke-width="2"/>
+                        <line x1="30" y1="45" x2="15" y2="45" stroke="#4caf50" stroke-width="2"/>
+                        <line x1="70" y1="45" x2="85" y2="45" stroke="#4caf50" stroke-width="2"/>
+                        <line x1="30" y1="50" x2="20" y2="65" stroke="#4caf50" stroke-width="2"/>
+                        <line x1="70" y1="50" x2="80" y2="65" stroke="#4caf50" stroke-width="2"/>
+                        <circle cx="45" cy="38" r="2" fill="black"/>
+                        <circle cx="55" cy="38" r="2" fill="black"/>
+                        <path d="M48 42 Q50 44 52 42" fill="none" stroke="black" stroke-width="1"/>
+                    </svg>
+                    Izzy Inner
+                </button>
+                <button class="bug-button lenny" id="lenny-button" disabled>
+                    <svg class="bug-icon" viewBox="0 0 100 100">
+                        <circle cx="50" cy="50" r="25" fill="#e53935"/>
+                        <path d="M50 25 C 30 30, 30 70, 50 75" fill="black"/>
+                        <circle cx="40" cy="40" r="5" fill="black"/>
+                        <circle cx="60" cy="40" r="5" fill="black"/>
+                        <circle cx="35" cy="55" r="5" fill="black"/>
+                        <circle cx="50" cy="60" r="5" fill="black"/>
+                        <circle cx="65" cy="55" r="5" fill="black"/>
+                        <circle cx="45" cy="35" r="2" fill="white"/>
+                        <circle cx="65" cy="35" r="2" fill="white"/>
+                        <path d="M45 70 Q50 75 55 70" fill="none" stroke="black" stroke-width="2"/>
+                    </svg>
+                    Lenny Last
+                </button>
+            </div>
+            
+            <div class="canvas-container">
+                <div id="garden-canvas"></div>
+                <svg id="arrows-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;">
+                    <!-- Arrows will be added dynamically -->
+                </svg>
+            </div>
+            
+            <div class="combo-multiplier" id="combo-multiplier">
+                Combo x2!
+            </div>
+            
+            <div style="text-align: center; margin-top: 15px;">
+                <button id="prev-step" disabled>Previous Step</button>
+                <button id="next-step">Next Step</button>
+                <button id="show-explanation">Show Explanation</button>
+                <button id="new-problem">New Problem</button>
+            </div>
+            
+            <div id="explanation-box" class="explanation-panel">
+                <h3>Understanding Binomial Multiplication</h3>
+                <div id="basic-explanation"></div>
+                <div id="advanced-explanation"></div>
+            </div>
+        </div>
+        
+        <div id="quiz-section" class="game-section" style="display: none;">
+            <h2>Garden Quiz</h2>
+            <div class="quiz-container">
+                <h3 id="quiz-question">Question goes here</h3>
+                <div class="quiz-options" id="quiz-options">
+                    <!-- Options will be inserted here -->
+                </div>
+                <div id="quiz-feedback" class="feedback"></div>
+                <div style="text-align: center; margin-top: 15px;">
+                    <button id="check-answer" style="display: none;">Check Answer</button>
+                    <button id="next-question" style="display: none;">Next Question</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="overlay"></div>
+    <div id="help-panel">
+        <h2>How to Play Buggy FOIL Adventure</h2>
+        <p>Welcome to a magical garden where you'll learn to multiply binomials using the FOIL method with our bug friends!</p>
+        
+        <h3>What is a Binomial?</h3>
+        <p>A binomial is like a special plant box with two different plants in it. For example: (3 + x) or (2a - 5)</p>
+        
+        <h3>What is FOIL?</h3>
+        <p>FOIL is a fun way to remember how to multiply binomials:</p>
+        <ul>
+            <li><strong>F</strong>irst: Multiply the first terms in each binomial - Frankie Butterfly helps with this!</li>
+            <li><strong>O</strong>uter: Multiply the outer terms - Ollie Bee buzzes between these!</li>
+            <li><strong>I</strong>nner: Multiply the inner terms - Izzy Ant crawls between these!</li>
+            <li><strong>L</strong>ast: Multiply the last terms - Lenny Ladybug helps here!</li>
+        </ul>
+        
+        <h3>How to Play:</h3>
+        <ol>
+            <li>Choose your settings in the Garden Settings panel</li>
+            <li>Click "Start Garden Adventure"</li>
+            <li>Click on the bug character buttons to help solve each step</li>
+            <li>Watch as they show you how to connect the right terms with colorful arrows</li>
+            <li>Answer quiz questions to earn points and unlock new levels!</li>
+        </ol>
+        
+        <p>Remember, our bug friends are here to help you understand FOIL in a fun way!</p>
+        
+        <div style="text-align: center; margin-top: 15px;">
+            <button id="close-help">Got it!</button>
+        </div>
+    </div>
+    
+    <div class="badge" id="level-badge">
+        <h2>Level Up!</h2>
+        <p>You reached level <span id="new-level">2</span>!</p>
+    </div>
+    
+    <div class="next-level-banner" id="next-level-banner">
+        <h2>Congratulations!</h2>
+        <p>You've mastered this level!</p>
+        <p>Ready for a new challenge?</p>
+        <button id="next-level-button">Go to Next Level</button>
+    </div>
+
+    <script>
+        // Global game variables
+        let gameState = {
+            difficulty: 1,
+            speed: .1,
+            explanationLevel: "basic",
+            currentStep: 0,
+            steps: ["intro", "first", "outer", "inner", "last", "result"],
+            foilElements: [],
+            result: "",
+            simplified: "",
+            problemCount: 0,
+            correctAnswers: 0,
+            initialized: false
+        };
+        
+        // Main game variables
+        let currentStep = 0;
+        let currentProblem = {};
+        let quizQuestions = [];
+        let currentQuizIndex = 0;
+        let selectedOption = null;
+        let quizActive = false;
+        let sketch = null;
+        let sketchPromise = null;
+        let currentScore = 0;
+        let currentStreak = 0;
+        let progressValue = 0;
+        let arrows = [];
+        let starsEarned = 0;
+        
+        // Sound effects with fallbacks
+        const sounds = {
+            correct: null,
+            incorrect: null,
+            click: null,
+            buzz: null,
+            pop: null,
+            levelUp: null,
+            celebration: null
+        };
+        
+        // DOM element references
+        const elements = {
+            difficultySelect: null,
+            speedSlider: null,
+            explanationSelect: null,
+            startButton: null,
+            helpButton: null,
+            closeHelpButton: null,
+            prevStepButton: null,
+            nextStepButton: null,
+            showExplanationButton: null,
+            newProblemButton: null,
+            problemDisplay: null,
+            characterMessage: null,
+            explanationBox: null,
+            basicExplanation: null,
+            advancedExplanation: null,
+            quizSection: null,
+            quizQuestion: null,
+            quizOptions: null,
+            quizFeedback: null,
+            checkAnswerButton: null,
+            nextQuestionButton: null,
+            overlay: null,
+            helpPanel: null,
+            scoreDisplay: null,
+            streakCounter: null,
+            levelProgressBar: null,
+            mainGame: null,
+            comboMultiplier: null,
+            frankieButton: null,
+            ollieButton: null,
+            izzyButton: null,
+            lennyButton: null,
+            arrowsContainer: null,
+            levelBadge: null,
+            newLevelDisplay: null,
+            nextLevelBanner: null,
+            nextLevelButton: null,
+            loadingIndicator: null
+        };
+
+        // Initialize sound effects with error handling
+        function initializeSounds() {
+            try {
+                sounds.correct = new Howl({
+                    src: ['https://assets.codepen.io/21542/correct2.mp3'],
+                    volume: 0.5
+                });
+                
+                sounds.incorrect = new Howl({
+                    src: ['https://assets.codepen.io/21542/wrong2.mp3'],
+                    volume: 0.5
+                });
+                
+                sounds.click = new Howl({
+                    src: ['https://assets.codepen.io/21542/click.mp3'],
+                    volume: 0.3
+                });
+                
+                sounds.buzz = new Howl({
+                    src: ['https://assets.codepen.io/21542/buzz.mp3'],
+                    volume: 0.3
+                });
+                
+                sounds.pop = new Howl({
+                    src: ['https://assets.codepen.io/21542/pop.mp3'],
+                    volume: 0.3
+                });
+                
+                sounds.levelUp = new Howl({
+                    src: ['https://assets.codepen.io/21542/levelup.mp3'],
+                    volume: 0.5
+                });
+                
+                sounds.celebration = new Howl({
+                    src: ['https://assets.codepen.io/21542/tada.mp3'],
+                    volume: 0.5
+                });
+            } catch (error) {
+                console.warn('Sound initialization failed:', error);
+                // Create fallback sound functions
+                for (let sound in sounds) {
+                    if (!sounds[sound]) {
+                        sounds[sound] = {
+                            play: function() { console.log(`Playing ${sound} sound (fallback)`); }
+                        };
+                    }
+                }
+            }
+        }
+        
+        // Initialize DOM element references
+        function initializeDOMElements() {
+            elements.difficultySelect = document.getElementById("difficulty");
+            elements.speedSlider = document.getElementById("speed");
+            elements.explanationSelect = document.getElementById("explanation");
+            elements.startButton = document.getElementById("start-button");
+            elements.helpButton = document.getElementById("help-button");
+            elements.closeHelpButton = document.getElementById("close-help");
+            elements.prevStepButton = document.getElementById("prev-step");
+            elements.nextStepButton = document.getElementById("next-step");
+            elements.showExplanationButton = document.getElementById("show-explanation");
+            elements.newProblemButton = document.getElementById("new-problem");
+            elements.problemDisplay = document.getElementById("problem-display");
+            elements.characterMessage = document.getElementById("character-message");
+            elements.explanationBox = document.getElementById("explanation-box");
+            elements.basicExplanation = document.getElementById("basic-explanation");
+            elements.advancedExplanation = document.getElementById("advanced-explanation");
+            elements.quizSection = document.getElementById("quiz-section");
+            elements.quizQuestion = document.getElementById("quiz-question");
+            elements.quizOptions = document.getElementById("quiz-options");
+            elements.quizFeedback = document.getElementById("quiz-feedback");
+            elements.checkAnswerButton = document.getElementById("check-answer");
+            elements.nextQuestionButton = document.getElementById("next-question");
+            elements.overlay = document.getElementById("overlay");
+            elements.helpPanel = document.getElementById("help-panel");
+            elements.scoreDisplay = document.getElementById("score");
+            elements.streakCounter = document.getElementById("streak-counter");
+            elements.levelProgressBar = document.getElementById("level-progress");
+            elements.mainGame = document.getElementById("main-game");
+            elements.comboMultiplier = document.getElementById("combo-multiplier");
+            elements.frankieButton = document.getElementById("frankie-button");
+            elements.ollieButton = document.getElementById("ollie-button");
+            elements.izzyButton = document.getElementById("izzy-button");
+            elements.lennyButton = document.getElementById("lenny-button");
+            elements.arrowsContainer = document.getElementById("arrows-container");
+            elements.levelBadge = document.getElementById("level-badge");
+            elements.newLevelDisplay = document.getElementById("new-level");
+            elements.nextLevelBanner = document.getElementById("next-level-banner");
+            elements.nextLevelButton = document.getElementById("next-level-button");
+            elements.loadingIndicator = document.getElementById("loading-indicator");
+        }
+        
+        // Initialize event listeners
+        function initializeEventListeners() {
+            elements.startButton.addEventListener("click", startGame);
+            elements.helpButton.addEventListener("click", showHelp);
+            elements.closeHelpButton.addEventListener("click", hideHelp);
+            elements.prevStepButton.addEventListener("click", previousStep);
+            elements.nextStepButton.addEventListener("click", nextStep);
+            elements.showExplanationButton.addEventListener("click", toggleExplanation);
+            elements.newProblemButton.addEventListener("click", generateNewProblem);
+            elements.checkAnswerButton.addEventListener("click", checkAnswer);
+            elements.nextQuestionButton.addEventListener("click", nextQuizQuestion);
+            elements.nextLevelButton.addEventListener("click", goToNextLevel);
+            
+            // Bug character buttons
+            elements.frankieButton.addEventListener("click", () => activateBugCharacter('frankie', 1));
+            elements.ollieButton.addEventListener("click", () => activateBugCharacter('ollie', 2));
+            elements.izzyButton.addEventListener("click", () => activateBugCharacter('izzy', 3));
+            elements.lennyButton.addEventListener("click", () => activateBugCharacter('lenny', 4));
+            
+            // Settings event listeners
+            elements.difficultySelect.addEventListener("change", () => {
+                gameState.difficulty = parseInt(elements.difficultySelect.value);
+            });
+            
+            elements.speedSlider.addEventListener("input", () => {
+                gameState.speed = parseInt(elements.speedSlider.value);
+            });
+            
+            elements.explanationSelect.addEventListener("change", () => {
+                gameState.explanationLevel = elements.explanationSelect.value;
+                updateExplanation();
+            });
+            
+            // Keyboard shortcuts for navigation
+            document.addEventListener("keydown", (e) => {
+                if (e.key === "ArrowLeft" && !elements.prevStepButton.disabled) {
+                    previousStep();
+                } else if (e.key === "ArrowRight" && !elements.nextStepButton.disabled) {
+                    nextStep();
+                } else if (e.key === "1" && !elements.frankieButton.disabled) {
+                    activateBugCharacter('frankie', 1);
+                } else if (e.key === "2" && !elements.ollieButton.disabled) {
+                    activateBugCharacter('ollie', 2);
+                } else if (e.key === "3" && !elements.izzyButton.disabled) {
+                    activateBugCharacter('izzy', 3);
+                } else if (e.key === "4" && !elements.lennyButton.disabled) {
+                    activateBugCharacter('lenny', 4);
+                } else if (e.key === "h") {
+                    toggleExplanation();
+                } else if (e.key === "n") {
+                    generateNewProblem();
+                }
+            });
+            
+            // Responsive window resize handling
+            window.addEventListener("resize", () => {
+                if (sketch) {
+                    // Resize the canvas if needed
+                    const canvas = document.getElementById("garden-canvas");
+                    if (canvas) {
+                        canvas.style.width = "100%";
+                        canvas.style.height = "auto";
+                    }
+                    
+                    // Refresh arrows based on current step
+                    refreshArrows();
+                }
+            });
+        }
+        
+        // Setup the p5.js sketch - Now returns a promise
+        function setupSketch() {
+            return new Promise((resolve) => {
+                // Remove any existing sketch
+                if (sketch) {
+                    sketch.remove();
+                }
+                
+                // Create new p5.js sketch
+                const newSketch = new p5((p) => {
+                    const width = 600;
+                    const height = 400;
+                    let animations = [];
+                    let characters = {};
+                    let particles = [];
+                    let binomialBoxes = {
+                        first: { x: 100, y: 200, width: 140, height: 70 },
+                        second: { x: 350, y: 200, width: 140, height: 70 }
+                    };
+                    let foilBoxes = {
+                        first: { x: 100, y: 320, width: 100, height: 40 },
+                        outer: { x: 220, y: 320, width: 100, height: 40 },
+                        inner: { x: 340, y: 320, width: 100, height: 40 },
+                        last: { x: 460, y: 320, width: 100, height: 40 }
+                    };
+                    
+                    p.setup = function() {
+                        const canvas = p.createCanvas(width, height);
+                        canvas.parent('garden-canvas');
+                        
+                        // Initialize characters
+                        characters = {
+                            frankie: {
+                                x: 80,
+                                y: 100,
+                                size: 40,
+                                color: p.color(239, 154, 154),
+                                active: false,
+                                targetX: 80,
+                                targetY: 100,
+                                isMoving: false,
+                                moveDuration: 0,
+                                moveProgress: 0
+                            },
+                            ollie: {
+                                x: 200,
+                                y: 100,
+                                size: 40,
+                                color: p.color(255, 235, 59),
+                                active: false,
+                                targetX: 200,
+                                targetY: 100,
+                                isMoving: false,
+                                moveDuration: 0,
+                                moveProgress: 0
+                            },
+                            izzy: {
+                                x: 320,
+                                y: 100,
+                                size: 40,
+                                color: p.color(76, 175, 80),
+                                active: false,
+                                targetX: 320,
+                                targetY: 100,
+                                isMoving: false,
+                                moveDuration: 0,
+                                moveProgress: 0
+                            },
+                            lenny: {
+                                x: 440,
+                                y: 100,
+                                size: 40,
+                                color: p.color(229, 57, 53),
+                                active: false,
+                                targetX: 440,
+                                targetY: 100,
+                                isMoving: false,
+                                moveDuration: 0,
+                                moveProgress: 0
+                            }
+                        };
+                        
+                        // Resolve the promise with the sketch instance
+                        resolve({
+                            activateCharacter: function(character, activate) {
+                                if (characters[character]) {
+                                    characters[character].active = activate;
+                                    
+                                    if (activate) {
+                                        // Emit particles
+                                        emitParticles(characters[character].x, characters[character].y, 5, characters[character].color);
+                                    }
+                                }
+                            },
+                            
+                            moveCharacterTo: function(character, x, y, duration) {
+                                if (characters[character]) {
+                                    characters[character].startX = characters[character].x;
+                                    characters[character].startY = characters[character].y;
+                                    characters[character].targetX = x;
+                                    characters[character].targetY = y;
+                                    characters[character].moveDuration = duration || (60 / gameState.speed); // Frames duration
+                                    characters[character].moveProgress = 0;
+                                    characters[character].isMoving = true;
+                                }
+                            },
+                            
+                            createConfetti: function(x, y) {
+                                const colors = [
+                                    p.color('#f44336'), // Red
+                                    p.color('#2196f3'), // Blue
+                                    p.color('#ffeb3b'), // Yellow
+                                    p.color('#4caf50'), // Green
+                                    p.color('#9c27b0'), // Purple
+                                    p.color('#ff9800')  // Orange
+                                ];
+                                
+                                for (let i = 0; i < 50; i++) {
+                                    const confetti = {
+                                        x: x || width/2,
+                                        y: y || 0,
+                                        vx: p.random(-5, 5),
+                                        vy: p.random(2, 7),
+                                        rotation: p.random(0, p.TWO_PI),
+                                        rotSpeed: p.random(-0.1, 0.1),
+                                        width: p.random(5, 15),
+                                        height: p.random(5, 15),
+                                        color: colors[Math.floor(p.random(colors.length))],
+                                        life: p.random(60, 120)
+                                    };
+                                    particles.push(confetti);
+                                }
+                            },
+                            
+                            getCharacterPosition: function(character) {
+                                if (characters[character]) {
+                                    return {
+                                        x: characters[character].x,
+                                        y: characters[character].y
+                                    };
+                                }
+                                return null;
+                            },
+                            
+                            getBinomialBoxPosition: function(which) {
+                                const boxKey = which === 'first' ? 'first' : 'second';
+                                return {
+                                    x1: binomialBoxes[boxKey].x,
+                                    y1: binomialBoxes[boxKey].y,
+                                    x2: binomialBoxes[boxKey].x + binomialBoxes[boxKey].width,
+                                    y2: binomialBoxes[boxKey].y + binomialBoxes[boxKey].height,
+                                    centerX: binomialBoxes[boxKey].x + binomialBoxes[boxKey].width/2,
+                                    centerY: binomialBoxes[boxKey].y + binomialBoxes[boxKey].height/2
+                                };
+                            },
+                            
+                            getFoilBoxPosition: function(which) {
+                                return {
+                                    x1: foilBoxes[which].x,
+                                    y1: foilBoxes[which].y,
+                                    x2: foilBoxes[which].x + foilBoxes[which].width,
+                                    y2: foilBoxes[which].y + foilBoxes[which].height,
+                                    centerX: foilBoxes[which].x + foilBoxes[which].width/2,
+                                    centerY: foilBoxes[which].y + foilBoxes[which].height/2
+                                };
+                            },
+                            
+                            remove: function() {
+                                try {
+                                    p.remove();
+                                } catch (err) {
+                                    console.warn('Failed to remove p5 sketch:', err);
+                                }
+                            }
+                        });
+                    };
+                    
+                    p.draw = function() {
+                        p.background('#f1f8e9');
+                        
+                        // Draw garden background
+                        drawGarden();
+                        
+                        // Draw binomials based on current state
+                        drawBinomials();
+                        
+                        // Update character movements
+                        updateCharacterMovements();
+                        
+                        // Draw characters
+                        drawCharacters();
+                        
+                        // Update particles
+                        updateParticles();
+                        
+                        // Run animations
+                        updateAnimations();
+                    };
+                    
+                    function drawGarden() {
+                        // Draw sky gradient
+                        let skyHeight = height * 0.6;
+                        for (let y = 0; y < skyHeight; y++) {
+                            let inter = p.map(y, 0, skyHeight, 0, 1);
+                            let c = p.lerpColor(p.color('#bbdefb'), p.color('#e3f2fd'), inter);
+                            p.stroke(c);
+                            p.line(0, y, width, y);
+                        }
+                        
+                        // Draw sun
+                        p.fill('#ffeb3b');
+                        p.noStroke();
+                        p.circle(width * 0.85, height * 0.15, 60);
+                        
+                        // Draw sun rays
+                        p.push();
+                        p.translate(width * 0.85, height * 0.15);
+                        p.stroke('#ffeb3b');
+                        p.strokeWeight(2);
+                        for (let i = 0; i < 8; i++) {
+                            let angle = i * p.TWO_PI / 8;
+                            p.push();
+                            p.rotate(angle);
+                            p.line(35, 0, 50, 0);
+                            p.pop();
+                        }
+                        p.pop();
+                        
+                        // Draw clouds
+                        p.noStroke();
+                        p.fill(255, 255, 255, 200);
+                        drawCloud(width * 0.2, height * 0.15, 1);
+                        drawCloud(width * 0.6, height * 0.25, 0.8);
+                        
+                        // Draw grass ground
+                        p.fill('#81c784');
+                        p.rect(0, height * 0.6, width, height * 0.4);
+                        
+                        // Draw flowers in the background
+                        p.push();
+                        p.translate(0, 0);
+                        for (let i = 0; i < 15; i++) {
+                            let x = i * 50 + p.random(-10, 10);
+                            let y = p.lerp(height * 0.65, height * 0.95, p.random());
+                            let size = p.random(10, 20);
+                            let flowerColor = p.color(
+                                p.random(150, 255),
+                                p.random(150, 255),
+                                p.random(150, 255)
+                            );
+                            drawFlower(x, y, size, flowerColor);
+                        }
+                        p.pop();
+                    }
+                    
+                    function drawCloud(x, y, scale) {
+                        p.push();
+                        p.translate(x, y);
+                        p.scale(scale);
+                        p.ellipse(0, 0, 70, 50);
+                        p.ellipse(-30, 0, 50, 40);
+                        p.ellipse(30, 0, 50, 40);
+                        p.ellipse(-15, -15, 40, 40);
+                        p.ellipse(15, -15, 40, 40);
+                        p.pop();
+                    }
+                    
+                    function drawFlower(x, y, size, color) {
+                        p.push();
+                        p.translate(x, y);
+                        
+                        // Stem
+                        p.stroke('#2e7d32');
+                        p.strokeWeight(2);
+                        p.line(0, 0, 0, size * 2);
+                        
+                        // Flower petals
+                        p.noStroke();
+                        p.fill(color);
+                        for (let i = 0; i < 6; i++) {
+                            let angle = i * p.TWO_PI / 6;
+                            let px = p.cos(angle) * size;
+                            let py = p.sin(angle) * size;
+                            p.ellipse(px, py, size, size);
+                        }
+                        
+                        // Flower center
+                        p.fill('#ffeb3b');
+                        p.circle(0, 0, size * 0.8);
+                        p.pop();
+                    }
+                    
+                    function drawBinomials() {
+                        if (!currentProblem.firstBinomial) return;
+                        
+                        // Draw first binomial box
+                        p.fill('#c8e6c9');
+                        p.stroke(0);
+                        p.strokeWeight(2);
+                        p.rect(binomialBoxes.first.x, binomialBoxes.first.y, binomialBoxes.first.width, binomialBoxes.first.height, 10);
+                        
+                        // Draw second binomial box
+                        p.fill('#bbdefb');
+                        p.rect(binomialBoxes.second.x, binomialBoxes.second.y, binomialBoxes.second.width, binomialBoxes.second.height, 10);
+                        
+                        // Draw the binomial expressions
+                        p.textSize(24);
+                        p.fill(0);
+                        p.textAlign(p.CENTER, p.CENTER);
+                        p.text(`(${currentProblem.firstBinomial})`, binomialBoxes.first.x + binomialBoxes.first.width/2, 
+                                 binomialBoxes.first.y + binomialBoxes.first.height/2);
+                        p.text(`(${currentProblem.secondBinomial})`, binomialBoxes.second.x + binomialBoxes.second.width/2, 
+                                 binomialBoxes.second.y + binomialBoxes.second.height/2);
+                        
+                        // If we're past the intro step, draw the multiplication symbol
+                        if (gameState.currentStep > 0) {
+                            p.textSize(36);
+                            p.text("×", (binomialBoxes.first.x + binomialBoxes.first.width + binomialBoxes.second.x) / 2, 
+                                     binomialBoxes.first.y + binomialBoxes.first.height/2);
+                        }
+                        
+                        // Draw FOIL results based on current step
+                        if (gameState.currentStep >= 1) {
+                            drawFoilResults();
+                        }
+                    }
+                    
+                    function drawFoilResults() {
+                        p.textSize(18);
+                        p.fill(0);
+                        
+                        // Draw result boxes
+                        if (gameState.currentStep >= 1) {
+                            // First
+                            p.fill('#ffcdd2');
+                            p.stroke(0);
+                            p.strokeWeight(1);
+                            p.rect(foilBoxes.first.x, foilBoxes.first.y, foilBoxes.first.width, foilBoxes.first.height, 5);
+                            if (gameState.foilElements[0]) {
+                                p.fill(0);
+                                p.textAlign(p.CENTER, p.CENTER);
+                                p.text(gameState.foilElements[0], foilBoxes.first.x + foilBoxes.first.width/2, 
+                                          foilBoxes.first.y + foilBoxes.first.height/2);
+                            }
+                        }
+                        
+                        if (gameState.currentStep >= 2) {
+                            // Outer
+                            p.fill('#fff9c4');
+                            p.rect(foilBoxes.outer.x, foilBoxes.outer.y, foilBoxes.outer.width, foilBoxes.outer.height, 5);
+                            if (gameState.foilElements[1]) {
+                                p.fill(0);
+                                p.text(gameState.foilElements[1], foilBoxes.outer.x + foilBoxes.outer.width/2, 
+                                          foilBoxes.outer.y + foilBoxes.outer.height/2);
+                            }
+                        }
+                        
+                        if (gameState.currentStep >= 3) {
+                            // Inner
+                            p.fill('#c8e6c9');
+                            p.rect(foilBoxes.inner.x, foilBoxes.inner.y, foilBoxes.inner.width, foilBoxes.inner.height, 5);
+                            if (gameState.foilElements[2]) {
+                                p.fill(0);
+                                p.text(gameState.foilElements[2], foilBoxes.inner.x + foilBoxes.inner.width/2, 
+                                          foilBoxes.inner.y + foilBoxes.inner.height/2);
+                            }
+                        }
+                        
+                        if (gameState.currentStep >= 4) {
+                            // Last
+                            p.fill('#bbdefb');
+                            p.rect(foilBoxes.last.x, foilBoxes.last.y, foilBoxes.last.width, foilBoxes.last.height, 5);
+                            if (gameState.foilElements[3]) {
+                                p.fill(0);
+                                p.text(gameState.foilElements[3], foilBoxes.last.x + foilBoxes.last.width/2, 
+                                          foilBoxes.last.y + foilBoxes.last.height/2);
+                            }
+                        }
+                        
+                        // Draw the final result
+                        if (gameState.currentStep >= 5) {
+                            p.textSize(24);
+                            p.fill('#4caf50');
+                            p.text(gameState.result, width / 2, foilBoxes.first.y + foilBoxes.first.height + 50);
+                            
+                            // If there's a simplified form, show it
+                            if (gameState.simplified && gameState.simplified !== gameState.result) {
+                                p.textSize(18);
+                                p.fill('#2196f3');
+                                p.text("Simplified: " + gameState.simplified, width / 2, foilBoxes.first.y + foilBoxes.first.height + 80);
+                            }
+                        }
+                    }
+                    
+                    function updateCharacterMovements() {
+                        // Update character positions based on movement targets
+                        for (let char in characters) {
+                            if (characters[char].isMoving) {
+                                characters[char].moveProgress++;
+                                
+                                // Calculate new position
+                                const progress = characters[char].moveProgress / characters[char].moveDuration;
+                                
+                                if (progress < 1) {
+                                    // Quadratic easing for natural movement
+                                    let easedProgress = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+                                    
+                                    characters[char].x = p.lerp(
+                                        characters[char].startX, 
+                                        characters[char].targetX, 
+                                        easedProgress
+                                    );
+                                    
+                                    characters[char].y = p.lerp(
+                                        characters[char].startY, 
+                                        characters[char].targetY, 
+                                        easedProgress
+                                    );
+                                    
+                                    // Add wiggle for flying bugs (Frankie and Ollie)
+                                    if (char === 'frankie' || char === 'ollie') {
+                                        characters[char].y += Math.sin(p.frameCount * 0.3) * 3;
+                                    }
+                                } else {
+                                    // Movement complete
+                                    characters[char].x = characters[char].targetX;
+                                    characters[char].y = characters[char].targetY;
+                                    characters[char].isMoving = false;
+                                    
+                                    // Emit particles at destination
+                                    emitParticles(
+                                        characters[char].x, 
+                                        characters[char].y, 
+                                        10, 
+                                        characters[char].color
+                                    );
+                                }
+                            }
+                        }
+                    }
+                    
+                    function drawCharacters() {
+                        // Draw each character
+                        for (let char in characters) {
+                            drawCharacter(
+                                char, 
+                                characters[char].x, 
+                                characters[char].y, 
+                                characters[char].size, 
+                                characters[char].color, 
+                                characters[char].active
+                            );
+                        }
+                    }
+                    
+                    function drawCharacter(name, x, y, size, color, active) {
+                        p.push();
+                        p.translate(x, y);
+                        
+                        if (active) {
+                            // Add a glow effect
+                            p.noStroke();
+                            p.fill(255, 255, 0, 100);
+                            p.ellipse(0, 0, size * 1.8, size * 1.8);
+                            
+                            // Make it slightly larger
+                            size *= 1.2;
+                        }
+                        
+                        // Draw the character based on name
+                        switch (name) {
+                            case 'frankie':
+                                // Butterfly - animated wings
+                                p.fill(color);
+                                p.ellipse(0, 0, size * 0.8, size * 0.8); // Body
+                                
+                                // Wings - flapping animation
+                                let wingAngle = Math.sin(p.frameCount * 0.2) * 0.4;
+                                
+                                p.fill(p.lerpColor(color, p.color(255), 0.3));
+                                p.push();
+                                p.translate(-size/3, 0);
+                                p.rotate(wingAngle);
+                                p.ellipse(0, -size/5, size * 0.8, size * 0.6);
+                                p.pop();
+                                
+                                p.push();
+                                p.translate(size/3, 0);
+                                p.rotate(-wingAngle);
+                                p.ellipse(0, -size/5, size * 0.8, size * 0.6);
+                                p.pop();
+                                
+                                // Face
+                                p.fill(0);
+                                p.ellipse(-size/8, -size/10, size/10, size/10);
+                                p.ellipse(size/8, -size/10, size/10, size/10);
+                                
+                                // Smile
+                                p.noFill();
+                                p.stroke(0);
+                                p.strokeWeight(1);
+                                p.arc(0, size/20, size/4, size/8, 0, p.PI);
+                                break;
+                                
+                            case 'ollie':
+                                // Bee - animated wings
+                                p.fill(color);
+                                p.ellipse(0, 0, size, size * 0.8); // Body
+                                
+                                // Stripes
+                                p.fill(0);
+                                p.rect(-size/4, -size/3, size/2, size/10);
+                                p.rect(-size/4, -size/6, size/2, size/10);
+                                p.rect(-size/4, 0, size/2, size/10);
+                                p.rect(-size/4, size/6, size/2, size/10);
+                                
+                                // Wings - faster flapping animation
+                                p.fill(255, 255, 255, 180);
+                                
+                                let beeWingAngle = Math.sin(p.frameCount * 0.5) * 0.5;
+                                p.push();
+                                p.translate(-size/3, -size/4);
+                                p.rotate(beeWingAngle);
+                                p.ellipse(0, 0, size/2, size/3);
+                                p.pop();
+                                
+                                p.push();
+                                p.translate(size/3, -size/4);
+                                p.rotate(-beeWingAngle);
+                                p.ellipse(0, 0, size/2, size/3);
+                                p.pop();
+                                
+                                // Face
+                                p.fill(0);
+                                p.ellipse(-size/8, -size/6, size/12, size/12);
+                                p.ellipse(size/8, -size/6, size/12, size/12);
+                                
+                                // Smile
+                                p.noFill();
+                                p.stroke(0);
+                                p.strokeWeight(1);
+                                p.arc(0, 0, size/4, size/8, 0, p.PI);
+                                break;
+                                
+                            case 'izzy':
+                                // Ant - moving legs
+                                p.fill(color);
+                                p.ellipse(-size/5, 0, size/2, size/2); // Head
+                                p.ellipse(0, 0, size/1.8, size/1.8); // Body
+                                p.ellipse(size/4, 0, size/2.5, size/2.5); // End part
+                                
+                                // Legs - walking animation
+                                p.stroke(color);
+                                p.strokeWeight(2);
+                                
+                                let legOffset = Math.sin(p.frameCount * 0.2) * 0.2;
+                                
+                                // Left legs
+                                p.line(-size/4, -size/4, -size/2, -size/2 - legOffset * size);
+                                p.line(0, -size/4, -size/4, -size/2 + legOffset * size);
+                                p.line(size/4, -size/4, 0, -size/2 - legOffset * size);
+                                
+                                // Right legs
+                                p.line(-size/4, size/4, -size/2, size/2 + legOffset * size);
+                                p.line(0, size/4, -size/4, size/2 - legOffset * size);
+                                p.line(size/4, size/4, 0, size/2 + legOffset * size);
+                                
+                                // Antennae
+                                p.line(-size/3, -size/5, -size/2, -size/2 - legOffset * size);
+                                p.line(-size/6, -size/5, -size/4, -size/2 + legOffset * size);
+                                
+                                // Face
+                                p.fill(0);
+                                p.noStroke();
+                                p.ellipse(-size/3, 0, size/12, size/12);
+                                p.ellipse(-size/6, 0, size/12, size/12);
+                                break;
+                                
+                            case 'lenny':
+                                // Ladybug
+                                p.fill(color);
+                                p.ellipse(0, 0, size, size * 0.8); // Body
+                                
+                                // Spots
+                                p.fill(0);
+                                p.ellipse(-size/4, -size/6, size/6, size/6);
+                                p.ellipse(size/4, -size/6, size/6, size/6);
+                                p.ellipse(-size/6, size/6, size/6, size/6);
+                                p.ellipse(size/6, size/6, size/6, size/6);
+                                
+                                // Head
+                                p.fill(0);
+                                p.ellipse(0, -size/3, size/2, size/3);
+                                
+                                // Eyes
+                                p.fill(255);
+                                p.ellipse(-size/8, -size/3, size/10, size/10);
+                                p.ellipse(size/8, -size/3, size/10, size/10);
+                                
+                                // Line down middle
+                                p.stroke(0);
+                                p.strokeWeight(1);
+                                p.line(0, -size/6, 0, size/3);
+                                
+                                // Occasionally move wings for flying animation
+                                if (active && p.frameCount % 30 < 15) {
+                                    p.noStroke();
+                                    p.fill(color);
+                                    p.arc(0, 0, size, size * 0.4, p.PI, p.TWO_PI);
+                                    p.fill(0);
+                                    p.ellipse(-size/4, -size/15, size/10, size/10);
+                                    p.ellipse(size/4, -size/15, size/10, size/10);
+                                }
+                                break;
+                        }
+                        
+                        p.pop();
+                    }
+                    
+                    function emitParticles(x, y, count, color) {
+                        for (let i = 0; i < count; i++) {
+                            particles.push({
+                                x: x,
+                                y: y,
+                                vx: p.random(-2, 2),
+                                vy: p.random(-3, -1),
+                                size: p.random(3, 8),
+                                color: color,
+                                alpha: 255,
+                                life: p.random(20, 40)
+                            });
+                        }
+                    }
+                    
+                    function updateParticles() {
+                        for (let i = particles.length - 1; i >= 0; i--) {
+                            let particle = particles[i];
+                            
+                            // Update position
+                            particle.x += particle.vx;
+                            particle.y += particle.vy;
+                            
+                            // Apply gravity
+                            particle.vy += 0.1;
+                            
+                            // Decrease life and alpha
+                            particle.life--;
+                            particle.alpha = (particle.life / 40) * 255;
+                            
+                            // Draw particle
+                            p.noStroke();
+                            let c = p.color(particle.color);
+                            c.setAlpha(particle.alpha);
+                            p.fill(c);
+                            p.ellipse(particle.x, particle.y, particle.size, particle.size);
+                            
+                            // Remove dead particles
+                            if (particle.life <= 0) {
+                                particles.splice(i, 1);
+                            }
+                        }
+                    }
+                    
+                    function updateAnimations() {
+                        // Just for fun, add little floating particles occasionally
+                        if (p.frameCount % 30 === 0) {
+                            let x = p.random(width);
+                            let y = height - p.random(20, 80);
+                            let sparkleColor = p.color(
+                                p.random(150, 255),
+                                p.random(150, 255),
+                                p.random(150, 255),
+                                150
+                            );
+                            emitParticles(x, y, 1, sparkleColor);
+                        }
+                    }
+                });
+                
+                // Store the sketch instance
+                sketch = newSketch;
+            });
+        }
+        
+        // Refresh arrow positions after resize
+        function refreshArrows() {
+            elements.arrowsContainer.innerHTML = '';
+            arrows = [];
+            
+            // Redraw arrows based on current step
+            if (gameState.currentStep === 1 && sketch) {
+                const firstBoxPos = sketch.getBinomialBoxPosition('first');
+                const secondBoxPos = sketch.getBinomialBoxPosition('second');
+                
+                createArrow(
+                    firstBoxPos.centerX, 
+                    firstBoxPos.centerY, 
+                    secondBoxPos.centerX, 
+                    secondBoxPos.centerY, 
+                    '#ffcdd2',
+                    'first-arrow'
+                );
+                
+                if (document.getElementById('first-arrow')) {
+                    document.getElementById('first-arrow').classList.add('visible');
+                }
+            }
+            
+            if (gameState.currentStep === 2 && sketch) {
+                const firstBoxPos = sketch.getBinomialBoxPosition('first');
+                const secondBoxPos = sketch.getBinomialBoxPosition('second');
+                
+                createArrow(
+                    firstBoxPos.centerX, 
+                    firstBoxPos.centerY, 
+                    secondBoxPos.centerX + secondBoxPos.x2 - secondBoxPos.x1, 
+                    secondBoxPos.centerY, 
+                    '#fff9c4',
+                    'outer-arrow',
+                    true
+                );
+                
+                if (document.getElementById('outer-arrow')) {
+                    document.getElementById('outer-arrow').classList.add('visible');
+                }
+            }
+            
+            if (gameState.currentStep === 3 && sketch) {
+                const firstBoxPos = sketch.getBinomialBoxPosition('first');
+                const secondBoxPos = sketch.getBinomialBoxPosition('second');
+                
+                createArrow(
+                    firstBoxPos.x2 - (firstBoxPos.x2 - firstBoxPos.x1) * 0.3, 
+                    firstBoxPos.centerY, 
+                    secondBoxPos.x1 + (secondBoxPos.x2 - secondBoxPos.x1) * 0.3, 
+                    secondBoxPos.centerY, 
+                    '#c8e6c9',
+                    'inner-arrow'
+                );
+                
+                if (document.getElementById('inner-arrow')) {
+                    document.getElementById('inner-arrow').classList.add('visible');
+                }
+            }
+            
+            if (gameState.currentStep === 4 && sketch) {
+                const firstBoxPos = sketch.getBinomialBoxPosition('first');
+                const secondBoxPos = sketch.getBinomialBoxPosition('second');
+                
+                createArrow(
+                    firstBoxPos.x2 - (firstBoxPos.x2 - firstBoxPos.x1) * 0.3, 
+                    firstBoxPos.centerY, 
+                    secondBoxPos.x2 - (secondBoxPos.x2 - secondBoxPos.x1) * 0.3, 
+                    secondBoxPos.centerY, 
+                    '#bbdefb',
+                    'last-arrow',
+                    true
+                );
+                
+                if (document.getElementById('last-arrow')) {
+                    document.getElementById('last-arrow').classList.add('visible');
+                }
+            }
+        }
+        
+        // Initialize the game
+        async function initGame() {
+            try {
+                // Initialize DOM elements, sounds, and event listeners
+                initializeDOMElements();
+                initializeSounds();
+                initializeEventListeners();
+                
+                // Get settings from DOM
+                gameState.difficulty = parseInt(elements.difficultySelect.value);
+                gameState.speed = parseInt(elements.speedSlider.value);
+                gameState.explanationLevel = elements.explanationSelect.value;
+                
+                // Setup the p5.js sketch and wait for it to be ready
+                sketchPromise = setupSketch();
+                sketch = await sketchPromise;
+                
+                // Generate a new problem
+                generateNewProblem();
+                
+                // Reset the UI state
+                resetUI();
+                
+                // Hide loading indicator
+                if (elements.loadingIndicator) {
+                    elements.loadingIndicator.style.display = 'none';
+                }
+                
+                // Mark game as initialized
+                gameState.initialized = true;
+                
+                return sketch;
+            } catch (error) {
+                console.error("Error initializing game:", error);
+                alert("There was an error initializing the game. Please refresh the page and try again.");
+                
+                // Hide loading indicator even on error
+                if (elements.loadingIndicator) {
+                    elements.loadingIndicator.style.display = 'none';
+                }
+            }
+        }
+        
+        // Reset the UI state
+        function resetUI() {
+            gameState.currentStep = 0;
+            updateStepIndicator();
+            resetBugButtons();
+            updateUI();
+            
+            elements.prevStepButton.disabled = true;
+            elements.nextStepButton.disabled = false;
+            
+            // Reset score display
+            elements.scoreDisplay.textContent = currentScore;
+            elements.streakCounter.textContent = "Streak: 0";
+            elements.levelProgressBar.style.width = "0%";
+            
+            // Reset stars
+            document.querySelectorAll('.star').forEach(star => {
+                star.classList.remove('filled');
+            });
+        }
+        
+        // Start the game
+        function startGame() {
+            try {
+                sounds.click.play();
+                
+                // Show main game section
+                elements.mainGame.style.display = "block";
+                
+                // Hide quiz section
+                elements.quizSection.style.display = "none";
+                
+                // Reset the game state
+                gameState.currentStep = 0;
+                gameState.problemCount = 0;
+                gameState.correctAnswers = 0;
+                currentScore = 0;
+                currentStreak = 0;
+                
+                // Update UI
+                resetUI();
+            } catch (error) {
+                console.error("Error starting game:", error);
+                alert("There was an error starting the game. Please refresh the page and try again.");
+            }
+        }
+        
+        // Generate a new binomial multiplication problem
+        function generateNewProblem() {
+            try {
+                sounds.pop.play();
+                
+                // Clear existing arrows
+                elements.arrowsContainer.innerHTML = '';
+                arrows = [];
+                
+                // Deactivate bug characters if sketch is ready
+                if (sketch) {
+                    sketch.activateCharacter('frankie', false);
+                    sketch.activateCharacter('ollie', false);
+                    sketch.activateCharacter('izzy', false);
+                    sketch.activateCharacter('lenny', false);
+                }
+                
+                const difficulty = gameState.difficulty;
+                let firstBinomial, secondBinomial;
+                
+                switch (difficulty) {
+                    case 1: // Simple numbers
+                        firstBinomial = generateSimpleBinomial(true);
+                        secondBinomial = generateSimpleBinomial(true);
+                        break;
+                    case 2: // Mixed numbers
+                        firstBinomial = generateSimpleBinomial(false);
+                        secondBinomial = generateSimpleBinomial(false);
+                        break;
+                    case 3: // Negative numbers
+                        firstBinomial = generateNegativeBinomial();
+                        secondBinomial = generateNegativeBinomial();
+                        break;
+                    case 4: // Variables
+                        firstBinomial = generateVariableBinomial("x");
+                        secondBinomial = generateVariableBinomial("x");
+                        break;
+                    case 5: // Mixed variables
+                        firstBinomial = generateMixedBinomial();
+                        secondBinomial = generateMixedBinomial();
+                        break;
+                    default:
+                        firstBinomial = "3 + 2";
+                        secondBinomial = "4 + 1";
+                }
+                
+                currentProblem = {
+                    firstBinomial: firstBinomial,
+                    secondBinomial: secondBinomial
+                };
+                
+                // Get the binomial parts
+                const firstParts = parseBinomial(firstBinomial);
+                const secondParts = parseBinomial(secondBinomial);
+                
+                currentProblem.firstParts = firstParts;
+                currentProblem.secondParts = secondParts;
+                
+                // Calculate FOIL elements and result
+                calculateFoilElements();
+                
+                // Reset step to intro
+                gameState.currentStep = 0;
+                elements.prevStepButton.disabled = true;
+                elements.nextStepButton.disabled = false;
+                
+                // Update the problem display
+                updateProblemDisplay();
+                
+                // Reset character states if sketch is ready
+                if (sketch) {
+                    sketch.activateCharacter('frankie', false);
+                    sketch.activateCharacter('ollie', false);
+                    sketch.activateCharacter('izzy', false);
+                    sketch.activateCharacter('lenny', false);
+                }
+                
+                // Update the character message
+                elements.characterMessage.style.display = "block";
+                elements.characterMessage.innerHTML = "<strong>Let's start our FOIL adventure!</strong><br>I'll help you multiply these binomials step by step. Click on our bug friends to help!";
+                
+                // Reset bug buttons
+                resetBugButtons();
+                
+                // Update step indicator
+                updateStepIndicator();
+                
+                // Update explanation
+                updateExplanation();
+                
+                // Hide the explanation box initially
+                elements.explanationBox.style.display = "none";
+                
+                // Generate quiz questions
+                generateQuizQuestions();
+                
+                // Hide quiz section initially
+                elements.quizSection.style.display = "none";
+                
+                // Increment problem count
+                gameState.problemCount++;
+            } catch (error) {
+                console.error("Error generating problem:", error);
+                alert("There was an error generating a new problem. Please try again.");
+            }
+        }
+        
+        // Generate a simple binomial with positive numbers
+        function generateSimpleBinomial(onlyPositive) {
+            const a = Math.floor(Math.random() * 5) + 1;
+            let b = Math.floor(Math.random() * 5) + 1;
+            
+            if (!onlyPositive && Math.random() > 0.5) {
+                b = -b;
+            }
+            
+            return b >= 0 ? `${a} + ${b}` : `${a} - ${Math.abs(b)}`;
+        }
+        
+        // Generate a binomial with potential negative numbers
+        function generateNegativeBinomial() {
+            let a = Math.floor(Math.random() * 6) + 1;
+            let b = Math.floor(Math.random() * 6) + 1;
+            
+            if (Math.random() > 0.5) {
+                a = -a;
+            }
+            
+            if (Math.random() > 0.5) {
+                b = -b;
+            }
+            
+            return a >= 0 
+                ? (b >= 0 ? `${a} + ${b}` : `${a} - ${Math.abs(b)}`)
+                : (b >= 0 ? `-${Math.abs(a)} + ${b}` : `-${Math.abs(a)} - ${Math.abs(b)}`);
+        }
+        
+        // Generate a binomial with variables
+        function generateVariableBinomial(variable) {
+            const a = Math.floor(Math.random() * 5) + 1;
+            let b = Math.floor(Math.random() * 5) + 1;
+            
+            if (Math.random() > 0.5) {
+                return b >= 0 ? `${a}${variable} + ${b}` : `${a}${variable} - ${Math.abs(b)}`;
+            } else {
+                return b >= 0 ? `${b} + ${a}${variable}` : `${b} - ${a}${variable}`;
+            }
+        }
+        
+        // Generate a mixed binomial with different variables
+        function generateMixedBinomial() {
+            const variables = ["x", "y"];
+            const variable = variables[Math.floor(Math.random() * variables.length)];
+            
+            const a = Math.floor(Math.random() * 5) + 1;
+            let b = Math.floor(Math.random() * 5) + 1;
+            
+            if (Math.random() > 0.5) {
+                b = -b;
+            }
+            
+            if (Math.random() > 0.7) {
+                return b >= 0 
+                    ? `${a}${variable} + ${b}${variable}`
+                    : `${a}${variable} - ${Math.abs(b)}${variable}`;
+            }
+            
+            return b >= 0 
+                ? `${a}${variable} + ${b}`
+                : `${a}${variable} - ${Math.abs(b)}`;
+        }
+        
+        // Parse a binomial expression
+        function parseBinomial(binomial) {
+            // Replace minus with plus minus to simplify parsing
+            const normalizedBinomial = binomial.replace(/\s*-\s*/g, " + -");
+            
+            // Split by + operator
+            const terms = normalizedBinomial.split(/\s*\+\s*/);
+            
+            // Clean up terms
+            const cleanTerms = terms.filter(term => term.trim() !== "").map(term => term.trim());
+            
+            // Determine operator
+            const operator = binomial.includes('-') ? ' - ' : ' + ';
+            
+            return {
+                first: cleanTerms[0],
+                second: cleanTerms[1],
+                operator: operator
+            };
+        }
+        
+        // Parse a term
+        function parseTerm(term) {
+            // Regular expression to match coefficients and variables
+            const pattern = /(-?\d*)(x|y)?/g;
+            const parts = [];
+            
+            let match;
+            while ((match = pattern.exec(term)) !== null) {
+                if (match[0] === '') continue;
+                
+                let coefficient = match[1];
+                if (coefficient === "-") coefficient = "-1";
+                else if (coefficient === "") coefficient = "1";
+                
+                const variable = match[2] || "";
+                
+                parts.push({
+                    coefficient: parseInt(coefficient),
+                    variable: variable
+                });
+            }
+            
+            return parts;
+        }
+        
+        // Calculate the FOIL elements and result
+        function calculateFoilElements() {
+            // Parse the binomials
+            const first = parseBinomial(currentProblem.firstBinomial);
+            const second = parseBinomial(currentProblem.secondBinomial);
+            
+            // F - First terms
+            const firstTerm = multiplyTerms(first.first, second.first);
+            
+            // O - Outer terms
+            const outerTerm = multiplyTerms(first.first, second.second);
+            
+            // I - Inner terms
+            const innerTerm = multiplyTerms(first.second, second.first);
+            
+            // L - Last terms
+            const lastTerm = multiplyTerms(first.second, second.second);
+            
+            // Store the results
+            gameState.foilElements = [
+                formatTerm(firstTerm),
+                formatTerm(outerTerm),
+                formatTerm(innerTerm),
+                formatTerm(lastTerm)
+            ];
+            
+            // Calculate the full result
+            gameState.result = `${gameState.foilElements[0]} + ${gameState.foilElements[1]} + ${gameState.foilElements[2]} + ${gameState.foilElements[3]}`;
+            
+            // Fix the display for negative terms
+            gameState.result = gameState.result.replace(/\+ -/g, "- ");
+            
+            // Calculate the simplified form
+            gameState.simplified = simplifyExpression([firstTerm, outerTerm, innerTerm, lastTerm]);
+        }
+        
+        // Multiply two terms
+        function multiplyTerms(term1, term2) {
+            const hasVariable1 = term1.includes("x") || term1.includes("y");
+            const hasVariable2 = term2.includes("x") || term2.includes("y");
+            
+            let coefficient1, variable1;
+            let coefficient2, variable2;
+            
+            // Parse first term
+            if (hasVariable1) {
+                const match = term1.match(/(-?\d*)([xy])/);
+                coefficient1 = match[1] === "-" ? -1 : (match[1] === "" ? 1 : parseInt(match[1]));
+                variable1 = match[2];
+            } else {
+                coefficient1 = parseInt(term1);
+                variable1 = "";
+            }
+            
+            // Parse second term
+            if (hasVariable2) {
+                const match = term2.match(/(-?\d*)([xy])/);
+                coefficient2 = match[1] === "-" ? -1 : (match[1] === "" ? 1 : parseInt(match[1]));
+                variable2 = match[2];
+            } else {
+                coefficient2 = parseInt(term2);
+                variable2 = "";
+            }
+            
+            // Calculate the product
+            const newCoefficient = coefficient1 * coefficient2;
+            let newVariable = "";
+            
+            if (variable1 && variable2) {
+                if (variable1 === variable2) {
+                    newVariable = `${variable1}²`;
+                } else {
+                    newVariable = `${variable1}${variable2}`;
+                }
+            } else {
+                newVariable = variable1 || variable2;
+            }
+            
+            return {
+                coefficient: newCoefficient,
+                variable: newVariable
+            };
+        }
+        
+        // Format a term for display
+        function formatTerm(term) {
+            const { coefficient, variable } = term;
+            
+            if (variable === "") {
+                return `${coefficient}`;
+            } else if (coefficient === 1) {
+                return variable;
+            } else if (coefficient === -1) {
+                return `-${variable}`;
+            } else {
+                return `${coefficient}${variable}`;
+            }
+        }
+        
+        // Simplify an expression by combining like terms
+        function simplifyExpression(terms) {
+            const likeTerms = {};
+            
+            // Group like terms
+            for (const term of terms) {
+                const { coefficient, variable } = term;
+                const key = variable || "constant";
+                
+                if (likeTerms[key]) {
+                    likeTerms[key] += coefficient;
+                } else {
+                    likeTerms[key] = coefficient;
+                }
+            }
+            
+            // Format the result
+            let result = "";
+            
+            // Handle constants first (no variables)
+            if (likeTerms["constant"]) {
+                result += likeTerms["constant"];
+            }
+            
+            // Handle single variables (x, y)
+            for (const variable of ["x", "y"]) {
+                if (likeTerms[variable]) {
+                    const coefficient = likeTerms[variable];
+                    
+                    if (coefficient !== 0) {
+                        if (result !== "" && coefficient > 0) {
+                            result += " + ";
+                        } else if (result !== "" && coefficient < 0) {
+                            result += " - ";
+                        }
+                        
+                        const absCoefficient = Math.abs(coefficient);
+                        
+                        if (result === "" && coefficient < 0) {
+                            result += "-";
+                        }
+                        
+                        if (absCoefficient === 1) {
+                            result += variable;
+                        } else {
+                            result += `${absCoefficient}${variable}`;
+                        }
+                    }
+                }
+            }
+            
+            // Handle squared variables (x², y²)
+            for (const variable of ["x²", "y²"]) {
+                if (likeTerms[variable]) {
+                    const coefficient = likeTerms[variable];
+                    
+                    if (coefficient !== 0) {
+                        if (result !== "" && coefficient > 0) {
+                            result += " + ";
+                        } else if (result !== "" && coefficient < 0) {
+                            result += " - ";
+                        }
+                        
+                        const absCoefficient = Math.abs(coefficient);
+                        
+                        if (result === "" && coefficient < 0) {
+                            result += "-";
+                        }
+                        
+                        if (absCoefficient === 1) {
+                            result += variable;
+                        } else {
+                            result += `${absCoefficient}${variable}`;
+                        }
+                    }
+                }
+            }
+            
+            // Handle mixed variables (xy)
+            for (const variable of ["xy", "yx"]) {
+                if (likeTerms[variable]) {
+                    const coefficient = likeTerms[variable];
+                    
+                    if (coefficient !== 0) {
+                        if (result !== "" && coefficient > 0) {
+                            result += " + ";
+                        } else if (result !== "" && coefficient < 0) {
+                            result += " - ";
+                        }
+                        
+                        const absCoefficient = Math.abs(coefficient);
+                        
+                        if (result === "" && coefficient < 0) {
+                            result += "-";
+                        }
+                        
+                        if (absCoefficient === 1) {
+                            result += "xy";
+                        } else {
+                            result += `${absCoefficient}xy`;
+                        }
+                    }
+                }
+            }
+            
+            // If result is empty, return 0
+            return result || "0";
+        }
+        
+        // Update the problem display with colored terms
+        function updateProblemDisplay() {
+            elements.problemDisplay.innerHTML = '';
+            
+            // First parenthesis
+            const openParen1 = document.createElement('span');
+            openParen1.textContent = '(';
+            elements.problemDisplay.appendChild(openParen1);
+            
+            // First term of first binomial
+            const firstTerm1 = document.createElement('span');
+            firstTerm1.textContent = currentProblem.firstParts.first;
+            firstTerm1.className = 'term first';
+            firstTerm1.dataset.term = 'firstFirst';
+            elements.problemDisplay.appendChild(firstTerm1);
+            
+            // Operator
+            const operator1 = document.createElement('span');
+            operator1.textContent = currentProblem.firstParts.operator;
+            elements.problemDisplay.appendChild(operator1);
+            
+            // Second term of first binomial
+            const secondTerm1 = document.createElement('span');
+            secondTerm1.textContent = currentProblem.firstParts.second;
+            secondTerm1.className = 'term inner';
+            secondTerm1.dataset.term = 'firstSecond';
+            elements.problemDisplay.appendChild(secondTerm1);
+            
+            // Close parenthesis
+            const closeParen1 = document.createElement('span');
+            closeParen1.textContent = ')';
+            elements.problemDisplay.appendChild(closeParen1);
+            
+            // Multiplication symbol
+            const multSymbol = document.createElement('span');
+            multSymbol.textContent = ' × ';
+            multSymbol.style.fontWeight = 'bold';
+            elements.problemDisplay.appendChild(multSymbol);
+            
+            // Second parenthesis
+            const openParen2 = document.createElement('span');
+            openParen2.textContent = '(';
+            elements.problemDisplay.appendChild(openParen2);
+            
+            // First term of second binomial
+            const firstTerm2 = document.createElement('span');
+            firstTerm2.textContent = currentProblem.secondParts.first;
+            firstTerm2.className = 'term outer';
+            firstTerm2.dataset.term = 'secondFirst';
+            elements.problemDisplay.appendChild(firstTerm2);
+            
+            // Operator
+            const operator2 = document.createElement('span');
+            operator2.textContent = currentProblem.secondParts.operator;
+            elements.problemDisplay.appendChild(operator2);
+            
+            // Second term of second binomial
+            const secondTerm2 = document.createElement('span');
+            secondTerm2.textContent = currentProblem.secondParts.second;
+            secondTerm2.className = 'term last';
+            secondTerm2.dataset.term = 'secondSecond';
+            elements.problemDisplay.appendChild(secondTerm2);
+            
+            // Close parenthesis
+            const closeParen2 = document.createElement('span');
+            closeParen2.textContent = ')';
+            elements.problemDisplay.appendChild(closeParen2);
+        }
+        
+        // Reset bug buttons
+        function resetBugButtons() {
+            elements.frankieButton.disabled = true;
+            elements.ollieButton.disabled = true;
+            elements.izzyButton.disabled = true;
+            elements.lennyButton.disabled = true;
+            
+            // Enable only the button for the current step
+            if (gameState.currentStep === 1) {
+                elements.frankieButton.disabled = false;
+            } else if (gameState.currentStep === 2) {
+                elements.ollieButton.disabled = false;
+            } else if (gameState.currentStep === 3) {
+                elements.izzyButton.disabled = false;
+            } else if (gameState.currentStep === 4) {
+                elements.lennyButton.disabled = false;
+            }
+        }
+        
+        // Activate a bug character
+        function activateBugCharacter(character, step) {
+            // Make sure we're on the right step and the sketch is initialized
+            if (gameState.currentStep !== step || !sketch) return;
+            
+            sounds.click.play();
+            
+            // Disable the button
+            document.getElementById(`${character}-button`).disabled = true;
+            
+            // Activate the character
+            sketch.activateCharacter(character, true);
+            
+            // Handle the character's movement based on FOIL step
+            if (character === 'frankie') {
+                handleFrankieMovement();
+            } else if (character === 'ollie') {
+                handleOllieMovement();
+            } else if (character === 'izzy') {
+                handleIzzyMovement();
+            } else if (character === 'lenny') {
+                handleLennyMovement();
+            }
+            
+            // Enable the next step button
+            elements.nextStepButton.disabled = false;
+        }
+        
+        // Handle Frankie's movement (First terms)
+        function handleFrankieMovement() {
+            const firstBoxPos = sketch.getBinomialBoxPosition('first');
+            const secondBoxPos = sketch.getBinomialBoxPosition('second');
+            const resultBoxPos = sketch.getFoilBoxPosition('first');
+            
+            // Highlight the terms
+            document.querySelector('[data-term="firstFirst"]').classList.add('highlight');
+            document.querySelector('[data-term="secondFirst"]').classList.add('highlight');
+            
+            // Draw arrow connecting first terms
+            createArrow(
+                firstBoxPos.centerX, 
+                firstBoxPos.centerY, 
+                secondBoxPos.centerX, 
+                secondBoxPos.centerY, 
+                '#ffcdd2',
+                'first-arrow'
+            );
+            
+            // Animate Frankie to go to first term, then second term, then result box
+            const charPos = sketch.getCharacterPosition('frankie');
+            const duration = 60 / gameState.speed;
+            
+            // First move to the first term
+            sketch.moveCharacterTo('frankie', firstBoxPos.centerX, firstBoxPos.centerY - 40, duration);
+            
+            // Play buzz sound
+            setTimeout(() => sounds.buzz.play(), duration * 30);
+            
+            // Then after delay, move to second term
+            setTimeout(() => {
+                sketch.moveCharacterTo('frankie', secondBoxPos.centerX, secondBoxPos.centerY - 40, duration);
+                
+                // Show the arrow
+                document.getElementById('first-arrow').classList.add('visible');
+                
+                // Play buzz sound
+                setTimeout(() => sounds.buzz.play(), duration * 30);
+                
+                // Then after delay, move to result box
+                setTimeout(() => {
+                    sketch.moveCharacterTo('frankie', resultBoxPos.centerX, resultBoxPos.centerY - 30, duration);
+                    
+                    // Update character message
+                    elements.characterMessage.innerHTML = "<strong>Frankie First says:</strong><br>'First things first! I multiply the first terms: " + 
+                        currentProblem.firstParts.first + " × " + 
+                        currentProblem.secondParts.first + " = " + 
+                        gameState.foilElements[0] + "'";
+                    
+                    // Then return to starting position
+                    setTimeout(() => {
+                        sketch.moveCharacterTo('frankie', charPos.x, charPos.y, duration);
+                        sketch.activateCharacter('frankie', false);
+                    }, duration * 50);
+                }, duration * 50);
+            }, duration * 50);
+        }
+        
+        // Handle Ollie's movement (Outer terms)
+        function handleOllieMovement() {
+            const firstBoxPos = sketch.getBinomialBoxPosition('first');
+            const secondBoxPos = sketch.getBinomialBoxPosition('second');
+            const resultBoxPos = sketch.getFoilBoxPosition('outer');
+            
+            // Highlight the terms
+            document.querySelector('[data-term="firstFirst"]').classList.add('highlight');
+            document.querySelector('[data-term="secondSecond"]').classList.add('highlight');
+            
+            // Draw arrow connecting outer terms
+            createArrow(
+                firstBoxPos.centerX, 
+                firstBoxPos.centerY, 
+                secondBoxPos.centerX + secondBoxPos.x2 - secondBoxPos.x1, 
+                secondBoxPos.centerY, 
+                '#fff9c4',
+                'outer-arrow',
+                true
+            );
+            
+            // Animate Ollie to fly in curves from first term to last term of second binomial
+            const charPos = sketch.getCharacterPosition('ollie');
+            const duration = 60 / gameState.speed;
+            
+            // First move to the first term
+            sketch.moveCharacterTo('ollie', firstBoxPos.centerX, firstBoxPos.centerY - 40, duration);
+            
+            // Play buzz sound
+            setTimeout(() => sounds.buzz.play(), duration * 30);
+            
+            // Then after delay, move in an arc to last term of second binomial
+            setTimeout(() => {
+                // Show the arrow
+                document.getElementById('outer-arrow').classList.add('visible');
+                
+                // Create a curved path for Ollie
+                const controlX = (firstBoxPos.centerX + secondBoxPos.centerX) / 2;
+                const controlY = Math.min(firstBoxPos.centerY, secondBoxPos.centerY) - 80;
+                
+                // Animate along the path - simplified version to reduce complexity
+                sketch.moveCharacterTo('ollie', secondBoxPos.x2, secondBoxPos.centerY - 40, duration * 2);
+                
+                // Play buzz sound
+                setTimeout(() => sounds.buzz.play(), duration * 30);
+                
+                // Then move to the result box
+                setTimeout(() => {
+                    sketch.moveCharacterTo('ollie', resultBoxPos.centerX, resultBoxPos.centerY - 30, duration);
+                    
+                    // Update character message
+                    elements.characterMessage.innerHTML = "<strong>Ollie Outer says:</strong><br>'Outside circles! I connect the outside terms: " + 
+                        currentProblem.firstParts.first + " × " + 
+                        currentProblem.secondParts.second + " = " + 
+                        gameState.foilElements[1] + "'";
+                    
+                    // Then return to starting position
+                    setTimeout(() => {
+                        sketch.moveCharacterTo('ollie', charPos.x, charPos.y, duration);
+                        sketch.activateCharacter('ollie', false);
+                    }, duration * 50);
+                }, duration * 2 * 16.67);
+            }, duration * 50);
+        }
+        
+        // Handle Izzy's movement (Inner terms)
+        function handleIzzyMovement() {
+            const firstBoxPos = sketch.getBinomialBoxPosition('first');
+            const secondBoxPos = sketch.getBinomialBoxPosition('second');
+            const resultBoxPos = sketch.getFoilBoxPosition('inner');
+            
+            // Highlight the terms
+            document.querySelector('[data-term="firstSecond"]').classList.add('highlight');
+            document.querySelector('[data-term="secondFirst"]').classList.add('highlight');
+            
+            // Draw arrow connecting inner terms
+            createArrow(
+                firstBoxPos.x2 - (firstBoxPos.x2 - firstBoxPos.x1) * 0.3, 
+                firstBoxPos.centerY, 
+                secondBoxPos.x1 + (secondBoxPos.x2 - secondBoxPos.x1) * 0.3, 
+                secondBoxPos.centerY, 
+                '#c8e6c9',
+                'inner-arrow'
+            );
+            
+            // Animate Izzy to crawl from last term of first binomial to first term of second binomial
+            const charPos = sketch.getCharacterPosition('izzy');
+            const duration = 60 / gameState.speed;
+            
+            // First move to the bottom of the first binomial box
+            sketch.moveCharacterTo('izzy', firstBoxPos.x2 - 30, firstBoxPos.y2, duration);
+            
+            // Then after delay, move along the ground to second binomial
+            setTimeout(() => {
+                // Show the arrow
+                document.getElementById('inner-arrow').classList.add('visible');
+                
+                // Crawl on the ground between binomials
+                sketch.moveCharacterTo('izzy', secondBoxPos.x1 + 30, secondBoxPos.y2, duration * 1.5);
+                
+                // Then climb up to the second binomial
+                setTimeout(() => {
+                    sketch.moveCharacterTo('izzy', secondBoxPos.x1 + 30, secondBoxPos.centerY, duration);
+                    
+                    // Then move to result box
+                    setTimeout(() => {
+                        sketch.moveCharacterTo('izzy', resultBoxPos.centerX, resultBoxPos.centerY - 30, duration);
+                        
+                        // Update character message
+                        elements.characterMessage.innerHTML = "<strong>Izzy Inner says:</strong><br>'Inner connections! I connect the inner terms: " + 
+                            currentProblem.firstParts.second + " × " + 
+                            currentProblem.secondParts.first + " = " + 
+                            gameState.foilElements[2] + "'";
+                        
+                        // Then return to starting position
+                        setTimeout(() => {
+                            sketch.moveCharacterTo('izzy', charPos.x, charPos.y, duration);
+                            sketch.activateCharacter('izzy', false);
+                        }, duration * 50);
+                    }, duration * 40);
+                }, duration * 1.5 * 16.67);
+            }, duration * 30);
+        }
+        
+        // Handle Lenny's movement (Last terms)
+        function handleLennyMovement() {
+            const firstBoxPos = sketch.getBinomialBoxPosition('first');
+            const secondBoxPos = sketch.getBinomialBoxPosition('second');
+            const resultBoxPos = sketch.getFoilBoxPosition('last');
+            
+            // Highlight the terms
+            document.querySelector('[data-term="firstSecond"]').classList.add('highlight');
+            document.querySelector('[data-term="secondSecond"]').classList.add('highlight');
+            
+            // Draw arrow connecting last terms
+            createArrow(
+                firstBoxPos.x2 - (firstBoxPos.x2 - firstBoxPos.x1) * 0.3, 
+                firstBoxPos.centerY, 
+                secondBoxPos.x2 - (secondBoxPos.x2 - secondBoxPos.x1) * 0.3, 
+                secondBoxPos.centerY, 
+                '#bbdefb',
+                'last-arrow',
+                true
+            );
+            
+            // Animate Lenny to go to last term of first binomial, then last term of second binomial
+            const charPos = sketch.getCharacterPosition('lenny');
+            const duration = 60 / gameState.speed;
+            
+            // First move to the last term of first binomial
+            sketch.moveCharacterTo('lenny', firstBoxPos.x2 - 30, firstBoxPos.centerY - 40, duration);
+            
+            // Play buzz sound
+            setTimeout(() => sounds.buzz.play(), duration * 30);
+            
+            // Then after delay, move to last term of second binomial
+            setTimeout(() => {
+                sketch.moveCharacterTo('lenny', secondBoxPos.x2 - 30, secondBoxPos.centerY - 40, duration);
+                
+                // Show the arrow
+                document.getElementById('last-arrow').classList.add('visible');
+                
+                // Play buzz sound
+                setTimeout(() => sounds.buzz.play(), duration * 30);
+                
+                // Then move to result box
+                setTimeout(() => {
+                    sketch.moveCharacterTo('lenny', resultBoxPos.centerX, resultBoxPos.centerY - 30, duration);
+                    
+                    // Update character message
+                    elements.characterMessage.innerHTML = "<strong>Lenny Last says:</strong><br>'Last but not least! I multiply the last terms: " + 
+                        currentProblem.firstParts.second + " × " + 
+                        currentProblem.secondParts.second + " = " + 
+                        gameState.foilElements[3] + "'";
+                    
+                    // Then return to starting position
+                    setTimeout(() => {
+                        sketch.moveCharacterTo('lenny', charPos.x, charPos.y, duration);
+                        sketch.activateCharacter('lenny', false);
+                    }, duration * 50);
+                }, duration * 50);
+            }, duration * 50);
+        }
+        
+        // Create an arrow between points
+        function createArrow(x1, y1, x2, y2, color, id, curved = false) {
+            // Create an SVG arrow
+            const arrow = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            
+            let pathData = "";
+            
+            if (curved) {
+                // Create a curved path
+                const controlX = (x1 + x2) / 2;
+                const controlY = Math.min(y1, y2) - 40;
+                pathData = `M ${x1} ${y1} Q ${controlX} ${controlY}, ${x2} ${y2}`;
+            } else {
+                // Create a straight path
+                pathData = `M ${x1} ${y1} L ${x2} ${y2}`;
+            }
+            
+            arrow.setAttribute("d", pathData);
+            arrow.setAttribute("stroke", color);
+            arrow.setAttribute("stroke-width", "4");
+            arrow.setAttribute("fill", "none");
+            arrow.setAttribute("marker-end", "url(#arrowhead)");
+            arrow.classList.add("arrow");
+            arrow.id = id;
+            
+            // Create arrowhead if it doesn't exist
+            if (!document.getElementById("arrowhead")) {
+                const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+                const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+                marker.setAttribute("id", "arrowhead");
+                marker.setAttribute("markerWidth", "10");
+                marker.setAttribute("markerHeight", "7");
+                marker.setAttribute("refX", "10");
+                marker.setAttribute("refY", "3.5");
+                marker.setAttribute("orient", "auto");
+                
+                const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                polygon.setAttribute("points", "0 0, 10 3.5, 0 7");
+                polygon.setAttribute("fill", "#333");
+                
+                marker.appendChild(polygon);
+                defs.appendChild(marker);
+                elements.arrowsContainer.appendChild(defs);
+            }
+            
+            elements.arrowsContainer.appendChild(arrow);
+            arrows.push(arrow);
+        }
+        
+        // Move to the previous step in the FOIL process
+        function previousStep() {
+            sounds.click.play();
+            
+            if (gameState.currentStep > 0) {
+                gameState.currentStep--;
+                updateUI();
+                updateStepIndicator();
+                resetBugButtons();
+            }
+            
+            // Enable/disable buttons as needed
+            elements.prevStepButton.disabled = gameState.currentStep === 0;
+            elements.nextStepButton.disabled = false;
+        }
+        
+        // Move to the next step in the FOIL process
+        function nextStep() {
+            sounds.click.play();
+            
+            if (gameState.currentStep < gameState.steps.length - 1) {
+                gameState.currentStep++;
+                updateUI();
+                updateStepIndicator();
+                resetBugButtons();
+            }
+            
+            // Enable/disable buttons as needed
+            elements.prevStepButton.disabled = false;
+            elements.nextStepButton.disabled = gameState.currentStep === gameState.steps.length - 1;
+            
+            // If we're at the end, show the quiz
+            if (gameState.currentStep === gameState.steps.length - 1) {
+                // Final step - show all four bugs together
+                elements.characterMessage.innerHTML = "<strong>Great job!</strong><br>Now we add all the terms together: " + 
+                    gameState.foilElements[0] + " + " + gameState.foilElements[1] + " + " + 
+                    gameState.foilElements[2] + " + " + gameState.foilElements[3] + " = " + gameState.simplified;
+                
+                setTimeout(() => {
+                    elements.quizSection.style.display = "block";
+                    startQuiz();
+                }, 1500);
+            }
+        }
+        
+        // Toggle explanation visibility
+        function toggleExplanation() {
+            sounds.click.play();
+            
+            if (elements.explanationBox.style.display === "none" || elements.explanationBox.style.display === "") {
+                elements.explanationBox.style.display = "block";
+                elements.showExplanationButton.textContent = "Hide Explanation";
+            } else {
+                elements.explanationBox.style.display = "none";
+                elements.showExplanationButton.textContent = "Show Explanation";
+            }
+        }
+        
+        // Update the UI based on the current step
+        function updateUI() {
+            // Reset term highlights
+            document.querySelectorAll('.term').forEach(term => {
+                term.classList.remove('highlight');
+            });
+            
+            // Deactivate all characters
+            if (sketch) {
+                sketch.activateCharacter('frankie', false);
+                sketch.activateCharacter('ollie', false);
+                sketch.activateCharacter('izzy', false);
+                sketch.activateCharacter('lenny', false);
+            }
+            
+            // Hide all arrows
+            arrows.forEach(arrow => {
+                arrow.classList.remove('visible');
+            });
+            
+            // Update based on current step
+            switch (gameState.currentStep) {
+                case 0: // Intro
+                    elements.characterMessage.innerHTML = "<strong>Welcome to the Binomial Garden!</strong><br>We're going to multiply these binomials using the FOIL method!";
+                    break;
+                    
+                case 1: // First
+                    elements.characterMessage.innerHTML = "<strong>Step 1: First Terms</strong><br>Click on Frankie Butterfly to help multiply the first terms!";
+                    break;
+                    
+                case 2: // Outer
+                    elements.characterMessage.innerHTML = "<strong>Step 2: Outer Terms</strong><br>Click on Ollie Bee to help multiply the outer terms!";
+                    break;
+                    
+                case 3: // Inner
+                    elements.characterMessage.innerHTML = "<strong>Step 3: Inner Terms</strong><br>Click on Izzy Ant to help multiply the inner terms!";
+                    break;
+                    
+                case 4: // Last
+                    elements.characterMessage.innerHTML = "<strong>Step 4: Last Terms</strong><br>Click on Lenny Ladybug to help multiply the last terms!";
+                    break;
+                    
+                case 5: // Result
+                    elements.characterMessage.innerHTML = "<strong>Final Step: Add Everything</strong><br>Now we add all the terms together: " + 
+                        gameState.foilElements[0] + " + " + gameState.foilElements[1] + " + " + 
+                        gameState.foilElements[2] + " + " + gameState.foilElements[3] + " = " + gameState.simplified;
+                    break;
+            }
+            
+            // Update explanation
+            updateExplanation();
+        }
+        
+        // Update the explanation based on the current level and step
+        function updateExplanation() {
+            const level = gameState.explanationLevel;
+            const step = gameState.currentStep;
+            
+            // Basic explanation for all levels
+            let basicText = "";
+            
+            switch (step) {
+                case 0:
+                    basicText = `<p>We're going to multiply (${currentProblem.firstBinomial}) × (${currentProblem.secondBinomial}) using the FOIL method!</p>`;
+                    break;
+                    
+                case 1:
+                    basicText = `<p>Step 1: <strong>F</strong> is for <strong>First</strong>.</p>
+                                <p>We multiply the first terms: ${currentProblem.firstParts.first} × ${currentProblem.secondParts.first} = ${gameState.foilElements[0]}</p>`;
+                    break;
+                    
+                case 2:
+                    basicText = `<p>Step 2: <strong>O</strong> is for <strong>Outer</strong>.</p>
+                                <p>We multiply the outer terms: ${currentProblem.firstParts.first} × ${currentProblem.secondParts.second} = ${gameState.foilElements[1]}</p>`;
+                    break;
+                    
+                case 3:
+                    basicText = `<p>Step 3: <strong>I</strong> is for <strong>Inner</strong>.</p>
+                                <p>We multiply the inner terms: ${currentProblem.firstParts.second} × ${currentProblem.secondParts.first} = ${gameState.foilElements[2]}</p>`;
+                    break;
+                    
+                case 4:
+                    basicText = `<p>Step 4: <strong>L</strong> is for <strong>Last</strong>.</p>
+                                <p>We multiply the last terms: ${currentProblem.firstParts.second} × ${currentProblem.secondParts.second} = ${gameState.foilElements[3]}</p>`;
+                    break;
+                    
+                case 5:
+                    basicText = `<p>Step 5: Add all the pieces together!</p>
+                                <p>${gameState.foilElements[0]} + ${gameState.foilElements[1]} + ${gameState.foilElements[2]} + ${gameState.foilElements[3]} = ${gameState.result}</p>`;
+                    if (gameState.simplified !== gameState.result) {
+                        basicText += `<p>We can simplify this to: ${gameState.simplified}</p>`;
+                    }
+                    break;
+            }
+            
+            elements.basicExplanation.innerHTML = basicText;
+            
+            // Advanced explanation based on level
+            let advancedText = "";
+            
+            if (level === "medium" || level === "advanced" || level === "expert") {
+                switch (step) {
+                    case 0:
+                        advancedText = `<p>FOIL is a special pattern to remember when multiplying two binomials. A binomial is a math expression with two terms, like (a + b).</p>`;
+                        break;
+                        
+                    case 1:
+                        advancedText = `<p>The F in FOIL stands for "First." We multiply the first term of each binomial.</p>
+                                      <p>In our example, the first terms are ${currentProblem.firstParts.first} and ${currentProblem.secondParts.first}.</p>`;
+                        break;
+                        
+                    case 2:
+                        advancedText = `<p>The O in FOIL stands for "Outer." We multiply the outer terms - the first term of the first binomial and the last term of the second binomial.</p>
+                                      <p>In our example, the outer terms are ${currentProblem.firstParts.first} and ${currentProblem.secondParts.second}.</p>`;
+                        break;
+                        
+                    case 3:
+                        advancedText = `<p>The I in FOIL stands for "Inner." We multiply the inner terms - the last term of the first binomial and the first term of the second binomial.</p>
+                                      <p>In our example, the inner terms are ${currentProblem.firstParts.second} and ${currentProblem.secondParts.first}.</p>`;
+                        break;
+                        
+                    case 4:
+                        advancedText = `<p>The L in FOIL stands for "Last." We multiply the last term of each binomial.</p>
+                                      <p>In our example, the last terms are ${currentProblem.firstParts.second} and ${currentProblem.secondParts.second}.</p>`;
+                        break;
+                        
+                    case 5:
+                        advancedText = `<p>Now we combine all the terms by adding them together. This gives us the complete product of the two binomials.</p>`;
+                        
+                        if (gameState.simplified !== gameState.result) {
+                            advancedText += `<p>Sometimes we can simplify our answer by combining "like terms" - terms with the same variables. For example, 2x + 3x = 5x.</p>`;
+                        }
+                        break;
+                }
+            }
+            
+            // Add more advanced content for higher levels
+            if (level === "advanced" || level === "expert") {
+                switch (step) {
+                    case 0:
+                        advancedText += `<p>When we multiply two binomials (a + b)(c + d), we get a product with four terms: ac + ad + bc + bd. The FOIL method helps us remember the pattern.</p>`;
+                        break;
+                        
+                    case 5:
+                        advancedText += `<p>The distributive property is what allows us to multiply binomials. It states that a(b + c) = ab + ac. When we apply this twice, we get (a + b)(c + d) = a(c + d) + b(c + d) = ac + ad + bc + bd, which is exactly what FOIL helps us calculate.</p>`;
+                        break;
+                }
+            }
+            
+            // Add PhD level simplified content
+            if (level === "expert") {
+                switch (step) {
+                    case 0:
+                        advancedText += `<p>The FOIL method is a specific application of the distributive property of multiplication over addition in algebra. It's conceptually similar to how we multiply multi-digit numbers by considering place values.</p>`;
+                        break;
+                        
+                    case 5:
+                        advancedText += `<p>In more advanced mathematics, this concept extends to multiplying polynomials of any degree, matrix multiplication, and even convolution in signal processing. The core idea of distributing the multiplication across all term combinations remains the same.</p>`;
+                        
+                        advancedText += `<p>Binomial multiplication is also foundational for understanding the binomial theorem, which describes patterns in (a + b)ⁿ for any positive integer n. This has applications in probability, statistics, and combinatorics.</p>`;
+                        break;
+                }
+            }
+            
+            elements.advancedExplanation.innerHTML = advancedText;
+        }
+        
+        // Update the step indicator
+        function updateStepIndicator() {
+            const steps = document.querySelectorAll('.step');
+            
+            steps.forEach((step, index) => {
+                if (index === gameState.currentStep) {
+                    step.classList.add('active');
+                    step.classList.remove('completed');
+                } else if (index < gameState.currentStep) {
+                    step.classList.remove('active');
+                    step.classList.add('completed');
+                } else {
+                    step.classList.remove('active');
+                    step.classList.remove('completed');
+                }
+            });
+        }
+        
+        // Show help panel
+        function showHelp() {
+            elements.overlay.style.display = "block";
+            elements.helpPanel.style.display = "block";
+            sounds.pop.play();
+        }
+        
+        // Hide help panel
+        function hideHelp() {
+            elements.overlay.style.display = "none";
+            elements.helpPanel.style.display = "none";
+            sounds.click.play();
+        }
+        
+        // Generate quiz questions
+        function generateQuizQuestions() {
+            quizQuestions = [];
+            
+            // Question 1: What is the result of multiplying the first terms?
+            quizQuestions.push({
+                question: `What is the result of multiplying the FIRST terms of (${currentProblem.firstBinomial}) and (${currentProblem.secondBinomial})?`,
+                options: [
+                    gameState.foilElements[0],
+                    gameState.foilElements[1],
+                    gameState.foilElements[2],
+                    gameState.foilElements[3]
+                ],
+                correctIndex: 0,
+                explanation: `The first terms are ${currentProblem.firstParts.first} and ${currentProblem.secondParts.first}, which multiply to give ${gameState.foilElements[0]}.`
+            });
+            
+            // Question 2: What is the final result?
+            const wrongResults = [
+                generateWrongResult(),
+                generateWrongResult(),
+                generateWrongResult()
+            ];
+            
+            quizQuestions.push({
+                question: `What is the final result of (${currentProblem.firstBinomial}) × (${currentProblem.secondBinomial})?`,
+                options: [
+                    gameState.simplified,
+                    wrongResults[0],
+                    wrongResults[1],
+                    wrongResults[2]
+                ],
+                correctIndex: 0,
+                explanation: `Using FOIL: (${currentProblem.firstBinomial}) × (${currentProblem.secondBinomial}) = ${gameState.foilElements[0]} + ${gameState.foilElements[1]} + ${gameState.foilElements[2]} + ${gameState.foilElements[3]} = ${gameState.simplified}`
+            });
+            
+            // Question 3: What does one of the letters in FOIL stand for?
+            const foilLetters = [
+                { letter: "F", meaning: "First" },
+                { letter: "O", meaning: "Outer" },
+                { letter: "I", meaning: "Inner" },
+                { letter: "L", meaning: "Last" }
+            ];
+            
+            const randomFoilLetter = foilLetters[Math.floor(Math.random() * foilLetters.length)];
+            
+            quizQuestions.push({
+                question: `What does the '${randomFoilLetter.letter}' in FOIL stand for?`,
+                options: [
+                    randomFoilLetter.meaning,
+                    "Forward",
+                    "Function",
+                    "Factor"
+                ].filter(option => option !== randomFoilLetter.meaning).slice(0, 3),
+                correctIndex: 0,
+                explanation: `The '${randomFoilLetter.letter}' in FOIL stands for '${randomFoilLetter.meaning}', meaning we multiply the ${randomFoilLetter.meaning.toLowerCase()} terms of the two binomials.`
+            });
+            
+            // Make sure the correct answer is at index 0
+            quizQuestions[2].options.unshift(randomFoilLetter.meaning);
+            
+            // Question 4: Match the FOIL step
+            const randomElement = Math.floor(Math.random() * 4);
+            const foilSteps = ["First", "Outer", "Inner", "Last"];
+            
+            quizQuestions.push({
+                question: `Which FOIL step would give us the term ${gameState.foilElements[randomElement]}?`,
+                options: foilSteps,
+                correctIndex: randomElement,
+                explanation: `The ${foilSteps[randomElement]} step gives us ${gameState.foilElements[randomElement]}.`
+            });
+            
+            // Add more questions based on difficulty
+            if (gameState.difficulty >= 3) {
+                // Question about like terms
+                if (gameState.simplified !== gameState.result) {
+                    quizQuestions.push({
+                        question: "When simplifying a binomial product, what do we combine?",
+                        options: [
+                            "Like terms",
+                            "Unlike terms",
+                            "Only negative terms",
+                            "Only positive terms"
+                        ],
+                        correctIndex: 0,
+                        explanation: "When simplifying, we combine 'like terms' - terms with the same variables, such as 2x and 3x, which combine to 5x."
+                    });
+                }
+                
+                // Question about the distributive property
+                quizQuestions.push({
+                    question: "The FOIL method is based on which mathematical property?",
+                    options: [
+                        "Distributive property",
+                        "Commutative property",
+                        "Associative property",
+                        "Identity property"
+                    ],
+                    correctIndex: 0,
+                    explanation: "The FOIL method is based on the distributive property, which states that a(b + c) = ab + ac."
+                });
+            }
+            
+            // Shuffle options for each question
+            quizQuestions.forEach(q => {
+                const correctOption = q.options[q.correctIndex];
+                const shuffledOptions = shuffleArray([...q.options]);
+                q.correctIndex = shuffledOptions.indexOf(correctOption);
+                q.options = shuffledOptions;
+            });
+            
+            // Shuffle question order
+            quizQuestions = shuffleArray(quizQuestions);
+        }
+        
+        // Generate a wrong result for quiz options
+        function generateWrongResult() {
+            const terms = gameState.foilElements;
+            let modifiedTerms;
+            
+            // Choose a way to make it wrong
+            const errorType = Math.floor(Math.random() * 3);
+            
+            switch (errorType) {
+                case 0: // Change a sign
+                    const termToChange = Math.floor(Math.random() * terms.length);
+                    modifiedTerms = [...terms];
+                    
+                    // Change the sign of one term
+                    if (modifiedTerms[termToChange].startsWith("-")) {
+                        modifiedTerms[termToChange] = modifiedTerms[termToChange].substring(1);
+                    } else {
+                        modifiedTerms[termToChange] = "-" + modifiedTerms[termToChange];
+                    }
+                    
+                    return simplifyExpression(modifiedTerms.map(term => {
+                        // Convert to parseTerm format
+                        if (term.includes("x") || term.includes("y")) {
+                            const match = term.match(/(-?\d*)([xy]²?)/);
+                            const coefficient = match[1] === "-" ? -1 : (match[1] === "" ? 1 : parseInt(match[1]));
+                            return { coefficient, variable: match[2] };
+                        } else {
+                            return { coefficient: parseInt(term), variable: "" };
+                        }
+                    }));
+                    
+                case 1: // Change a number
+                    const term = Math.floor(Math.random() * terms.length);
+                    modifiedTerms = [...terms];
+                    
+                    // Extract the number from the term
+                    const match = modifiedTerms[term].match(/^(-?\d+)/);
+                    
+                    if (match) {
+                        const number = parseInt(match[0]);
+                        const newNumber = number + (Math.random() > 0.5 ? 1 : -1);
+                        
+                        modifiedTerms[term] = modifiedTerms[term].replace(/^(-?\d+)/, newNumber);
+                    }
+                    
+                    return simplifyExpression(modifiedTerms.map(term => {
+                        // Convert to parseTerm format
+                        if (term.includes("x") || term.includes("y")) {
+                            const match = term.match(/(-?\d*)([xy]²?)/);
+                            const coefficient = match[1] === "-" ? -1 : (match[1] === "" ? 1 : parseInt(match[1]));
+                            return { coefficient, variable: match[2] };
+                        } else {
+                            return { coefficient: parseInt(term), variable: "" };
+                        }
+                    }));
+                    
+                case 2: // Forget a term
+                    const termToRemove = Math.floor(Math.random() * terms.length);
+                    const reducedTerms = terms.filter((_, i) => i !== termToRemove);
+                    
+                    return simplifyExpression(reducedTerms.map(term => {
+                        // Convert to parseTerm format
+                        if (term.includes("x") || term.includes("y")) {
+                            const match = term.match(/(-?\d*)([xy]²?)/);
+                            if (!match) return { coefficient: 0, variable: "" };
+                            const coefficient = match[1] === "-" ? -1 : (match[1] === "" ? 1 : parseInt(match[1]));
+                            return { coefficient, variable: match[2] };
+                        } else {
+                            return { coefficient: parseInt(term), variable: "" };
+                        }
+                    }));
+            }
+        }
+        
+        // Shuffle an array
+        function shuffleArray(array) {
+            const newArray = [...array];
+            
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            
+            return newArray;
+        }
+        
+        // Start the quiz
+        function startQuiz() {
+            quizActive = true;
+            currentQuizIndex = 0;
+            selectedOption = null;
+            
+            displayCurrentQuestion();
+        }
+        
+        // Display the current quiz question
+        function displayCurrentQuestion() {
+            const question = quizQuestions[currentQuizIndex];
+            
+            elements.quizQuestion.textContent = question.question;
+            elements.quizOptions.innerHTML = "";
+            
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement("div");
+                optionElement.className = "quiz-option";
+                optionElement.textContent = option;
+                optionElement.dataset.index = index;
+                
+                optionElement.addEventListener("click", () => {
+                    // Remove previous selection
+                    document.querySelectorAll(".quiz-option").forEach(opt => {
+                        opt.classList.remove("selected");
+                    });
+                    
+                    // Highlight the selected option
+                    optionElement.classList.add("selected");
+                    selectedOption = index;
+                    
+                    // Show the check answer button
+                    elements.checkAnswerButton.style.display = "block";
+                    
+                    // Play sound
+                    sounds.click.play();
+                });
+                
+                elements.quizOptions.appendChild(optionElement);
+            });
+            
+            // Reset UI elements
+            elements.quizFeedback.style.display = "none";
+            elements.quizFeedback.className = "feedback";
+            elements.checkAnswerButton.style.display = "none";
+            elements.nextQuestionButton.style.display = "none";
+        }
+        
+        // Check the quiz answer
+        function checkAnswer() {
+            const question = quizQuestions[currentQuizIndex];
+            
+            if (selectedOption === null) return;
+            
+            if (selectedOption === question.correctIndex) {
+                elements.quizFeedback.textContent = "Correct! " + question.explanation;
+                elements.quizFeedback.className = "feedback correct";
+                
+                // Play correct sound
+                sounds.correct.play();
+                
+                // Increase score
+                updateScore(10);
+                
+                // Increase streak
+                currentStreak++;
+                updateStreak();
+                
+                // Add progress towards level
+                updateLevelProgress(10);
+                
+                // Check for combo bonus
+                if (currentStreak >= 3) {
+                    // Add combo bonus
+                    const bonus = Math.floor(currentStreak / 3) * 5;
+                    updateScore(bonus);
+                    
+                    // Show combo multiplier
+                    showComboMessage(Math.floor(currentStreak / 3) + 1);
+                }
+                
+                // Correct answer celebration
+                createSmallCelebration();
+                
+                // Add to correct answers count
+                gameState.correctAnswers++;
+            } else {
+                elements.quizFeedback.textContent = "Not quite. " + question.explanation;
+                elements.quizFeedback.className = "feedback incorrect";
+                
+                // Play incorrect sound
+                sounds.incorrect.play();
+                
+                // Reset streak
+                currentStreak = 0;
+                updateStreak();
+            }
+            
+            elements.quizFeedback.style.display = "block";
+            elements.checkAnswerButton.style.display = "none";
+            
+            // Show next question button if there are more questions
+            if (currentQuizIndex < quizQuestions.length - 1) {
+                elements.nextQuestionButton.style.display = "block";
+                elements.nextQuestionButton.textContent = "Next Question";
+            } else {
+                elements.nextQuestionButton.textContent = "Finish Quiz";
+                elements.nextQuestionButton.style.display = "block";
+            }
+        }
+        
+        // Move to the next quiz question
+        function nextQuizQuestion() {
+            sounds.click.play();
+            
+            currentQuizIndex++;
+            
+            if (currentQuizIndex < quizQuestions.length) {
+                displayCurrentQuestion();
+            } else {
+                // Quiz completed
+                completeQuiz();
+            }
+        }
+        
+        // Complete the quiz and show results
+        function completeQuiz() {
+            // Calculate accuracy
+            const accuracy = Math.round((gameState.correctAnswers / quizQuestions.length) * 100);
+            
+            // Award stars based on accuracy
+            starsEarned = 0;
+            if (accuracy >= 40) starsEarned = 1;
+            if (accuracy >= 70) starsEarned = 2;
+            if (accuracy >= 90) starsEarned = 3;
+            
+            // Update stars display
+            updateStars(starsEarned);
+            
+            // Award bonus points based on stars
+            const starBonus = starsEarned * 20;
+            updateScore(starBonus);
+            
+            // Show completion message
+            elements.quizSection.innerHTML = `
+                <h2>Quiz Completed!</h2>
+                <div style="text-align: center; padding: 20px;">
+                    <p>Great job! You answered ${gameState.correctAnswers} out of ${quizQuestions.length} questions correctly.</p>
+                    <p>Accuracy: ${accuracy}%</p>
+                    <p>Star Bonus: +${starBonus} points</p>
+                    <button id="continue-button">Continue Learning</button>
+                </div>
+            `;
+            
+            document.getElementById("continue-button").addEventListener("click", () => {
+                sounds.click.play();
+                
+                // Check if we should level up
+                if (starsEarned === 3 && gameState.difficulty < 5) {
+                    showNextLevelBanner();
+                } else {
+                    // Generate a new problem
+                    generateNewProblem();
+                    elements.quizSection.style.display = "none";
+                }
+            });
+            
+            // Celebration effect
+            createBigCelebration();
+        }
+        
+        // Show next level banner
+        function showNextLevelBanner() {
+            elements.nextLevelBanner.style.display = "block";
+            elements.overlay.style.display = "block";
+        }
+        
+        // Go to next level
+        function goToNextLevel() {
+            sounds.levelUp.play();
+            
+            // Increase difficulty
+            gameState.difficulty++;
+            elements.difficultySelect.value = gameState.difficulty;
+            
+            // Hide banner
+            elements.nextLevelBanner.style.display = "none";
+            elements.overlay.style.display = "none";
+            
+            // Show level badge
+            elements.newLevelDisplay.textContent = gameState.difficulty;
+            elements.levelBadge.classList.add("show");
+            
+            // Generate new problem
+            generateNewProblem();
+            elements.quizSection.style.display = "none";
+            
+            // Reset progress bar
+            elements.levelProgressBar.style.width = "0%";
+            
+            // Hide level badge after delay
+            setTimeout(() => {
+                elements.levelBadge.classList.remove("show");
+            }, 3000);
+        }
+        
+        // Update score
+        function updateScore(points) {
+            currentScore += points;
+            elements.scoreDisplay.textContent = currentScore;
+            
+            // Create floating score text
+            const scoreText = document.createElement("div");
+            scoreText.textContent = "+" + points;
+            scoreText.style.position = "absolute";
+            scoreText.style.top = "50px";
+            scoreText.style.right = "30px";
+            scoreText.style.color = "#4caf50";
+            scoreText.style.fontWeight = "bold";
+            scoreText.style.fontSize = "24px";
+            scoreText.style.opacity = "1";
+            scoreText.style.transition = "all 1s";
+            document.querySelector(".score-container").appendChild(scoreText);
+            
+            // Animate score text
+            setTimeout(() => {
+                scoreText.style.top = "20px";
+                scoreText.style.opacity = "0";
+                setTimeout(() => {
+                    scoreText.remove();
+                }, 1000);
+            }, 50);
+        }
+        
+        // Update streak counter
+        function updateStreak() {
+            elements.streakCounter.textContent = "Streak: " + currentStreak;
+            
+            // Add visual effect for streak
+            if (currentStreak > 0) {
+                elements.streakCounter.classList.add("highlight");
+                setTimeout(() => {
+                    elements.streakCounter.classList.remove("highlight");
+                }, 1000);
+            }
+        }
+        
+        // Show combo multiplier message
+        function showComboMessage(multiplier) {
+            elements.comboMultiplier.textContent = "Combo x" + multiplier + "!";
+            elements.comboMultiplier.style.display = "block";
+            
+            // Hide after 2 seconds
+            setTimeout(() => {
+                elements.comboMultiplier.style.display = "none";
+            }, 2000);
+        }
+        
+        // Update level progress
+        function updateLevelProgress(points) {
+            // Get current width
+            const currentWidth = parseFloat(elements.levelProgressBar.style.width || "0");
+            
+            // Add points (max 100%)
+            const newWidth = Math.min(currentWidth + points / 2, 100);
+            elements.levelProgressBar.style.width = newWidth + "%";
+        }
+        
+        // Update stars display
+        function updateStars(count) {
+            const stars = document.querySelectorAll('.star');
+            
+            stars.forEach((star, index) => {
+                if (index < count) {
+                    star.classList.add('filled');
+                } else {
+                    star.classList.remove('filled');
+                }
+            });
+        }
+        
+        // Create a small celebration effect
+        function createSmallCelebration() {
+            // Create confetti
+            if (sketch) {
+                sketch.createConfetti(window.innerWidth / 2, window.innerHeight / 4);
+            }
+        }
+        
+        // Create a big celebration effect
+        function createBigCelebration() {
+            // Play celebration sound
+            sounds.celebration.play();
+            
+            // Create multiple confetti bursts
+            if (sketch) {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        sketch.createConfetti(window.innerWidth * Math.random(), window.innerHeight / 4);
+                    }, i * 500);
+                }
+            }
+            
+            // Create confetti elements in the DOM
+            const celebration = document.createElement("div");
+            celebration.className = "celebration";
+            document.body.appendChild(celebration);
+            
+            const colors = [
+                "#f44336", // Red
+                "#2196f3", // Blue
+                "#ffeb3b", // Yellow
+                "#4caf50", // Green
+                "#9c27b0", // Purple
+                "#ff9800"  // Orange
+            ];
+            
+            // Create confetti pieces
+            for (let i = 0; i < 100; i++) {
+                const confetti = document.createElement("div");
+                confetti.className = "confetti";
+                confetti.style.setProperty('--color', colors[Math.floor(Math.random() * colors.length)]);
+                confetti.style.left = Math.random() * 100 + "vw";
+                confetti.style.animationDelay = Math.random() * 3 + "s";
+                confetti.style.opacity = "1";
+                celebration.appendChild(confetti);
+            }
+            
+            // Remove celebration after animation
+            setTimeout(() => {
+                celebration.remove();
+            }, 8000);
+        }
+        
+        // Make sure to initialize the game properly when the page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            // Initialize the game when the page loads
+            initGame().then(() => {
+                console.log("Game initialized successfully!");
+            }).catch(error => {
+                console.error("Failed to initialize game:", error);
+            });
+        });
+    </script>
+    </body>
+    </html>
+    

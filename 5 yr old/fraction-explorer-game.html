@@ -1,0 +1,2195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraction Explorer: Adventure Learning Game</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            background-color: #f0f8ff;
+            overflow: hidden;
+            color: #333;
+        }
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+        #main-menu, #game-screen, #quiz-screen, #reward-screen, #settings-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease-in-out;
+        }
+        #main-menu {
+            background: linear-gradient(to bottom, #89cff0, #b0e0e6);
+            z-index: 100;
+        }
+        #game-screen, #quiz-screen, #reward-screen, #settings-screen {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .hidden {
+            opacity: 0 !important;
+            pointer-events: none !important;
+        }
+        .visible {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+        .title {
+            font-size: 3em;
+            color: #4b0082;
+            text-shadow: 3px 3px 0px rgba(255,255,255,0.7);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .subtitle {
+            font-size: 1.5em;
+            color: #4b0082;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        .button {
+            background-color: #ff9a00;
+            border: none;
+            border-radius: 50px;
+            color: white;
+            padding: 15px 30px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1.5em;
+            margin: 10px;
+            cursor: pointer;
+            box-shadow: 0 9px #999;
+            transition: all 0.2s;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+        }
+        .button:hover {
+            background-color: #ff8c00;
+            transform: translateY(-2px);
+        }
+        .button:active {
+            background-color: #ff8c00;
+            box-shadow: 0 5px #666;
+            transform: translateY(4px);
+        }
+        .button-small {
+            font-size: 1em;
+            padding: 10px 20px;
+            margin: 5px;
+        }
+        .character {
+            position: absolute;
+            bottom: 20px;
+            width: 150px;
+            height: 150px;
+            transition: transform 0.3s ease-in-out;
+        }
+        .character:hover {
+            transform: scale(1.1);
+        }
+        #character-prof {
+            left: 50px;
+        }
+        #character-frac {
+            right: 50px;
+        }
+        #progress-container {
+            width: 80%;
+            height: 30px;
+            background-color: #ddd;
+            border-radius: 15px;
+            margin: 20px;
+            overflow: hidden;
+        }
+        #progress-bar {
+            height: 100%;
+            background-color: #4CAF50;
+            width: 0%;
+            border-radius: 15px;
+            transition: width 0.5s;
+        }
+        #fraction-display {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 20px;
+        }
+        .fraction-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        .fraction-shape {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .fraction-piece {
+            position: absolute;
+            background-color: #ff9a00;
+            border: 2px solid #fff;
+            transition: background-color 0.3s;
+            cursor: pointer;
+        }
+        .fraction-piece.selected {
+            background-color: #ff5722;
+        }
+        .fraction-piece.correct {
+            background-color: #4CAF50;
+        }
+        .fraction-piece.incorrect {
+            background-color: #f44336;
+        }
+        #quiz-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px;
+        }
+        .quiz-option {
+            margin: 10px;
+            padding: 10px 20px;
+            border: 3px solid #4b0082;
+            border-radius: 10px;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: #fff;
+            min-width: 60px;
+            text-align: center;
+        }
+        .quiz-option:hover {
+            transform: scale(1.1);
+            background-color: #f0f0f0;
+        }
+        #question-text {
+            font-size: 1.8em;
+            margin: 20px;
+            text-align: center;
+            color: #4b0082;
+        }
+        .settings-group {
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px;
+            width: 80%;
+            max-width: 600px;
+        }
+        .setting-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 15px 0;
+        }
+        .setting-label {
+            font-size: 1.2em;
+            color: #4b0082;
+            flex: 1;
+        }
+        .setting-value {
+            font-size: 1em;
+            color: #333;
+            width: 50px;
+            text-align: center;
+            margin: 0 10px;
+        }
+        .slider {
+            -webkit-appearance: none;
+            width: 60%;
+            height: 15px;
+            border-radius: 10px;  
+            background: #ddd;
+            outline: none;
+        }
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #ff9a00;
+            cursor: pointer;
+        }
+        .slider::-moz-range-thumb {
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background: #ff9a00;
+            cursor: pointer;
+        }
+        #reward-animation {
+            width: 100%;
+            height: 70%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #reward-text {
+            font-size: 2em;
+            color: #4b0082;
+            text-align: center;
+            margin: 20px;
+        }
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .star {
+            position: absolute;
+            pointer-events: none;
+        }
+        .message-bubble {
+            position: absolute;
+            background-color: white;
+            border: 3px solid #4b0082;
+            border-radius: 20px;
+            padding: 15px;
+            max-width: 300px;
+            font-size: 1.2em;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.5s;
+            text-align: center;
+        }
+        #professor-bubble {
+            left: 180px;
+            bottom: 150px;
+        }
+        #frac-bubble {
+            right: 180px;
+            bottom: 150px;
+        }
+        #hint-button {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        #hint-button:hover {
+            background-color: #3a006f;
+        }
+        #hint-text {
+            position: absolute;
+            bottom: 85px;
+            right: 20px;
+            background-color: white;
+            border: 2px solid #4b0082;
+            border-radius: 10px;
+            padding: 10px;
+            max-width: 250px;
+            font-size: 1em;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.3s;
+            text-align: center;
+        }
+        #back-button {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5em;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+        #back-button:hover {
+            background-color: #3a006f;
+        }
+        #learning-path {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            background-color: #ddd;
+            display: flex;
+        }
+        .path-segment {
+            height: 100%;
+            flex: 1;
+            margin: 0 2px;
+            background-color: #ddd;
+        }
+        .path-segment.completed {
+            background-color: #4CAF50;
+        }
+        .path-segment.current {
+            background-color: #ff9a00;
+        }
+        #controls-explanation {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 2px solid #4b0082;
+            border-radius: 10px;
+            padding: 10px;
+            font-size: 0.9em;
+            text-align: left;
+            max-width: 250px;
+            z-index: 10;
+        }
+        .explanation-title {
+            font-weight: bold;
+            color: #4b0082;
+            margin-bottom: 5px;
+        }
+        .explanation-item {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Main Menu -->
+        <div id="main-menu" class="visible">
+            <h1 class="title">Fraction Explorer</h1>
+            <h2 class="subtitle">Adventure in the World of Fractions!</h2>
+            <button id="start-button" class="button">Start Adventure</button>
+            <button id="settings-button" class="button">Settings</button>
+            
+            <div id="character-prof" class="character">
+                <!-- Professor character SVG -->
+                <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Body -->
+                    <ellipse cx="50" cy="70" rx="30" ry="35" fill="#1E88E5"/>
+                    <!-- Head -->
+                    <circle cx="50" cy="30" r="20" fill="#FFD700"/>
+                    <!-- Eyes -->
+                    <circle cx="42" cy="25" r="4" fill="white"/>
+                    <circle cx="58" cy="25" r="4" fill="white"/>
+                    <circle cx="42" cy="25" r="2" fill="black"/>
+                    <circle cx="58" cy="25" r="2" fill="black"/>
+                    <!-- Smile -->
+                    <path d="M40,35 Q50,45 60,35" fill="none" stroke="black" stroke-width="2"/>
+                    <!-- Glasses -->
+                    <circle cx="42" cy="25" r="6" fill="none" stroke="black" stroke-width="1.5"/>
+                    <circle cx="58" cy="25" r="6" fill="none" stroke="black" stroke-width="1.5"/>
+                    <line x1="48" y1="25" x2="52" y2="25" stroke="black" stroke-width="1.5"/>
+                    <!-- Arms -->
+                    <line x1="30" y1="60" x2="15" y2="50" stroke="#FFD700" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="70" y1="60" x2="85" y2="50" stroke="#FFD700" stroke-width="5" stroke-linecap="round"/>
+                    <!-- Legs -->
+                    <line x1="40" y1="105" x2="35" y2="120" stroke="#1E88E5" stroke-width="8" stroke-linecap="round"/>
+                    <line x1="60" y1="105" x2="65" y2="120" stroke="#1E88E5" stroke-width="8" stroke-linecap="round"/>
+                    <!-- Beard -->
+                    <path d="M40,40 Q50,55 60,40" fill="#A0522D"/>
+                    <!-- Hair -->
+                    <path d="M30,20 Q50,0 70,20" fill="#A0522D"/>
+                </svg>
+            </div>
+            
+            <div id="character-frac" class="character">
+                <!-- Frac character SVG -->
+                <svg viewBox="0 0 100 120" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Body -->
+                    <ellipse cx="50" cy="70" rx="25" ry="30" fill="#FF6D00"/>
+                    <!-- Head -->
+                    <circle cx="50" cy="30" r="20" fill="#FFEB3B"/>
+                    <!-- Eyes -->
+                    <circle cx="42" cy="25" r="4" fill="white"/>
+                    <circle cx="58" cy="25" r="4" fill="white"/>
+                    <circle cx="42" cy="25" r="2" fill="black"/>
+                    <circle cx="58" cy="25" r="2" fill="black"/>
+                    <!-- Smile -->
+                    <path d="M40,35 Q50,45 60,35" fill="none" stroke="black" stroke-width="2"/>
+                    <!-- Arms -->
+                    <line x1="30" y1="60" x2="15" y2="70" stroke="#FFEB3B" stroke-width="5" stroke-linecap="round"/>
+                    <line x1="70" y1="60" x2="85" y2="70" stroke="#FFEB3B" stroke-width="5" stroke-linecap="round"/>
+                    <!-- Legs -->
+                    <line x1="40" y1="100" x2="35" y2="115" stroke="#FF6D00" stroke-width="8" stroke-linecap="round"/>
+                    <line x1="60" y1="100" x2="65" y2="115" stroke="#FF6D00" stroke-width="8" stroke-linecap="round"/>
+                    <!-- Accessory - Fraction symbol -->
+                    <line x1="40" y1="15" x2="60" y2="15" stroke="black" stroke-width="2"/>
+                    <text x="45" y="12" font-family="Arial" font-size="10">1</text>
+                    <text x="45" y="25" font-family="Arial" font-size="10">2</text>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen">
+            <div id="back-button">←</div>
+            <h2 id="level-title" class="subtitle">Level 1: Introduction to Fractions</h2>
+            
+            <div id="fraction-display"></div>
+            
+            <div id="progress-container">
+                <div id="progress-bar"></div>
+            </div>
+            
+            <div id="controls-explanation">
+                <div class="explanation-title">Game Controls:</div>
+                <div class="explanation-item">- Click on pieces to select them</div>
+                <div class="explanation-item">- Click the hint button (?) for help</div>
+                <div class="explanation-item">- Complete each level to advance</div>
+            </div>
+            
+            <button id="next-button" class="button">Next →</button>
+            <button id="hint-button">?</button>
+            <div id="hint-text"></div>
+            
+            <div id="professor-bubble" class="message-bubble"></div>
+            <div id="frac-bubble" class="message-bubble"></div>
+            
+            <div id="learning-path"></div>
+        </div>
+        
+        <!-- Quiz Screen -->
+        <div id="quiz-screen">
+            <div id="back-button-quiz" class="back-button">←</div>
+            <h2 class="subtitle">Fraction Quiz Challenge</h2>
+            
+            <div id="question-text">What fraction of the shape is colored?</div>
+            
+            <div id="fraction-quiz-display"></div>
+            
+            <div id="quiz-options"></div>
+            
+            <button id="submit-answer" class="button">Submit Answer</button>
+            
+            <div id="quiz-professor-bubble" class="message-bubble"></div>
+            <div id="quiz-frac-bubble" class="message-bubble"></div>
+        </div>
+        
+        <!-- Reward Screen -->
+        <div id="reward-screen">
+            <h2 class="subtitle">Amazing Job!</h2>
+            
+            <div id="reward-animation"></div>
+            
+            <div id="reward-text">You've mastered fractions!</div>
+            
+            <button id="continue-button" class="button">Continue Learning</button>
+            <button id="main-menu-button" class="button">Main Menu</button>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settings-screen">
+            <div id="back-button-settings" class="back-button">←</div>
+            <h2 class="subtitle">Game Settings</h2>
+            
+            <div class="settings-group">
+                <h3>Learning Settings</h3>
+                
+                <div class="setting-control">
+                    <span class="setting-label">Difficulty Level:</span>
+                    <input type="range" min="1" max="5" value="1" class="slider" id="difficulty-slider">
+                    <span id="difficulty-value" class="setting-value">1</span>
+                </div>
+                
+                <div class="setting-control">
+                    <span class="setting-label">Learning Speed:</span>
+                    <input type="range" min="1" max="5" value="3" class="slider" id="speed-slider">
+                    <span id="speed-value" class="setting-value">3</span>
+                </div>
+                
+                <div class="setting-control">
+                    <span class="setting-label">Abstract Concepts:</span>
+                    <input type="range" min="1" max="5" value="1" class="slider" id="abstract-slider">
+                    <span id="abstract-value" class="setting-value">1</span>
+                </div>
+            </div>
+            
+            <div class="settings-group">
+                <h3>Game Settings</h3>
+                
+                <div class="setting-control">
+                    <span class="setting-label">Sound Effects:</span>
+                    <input type="range" min="0" max="10" value="7" class="slider" id="sound-slider">
+                    <span id="sound-value" class="setting-value">7</span>
+                </div>
+                
+                <div class="setting-control">
+                    <span class="setting-label">Animation Speed:</span>
+                    <input type="range" min="1" max="5" value="3" class="slider" id="animation-slider">
+                    <span id="animation-value" class="setting-value">3</span>
+                </div>
+                
+                <div class="setting-control">
+                    <span class="setting-label">Character Interaction:</span>
+                    <input type="range" min="1" max="5" value="4" class="slider" id="character-slider">
+                    <span id="character-value" class="setting-value">4</span>
+                </div>
+            </div>
+            
+            <button id="save-settings" class="button">Save Settings</button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        const gameState = {
+            // Game progress
+            currentLevel: 1,
+            maxLevel: 10,
+            progress: 0,
+            score: 0,
+            
+            // Settings
+            settings: {
+                difficulty: 1,
+                learningSpeed: 3,
+                abstractLevel: 1,
+                soundVolume: 0.7,
+                animationSpeed: 3,
+                characterInteraction: 4
+            },
+            
+            // Level data
+            levels: [
+                {
+                    title: "Level 1: Introduction to Fractions",
+                    type: "circle",
+                    denominator: 2,
+                    numerator: 1,
+                    message: "Fractions show parts of a whole. This is 1/2 - one half!",
+                    professorMessage: "Welcome to fractions! They help us talk about parts of something.",
+                    fracMessage: "I'm Frac! I'll help you learn about me and my fraction friends!"
+                },
+                {
+                    title: "Level 2: Quarter Fractions",
+                    type: "circle",
+                    denominator: 4,
+                    numerator: 1,
+                    message: "This is 1/4 - one quarter of the circle!",
+                    professorMessage: "Now we've divided our circle into 4 equal parts.",
+                    fracMessage: "Can you find 1/4? That's one piece out of four equal pieces!"
+                },
+                {
+                    title: "Level 3: Multiple Parts",
+                    type: "circle",
+                    denominator: 4,
+                    numerator: 3,
+                    message: "This is 3/4 - three quarters!",
+                    professorMessage: "Sometimes we need more than one piece.",
+                    fracMessage: "Can you select 3 pieces to show 3/4?"
+                },
+                {
+                    title: "Level 4: Square Fractions",
+                    type: "square",
+                    denominator: 4,
+                    numerator: 2,
+                    message: "Fractions work for squares too! This is 2/4 or 1/2.",
+                    professorMessage: "Fractions work with any shape, not just circles!",
+                    fracMessage: "Can you show me 2/4 of this square?"
+                },
+                {
+                    title: "Level 5: More Pieces",
+                    type: "circle",
+                    denominator: 8,
+                    numerator: 4,
+                    message: "4/8 means 4 out of 8 equal pieces. That's also 1/2!",
+                    professorMessage: "We can divide shapes into even more pieces.",
+                    fracMessage: "Find 4/8 - that's 4 pieces out of 8 total pieces."
+                },
+                {
+                    title: "Level 6: Equivalent Fractions",
+                    type: "square",
+                    denominator: 8,
+                    numerator: 4,
+                    message: "4/8 and 1/2 are equivalent fractions - they're the same amount!",
+                    professorMessage: "Some fractions look different but represent the same amount!",
+                    fracMessage: "4/8 is the same as 1/2. Both are half of the whole shape!"
+                },
+                {
+                    title: "Level 7: Thirds",
+                    type: "rectangle",
+                    denominator: 3,
+                    numerator: 2,
+                    message: "This is 2/3 - two thirds of the rectangle!",
+                    professorMessage: "We can divide shapes into any number of equal parts.",
+                    fracMessage: "Can you find 2/3 of this rectangle?"
+                },
+                {
+                    title: "Level 8: Complex Shapes",
+                    type: "hexagon",
+                    denominator: 6,
+                    numerator: 3,
+                    message: "This is 3/6 or 1/2 of the hexagon!",
+                    professorMessage: "Even complex shapes can be divided into fractions.",
+                    fracMessage: "Can you show me 3/6 of this hexagon?"
+                },
+                {
+                    title: "Level 9: Comparing Fractions",
+                    type: "compare",
+                    shapes: ["circle", "square"],
+                    denominators: [4, 8],
+                    numerators: [2, 4],
+                    message: "2/4 and 4/8 are both equal to 1/2!",
+                    professorMessage: "Let's compare fractions across different shapes.",
+                    fracMessage: "Can you find the same amount in both shapes?"
+                },
+                {
+                    title: "Level 10: Fraction Master Challenge",
+                    type: "quiz",
+                    questions: 5,
+                    message: "You're a fraction master!",
+                    professorMessage: "Let's test all your fraction knowledge!",
+                    fracMessage: "I know you can ace this quiz! Good luck!"
+                }
+            ],
+            
+            // Current quiz data
+            currentQuiz: {
+                question: "",
+                options: [],
+                correctAnswer: null,
+                userAnswer: null
+            },
+            
+            // Animation timers and objects
+            animations: {
+                stars: [],
+                bubbles: [],
+                timers: []
+            },
+            
+            // Selected pieces
+            selectedPieces: []
+        };
+        
+        // DOM Elements
+        const elements = {
+            screens: {
+                mainMenu: document.getElementById('main-menu'),
+                gameScreen: document.getElementById('game-screen'),
+                quizScreen: document.getElementById('quiz-screen'),
+                rewardScreen: document.getElementById('reward-screen'),
+                settingsScreen: document.getElementById('settings-screen')
+            },
+            buttons: {
+                startButton: document.getElementById('start-button'),
+                settingsButton: document.getElementById('settings-button'),
+                nextButton: document.getElementById('next-button'),
+                hintButton: document.getElementById('hint-button'),
+                backButton: document.getElementById('back-button'),
+                backButtonQuiz: document.getElementById('back-button-quiz'),
+                backButtonSettings: document.getElementById('back-button-settings'),
+                submitAnswer: document.getElementById('submit-answer'),
+                continueButton: document.getElementById('continue-button'),
+                mainMenuButton: document.getElementById('main-menu-button'),
+                saveSettings: document.getElementById('save-settings')
+            },
+            displays: {
+                levelTitle: document.getElementById('level-title'),
+                fractionDisplay: document.getElementById('fraction-display'),
+                fractionQuizDisplay: document.getElementById('fraction-quiz-display'),
+                progressBar: document.getElementById('progress-bar'),
+                questionText: document.getElementById('question-text'),
+                quizOptions: document.getElementById('quiz-options'),
+                rewardText: document.getElementById('reward-text'),
+                rewardAnimation: document.getElementById('reward-animation'),
+                hintText: document.getElementById('hint-text'),
+                learningPath: document.getElementById('learning-path')
+            },
+            characters: {
+                professorBubble: document.getElementById('professor-bubble'),
+                fracBubble: document.getElementById('frac-bubble'),
+                quizProfessorBubble: document.getElementById('quiz-professor-bubble'),
+                quizFracBubble: document.getElementById('quiz-frac-bubble')
+            },
+            settings: {
+                difficultySlider: document.getElementById('difficulty-slider'),
+                difficultyValue: document.getElementById('difficulty-value'),
+                speedSlider: document.getElementById('speed-slider'),
+                speedValue: document.getElementById('speed-value'),
+                abstractSlider: document.getElementById('abstract-slider'),
+                abstractValue: document.getElementById('abstract-value'),
+                soundSlider: document.getElementById('sound-slider'),
+                soundValue: document.getElementById('sound-value'),
+                animationSlider: document.getElementById('animation-slider'),
+                animationValue: document.getElementById('animation-value'),
+                characterSlider: document.getElementById('character-slider'),
+                characterValue: document.getElementById('character-value')
+            }
+        };
+        
+        // Audio Context for sound generation
+        let audioContext;
+        
+        // Initialize the game
+        function initGame() {
+            // Initialize audio context
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn('Web Audio API not supported:', e);
+            }
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Initialize learning path
+            createLearningPath();
+            
+            // Show main menu
+            showScreen('mainMenu');
+        }
+        
+        // Set up all event listeners
+        function setupEventListeners() {
+            // Main menu buttons
+            elements.buttons.startButton.addEventListener('click', () => {
+                playButtonSound();
+                startGame();
+            });
+            
+            elements.buttons.settingsButton.addEventListener('click', () => {
+                playButtonSound();
+                showScreen('settingsScreen');
+            });
+            
+            // Game screen buttons
+            elements.buttons.nextButton.addEventListener('click', () => {
+                playButtonSound();
+                nextLevel();
+            });
+            
+            elements.buttons.hintButton.addEventListener('click', () => {
+                playButtonSound();
+                toggleHint();
+            });
+            
+            elements.buttons.backButton.addEventListener('click', () => {
+                playButtonSound();
+                showScreen('mainMenu');
+            });
+            
+            // Quiz screen buttons
+            elements.buttons.backButtonQuiz.addEventListener('click', () => {
+                playButtonSound();
+                showScreen('gameScreen');
+            });
+            
+            elements.buttons.submitAnswer.addEventListener('click', () => {
+                playButtonSound();
+                checkQuizAnswer();
+            });
+            
+            // Reward screen buttons
+            elements.buttons.continueButton.addEventListener('click', () => {
+                playButtonSound();
+                continueGame();
+            });
+            
+            elements.buttons.mainMenuButton.addEventListener('click', () => {
+                playButtonSound();
+                showScreen('mainMenu');
+            });
+            
+            // Settings screen
+            elements.buttons.backButtonSettings.addEventListener('click', () => {
+                playButtonSound();
+                showScreen('mainMenu');
+            });
+            
+            elements.buttons.saveSettings.addEventListener('click', () => {
+                playButtonSound();
+                saveSettings();
+                showScreen('mainMenu');
+            });
+            
+            // Settings sliders
+            setupSettingsSliders();
+        }
+        
+        // Setup settings sliders event listeners
+        function setupSettingsSliders() {
+            // Difficulty slider
+            elements.settings.difficultySlider.addEventListener('input', () => {
+                elements.settings.difficultyValue.textContent = elements.settings.difficultySlider.value;
+                playTickSound();
+            });
+            
+            // Speed slider
+            elements.settings.speedSlider.addEventListener('input', () => {
+                elements.settings.speedValue.textContent = elements.settings.speedSlider.value;
+                playTickSound();
+            });
+            
+            // Abstract slider
+            elements.settings.abstractSlider.addEventListener('input', () => {
+                elements.settings.abstractValue.textContent = elements.settings.abstractSlider.value;
+                playTickSound();
+            });
+            
+            // Sound slider
+            elements.settings.soundSlider.addEventListener('input', () => {
+                elements.settings.soundValue.textContent = elements.settings.soundSlider.value;
+                gameState.settings.soundVolume = elements.settings.soundSlider.value / 10;
+                playTickSound();
+            });
+            
+            // Animation slider
+            elements.settings.animationSlider.addEventListener('input', () => {
+                elements.settings.animationValue.textContent = elements.settings.animationSlider.value;
+                playTickSound();
+            });
+            
+            // Character slider
+            elements.settings.characterSlider.addEventListener('input', () => {
+                elements.settings.characterValue.textContent = elements.settings.characterSlider.value;
+                playTickSound();
+            });
+        }
+        
+        // Save settings
+        function saveSettings() {
+            gameState.settings.difficulty = parseInt(elements.settings.difficultySlider.value);
+            gameState.settings.learningSpeed = parseInt(elements.settings.speedSlider.value);
+            gameState.settings.abstractLevel = parseInt(elements.settings.abstractSlider.value);
+            gameState.settings.soundVolume = parseInt(elements.settings.soundSlider.value) / 10;
+            gameState.settings.animationSpeed = parseInt(elements.settings.animationSlider.value);
+            gameState.settings.characterInteraction = parseInt(elements.settings.characterSlider.value);
+            
+            playSuccessSound();
+        }
+        
+        // Start the game
+        function startGame() {
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.progress = 0;
+            
+            // Update the learning path
+            updateLearningPath();
+            
+            // Load the first level
+            loadLevel(gameState.currentLevel);
+            
+            // Show the game screen
+            showScreen('gameScreen');
+        }
+        
+        // Load a specific level
+        function loadLevel(levelIndex) {
+            const level = gameState.levels[levelIndex - 1];
+            
+            // Update level title
+            elements.displays.levelTitle.textContent = level.title;
+            
+            // Reset selected pieces
+            gameState.selectedPieces = [];
+            
+            // Create the appropriate fraction display
+            createFractionDisplay(level);
+            
+            // Show character messages
+            if (gameState.settings.characterInteraction >= 2) {
+                showMessage(elements.characters.professorBubble, level.professorMessage);
+                
+                setTimeout(() => {
+                    showMessage(elements.characters.fracBubble, level.fracMessage);
+                }, 2000);
+            }
+            
+            // Update the hint text
+            elements.displays.hintText.textContent = level.message;
+            
+            // Enable/disable the next button based on progress
+            elements.buttons.nextButton.disabled = gameState.progress < 100;
+            
+            // Update the learning path
+            updateLearningPath();
+        }
+        
+        // Create the fraction display based on the level
+        function createFractionDisplay(level) {
+            // Clear the display
+            elements.displays.fractionDisplay.innerHTML = '';
+            
+            // Create container
+            const container = document.createElement('div');
+            container.className = 'fraction-container';
+            elements.displays.fractionDisplay.appendChild(container);
+            
+            switch (level.type) {
+                case 'circle':
+                    createCircleFraction(container, level.denominator, level.numerator);
+                    break;
+                case 'square':
+                    createSquareFraction(container, level.denominator, level.numerator);
+                    break;
+                case 'rectangle':
+                    createRectangleFraction(container, level.denominator, level.numerator);
+                    break;
+                case 'hexagon':
+                    createHexagonFraction(container, level.denominator, level.numerator);
+                    break;
+                case 'compare':
+                    createComparisonFraction(container, level.shapes, level.denominators, level.numerators);
+                    break;
+            }
+        }
+        
+        // Create a circle fraction
+        function createCircleFraction(container, denominator, numerator) {
+            const radius = 120;
+            const centerX = 150;
+            const centerY = 150;
+            const anglePerSlice = (2 * Math.PI) / denominator;
+            
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 300 300");
+            container.appendChild(svg);
+            
+            // Create a group for the entire fraction
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(group);
+            
+            // Create circle outline
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", centerX);
+            circle.setAttribute("cy", centerY);
+            circle.setAttribute("r", radius);
+            circle.setAttribute("fill", "none");
+            circle.setAttribute("stroke", "#4b0082");
+            circle.setAttribute("stroke-width", "2");
+            group.appendChild(circle);
+            
+            // Create the slices
+            for (let i = 0; i < denominator; i++) {
+                const startAngle = i * anglePerSlice;
+                const endAngle = (i + 1) * anglePerSlice;
+                
+                const startX = centerX + radius * Math.cos(startAngle);
+                const startY = centerY + radius * Math.sin(startAngle);
+                const endX = centerX + radius * Math.cos(endAngle);
+                const endY = centerY + radius * Math.sin(endAngle);
+                
+                // Create the sector path
+                const largeArcFlag = (endAngle - startAngle > Math.PI) ? 1 : 0;
+                const pathData = `M ${centerX},${centerY} L ${startX},${startY} A ${radius},${radius} 0 ${largeArcFlag},1 ${endX},${endY} Z`;
+                
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", pathData);
+                path.setAttribute("fill", "#e0e0e0");
+                path.setAttribute("stroke", "#4b0082");
+                path.setAttribute("stroke-width", "1");
+                path.setAttribute("data-index", i);
+                path.addEventListener('click', function() {
+                    togglePieceSelection(this, numerator);
+                });
+                group.appendChild(path);
+            }
+            
+            // Add fraction label
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", centerX);
+            text.setAttribute("y", centerY + radius + 30);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("font-size", "24");
+            text.setAttribute("fill", "#4b0082");
+            text.textContent = `${numerator}/${denominator}`;
+            group.appendChild(text);
+        }
+        
+        // Create a square fraction
+        function createSquareFraction(container, denominator, numerator) {
+            const size = 240;
+            const startX = 30;
+            const startY = 30;
+            
+            // Calculate rows and columns
+            let rows, cols;
+            if (denominator === 2) {
+                rows = 1;
+                cols = 2;
+            } else if (denominator === 4) {
+                rows = 2;
+                cols = 2;
+            } else if (denominator === 8) {
+                rows = 4;
+                cols = 2;
+            } else if (denominator === 9) {
+                rows = 3;
+                cols = 3;
+            } else {
+                rows = Math.ceil(Math.sqrt(denominator));
+                cols = Math.ceil(denominator / rows);
+            }
+            
+            const pieceWidth = size / cols;
+            const pieceHeight = size / rows;
+            
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 300 300");
+            container.appendChild(svg);
+            
+            // Create a group for the entire fraction
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(group);
+            
+            // Create square outline
+            const square = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            square.setAttribute("x", startX);
+            square.setAttribute("y", startY);
+            square.setAttribute("width", size);
+            square.setAttribute("height", size);
+            square.setAttribute("fill", "none");
+            square.setAttribute("stroke", "#4b0082");
+            square.setAttribute("stroke-width", "2");
+            group.appendChild(square);
+            
+            // Create the pieces
+            let index = 0;
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    if (index < denominator) {
+                        const x = startX + col * pieceWidth;
+                        const y = startY + row * pieceHeight;
+                        
+                        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", x);
+                        rect.setAttribute("y", y);
+                        rect.setAttribute("width", pieceWidth);
+                        rect.setAttribute("height", pieceHeight);
+                        rect.setAttribute("fill", "#e0e0e0");
+                        rect.setAttribute("stroke", "#4b0082");
+                        rect.setAttribute("stroke-width", "1");
+                        rect.setAttribute("data-index", index);
+                        rect.addEventListener('click', function() {
+                            togglePieceSelection(this, numerator);
+                        });
+                        group.appendChild(rect);
+                        
+                        index++;
+                    }
+                }
+            }
+            
+            // Add fraction label
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", startX + size / 2);
+            text.setAttribute("y", startY + size + 30);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("font-size", "24");
+            text.setAttribute("fill", "#4b0082");
+            text.textContent = `${numerator}/${denominator}`;
+            group.appendChild(text);
+        }
+        
+        // Create a rectangle fraction
+        function createRectangleFraction(container, denominator, numerator) {
+            const width = 240;
+            const height = 160;
+            const startX = 30;
+            const startY = 70;
+            
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 300 300");
+            container.appendChild(svg);
+            
+            // Create a group for the entire fraction
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(group);
+            
+            // Create rectangle outline
+            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rect.setAttribute("x", startX);
+            rect.setAttribute("y", startY);
+            rect.setAttribute("width", width);
+            rect.setAttribute("height", height);
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#4b0082");
+            rect.setAttribute("stroke-width", "2");
+            group.appendChild(rect);
+            
+            // Create the pieces (horizontal division)
+            const pieceWidth = width / denominator;
+            
+            for (let i = 0; i < denominator; i++) {
+                const x = startX + i * pieceWidth;
+                
+                const piece = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                piece.setAttribute("x", x);
+                piece.setAttribute("y", startY);
+                piece.setAttribute("width", pieceWidth);
+                piece.setAttribute("height", height);
+                piece.setAttribute("fill", "#e0e0e0");
+                piece.setAttribute("stroke", "#4b0082");
+                piece.setAttribute("stroke-width", "1");
+                piece.setAttribute("data-index", i);
+                piece.addEventListener('click', function() {
+                    togglePieceSelection(this, numerator);
+                });
+                group.appendChild(piece);
+            }
+            
+            // Add fraction label
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", startX + width / 2);
+            text.setAttribute("y", startY + height + 30);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("font-size", "24");
+            text.setAttribute("fill", "#4b0082");
+            text.textContent = `${numerator}/${denominator}`;
+            group.appendChild(text);
+        }
+        
+        // Create a hexagon fraction
+        function createHexagonFraction(container, denominator, numerator) {
+            const radius = 120;
+            const centerX = 150;
+            const centerY = 150;
+            
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 300 300");
+            container.appendChild(svg);
+            
+            // Create a group for the entire fraction
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(group);
+            
+            // Create hexagon points
+            const points = [];
+            for (let i = 0; i < 6; i++) {
+                const angle = (Math.PI / 3) * i - Math.PI / 6;
+                const x = centerX + radius * Math.cos(angle);
+                const y = centerY + radius * Math.sin(angle);
+                points.push({ x, y });
+            }
+            
+            // Create hexagon outline
+            const hexagonPoints = points.map(p => `${p.x},${p.y}`).join(' ');
+            const hexagon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            hexagon.setAttribute("points", hexagonPoints);
+            hexagon.setAttribute("fill", "none");
+            hexagon.setAttribute("stroke", "#4b0082");
+            hexagon.setAttribute("stroke-width", "2");
+            group.appendChild(hexagon);
+            
+            // Create the pieces (pizza-slice style)
+            const anglePerSlice = (2 * Math.PI) / denominator;
+            
+            for (let i = 0; i < denominator; i++) {
+                const startAngle = i * anglePerSlice - Math.PI / 6;
+                const endAngle = (i + 1) * anglePerSlice - Math.PI / 6;
+                
+                // Calculate intersection points with the hexagon edges
+                const piecePoints = [];
+                
+                // Add center point
+                piecePoints.push({ x: centerX, y: centerY });
+                
+                // Find intersection with hexagon edges
+                for (let j = 0; j < 6; j++) {
+                    const edge1 = points[j];
+                    const edge2 = points[(j + 1) % 6];
+                    
+                    const angle1 = Math.atan2(edge1.y - centerY, edge1.x - centerX);
+                    const angle2 = Math.atan2(edge2.y - centerY, edge2.x - centerX);
+                    
+                    // Normalize angles
+                    const normAngle1 = angle1 < 0 ? angle1 + 2 * Math.PI : angle1;
+                    const normAngle2 = angle2 < 0 ? angle2 + 2 * Math.PI : angle2;
+                    let normStartAngle = startAngle < 0 ? startAngle + 2 * Math.PI : startAngle;
+                    let normEndAngle = endAngle < 0 ? endAngle + 2 * Math.PI : endAngle;
+                    
+                    // Check if the line segment is intersected by the sector
+                    if ((normStartAngle <= normAngle1 && normAngle1 <= normEndAngle) ||
+                        (normStartAngle <= normAngle2 && normAngle2 <= normEndAngle) ||
+                        (normAngle1 <= normStartAngle && normStartAngle <= normAngle2) ||
+                        (normAngle1 <= normEndAngle && normEndAngle <= normAngle2)) {
+                        
+                        // Simplified: just add both points
+                        if (normStartAngle <= normAngle1 && normAngle1 <= normEndAngle) {
+                            piecePoints.push(edge1);
+                        }
+                        if (normStartAngle <= normAngle2 && normAngle2 <= normEndAngle) {
+                            piecePoints.push(edge2);
+                        }
+                    }
+                }
+                
+                // Sort points by angle
+                piecePoints.sort((a, b) => {
+                    const angleA = Math.atan2(a.y - centerY, a.x - centerX);
+                    const angleB = Math.atan2(b.y - centerY, b.x - centerX);
+                    return angleA - angleB;
+                });
+                
+                // Create the polygon for the piece
+                if (piecePoints.length >= 3) {
+                    const piecePointsStr = piecePoints.map(p => `${p.x},${p.y}`).join(' ');
+                    const piece = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                    piece.setAttribute("points", piecePointsStr);
+                    piece.setAttribute("fill", "#e0e0e0");
+                    piece.setAttribute("stroke", "#4b0082");
+                    piece.setAttribute("stroke-width", "1");
+                    piece.setAttribute("data-index", i);
+                    piece.addEventListener('click', function() {
+                        togglePieceSelection(this, numerator);
+                    });
+                    group.appendChild(piece);
+                }
+            }
+            
+            // Add fraction label
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", centerX);
+            text.setAttribute("y", centerY + radius + 30);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("font-size", "24");
+            text.setAttribute("fill", "#4b0082");
+            text.textContent = `${numerator}/${denominator}`;
+            group.appendChild(text);
+        }
+        
+        // Create comparison fractions
+        function createComparisonFraction(container, shapes, denominators, numerators) {
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 600 300");
+            container.appendChild(svg);
+            
+            // Create a group for the entire fraction
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(group);
+            
+            // Create first shape
+            const group1 = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            group1.setAttribute("transform", "translate(0, 0)");
+            group.appendChild(group1);
+            
+            // Create second shape
+            const group2 = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            group2.setAttribute("transform", "translate(300, 0)");
+            group.appendChild(group2);
+            
+            // Draw shapes based on type
+            for (let i = 0; i < shapes.length; i++) {
+                const currentGroup = i === 0 ? group1 : group2;
+                const shapeType = shapes[i];
+                const denominator = denominators[i];
+                const numerator = numerators[i];
+                
+                switch (shapeType) {
+                    case 'circle':
+                        drawCircleFraction(currentGroup, denominator, numerator, i);
+                        break;
+                    case 'square':
+                        drawSquareFraction(currentGroup, denominator, numerator, i);
+                        break;
+                }
+            }
+            
+            // Add equals sign
+            const equals = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            equals.setAttribute("x", "300");
+            equals.setAttribute("y", "150");
+            equals.setAttribute("text-anchor", "middle");
+            equals.setAttribute("font-size", "40");
+            equals.setAttribute("fill", "#4b0082");
+            equals.textContent = "=";
+            group.appendChild(equals);
+        }
+        
+        // Draw a circle fraction within a comparison
+        function drawCircleFraction(group, denominator, numerator, groupIndex) {
+            const radius = 100;
+            const centerX = 150;
+            const centerY = 150;
+            const anglePerSlice = (2 * Math.PI) / denominator;
+            
+            // Create circle outline
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", centerX);
+            circle.setAttribute("cy", centerY);
+            circle.setAttribute("r", radius);
+            circle.setAttribute("fill", "none");
+            circle.setAttribute("stroke", "#4b0082");
+            circle.setAttribute("stroke-width", "2");
+            group.appendChild(circle);
+            
+            // Create the slices
+            for (let i = 0; i < denominator; i++) {
+                const startAngle = i * anglePerSlice;
+                const endAngle = (i + 1) * anglePerSlice;
+                
+                const startX = centerX + radius * Math.cos(startAngle);
+                const startY = centerY + radius * Math.sin(startAngle);
+                const endX = centerX + radius * Math.cos(endAngle);
+                const endY = centerY + radius * Math.sin(endAngle);
+                
+                // Create the sector path
+                const largeArcFlag = (endAngle - startAngle > Math.PI) ? 1 : 0;
+                const pathData = `M ${centerX},${centerY} L ${startX},${startY} A ${radius},${radius} 0 ${largeArcFlag},1 ${endX},${endY} Z`;
+                
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", pathData);
+                path.setAttribute("fill", i < numerator ? "#ff9a00" : "#e0e0e0");
+                path.setAttribute("stroke", "#4b0082");
+                path.setAttribute("stroke-width", "1");
+                path.setAttribute("data-group", groupIndex);
+                path.setAttribute("data-index", i);
+                group.appendChild(path);
+            }
+            
+            // Add fraction label
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", centerX);
+            text.setAttribute("y", centerY + radius + 30);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("font-size", "24");
+            text.setAttribute("fill", "#4b0082");
+            text.textContent = `${numerator}/${denominator}`;
+            group.appendChild(text);
+        }
+        
+        // Draw a square fraction within a comparison
+        function drawSquareFraction(group, denominator, numerator, groupIndex) {
+            const size = 200;
+            const startX = 50;
+            const startY = 50;
+            
+            // Calculate rows and columns
+            let rows, cols;
+            if (denominator === 2) {
+                rows = 1;
+                cols = 2;
+            } else if (denominator === 4) {
+                rows = 2;
+                cols = 2;
+            } else if (denominator === 8) {
+                rows = 4;
+                cols = 2;
+            } else if (denominator === 9) {
+                rows = 3;
+                cols = 3;
+            } else {
+                rows = Math.ceil(Math.sqrt(denominator));
+                cols = Math.ceil(denominator / rows);
+            }
+            
+            const pieceWidth = size / cols;
+            const pieceHeight = size / rows;
+            
+            // Create square outline
+            const square = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            square.setAttribute("x", startX);
+            square.setAttribute("y", startY);
+            square.setAttribute("width", size);
+            square.setAttribute("height", size);
+            square.setAttribute("fill", "none");
+            square.setAttribute("stroke", "#4b0082");
+            square.setAttribute("stroke-width", "2");
+            group.appendChild(square);
+            
+            // Create the pieces
+            let index = 0;
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    if (index < denominator) {
+                        const x = startX + col * pieceWidth;
+                        const y = startY + row * pieceHeight;
+                        
+                        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", x);
+                        rect.setAttribute("y", y);
+                        rect.setAttribute("width", pieceWidth);
+                        rect.setAttribute("height", pieceHeight);
+                        rect.setAttribute("fill", index < numerator ? "#ff9a00" : "#e0e0e0");
+                        rect.setAttribute("stroke", "#4b0082");
+                        rect.setAttribute("stroke-width", "1");
+                        rect.setAttribute("data-group", groupIndex);
+                        rect.setAttribute("data-index", index);
+                        group.appendChild(rect);
+                        
+                        index++;
+                    }
+                }
+            }
+            
+            // Add fraction label
+            const text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            text.setAttribute("x", startX + size / 2);
+            text.setAttribute("y", startY + size + 30);
+            text.setAttribute("text-anchor", "middle");
+            text.setAttribute("font-size", "24");
+            text.setAttribute("fill", "#4b0082");
+            text.textContent = `${numerator}/${denominator}`;
+            group.appendChild(text);
+        }
+        
+        // Toggle piece selection
+        function togglePieceSelection(piece, targetNumerator) {
+            const index = parseInt(piece.getAttribute('data-index'));
+            
+            // Check if piece is already selected
+            const isSelected = piece.getAttribute('fill') === '#ff9a00';
+            
+            if (isSelected) {
+                // Deselect piece
+                piece.setAttribute('fill', '#e0e0e0');
+                
+                // Remove from selected pieces
+                const pieceIndex = gameState.selectedPieces.indexOf(index);
+                if (pieceIndex !== -1) {
+                    gameState.selectedPieces.splice(pieceIndex, 1);
+                }
+            } else {
+                // Only allow selection if we haven't selected enough pieces yet
+                if (gameState.selectedPieces.length < targetNumerator) {
+                    // Select piece
+                    piece.setAttribute('fill', '#ff9a00');
+                    
+                    // Add to selected pieces
+                    gameState.selectedPieces.push(index);
+                    
+                    // Play selection sound
+                    playSelectSound();
+                }
+            }
+            
+            // Check if the correct number of pieces are selected
+            if (gameState.selectedPieces.length === targetNumerator) {
+                // Check if they are the correct pieces (for simplicity, just check count)
+                updateProgress(100);
+                playCelebrationSound();
+                createParticleEffect();
+            } else {
+                // Partial progress
+                const progressPercent = (gameState.selectedPieces.length / targetNumerator) * 100;
+                updateProgress(progressPercent);
+            }
+        }
+        
+        // Update progress bar
+        function updateProgress(percent) {
+            gameState.progress = percent;
+            elements.displays.progressBar.style.width = `${percent}%`;
+            
+            // Enable or disable next button
+            elements.buttons.nextButton.disabled = percent < 100;
+            if (percent >= 100) {
+                elements.buttons.nextButton.classList.add('button-highlight');
+            } else {
+                elements.buttons.nextButton.classList.remove('button-highlight');
+            }
+        }
+        
+        // Move to next level
+        function nextLevel() {
+            if (gameState.currentLevel < gameState.maxLevel) {
+                gameState.currentLevel++;
+                loadLevel(gameState.currentLevel);
+                updateProgress(0);
+            } else {
+                // Game completed
+                startQuiz();
+            }
+        }
+        
+        // Start the quiz
+        function startQuiz() {
+            // Generate quiz questions based on settings
+            generateQuizQuestions();
+            
+            // Show the quiz screen
+            showScreen('quizScreen');
+        }
+        
+        // Generate quiz questions
+        function generateQuizQuestions() {
+            // Get the current level data based on difficulty
+            const level = gameState.levels[9]; // Quiz level
+            
+            // Show messages
+            if (gameState.settings.characterInteraction >= 2) {
+                showMessage(elements.characters.quizProfessorBubble, level.professorMessage);
+                
+                setTimeout(() => {
+                    showMessage(elements.characters.quizFracBubble, level.fracMessage);
+                }, 2000);
+            }
+            
+            // Generate first question
+            generateQuizQuestion();
+        }
+        
+        // Generate a single quiz question
+        function generateQuizQuestion() {
+            // Clear previous question
+            elements.displays.fractionQuizDisplay.innerHTML = '';
+            elements.displays.quizOptions.innerHTML = '';
+            
+            // Create a random question based on difficulty
+            const difficulty = gameState.settings.difficulty;
+            const questionType = Math.floor(Math.random() * 3); // 0: identify fraction, 1: select equivalent, 2: compare fractions
+            
+            switch (questionType) {
+                case 0:
+                    createIdentifyFractionQuestion(difficulty);
+                    break;
+                case 1:
+                    createEquivalentFractionQuestion(difficulty);
+                    break;
+                case 2:
+                    createCompareFractionsQuestion(difficulty);
+                    break;
+            }
+        }
+        
+        // Create a question to identify a fraction
+        function createIdentifyFractionQuestion(difficulty) {
+            // Set question text
+            elements.displays.questionText.textContent = "What fraction of the shape is colored?";
+            
+            // Create fraction container
+            const container = document.createElement('div');
+            container.className = 'fraction-container';
+            elements.displays.fractionQuizDisplay.appendChild(container);
+            
+            // Choose shape type
+            const shapeTypes = ['circle', 'square', 'rectangle'];
+            const shapeType = shapeTypes[Math.floor(Math.random() * shapeTypes.length)];
+            
+            // Generate denominator and numerator based on difficulty
+            let denominator, numerator;
+            
+            if (difficulty === 1) {
+                denominator = 2;
+                numerator = 1;
+            } else if (difficulty === 2) {
+                denominator = 4;
+                numerator = Math.floor(Math.random() * 4) + 1;
+            } else if (difficulty === 3) {
+                denominator = 2 * Math.pow(2, Math.floor(Math.random() * 3)); // 2, 4, or 8
+                numerator = Math.floor(Math.random() * denominator) + 1;
+            } else if (difficulty === 4) {
+                const denominators = [3, 6, 8, 9, 12];
+                denominator = denominators[Math.floor(Math.random() * denominators.length)];
+                numerator = Math.floor(Math.random() * denominator) + 1;
+            } else {
+                const denominators = [3, 5, 6, 8, 9, 10, 12];
+                denominator = denominators[Math.floor(Math.random() * denominators.length)];
+                numerator = Math.floor(Math.random() * denominator) + 1;
+            }
+            
+            // Create the shape with colored pieces
+            switch (shapeType) {
+                case 'circle':
+                    createQuizCircleFraction(container, denominator, numerator);
+                    break;
+                case 'square':
+                    createQuizSquareFraction(container, denominator, numerator);
+                    break;
+                case 'rectangle':
+                    createQuizRectangleFraction(container, denominator, numerator);
+                    break;
+            }
+            
+            // Store correct answer
+            gameState.currentQuiz.correctAnswer = `${numerator}/${denominator}`;
+            
+            // Generate answer options
+            generateAnswerOptions(numerator, denominator);
+        }
+        
+        // Create a quiz circle fraction
+        function createQuizCircleFraction(container, denominator, numerator) {
+            const radius = 120;
+            const centerX = 150;
+            const centerY = 150;
+            const anglePerSlice = (2 * Math.PI) / denominator;
+            
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 300 300");
+            container.appendChild(svg);
+            
+            // Create a group for the entire fraction
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(group);
+            
+            // Create circle outline
+            const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            circle.setAttribute("cx", centerX);
+            circle.setAttribute("cy", centerY);
+            circle.setAttribute("r", radius);
+            circle.setAttribute("fill", "none");
+            circle.setAttribute("stroke", "#4b0082");
+            circle.setAttribute("stroke-width", "2");
+            group.appendChild(circle);
+            
+            // Randomly select pieces to color
+            const coloredPieces = [];
+            while (coloredPieces.length < numerator) {
+                const piece = Math.floor(Math.random() * denominator);
+                if (!coloredPieces.includes(piece)) {
+                    coloredPieces.push(piece);
+                }
+            }
+            
+            // Create the slices
+            for (let i = 0; i < denominator; i++) {
+                const startAngle = i * anglePerSlice;
+                const endAngle = (i + 1) * anglePerSlice;
+                
+                const startX = centerX + radius * Math.cos(startAngle);
+                const startY = centerY + radius * Math.sin(startAngle);
+                const endX = centerX + radius * Math.cos(endAngle);
+                const endY = centerY + radius * Math.sin(endAngle);
+                
+                // Create the sector path
+                const largeArcFlag = (endAngle - startAngle > Math.PI) ? 1 : 0;
+                const pathData = `M ${centerX},${centerY} L ${startX},${startY} A ${radius},${radius} 0 ${largeArcFlag},1 ${endX},${endY} Z`;
+                
+                const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", pathData);
+                path.setAttribute("fill", coloredPieces.includes(i) ? "#ff9a00" : "#e0e0e0");
+                path.setAttribute("stroke", "#4b0082");
+                path.setAttribute("stroke-width", "1");
+                group.appendChild(path);
+            }
+        }
+        
+        // Create a quiz square fraction
+        function createQuizSquareFraction(container, denominator, numerator) {
+            const size = 240;
+            const startX = 30;
+            const startY = 30;
+            
+            // Calculate rows and columns
+            let rows, cols;
+            if (denominator === 2) {
+                rows = 1;
+                cols = 2;
+            } else if (denominator === 4) {
+                rows = 2;
+                cols = 2;
+            } else if (denominator === 8) {
+                rows = 4;
+                cols = 2;
+            } else if (denominator === 9) {
+                rows = 3;
+                cols = 3;
+            } else {
+                rows = Math.ceil(Math.sqrt(denominator));
+                cols = Math.ceil(denominator / rows);
+            }
+            
+            const pieceWidth = size / cols;
+            const pieceHeight = size / rows;
+            
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 300 300");
+            container.appendChild(svg);
+            
+            // Create a group for the entire fraction
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(group);
+            
+            // Create square outline
+            const square = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            square.setAttribute("x", startX);
+            square.setAttribute("y", startY);
+            square.setAttribute("width", size);
+            square.setAttribute("height", size);
+            square.setAttribute("fill", "none");
+            square.setAttribute("stroke", "#4b0082");
+            square.setAttribute("stroke-width", "2");
+            group.appendChild(square);
+            
+            // Randomly select pieces to color
+            const coloredPieces = [];
+            while (coloredPieces.length < numerator) {
+                const piece = Math.floor(Math.random() * denominator);
+                if (!coloredPieces.includes(piece)) {
+                    coloredPieces.push(piece);
+                }
+            }
+            
+            // Create the pieces
+            let index = 0;
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    if (index < denominator) {
+                        const x = startX + col * pieceWidth;
+                        const y = startY + row * pieceHeight;
+                        
+                        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", x);
+                        rect.setAttribute("y", y);
+                        rect.setAttribute("width", pieceWidth);
+                        rect.setAttribute("height", pieceHeight);
+                        rect.setAttribute("fill", coloredPieces.includes(index) ? "#ff9a00" : "#e0e0e0");
+                        rect.setAttribute("stroke", "#4b0082");
+                        rect.setAttribute("stroke-width", "1");
+                        group.appendChild(rect);
+                        
+                        index++;
+                    }
+                }
+            }
+        }
+        
+        // Create a quiz rectangle fraction
+        function createQuizRectangleFraction(container, denominator, numerator) {
+            const width = 240;
+            const height = 160;
+            const startX = 30;
+            const startY = 70;
+            
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 300 300");
+            container.appendChild(svg);
+            
+            // Create a group for the entire fraction
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(group);
+            
+            // Create rectangle outline
+            const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            rect.setAttribute("x", startX);
+            rect.setAttribute("y", startY);
+            rect.setAttribute("width", width);
+            rect.setAttribute("height", height);
+            rect.setAttribute("fill", "none");
+            rect.setAttribute("stroke", "#4b0082");
+            rect.setAttribute("stroke-width", "2");
+            group.appendChild(rect);
+            
+            // Randomly select pieces to color
+            const coloredPieces = [];
+            while (coloredPieces.length < numerator) {
+                const piece = Math.floor(Math.random() * denominator);
+                if (!coloredPieces.includes(piece)) {
+                    coloredPieces.push(piece);
+                }
+            }
+            
+            // Create the pieces (horizontal division)
+            const pieceWidth = width / denominator;
+            
+            for (let i = 0; i < denominator; i++) {
+                const x = startX + i * pieceWidth;
+                
+                const piece = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                piece.setAttribute("x", x);
+                piece.setAttribute("y", startY);
+                piece.setAttribute("width", pieceWidth);
+                piece.setAttribute("height", height);
+                piece.setAttribute("fill", coloredPieces.includes(i) ? "#ff9a00" : "#e0e0e0");
+                piece.setAttribute("stroke", "#4b0082");
+                piece.setAttribute("stroke-width", "1");
+                group.appendChild(piece);
+            }
+        }
+        
+        // Create a question to find equivalent fractions
+        function createEquivalentFractionQuestion(difficulty) {
+            // Set question text
+            elements.displays.questionText.textContent = "Which fraction is equal to the colored part?";
+            
+            // Create fraction container
+            const container = document.createElement('div');
+            container.className = 'fraction-container';
+            elements.displays.fractionQuizDisplay.appendChild(container);
+            
+            // Generate a fraction and its equivalent
+            let fraction1, fraction2;
+            
+            if (difficulty <= 2) {
+                // Simple equivalences: 1/2 = 2/4 = 4/8
+                fraction1 = { numerator: 1, denominator: 2 };
+                const multiplier = 2; // or 4 for 4/8
+                fraction2 = { 
+                    numerator: fraction1.numerator * multiplier, 
+                    denominator: fraction1.denominator * multiplier 
+                };
+            } else if (difficulty === 3) {
+                // Medium equivalences: 2/3 = 4/6, 3/4 = 6/8, etc.
+                const options = [
+                    { base: { numerator: 1, denominator: 2 }, multiplier: 2 },
+                    { base: { numerator: 2, denominator: 3 }, multiplier: 2 },
+                    { base: { numerator: 3, denominator: 4 }, multiplier: 2 }
+                ];
+                const choice = options[Math.floor(Math.random() * options.length)];
+                fraction1 = choice.base;
+                fraction2 = { 
+                    numerator: fraction1.numerator * choice.multiplier, 
+                    denominator: fraction1.denominator * choice.multiplier 
+                };
+            } else {
+                // Advanced equivalences with larger numbers or simplification
+                const options = [
+                    { base: { numerator: 2, denominator: 4 }, simplified: { numerator: 1, denominator: 2 } },
+                    { base: { numerator: 3, denominator: 6 }, simplified: { numerator: 1, denominator: 2 } },
+                    { base: { numerator: 4, denominator: 6 }, simplified: { numerator: 2, denominator: 3 } },
+                    { base: { numerator: 6, denominator: 8 }, simplified: { numerator: 3, denominator: 4 } },
+                    { base: { numerator: 4, denominator: 10 }, simplified: { numerator: 2, denominator: 5 } }
+                ];
+                const choice = options[Math.floor(Math.random() * options.length)];
+                fraction1 = choice.base;
+                fraction2 = choice.simplified;
+            }
+            
+            // Randomly decide which fraction to display
+            const displayFirst = Math.random() > 0.5;
+            const displayedFraction = displayFirst ? fraction1 : fraction2;
+            const targetFraction = displayFirst ? fraction2 : fraction1;
+            
+            // Create the fraction display
+            createQuizSquareFraction(container, displayedFraction.denominator, displayedFraction.numerator);
+            
+            // Store correct answer
+            gameState.currentQuiz.correctAnswer = `${targetFraction.numerator}/${targetFraction.denominator}`;
+            
+            // Generate answer options
+            generateEquivalentOptions(targetFraction.numerator, targetFraction.denominator);
+        }
+        
+        // Create a question to compare fractions
+        function createCompareFractionsQuestion(difficulty) {
+            // Set question text
+            elements.displays.questionText.textContent = "Which fraction is larger?";
+            
+            // Create fraction container
+            const container = document.createElement('div');
+            container.className = 'fraction-container';
+            elements.displays.fractionQuizDisplay.appendChild(container);
+            
+            // Generate two fractions to compare
+            let fraction1, fraction2;
+            
+            if (difficulty <= 2) {
+                // Simple comparisons with same denominator
+                const denominator = [2, 4, 6, 8][Math.floor(Math.random() * 4)];
+                let numerator1 = Math.floor(Math.random() * (denominator - 1)) + 1;
+                let numerator2;
+                do {
+                    numerator2 = Math.floor(Math.random() * (denominator - 1)) + 1;
+                } while (numerator2 === numerator1);
+                
+                fraction1 = { numerator: numerator1, denominator: denominator };
+                fraction2 = { numerator: numerator2, denominator: denominator };
+            } else if (difficulty === 3) {
+                // Medium comparisons with different denominators but easy to compare
+                const options = [
+                    { frac1: { numerator: 1, denominator: 2 }, frac2: { numerator: 1, denominator: 4 } },
+                    { frac1: { numerator: 3, denominator: 4 }, frac2: { numerator: 2, denominator: 3 } },
+                    { frac1: { numerator: 2, denominator: 3 }, frac2: { numerator: 3, denominator: 5 } }
+                ];
+                const choice = options[Math.floor(Math.random() * options.length)];
+                fraction1 = choice.frac1;
+                fraction2 = choice.frac2;
+            } else {
+                // Advanced comparisons requiring conversion to common denominator
+                const options = [
+                    { frac1: { numerator: 3, denominator: 8 }, frac2: { numerator: 5, denominator: 12 } },
+                    { frac1: { numerator: 7, denominator: 12 }, frac2: { numerator: 3, denominator: 5 } },
+                    { frac1: { numerator: 5, denominator: 6 }, frac2: { numerator: 7, denominator: 9 } }
+                ];
+                const choice = options[Math.floor(Math.random() * options.length)];
+                fraction1 = choice.frac1;
+                fraction2 = choice.frac2;
+            }
+            
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 600 300");
+            container.appendChild(svg);
+            
+            // Create a group for the entire fraction
+            const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            svg.appendChild(group);
+            
+            // Draw first fraction
+            const group1 = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            group1.setAttribute("transform", "translate(0, 0)");
+            group.appendChild(group1);
+            
+            // Create first fraction
+            drawQuizSquareFraction(group1, fraction1.denominator, fraction1.numerator);
+            
+            // Draw second fraction
+            const group2 = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            group2.setAttribute("transform", "translate(300, 0)");
+            group.appendChild(group2);
+            
+            // Create second fraction
+            drawQuizSquareFraction(group2, fraction2.denominator, fraction2.numerator);
+            
+            // Add question mark between fractions
+            const question = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            question.setAttribute("x", "300");
+            question.setAttribute("y", "150");
+            question.setAttribute("text-anchor", "middle");
+            question.setAttribute("font-size", "40");
+            question.setAttribute("fill", "#4b0082");
+            question.textContent = "?";
+            group.appendChild(question);
+            
+            // Add fraction labels
+            const label1 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label1.setAttribute("x", "150");
+            label1.setAttribute("y", "240");
+            label1.setAttribute("text-anchor", "middle");
+            label1.setAttribute("font-size", "24");
+            label1.setAttribute("fill", "#4b0082");
+            label1.textContent = `A: ${fraction1.numerator}/${fraction1.denominator}`;
+            group.appendChild(label1);
+            
+            const label2 = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            label2.setAttribute("x", "450");
+            label2.setAttribute("y", "240");
+            label2.setAttribute("text-anchor", "middle");
+            label2.setAttribute("font-size", "24");
+            label2.setAttribute("fill", "#4b0082");
+            label2.textContent = `B: ${fraction2.numerator}/${fraction2.denominator}`;
+            group.appendChild(label2);
+            
+            // Calculate the larger fraction
+            const value1 = fraction1.numerator / fraction1.denominator;
+            const value2 = fraction2.numerator / fraction2.denominator;
+            
+            // Store correct answer
+            gameState.currentQuiz.correctAnswer = value1 > value2 ? "A" : "B";
+            
+            // Generate answer options
+            generateComparisonOptions();
+        }
+        
+        // Draw a quiz square fraction (for comparison)
+        function drawQuizSquareFraction(group, denominator, numerator) {
+            const size = 200;
+            const startX = 50;
+            const startY = 50;
+            
+            // Calculate rows and columns
+            let rows, cols;
+            if (denominator === 2) {
+                rows = 1;
+                cols = 2;
+            } else if (denominator === 4) {
+                rows = 2;
+                cols = 2;
+            } else if (denominator === 8) {
+                rows = 4;
+                cols = 2;
+            } else if (denominator === 9) {
+                rows = 3;
+                cols = 3;
+            } else {
+                rows = Math.ceil(Math.sqrt(denominator));
+                cols = Math.ceil(denominator / rows);
+            }
+            
+            const pieceWidth = size / cols;
+            const pieceHeight = size / rows;
+            
+            // Create square outline
+            const square = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            square.setAttribute("x", startX);
+            square.setAttribute("y", startY);
+            square.setAttribute("width", size);
+            square.setAttribute("height", size);
+            square.setAttribute("fill", "none");
+            square.setAttribute("stroke", "#4b0082");
+            square.setAttribute("stroke-width", "2");
+            group.appendChild(square);
+            
+            // Create the pieces
+            let index = 0;
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    if (index < denominator) {
+                        const x = startX + col * pieceWidth;
+                        const y = startY + row * pieceHeight;
+                        
+                        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", x);
+                        rect.setAttribute("y", y);
+                        rect.setAttribute("width", pieceWidth);
+                        rect.setAttribute("height", pieceHeight);
+                        rect.setAttribute("fill", index < numerator ? "#ff9a00" : "#e0e0e0");
+                        rect.setAttribute("stroke", "#4b0082");
+                        rect.setAttribute("stroke-width", "1");
+                        group.appendChild(rect);
+                        
+                        index++;
+                    }
+                }
+            }
+        }
+        
+        // Generate answer options for identify fraction questions
+        function generateAnswerOptions(correctNumerator, correctDenominator) {
+            const options = [`${correctNumerator}/${correctDenominator}`];
+            
+            // Generate wrong options
+            while (options.length < 4) {
+                let wrongOption;
+                
+                // Different types of wrong answers
+                const wrongType = Math.floor(Math.random() * 3);
+                
+                if (wrongType === 0) {
+                    // Swap numerator and denominator
+                    wrongOption = `${correctDenominator}/${correctNumerator}`;
+                } else if (wrongType === 1) {
+                    // Wrong numerator
+                    let wrongNumerator;
+                    do {
+                        wrongNumerator = Math.floor(Math.random() * correctDenominator) + 1;
+                    } while (wrongNumerator === correctNumerator);
+                    
+                    wrongOption = `${wrongNumerator}/${correctDenominator}`;
+                } else {
+                    // Wrong denominator
+                    let wrongDenominator;
+                    do {
+                        wrongDenominator = Math.floor(Math.random() * 10) + 2;
+                    } while (wrongDenominator === correctDenominator);
+                    
+                    wrongOption = `${correctNumerator}/${wrongDenominator}`;
+                }
+                
+                // Add the option if it's not already in the list
+                if (!options.includes(wrongOption)) {
+                    options.push(wrongOption);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', function() {
+                    selectQuizOption(this);
+                });
+                elements.displays.quizOptions.appendChild(optionElement);
+            });
+        }
+        
+        // Generate answer options for equivalent fraction questions
+        function generateEquivalentOptions(correctNumerator, correctDenominator) {
+            const options = [`${correctNumerator}/${correctDenominator}`];
+            
+            // Generate wrong options
+            while (options.length < 4) {
+                let wrongOption;
+                
+                // Different types of wrong answers
+                const wrongType = Math.floor(Math.random() * 3);
+                
+                if (wrongType === 0) {
+                    // Close to correct but not equivalent
+                    wrongOption = `${correctNumerator + 1}/${correctDenominator + 1}`;
+                } else if (wrongType === 1) {
+                    // Same numerator, different denominator
+                    let wrongDenominator;
+                    do {
+                        wrongDenominator = Math.floor(Math.random() * 10) + 2;
+                    } while (wrongDenominator === correctDenominator);
+                    
+                    wrongOption = `${correctNumerator}/${wrongDenominator}`;
+                } else {
+                    // Different numerator, same denominator
+                    let wrongNumerator;
+                    do {
+                        wrongNumerator = Math.floor(Math.random() * correctDenominator) + 1;
+                    } while (wrongNumerator === correctNumerator);
+                    
+                    wrongOption = `${wrongNumerator}/${correctDenominator}`;
+                }
+                
+                // Add the option if it's not already in the list
+                if (!options.includes(wrongOption)) {
+                    options.push(wrongOption);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', function() {
+                    selectQuizOption(this);
+                });
+                elements.displays.quizOptions.appendChild(optionElement);
+            });
+        }
+        
+        // Generate answer options for comparison questions
+        function generateComparisonOptions() {
+            const options = ["A", "B", "Equal"];
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create option buttons
+            options.forEach(option => {
+                const option

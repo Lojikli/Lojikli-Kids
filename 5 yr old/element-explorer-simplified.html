@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Element Explorer: Chemistry Adventure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            color: #333;
+        }
+        
+        #gameContainer {
+            width: 95%;
+            max-width: 1200px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin: 20px 0;
+            overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        header {
+            background: linear-gradient(to right, #3a7bd5, #00d2ff);
+            padding: 20px;
+            text-align: center;
+            color: white;
+            position: relative;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        #mainMenuContainer, 
+        #periodicTableContainer,
+        #quizContainer,
+        #experimentLabContainer {
+            padding: 20px;
+            display: none;
+        }
+        
+        #mainMenuContainer {
+            display: block;
+            text-align: center;
+            padding: 40px 20px;
+        }
+        
+        .menu-button {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            margin: 15px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            max-width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .menu-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .menu-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .menu-button i {
+            margin-right: 10px;
+            font-size: 1.3rem;
+        }
+        
+        .back-button {
+            background: linear-gradient(to right, #ff9966, #ff5e62);
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            font-weight: bold;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+        }
+        
+        .back-button i {
+            margin-right: 5px;
+        }
+        
+        #characterContainer {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 180px;
+            height: 180px;
+            z-index: 100;
+        }
+        
+        #character {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        
+        #characterSpeech {
+            position: absolute;
+            top: -80px;
+            left: -200px;
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            width: 250px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+            display: none;
+            z-index: 101;
+        }
+        
+        #characterSpeech:after {
+            content: '';
+            position: absolute;
+            bottom: 15px;
+            right: -10px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            transform: rotate(45deg);
+            box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Periodic Table Styles */
+        #periodicTableGrid {
+            display: grid;
+            grid-template-columns: repeat(18, 1fr);
+            gap: 3px;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        
+        .element {
+            background-color: #f0f0f0;
+            border-radius: 5px;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            aspect-ratio: 1/1;
+            position: relative;
+        }
+        
+        .element:hover {
+            transform: translateZ(20px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            z-index: 20;
+        }
+        
+        .element .symbol {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        
+        .element .number {
+            font-size: 0.7em;
+            position: absolute;
+            top: 2px;
+            left: 5px;
+        }
+        
+        .element .name {
+            font-size: 0.6em;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 100%;
+        }
+        
+        /* Element category colors */
+        .alkali-metal { background-color: #ffafaf; }
+        .alkaline-earth { background-color: #ffddbf; }
+        .transition-metal { background-color: #fff1bf; }
+        .post-transition { background-color: #c8ffbf; }
+        .metalloid { background-color: #bffffd; }
+        .nonmetal { background-color: #bfcfff; }
+        .halogen { background-color: #debfff; }
+        .noble-gas { background-color: #ffbfe7; }
+        .lanthanide { background-color: #ebebeb; }
+        .actinide { background-color: #d1d1d1; }
+        
+        /* Element detail panel */
+        #elementDetails {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            visibility: hidden;
+        }
+        
+        #elementDetails.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        #elementDetails h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        #elementInfo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .info-item {
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-item h4 {
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .info-item p {
+            font-size: 1.1rem;
+            font-weight: bold;
+        }
+        
+        #closeDetails {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        /* Quiz Styles */
+        #quizContent {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        #questionContainer {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        #questionText {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        #answerOptions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 600px) {
+            #answerOptions {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .answer-option {
+            background: linear-gradient(to right, #f8f9fa, #e9ecef);
+            border: 2px solid #dee2e6;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 1.1rem;
+        }
+        
+        .answer-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.05);
+            border-color: #4facfe;
+        }
+        
+        .answer-option.selected {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .answer-option.correct {
+            background: linear-gradient(to right, #67e26f, #00b09b);
+            color: white;
+            border-color: transparent;
+        }
+        
+        .answer-option.incorrect {
+            background: linear-gradient(to right, #ff6b6b, #ff8787);
+            color: white;
+            border-color: transparent;
+        }
+        
+        #quizControls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        #submitAnswer, #nextQuestion {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 30px;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        #submitAnswer:hover, #nextQuestion:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        #nextQuestion {
+            display: none;
+            background: linear-gradient(to right, #67e26f, #00b09b);
+        }
+        
+        #feedbackMessage {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            text-align: center;
+            display: none;
+        }
+        
+        #quizProgress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        #progressBar {
+            flex-grow: 1;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 5px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+        
+        #progressFill {
+            height: 100%;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        #scoreDisplay {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #4facfe;
+        }
+        
+        /* Experiment Lab Styles */
+        #experimentContainer {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .experiment-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .experiment-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .experiment-card h3 {
+            margin-bottom: 15px;
+            color: #3a7bd5;
+        }
+        
+        .experiment-card p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+        
+        .experiment-card .materials {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .experiment-card .materials h4 {
+            margin-bottom: 5px;
+            color: #666;
+        }
+        
+        .experiment-card .materials ul {
+            list-style-type: none;
+            padding-left: 10px;
+        }
+        
+        .experiment-card .materials li {
+            padding: 3px 0;
+        }
+        
+        .experiment-card .experiment-button {
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: block;
+            margin: 0 auto;
+        }
+        
+        .experiment-card .experiment-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        #experimentResult {
+            display: none;
+            background: #f0f9ff;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            border-left: 5px solid #4facfe;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* Media queries for responsiveness */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .menu-button {
+                width: 250px;
+                padding: 12px 25px;
+                font-size: 1rem;
+            }
+            
+            #periodicTableGrid {
+                gap: 2px;
+            }
+            
+            .element .symbol {
+                font-size: 1em;
+            }
+            
+            .element .number, .element .name {
+                font-size: 0.6em;
+            }
+            
+            #elementDetails {
+                width: 95%;
+                padding: 15px;
+            }
+            
+            #elementInfo {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .menu-button {
+                width: 100%;
+                max-width: 300px;
+                margin: 10px;
+            }
+            
+            #periodicTableGrid {
+                grid-template-columns: repeat(9, 1fr);
+            }
+            
+            .element .symbol {
+                font-size: 0.85em;
+            }
+            
+            .element .number {
+                font-size: 0.5em;
+            }
+            
+            .element .name {
+                display: none;
+            }
+        }
+
+        /* Notification styles */
+        #notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            transform: translateX(150%);
+            transition: transform 0.5s;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+        }
+        
+        #notification.show {
+            transform: translateX(0);
+        }
+        
+        #notification-icon {
+            margin-right: 15px;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(to right, #4facfe, #00f2fe);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        #notification-text {
+            font-weight: bold;
+        }
+
+        /* Confetti effect */
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 50%;
+            animation: confettiFall 4s ease-out forwards;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-10vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Game Container -->
+    <div id="gameContainer">
+        <header>
+            <h1>Element Explorer: Chemistry Adventure</h1>
+            <p>Discover the amazing world of atoms and molecules!</p>
+        </header>
+        
+        <!-- Main Menu -->
+        <div id="mainMenuContainer">
+            <button class="menu-button" onclick="startPeriodicTable()">
+                <i>🔍</i> Explore Periodic Table
+            </button>
+            <button class="menu-button" onclick="startQuiz()">
+                <i>❓</i> Element Quiz
+            </button>
+            <button class="menu-button" onclick="startExperimentLab()">
+                <i>🔬</i> Experiment Lab
+            </button>
+        </div>
+        
+        <!-- Periodic Table Container -->
+        <div id="periodicTableContainer">
+            <button class="back-button" onclick="goToMainMenu()">
+                <i>←</i> Back
+            </button>
+            <h2 style="text-align: center; margin-bottom: 20px;">The Periodic Table of Elements</h2>
+            <div id="periodicTableGrid"></div>
+            
+            <!-- Element Details Panel -->
+            <div id="elementDetails">
+                <button id="closeDetails">×</button>
+                <h2 id="detailsTitle">Element Name</h2>
+                <div id="elementInfo">
+                    <!-- Element info will be added dynamically -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quiz Container -->
+        <div id="quizContainer">
+            <button class="back-button" onclick="goToMainMenu()">
+                <i>←</i> Back
+            </button>
+            <div id="quizContent">
+                <div id="quizProgress">
+                    <span>Question <span id="currentQuestion">1</span>/<span id="totalQuestions">10</span></span>
+                    <div id="progressBar">
+                        <div id="progressFill"></div>
+                    </div>
+                    <span id="scoreDisplay">Score: 0</span>
+                </div>
+                <div id="questionContainer">
+                    <h3 id="questionText">What is the chemical symbol for Hydrogen?</h3>
+                    <div id="answerOptions">
+                        <!-- Answer options will be added dynamically -->
+                    </div>
+                </div>
+                <div id="feedbackMessage"></div>
+                <div id="quizControls">
+                    <button id="submitAnswer">Submit Answer</button>
+                    <button id="nextQuestion">Next Question</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Experiment Lab Container -->
+        <div id="experimentLabContainer">
+            <button class="back-button" onclick="goToMainMenu()">
+                <i>←</i> Back
+            </button>
+            <h2 style="text-align: center; margin-bottom: 20px;">Chemistry Experiments</h2>
+            <div id="experimentContainer">
+                <!-- Experiment cards will be added here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Character Helper -->
+    <div id="characterContainer">
+        <div id="character">
+            <svg width="180" height="180" viewBox="0 0 200 200">
+                <!-- Professor Atom character -->
+                <circle cx="100" cy="100" r="35" fill="#4facfe" stroke="#333" stroke-width="2" />
+                <circle cx="100" cy="100" r="60" fill="none" stroke="#333" stroke-width="1" stroke-dasharray="5,5" />
+                <circle cx="100" cy="100" r="85" fill="none" stroke="#333" stroke-width="1" stroke-dasharray="5,5" />
+                
+                <!-- Electron animations -->
+                <circle cx="100" cy="40" r="8" fill="#3498db">
+                    <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        from="0 100 100"
+                        to="360 100 100"
+                        dur="3s"
+                        repeatCount="indefinite" />
+                </circle>
+                
+                <circle cx="160" cy="100" r="8" fill="#3498db">
+                    <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        from="0 100 100"
+                        to="360 100 100"
+                        dur="5s"
+                        repeatCount="indefinite" />
+                </circle>
+                
+                <circle cx="100" cy="185" r="8" fill="#3498db">
+                    <animateTransform
+                        attributeName="transform"
+                        type="rotate"
+                        from="0 100 100"
+                        to="360 100 100"
+                        dur="7s"
+                        repeatCount="indefinite" />
+                </circle>
+                
+                <!-- Face features -->
+                <circle cx="90" cy="90" r="5" fill="white" />
+                <circle cx="110" cy="90" r="5" fill="white" />
+                <circle cx="90" cy="90" r="2" fill="black" />
+                <circle cx="110" cy="90" r="2" fill="black" />
+                <path d="M85 110 Q100 125 115 110" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" />
+                
+                <!-- Glasses -->
+                <circle cx="90" cy="90" r="10" fill="none" stroke="white" stroke-width="2" />
+                <circle cx="110" cy="90" r="10" fill="none" stroke="white" stroke-width="2" />
+                <line x1="100" y1="90" x2="100" y2="90" stroke="white" stroke-width="2" />
+            </svg>
+        </div>
+        <div id="characterSpeech"></div>
+    </div>
+    
+    <!-- Notification -->
+    <div id="notification">
+        <div id="notification-icon">🏆</div>
+        <div id="notification-text">Achievement unlocked!</div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            discoveredElements: [],
+            quizScore: 0,
+            totalQuestions: 0,
+            showCharacter: true
+        };
+        
+        // Elements data
+        const elements = [
+            { number: 1, symbol: 'H', name: 'Hydrogen', category: 'nonmetal', state: 'gas', weight: 1.008, color: '#FFFFFF', description: "The lightest element that makes up water and stars!" },
+            { number: 2, symbol: 'He', name: 'Helium', category: 'noble-gas', state: 'gas', weight: 4.0026, color: '#D9FFFF', description: "This gas makes balloons float and gives a funny voice!" },
+            { number: 3, symbol: 'Li', name: 'Lithium', category: 'alkali-metal', state: 'solid', weight: 6.94, color: '#CC80FF', description: "Used in batteries and helps treat some mood problems." },
+            { number: 4, symbol: 'Be', name: 'Beryllium', category: 'alkaline-earth', state: 'solid', weight: 9.0122, color: '#C2FF00', description: "A lightweight metal used in spacecraft and X-ray machines." },
+            { number: 5, symbol: 'B', name: 'Boron', category: 'metalloid', state: 'solid', weight: 10.81, color: '#FFB5B5', description: "Used in cleaning products and makes plants grow better." },
+            { number: 6, symbol: 'C', name: 'Carbon', category: 'nonmetal', state: 'solid', weight: 12.011, color: '#909090', description: "The building block of all life and found in diamonds!" },
+            { number: 7, symbol: 'N', name: 'Nitrogen', category: 'nonmetal', state: 'gas', weight: 14.007, color: '#3050F8', description: "Makes up most of the air we breathe and helps plants grow." },
+            { number: 8, symbol: 'O', name: 'Oxygen', category: 'nonmetal', state: 'gas', weight: 15.999, color: '#FF0D0D', description: "We need this gas to breathe and it makes up water too!" },
+            { number: 9, symbol: 'F', name: 'Fluorine', category: 'halogen', state: 'gas', weight: 18.998, color: '#90E050', description: "The most reactive element and helps protect teeth." },
+            { number: 10, symbol: 'Ne', name: 'Neon', category: 'noble-gas', state: 'gas', weight: 20.180, color: '#B3E3F5', description: "Makes bright glowing signs and never reacts with others." },
+            { number: 11, symbol: 'Na', name: 'Sodium', category: 'alkali-metal', state: 'solid', weight: 22.990, color: '#AB5CF2', description: "A reactive metal that explodes in water and is in salt!" },
+            { number: 12, symbol: 'Mg', name: 'Magnesium', category: 'alkaline-earth', state: 'solid', weight: 24.305, color: '#8AFF00', description: "Burns with a bright light and helps our bones stay strong." },
+            { number: 13, symbol: 'Al', name: 'Aluminum', category: 'post-transition', state: 'solid', weight: 26.982, color: '#BFA6A6', description: "A lightweight metal used for foil, cans, and airplanes." },
+            { number: 14, symbol: 'Si', name: 'Silicon', category: 'metalloid', state: 'solid', weight: 28.085, color: '#F0C8A0', description: "Used in computer chips and is found in sand and glass." },
+            { number: 15, symbol: 'P', name: 'Phosphorus', category: 'nonmetal', state: 'solid', weight: 30.974, color: '#FF8000', description: "Glows in the dark and helps build strong bones and teeth." },
+            { number: 16, symbol: 'S', name: 'Sulfur', category: 'nonmetal', state: 'solid', weight: 32.06, color: '#FFFF30', description: "A yellow element with a strong smell like rotten eggs." },
+            { number: 17, symbol: 'Cl', name: 'Chlorine', category: 'halogen', state: 'gas', weight: 35.45, color: '#1FF01F', description: "Used to clean swimming pools and is part of table salt." },
+            { number: 18, symbol: 'Ar', name: 'Argon', category: 'noble-gas', state: 'gas', weight: 39.948, color: '#80D1E3', description: "An invisible gas used in light bulbs that doesn't react." },
+            { number: 19, symbol: 'K', name: 'Potassium', category: 'alkali-metal', state: 'solid', weight: 39.098, color: '#8F40D4', description: "A reactive metal important for heart and muscle health." },
+            { number: 20, symbol: 'Ca', name: 'Calcium', category: 'alkaline-earth', state: 'solid', weight: 40.078, color: '#3DFF00', description: "Makes bones and teeth strong and is found in milk!" }
+        ];
+        
+        // Quiz questions
+        const quizQuestions = [
+            {
+                question: "What is the chemical symbol for Hydrogen?",
+                options: ["H", "He", "Hy", "Ho"],
+                correctAnswer: 0,
+                explanation: "Hydrogen's symbol is H. It's the first element on the periodic table!"
+            },
+            {
+                question: "Which element helps plants grow and is part of the air we breathe?",
+                options: ["Oxygen", "Nitrogen", "Carbon", "Helium"],
+                correctAnswer: 1,
+                explanation: "Nitrogen makes up about 78% of our atmosphere and is essential for plant growth."
+            },
+            {
+                question: "What element is most important for strong bones and teeth?",
+                options: ["Iron", "Sodium", "Calcium", "Potassium"],
+                correctAnswer: 2,
+                explanation: "Calcium is vital for building strong bones and teeth. That's why milk is good for you!"
+            },
+            {
+                question: "Which of these is NOT a state of matter?",
+                options: ["Solid", "Liquid", "Gas", "Element"],
+                correctAnswer: 3,
+                explanation: "Element is not a state of matter. The three basic states are solid, liquid, and gas."
+            },
+            {
+                question: "What element makes up most of the Sun?",
+                options: ["Oxygen", "Carbon", "Helium", "Hydrogen"],
+                correctAnswer: 3,
+                explanation: "The Sun is mostly made of Hydrogen, which is the most abundant element in the universe!"
+            },
+            {
+                question: "How many atoms of Hydrogen are in a water (H₂O) molecule?",
+                options: ["1", "2", "3", "4"],
+                correctAnswer: 1,
+                explanation: "Water (H₂O) has 2 Hydrogen atoms and 1 Oxygen atom."
+            },
+            {
+                question: "Which element is a noble gas that makes balloons float?",
+                options: ["Hydrogen", "Oxygen", "Helium", "Neon"],
+                correctAnswer: 2,
+                explanation: "Helium is a noble gas that is lighter than air, making balloons float upward."
+            },
+            {
+                question: "What happens when atoms share electrons?",
+                options: ["They form a crystal", "They form a chemical bond", "They change color", "They become magnetic"],
+                correctAnswer: 1,
+                explanation: "When atoms share electrons, they form a chemical bond called a covalent bond."
+            },
+            {
+                question: "Which element is needed for us to breathe?",
+                options: ["Nitrogen", "Hydrogen", "Carbon", "Oxygen"],
+                correctAnswer: 3,
+                explanation: "Oxygen is essential for human respiration. We breathe it in and exhale carbon dioxide."
+            },
+            {
+                question: "What is the center of an atom called?",
+                options: ["Nucleus", "Core", "Electron", "Neutron"],
+                correctAnswer: 0,
+                explanation: "The center of an atom is called the nucleus, which contains protons and neutrons."
+            }
+        ];
+        
+        // Experiments data
+        const experiments = [
+            {
+                title: "Colorful Chemical Reactions",
+                description: "Mix different household chemicals to create colorful reactions that demonstrate chemical changes.",
+                materials: ["Baking soda", "Vinegar", "Food coloring", "Dish soap", "Small containers"],
+                procedure: "1. Place some baking soda in a container.\n2. Add a few drops of food coloring.\n3. Mix in a little dish soap.\n4. Slowly pour in vinegar and watch what happens!",
+                result: "The baking soda (sodium bicarbonate) reacts with vinegar (acetic acid) to produce carbon dioxide gas. The bubbles get trapped in the dish soap, creating a colorful, foaming reaction!",
+                explanation: "This demonstrates an acid-base reaction. The vinegar (acid) reacts with baking soda (base) to form carbon dioxide gas, water, and sodium acetate. The bubbles you see are the carbon dioxide gas being released.",
+                difficulty: "easy"
+            },
+            {
+                title: "Making Water Molecules",
+                description: "Learn about how hydrogen and oxygen combine to form water through a simple visual demonstration.",
+                materials: ["Blue and red construction paper", "Scissors", "Glue or tape"],
+                procedure: "1. Cut out two small red circles for hydrogen atoms.\n2. Cut out one larger blue circle for an oxygen atom.\n3. Arrange them in a V-shape with oxygen at the center and the two hydrogen atoms at the ends.\n4. Glue or tape them together.",
+                result: "You've created a model of a water molecule (H₂O)! Water has a bent shape with hydrogen atoms at about 104.5° apart.",
+                explanation: "Water molecules have a bent shape because oxygen has two pairs of electrons that aren't shared with hydrogen. These lone pairs repel the hydrogen atoms, creating the bent shape. This shape gives water its special properties!",
+                difficulty: "easy"
+            },
+            {
+                title: "Invisible Ink",
+                description: "Create messages that can only be seen with heat, using the chemical properties of lemon juice.",
+                materials: ["Lemon juice", "Cotton swab or paintbrush", "White paper", "Heat source (lamp or iron on low)"],
+                procedure: "1. Dip the cotton swab in lemon juice.\n2. Write a secret message on white paper.\n3. Let it dry completely - the message will be invisible.\n4. Hold the paper near a heat source (with adult help).",
+                result: "The invisible message will appear as brown text when heated!",
+                explanation: "Lemon juice contains carbon compounds. When heated, these compounds oxidize and turn brown, revealing your message. This demonstrates how heat can cause chemical changes in substances.",
+                difficulty: "medium"
+            },
+            {
+                title: "Crystal Garden",
+                description: "Grow beautiful crystals using household chemicals to learn about solutions and crystallization.",
+                materials: ["Table salt or Epsom salt", "Water", "Food coloring", "Small jar", "Pipe cleaners"],
+                procedure: "1. Dissolve salt in hot water until no more will dissolve.\n2. Add food coloring if desired.\n3. Shape pipe cleaners into simple forms.\n4. Pour the solution into a jar and place pipe cleaners inside.\n5. Leave undisturbed for several days.",
+                result: "Beautiful crystals will form on the pipe cleaners as the water evaporates!",
+                explanation: "This demonstrates supersaturation and crystallization. When the water evaporates, the solution becomes so concentrated that the salt molecules arrange themselves into solid crystal structures with regular geometric patterns.",
+                difficulty: "medium"
+            },
+            {
+                title: "pH Rainbow",
+                description: "Create a rainbow of colors by testing the pH of different household substances.",
+                materials: ["Red cabbage", "Hot water", "Various household items (lemon juice, baking soda solution, soap, etc.)", "Clear cups"],
+                procedure: "1. Chop red cabbage and soak in hot water for 10 minutes.\n2. Strain to collect the purple liquid - this is your pH indicator.\n3. Pour a small amount into separate cups.\n4. Add different substances to each cup and observe color changes.",
+                result: "The cabbage juice will change color based on whether substances are acidic (pink/red), neutral (purple), or basic (blue/green)!",
+                explanation: "Red cabbage contains anthocyanins that change color depending on pH. This demonstrates how molecular structures can change in different chemical environments, causing visible color changes.",
+                difficulty: "hard"
+            }
+        ];
+        
+        // Initialize game
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Periodic Table
+            createPeriodicTable();
+            
+            // Set up element details panel
+            document.getElementById('closeDetails').addEventListener('click', hideElementDetails);
+            
+            // Set up quiz
+            document.getElementById('submitAnswer').addEventListener('click', checkAnswer);
+            document.getElementById('nextQuestion').addEventListener('click', loadQuizQuestion);
+            
+            // Set up experiment lab
+            populateExperiments();
+            
+            // Show welcome message
+            showCharacterSpeech("Welcome to Element Explorer! I'm Professor Atom. Click on the menu options to start your chemistry adventure!");
+        });
+        
+        // Navigation functions
+        function goToMainMenu() {
+            hideAllContainers();
+            document.getElementById('mainMenuContainer').style.display = 'block';
+            
+            // Show random character tip
+            const tips = [
+                "Click on 'Explore Periodic Table' to learn about elements!",
+                "Did you know water is made of hydrogen and oxygen atoms?",
+                "Try the 'Element Quiz' to test your knowledge!",
+                "All matter in the universe is made of atoms. Even you!"
+            ];
+            
+            showCharacterSpeech(tips[Math.floor(Math.random() * tips.length)]);
+        }
+        
+        function hideAllContainers() {
+            const containers = [
+                'mainMenuContainer',
+                'periodicTableContainer',
+                'quizContainer',
+                'experimentLabContainer'
+            ];
+            
+            containers.forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            
+            // Hide element details if open
+            document.getElementById('elementDetails').classList.remove('show');
+        }
+        
+        function startPeriodicTable() {
+            hideAllContainers();
+            document.getElementById('periodicTableContainer').style.display = 'block';
+            
+            showCharacterSpeech("Welcome to the Periodic Table! Click on any element to learn more about it. The colors show different element categories.");
+        }
+        
+        function startQuiz() {
+            hideAllContainers();
+            document.getElementById('quizContainer').style.display = 'block';
+            
+            // Reset quiz state
+            gameState.quizScore = 0;
+            gameState.totalQuestions = 0;
+            
+            // Load first question
+            loadQuizQuestion();
+            
+            showCharacterSpeech("Time to test your knowledge! Answer questions about elements and chemistry concepts. Good luck!");
+        }
+        
+        function startExperimentLab() {
+            hideAllContainers();
+            document.getElementById('experimentLabContainer').style.display = 'block';
+            
+            showCharacterSpeech("Welcome to the Chemistry Lab! Explore different experiments to learn about chemical reactions and properties.");
+        }
+        
+        // Periodic Table functions
+        function createPeriodicTable() {
+            const grid = document.getElementById('periodicTableGrid');
+            
+            // Clear existing content
+            grid.innerHTML = '';
+            
+            // Array to track element positions
+            const positions = [];
+            for (let i = 0; i < 10; i++) {
+                positions[i] = Array(18).fill(null);
+            }
+            
+            // Define positions for main group elements
+            // This is a simplified layout for educational purposes
+            elements.forEach(element => {
+                let row, col;
+                
+                if (element.number <= 2) {
+                    // First period (H and He)
+                    row = 0;
+                    col = element.number === 1 ? 0 : 17;
+                } else if (element.number <= 10) {
+                    // Second period (Li to Ne)
+                    row = 1;
+                    col = (element.number - 3) % 8;
+                    if (element.number >= 5) col += 10;
+                } else if (element.number <= 18) {
+                    // Third period (Na to Ar)
+                    row = 2;
+                    col = (element.number - 11) % 8;
+                    if (element.number >= 13) col += 10;
+                } else {
+                    // Fourth period (K and Ca only in this simplified version)
+                    row = 3;
+                    col = (element.number - 19) % 8;
+                }
+                
+                positions[row][col] = element;
+            });
+            
+            // Create elements in the grid
+            for (let row = 0; row < 10; row++) {
+                for (let col = 0; col < 18; col++) {
+                    const element = positions[row][col];
+                    
+                    // Create empty cell or element
+                    const cell = document.createElement('div');
+                    
+                    if (element) {
+                        cell.className = `element ${element.category}`;
+                        cell.innerHTML = `
+                            <span class="number">${element.number}</span>
+                            <span class="symbol">${element.symbol}</span>
+                            <span class="name">${element.name}</span>
+                        `;
+                        cell.addEventListener('click', () => showElementDetails(element));
+                    } else {
+                        cell.className = 'element empty';
+                        cell.style.visibility = 'hidden';
+                    }
+                    
+                    grid.appendChild(cell);
+                }
+            }
+        }
+        
+        function showElementDetails(element) {
+            const detailsPanel = document.getElementById('elementDetails');
+            
+            // Update details content
+            document.getElementById('detailsTitle').textContent = `${element.name} (${element.symbol})`;
+            
+            // Update element info
+            const elementInfo = document.getElementById('elementInfo');
+            elementInfo.innerHTML = `
+                <div class="info-item">
+                    <h4>Atomic Number</h4>
+                    <p>${element.number}</p>
+                </div>
+                <div class="info-item">
+                    <h4>Atomic Weight</h4>
+                    <p>${element.weight} u</p>
+                </div>
+                <div class="info-item">
+                    <h4>Category</h4>
+                    <p>${element.category.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}</p>
+                </div>
+                <div class="info-item">
+                    <h4>State at Room Temp</h4>
+                    <p>${element.state.charAt(0).toUpperCase() + element.state.slice(1)}</p>
+                </div>
+                <div class="info-item" style="grid-column: span 2;">
+                    <h4>Fun Fact</h4>
+                    <p>${element.description}</p>
+                </div>
+            `;
+            
+            // Show the details panel
+            detailsPanel.classList.add('show');
+            
+            // Add to discovered elements
+            if (!gameState.discoveredElements.includes(element.symbol)) {
+                gameState.discoveredElements.push(element.symbol);
+                
+                // Show achievement notification if it's a new discovery
+                showNotification("New Element Discovered!", "🔍");
+            }
+            
+            // Show character speech
+            showCharacterSpeech(`This is ${element.name} (${element.symbol})! ${element.description}`);
+        }
+        
+        function hideElementDetails() {
+            document.getElementById('elementDetails').classList.remove('show');
+        }
+        
+        // Quiz functions
+        function loadQuizQuestion() {
+            // Reset state
+            document.getElementById('submitAnswer').style.display = 'block';
+            document.getElementById('nextQuestion').style.display = 'none';
+            document.getElementById('feedbackMessage').style.display = 'none';
+            
+            // Get random question
+            const questionIndex = Math.floor(Math.random() * quizQuestions.length);
+            const question = quizQuestions[questionIndex];
+            
+            // Update UI
+            document.getElementById('questionText').textContent = question.question;
+            
+            // Create answer options
+            const answerOptions = document.getElementById('answerOptions');
+            answerOptions.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'answer-option';
+                optionDiv.textContent = option;
+                optionDiv.dataset.index = index;
+                
+                optionDiv.addEventListener('click', () => {
+                    // Deselect all options
+                    document.querySelectorAll('.answer-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    
+                    // Select this option
+                    optionDiv.classList.add('selected');
+                });
+                
+                answerOptions.appendChild(optionDiv);
+            });
+            
+            // Update progress
+            gameState.totalQuestions++;
+            document.getElementById('currentQuestion').textContent = gameState.totalQuestions;
+            document.getElementById('totalQuestions').textContent = '10';
+            
+            // Update progress bar
+            const progressPercentage = (gameState.totalQuestions - 1) * 10;
+            document.getElementById('progressFill').style.width = `${progressPercentage}%`;
+            
+            // Store current question for checking answer
+            gameState.currentQuestion = question;
+            
+            // Character tip
+            showCharacterSpeech("Think carefully about this question. You can do it!");
+        }
+        
+        function checkAnswer() {
+            const selectedOption = document.querySelector('.answer-option.selected');
+            
+            if (!selectedOption) {
+                showCharacterSpeech("Please select an answer first!");
+                return;
+            }
+            
+            const selectedIndex = parseInt(selectedOption.dataset.index);
+            const correctIndex = gameState.currentQuestion.correctAnswer;
+            
+            // Mark correct and incorrect answers
+            document.querySelectorAll('.answer-option').forEach((option, index) => {
+                if (index === correctIndex) {
+                    option.classList.add('correct');
+                } else if (index === selectedIndex && selectedIndex !== correctIndex) {
+                    option.classList.add('incorrect');
+                }
+            });
+            
+            // Display feedback
+            const feedbackMessage = document.getElementById('feedbackMessage');
+            feedbackMessage.style.display = 'block';
+            
+            if (selectedIndex === correctIndex) {
+                feedbackMessage.textContent = `Correct! ${gameState.currentQuestion.explanation}`;
+                feedbackMessage.style.backgroundColor = 'rgba(103, 226, 111, 0.2)';
+                feedbackMessage.style.border = '1px solid #67e26f';
+                
+                // Update score
+                gameState.quizScore++;
+                document.getElementById('scoreDisplay').textContent = `Score: ${gameState.quizScore}`;
+                
+                // Create confetti celebration
+                createConfetti(10);
+                
+                showCharacterSpeech("Great job! That's correct!");
+            } else {
+                feedbackMessage.textContent = `Not quite! The correct answer is: ${gameState.currentQuestion.options[correctIndex]}. ${gameState.currentQuestion.explanation}`;
+                feedbackMessage.style.backgroundColor = 'rgba(255, 107, 107, 0.2)';
+                feedbackMessage.style.border = '1px solid #ff6b6b';
+                
+                showCharacterSpeech("That's not right. Let's learn from this and try again!");
+            }
+            
+            // Show next question button
+            document.getElementById('submitAnswer').style.display = 'none';
+            document.getElementById('nextQuestion').style.display = 'block';
+            
+            // End quiz if reached 10 questions
+            if (gameState.totalQuestions >= 10) {
+                document.getElementById('nextQuestion').textContent = 'See Results';
+                document.getElementById('nextQuestion').removeEventListener('click', loadQuizQuestion);
+                document.getElementById('nextQuestion').addEventListener('click', showQuizResults);
+            }
+        }
+        
+        function showQuizResults() {
+            // Clear question display
+            document.getElementById('questionContainer').innerHTML = `
+                <h2 style="text-align: center; margin-bottom: 30px;">Quiz Results</h2>
+                <div style="text-align: center; font-size: 1.5rem; margin-bottom: 20px;">
+                    You scored <span style="color: #4facfe; font-weight: bold;">${gameState.quizScore}</span> out of 10!
+                </div>
+                <div style="text-align: center; margin-bottom: 30px;">
+                    ${getQuizResultMessage(gameState.quizScore)}
+                </div>
+                <button class="menu-button" style="margin: 0 auto;" onclick="startQuiz()">Play Again</button>
+                <button class="menu-button" style="margin: 15px auto 0;" onclick="goToMainMenu()">Back to Main Menu</button>
+            `;
+            
+            document.getElementById('quizProgress').style.display = 'none';
+            document.getElementById('feedbackMessage').style.display = 'none';
+            document.getElementById('quizControls').style.display = 'none';
+            
+            // Celebration if score is good
+            if (gameState.quizScore >= 7) {
+                createConfetti(50);
+                
+                showCharacterSpeech("Fantastic job! You're becoming a chemistry expert!");
+            } else {
+                showCharacterSpeech("Good effort! Keep exploring to learn more about chemistry!");
+            }
+        }
+        
+        function getQuizResultMessage(score) {
+            if (score >= 9) {
+                return "Amazing! You're a chemistry genius! 🌟";
+            } else if (score >= 7) {
+                return "Great job! You know your elements very well! 🎉";
+            } else if (score >= 5) {
+                return "Good effort! Keep exploring to learn more! 👍";
+            } else {
+                return "Keep learning! The more you play, the better you'll get! 💪";
+            }
+        }
+        
+        // Experiment Lab functions
+        function populateExperiments() {
+            const container = document.getElementById('experimentContainer');
+            container.innerHTML = '';
+            
+            experiments.forEach(experiment => {
+                const card = document.createElement('div');
+                card.className = 'experiment-card';
+                
+                let materialsHTML = '<ul>';
+                experiment.materials.forEach(material => {
+                    materialsHTML += `<li>${material}</li>`;
+                });
+                materialsHTML += '</ul>';
+                
+                card.innerHTML = `
+                    <h3>${experiment.title}</h3>
+                    <p>${experiment.description}</p>
+                    <div class="materials">
+                        <h4>Materials:</h4>
+                        ${materialsHTML}
+                    </div>
+                    <button class="experiment-button" onclick="showExperiment('${experiment.title}')">Try Experiment</button>
+                    <div id="experiment-${experiment.title.replace(/\s+/g, '-').toLowerCase()}" class="experimentResult"></div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        function showExperiment(title) {
+            const experiment = experiments.find(exp => exp.title === title);
+            if (!experiment) return;
+            
+            const resultDiv = document.getElementById(`experiment-${title.replace(/\s+/g, '-').toLowerCase()}`);
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <h4>Procedure:</h4>
+                <p style="white-space: pre-line; margin-bottom: 10px;">${experiment.procedure}</p>
+                <h4>What happens:</h4>
+                <p style="margin-bottom: 10px;">${experiment.result}</p>
+                <h4>The Science:</h4>
+                <p>${experiment.explanation}</p>
+            `;
+            
+            // Show professor reaction
+            showCharacterSpeech("Great choice! This experiment shows " + experiment.description.toLowerCase());
+            
+            // Create celebration effect
+            createConfetti(10);
+            
+            // Show notification
+            showNotification("New Experiment Unlocked!", "🧪");
+        }
+        
+        // Utility functions
+        function showCharacterSpeech(text) {
+            if (!gameState.showCharacter) return;
+            
+            const speechBubble = document.getElementById('characterSpeech');
+            speechBubble.textContent = text;
+            speechBubble.style.display = 'block';
+            
+            // Hide speech after a delay based on text length
+            const duration = Math.max(3000, text.length * 50);
+            setTimeout(() => {
+                speechBubble.style.display = 'none';
+            }, duration);
+        }
+        
+        function showNotification(text, icon = '🎉') {
+            const notification = document.getElementById('notification');
+            const notificationIcon = document.getElementById('notification-icon');
+            const notificationText = document.getElementById('notification-text');
+            
+            notificationIcon.textContent = icon;
+            notificationText.textContent = text;
+            
+            notification.classList.add('show');
+            
+            // Hide notification after delay
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+        
+        function createConfetti(count) {
+            // Clear existing confetti
+            const existingConfetti = document.querySelectorAll('.confetti');
+            existingConfetti.forEach(conf => conf.remove());
+            
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                // Random position, color and size
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.width = Math.random() * 10 + 5 + 'px';
+                confetti.style.height = Math.random() * 10 + 5 + 'px';
+                
+                // Add to body
+                document.body.appendChild(confetti);
+                
+                // Remove after animation
+                setTimeout(() => {
+                    if (document.body.contains(confetti)) {
+                        document.body.removeChild(confetti);
+                    }
+                }, 4000);
+            }
+        }
+    </script>
+</body>
+</html>

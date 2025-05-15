@@ -1,0 +1,1736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rotated Blocks Game</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Comic Neue', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6EC3F4, #3A8DFF);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 10px;
+            touch-action: manipulation;
+        }
+        
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 15px;
+            position: relative;
+        }
+        
+        h1 {
+            color: #FF6B6B;
+            font-size: 2rem;
+            text-shadow: 2px 2px 0px #FFD166;
+        }
+        
+        .subtitle {
+            color: #06D6A0;
+            font-size: 1rem;
+        }
+        
+        .view-type-indicator {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: #118AB2;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .question-area {
+            width: 100%;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .canvas-container {
+            width: 100%;
+            max-width: 300px;
+            height: 200px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .canvas-container canvas {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+        }
+        
+        .question-title {
+            font-size: 1.3rem;
+            color: #118AB2;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        
+        @media (max-width: 600px) {
+            .options-grid {
+                grid-template-columns: repeat(1, 1fr);
+            }
+        }
+        
+        .option {
+            background-color: white;
+            border: 3px solid #6EC3F4;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-bottom: 10px;
+        }
+        
+        .option:hover {
+            transform: scale(1.03);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .option.selected {
+            border-color: #118AB2;
+            box-shadow: 0 0 0 3px #118AB2;
+        }
+        
+        .option.correct {
+            border-color: #06D6A0;
+            box-shadow: 0 0 0 3px #06D6A0;
+        }
+        
+        .option.incorrect {
+            border-color: #EF476F;
+            box-shadow: 0 0 0 3px #EF476F;
+        }
+        
+        .option-canvas {
+            width: 100%;
+            height: 120px;
+        }
+        
+        .option-label {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #073B4C;
+            padding: 5px 0;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        button {
+            background-color: #FF9F1C;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            min-width: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+            background-color: #FFB627;
+        }
+        
+        button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hint-btn {
+            background-color: #06D6A0;
+        }
+        
+        .hint-btn:hover {
+            background-color: #0ACF97;
+        }
+        
+        .prev-btn {
+            background-color: #118AB2;
+        }
+        
+        .prev-btn:hover {
+            background-color: #0F7A9A;
+        }
+        
+        .next-btn {
+            background-color: #EF476F;
+        }
+        
+        .next-btn:hover {
+            background-color: #E43D65;
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            width: 100%;
+        }
+        
+        .score-board {
+            background-color: #FFD166;
+            color: #073B4C;
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .score-board img {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .level-indicator {
+            background-color: #118AB2;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hint-box {
+            background-color: #FFD166;
+            border-radius: 15px;
+            padding: 10px 15px;
+            margin: 15px 0;
+            display: none;
+            animation: fadeIn 0.5s;
+            font-weight: bold;
+            color: #073B4C;
+            text-align: center;
+            width: 100%;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            border-radius: 2px;
+        }
+        
+        .character {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 80px;
+            height: 80px;
+            z-index: 50;
+            transition: all 0.3s;
+        }
+        
+        .character-bubble {
+            position: fixed;
+            bottom: 90px;
+            right: 50px;
+            background-color: white;
+            border-radius: 15px;
+            padding: 10px 15px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            max-width: 200px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 50;
+            font-size: 0.9rem;
+        }
+        
+        .character-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            right: 20px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent;
+        }
+        
+        .settings-panel {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #118AB2;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            font-size: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            z-index: 100;
+        }
+        
+        .settings-panel:hover {
+            transform: rotate(90deg);
+        }
+        
+        .settings-menu {
+            position: absolute;
+            top: 60px;
+            right: 10px;
+            background-color: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            z-index: 99;
+            width: 250px;
+            display: none;
+        }
+        
+        .settings-menu h3 {
+            margin-bottom: 10px;
+            color: #118AB2;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        
+        .settings-option {
+            margin-bottom: 10px;
+        }
+        
+        .settings-option label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #073B4C;
+        }
+        
+        .settings-option input,
+        .settings-option select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-family: 'Comic Neue', sans-serif;
+        }
+        
+        .settings-option input[type="range"] {
+            -webkit-appearance: none;
+            height: 8px;
+            background: #ddd;
+            border-radius: 5px;
+            outline: none;
+        }
+        
+        .settings-option input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #118AB2;
+            cursor: pointer;
+        }
+        
+        .settings-apply {
+            background-color: #06D6A0;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 8px 15px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        
+        /* Mobile optimizations */
+        @media (max-width: 500px) {
+            .game-container {
+                padding: 10px;
+                border-radius: 15px;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .subtitle {
+                font-size: 0.9rem;
+            }
+            
+            button {
+                padding: 10px 15px;
+                font-size: 0.9rem;
+                min-width: 100px;
+            }
+            
+            .score-board, .level-indicator {
+                font-size: 0.9rem;
+                padding: 5px 10px;
+            }
+            
+            .character {
+                width: 60px;
+                height: 60px;
+                bottom: 5px;
+                right: 5px;
+            }
+            
+            .character-bubble {
+                bottom: 70px;
+                right: 40px;
+                max-width: 180px;
+                font-size: 0.8rem;
+            }
+        }
+        
+        /* For very small screens */
+        @media (max-width: 350px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <header>
+            <h1>Rotated Blocks Game</h1>
+            <div class="subtitle">Find the correct view!</div>
+            <div class="view-type-indicator" id="viewTypeIndicator">TOP VIEW</div>
+        </header>
+        
+        <div class="game-area">
+            <div class="question-area">
+                <div class="question-title">What is the <span id="viewType">TOP</span> view of this block?</div>
+                <div class="canvas-container" id="isometricView"></div>
+            </div>
+            
+            <div class="hint-box" id="hintBox">
+                <p>Hint: The TOP view is what you see when looking at the block from above.</p>
+            </div>
+            
+            <div class="options-grid" id="options">
+                <!-- Options will be added here dynamically -->
+            </div>
+        </div>
+        
+        <div class="score-container">
+            <div class="score-board">
+                <span>Score:</span>
+                <span id="score">0</span>
+            </div>
+            <div class="level-indicator">
+                <span>Level:</span>
+                <span id="level">1</span>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="hint-btn" id="hintBtn">Hint</button>
+            <button class="check-btn" id="checkBtn">Check</button>
+            <button class="next-btn" id="nextBtn">Next</button>
+        </div>
+        
+        <div class="settings-panel">⚙️</div>
+        <div class="settings-menu">
+            <h3>Game Settings</h3>
+            <div class="settings-option">
+                <label for="difficulty">Difficulty Level:</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="settings-option">
+                <label for="blockComplexity">Block Complexity:</label>
+                <input type="range" id="blockComplexity" min="1" max="5" value="2">
+            </div>
+            <div class="settings-option">
+                <label for="soundVolume">Sound Volume:</label>
+                <input type="range" id="soundVolume" min="0" max="100" value="70">
+            </div>
+            <button class="settings-apply" id="applySettings">Apply Settings</button>
+        </div>
+    </div>
+    
+    <div class="celebration" id="celebration"></div>
+    
+    <div class="character" id="character">
+        <svg width="80" height="80" viewBox="0 0 100 100">
+            <!-- Body -->
+            <circle cx="50" cy="50" r="40" fill="#FF9F1C" />
+            <!-- Eyes -->
+            <circle cx="35" cy="40" r="6" fill="white" />
+            <circle cx="65" cy="40" r="6" fill="white" />
+            <circle cx="35" cy="40" r="3" fill="black" />
+            <circle cx="65" cy="40" r="3" fill="black" />
+            <!-- Mouth -->
+            <path id="characterMouth" d="M30 60 Q50 70 70 60" stroke="black" stroke-width="3" fill="none" />
+        </svg>
+    </div>
+    
+    <div class="character-bubble" id="characterBubble">
+        Welcome to the Rotated Blocks Game! Can you figure out how the block looks from different views?
+    </div>
+    
+    <script>
+        // Game variables
+        const gameState = {
+            currentLevel: 0,
+            score: 0,
+            selectedOption: null,
+            levels: [],
+            settings: {
+                difficulty: 'medium',
+                blockComplexity: 2,
+                soundVolume: 70
+            },
+            answered: false,
+            showHint: false,
+            viewTypes: ['TOP', 'FRONT', 'SIDE']
+        };
+        
+        // Audio context for sound effects
+        let audioContext;
+        let masterGainNode;
+        
+        // Character states
+        const characterStates = {
+            normal: "M30 60 Q50 70 70 60",
+            happy: "M30 70 Q50 85 70 70",
+            sad: "M30 65 Q50 55 70 65"
+        };
+        
+                    // Character messages
+        const characterMessages = {
+            welcome: "Welcome to the Rotated Blocks Game! Can you figure out how the block looks from different views? Look for the red arrow to see which way is front!",
+            correct: [
+                "Great job! You found the right view!",
+                "Amazing! You're a geometry genius!",
+                "Wow! You got it right! Keep it up!",
+                "Correct! Your 3D thinking is super!"
+            ],
+            incorrect: [
+                "Not quite right. Look carefully at the shape!",
+                "Hmm, that's not it. Try again!",
+                "Oops! That's not the right view.",
+                "Keep trying! You're learning!"
+            ],
+            hint: [
+                "Imagine looking at the block from above for the TOP view.",
+                "For the FRONT view, look at the block from the front.",
+                "For the SIDE view, imagine looking from the side.",
+                "Remember each color helps you identify different sides!"
+            ],
+            levelComplete: "You completed all the levels! Let's play again!"
+        };
+        
+        // Three.js variables
+        let isometricScene, isometricCamera, isometricRenderer;
+        let optionScenes = [], optionCameras = [], optionRenderers = [];
+        let currentBlock;
+        
+        // Initialize the game
+        function initGame() {
+            // Initialize Audio Context
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                masterGainNode = audioContext.createGain();
+                masterGainNode.connect(audioContext.destination);
+                updateVolume();
+            } catch(e) {
+                console.error("Web Audio API not supported:", e);
+            }
+            
+            // Setup Three.js scenes
+            setupIsometricView();
+            
+            // Generate game levels
+            generateLevels();
+            
+            // Load the first level
+            loadLevel(gameState.currentLevel);
+            
+            // Setup event listeners
+            document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+            document.getElementById('hintBtn').addEventListener('click', toggleHint);
+            document.getElementById('nextBtn').addEventListener('click', nextLevel);
+            document.getElementById('applySettings').addEventListener('click', applySettings);
+            
+            document.querySelector('.settings-panel').addEventListener('click', function() {
+                const settingsMenu = document.querySelector('.settings-menu');
+                settingsMenu.style.display = settingsMenu.style.display === 'none' || !settingsMenu.style.display ? 'block' : 'none';
+            });
+            
+            // Hide settings menu when clicking outside
+            document.addEventListener('click', function(event) {
+                const settingsMenu = document.querySelector('.settings-menu');
+                const settingsPanel = document.querySelector('.settings-panel');
+                
+                if (!settingsMenu.contains(event.target) && !settingsPanel.contains(event.target)) {
+                    settingsMenu.style.display = 'none';
+                }
+            });
+            
+            // Show character bubble on load
+            showCharacterMessage(characterMessages.welcome);
+            
+            // Start animation loop
+            requestAnimationFrame(animate);
+        }
+        
+        // Setup the isometric view
+        function setupIsometricView() {
+            // Create scene
+            isometricScene = new THREE.Scene();
+            isometricScene.background = new THREE.Color(0xf0f0f0);
+            
+            // Create camera (use PerspectiveCamera for better mobile performance)
+            isometricCamera = new THREE.PerspectiveCamera(40, 1, 0.1, 1000);
+            isometricCamera.position.set(8, 8, 8);
+            isometricCamera.lookAt(0, 0, 0);
+            
+            // Create renderer
+            isometricRenderer = new THREE.WebGLRenderer({ antialias: true });
+            isometricRenderer.setSize(300, 200);
+            document.getElementById('isometricView').appendChild(isometricRenderer.domElement);
+            
+            // Add lights
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            isometricScene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 7);
+            isometricScene.add(directionalLight);
+            
+            // Add front indicator - Arrow pointing to front
+            const arrowLength = 2;
+            const arrowDir = new THREE.Vector3(0, 0, 1);
+            arrowDir.normalize();
+            
+            const frontArrowHelper = new THREE.ArrowHelper(
+                arrowDir,
+                new THREE.Vector3(-4, -3, -4),
+                arrowLength,
+                0xFF0000,
+                0.4,
+                0.3
+            );
+            isometricScene.add(frontArrowHelper);
+            
+            // Add "F" text to indicate front - more subtle and off to the side
+            const loader = new THREE.TextureLoader();
+            
+            // Create canvas for "F" letter
+            const canvas = document.createElement('canvas');
+            canvas.width = 64;
+            canvas.height = 64;
+            const context = canvas.getContext('2d');
+            context.fillStyle = '#FFFFFF';
+            context.fillRect(0, 0, 64, 64);
+            context.font = 'bold 48px Arial';
+            context.fillStyle = '#FF0000';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText('F', 32, 32);
+            
+            const frontTexture = new THREE.CanvasTexture(canvas);
+            
+            const frontLabelPlane = new THREE.Mesh(
+                new THREE.PlaneGeometry(0.8, 0.8),
+                new THREE.MeshBasicMaterial({ 
+                    map: frontTexture, 
+                    transparent: true,
+                    depthTest: false,
+                    side: THREE.DoubleSide 
+                })
+            );
+            
+            frontLabelPlane.position.set(-4, -3, -2.5);
+            frontLabelPlane.renderOrder = 999; // Ensure it renders on top
+            isometricScene.add(frontLabelPlane);
+            
+            // Add coordinate axis for reference (small and subtle)
+            const axesHelper = new THREE.AxesHelper(0.5);
+            axesHelper.position.set(-3, -2, -3);
+            isometricScene.add(axesHelper);
+        }
+        
+        // Generate random block structure
+        function generateBlockStructure(complexity) {
+            const cubes = [];
+            const size = Math.min(Math.max(complexity, 1), 3);
+            
+            // Always add a base cube at origin
+            cubes.push({ x: 0, y: 0, z: 0 });
+            
+            // Add random cubes connected to existing cubes
+            const maxCubes = Math.floor(2 + complexity * 2);
+            const numCubes = Math.max(2, Math.floor(Math.random() * maxCubes));
+            
+            for (let i = 0; i < numCubes; i++) {
+                // Try to add connected cubes
+                let attempts = 0;
+                let validPosition = false;
+                let x, y, z;
+                
+                while (!validPosition && attempts < 20) {
+                    // Pick a random existing cube
+                    const baseCube = cubes[Math.floor(Math.random() * cubes.length)];
+                    
+                    // Pick a random direction
+                    const direction = Math.floor(Math.random() * 6);
+                    x = baseCube.x;
+                    y = baseCube.y;
+                    z = baseCube.z;
+                    
+                    switch (direction) {
+                        case 0: x += 1; break;
+                        case 1: x -= 1; break;
+                        case 2: y += 1; break;
+                        case 3: y -= 1; break;
+                        case 4: z += 1; break;
+                        case 5: z -= 1; break;
+                    }
+                    
+                    // Check if this position is already occupied
+                    validPosition = !cubes.some(cube => 
+                        cube.x === x && cube.y === y && cube.z === z
+                    );
+                    
+                    // Check if within bounds
+                    if (Math.abs(x) > size || Math.abs(y) > size || Math.abs(z) > size) {
+                        validPosition = false;
+                    }
+                    
+                    attempts++;
+                }
+                
+                if (validPosition) {
+                    cubes.push({ x, y, z });
+                }
+            }
+            
+            return cubes;
+        }
+        
+        // Create a 3D block from cube positions
+        function createBlock(cubePositions) {
+            const blockGroup = new THREE.Group();
+            const cubeSize = 1;
+            const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize);
+            
+            // Create materials with different colors for each face
+            const cubeMaterials = [
+                new THREE.MeshLambertMaterial({ color: 0xff6b6b }), // Right face (RED)
+                new THREE.MeshLambertMaterial({ color: 0xffd166 }), // Left face (YELLOW)
+                new THREE.MeshLambertMaterial({ color: 0x06d6a0 }), // Top face (GREEN)
+                new THREE.MeshLambertMaterial({ color: 0x118ab2 }), // Bottom face (BLUE)
+                new THREE.MeshLambertMaterial({ color: 0xef476f }), // Front face (PINK)
+                new THREE.MeshLambertMaterial({ color: 0x073b4c })  // Back face (NAVY)
+            ];
+            
+            cubePositions.forEach(pos => {
+                const cubeMesh = new THREE.Mesh(cubeGeometry, cubeMaterials);
+                cubeMesh.position.set(pos.x, pos.y, pos.z);
+                
+                // Add black edges to cubes for better visibility
+                const edges = new THREE.LineSegments(
+                    new THREE.EdgesGeometry(cubeGeometry),
+                    new THREE.LineBasicMaterial({ color: 0x000000, linewidth: 2 })
+                );
+                edges.position.set(pos.x, pos.y, pos.z);
+                
+                blockGroup.add(cubeMesh);
+                blockGroup.add(edges);
+            });
+            
+            // Center the block
+            const box = new THREE.Box3().setFromObject(blockGroup);
+            const center = box.getCenter(new THREE.Vector3());
+            blockGroup.position.sub(center);
+            
+            return blockGroup;
+        }
+        
+        // Generate game levels
+        function generateLevels() {
+            const numLevels = 10;
+            gameState.levels = [];
+            
+            for (let i = 0; i < numLevels; i++) {
+                const complexity = Math.min(
+                    Math.max(Math.floor(i / 3) + 1, 1), 
+                    gameState.settings.blockComplexity
+                );
+                const cubePositions = generateBlockStructure(complexity);
+                const viewType = gameState.viewTypes[Math.floor(Math.random() * gameState.viewTypes.length)];
+                
+                gameState.levels.push({
+                    blockStructure: cubePositions,
+                    viewType: viewType,
+                    options: generateOptions(cubePositions, viewType)
+                });
+            }
+        }
+        
+        // Generate answer options
+        function generateOptions(cubePositions, correctViewType) {
+            const options = [];
+            
+            // First option is always the correct one
+            const correctOption = {
+                cubePositions: JSON.parse(JSON.stringify(cubePositions)),
+                viewType: correctViewType,
+                isCorrect: true
+            };
+            
+            options.push(correctOption);
+            
+            // Track occupied positions to ensure unique options
+            const allOccupiedPositions = new Set();
+            
+            // Add all original positions to the set
+            cubePositions.forEach(pos => {
+                allOccupiedPositions.add(`${pos.x},${pos.y},${pos.z}`);
+            });
+            
+            // Generate 2 incorrect options that are visually distinct
+            for (let i = 0; i < 2; i++) {
+                let modifiedCubes;
+                let isUnique = false;
+                let attempts = 0;
+                
+                // Try up to 10 times to create a unique option
+                while (!isUnique && attempts < 10) {
+                    modifiedCubes = JSON.parse(JSON.stringify(cubePositions));
+                    
+                    // Choose a more aggressive modification strategy
+                    // For the first incorrect option, remove a cube and add one in a different place
+                    // For the second incorrect option, move two cubes
+                    
+                    if (i === 0) {
+                        // First incorrect option: remove and add
+                        if (modifiedCubes.length > 2) {
+                            // Remove a random cube (not the base cube)
+                            const removeIndex = 1 + Math.floor(Math.random() * (modifiedCubes.length - 1));
+                            modifiedCubes.splice(removeIndex, 1);
+                        }
+                        
+                        // Add a new cube in a unique position
+                        addUniqueBlock(modifiedCubes, allOccupiedPositions);
+                    } else {
+                        // Second incorrect option: move two cubes
+                        if (modifiedCubes.length > 1) {
+                            // Move first cube
+                            const moveIndex1 = Math.floor(Math.random() * modifiedCubes.length);
+                            moveBlockRandomly(modifiedCubes, moveIndex1, allOccupiedPositions);
+                            
+                            // Move second cube if possible
+                            if (modifiedCubes.length > 2) {
+                                let moveIndex2 = Math.floor(Math.random() * modifiedCubes.length);
+                                // Make sure we're not moving the same cube twice
+                                while (moveIndex2 === moveIndex1) {
+                                    moveIndex2 = Math.floor(Math.random() * modifiedCubes.length);
+                                }
+                                moveBlockRandomly(modifiedCubes, moveIndex2, allOccupiedPositions);
+                            } else {
+                                // If only one block left, add a new one
+                                addUniqueBlock(modifiedCubes, allOccupiedPositions);
+                            }
+                        } else {
+                            // If only one block, add two more
+                            addUniqueBlock(modifiedCubes, allOccupiedPositions);
+                            addUniqueBlock(modifiedCubes, allOccupiedPositions);
+                        }
+                    }
+                    
+                    // Check if this option is visually distinct from previous options
+                    isUnique = isVisuallyDistinct(modifiedCubes, options, correctViewType);
+                    attempts++;
+                }
+                
+                // If we couldn't create a unique option, create a fallback that's guaranteed to be different
+                if (!isUnique) {
+                    modifiedCubes = createFallbackOption(cubePositions, options, correctViewType, i);
+                }
+                
+                options.push({
+                    cubePositions: modifiedCubes,
+                    viewType: correctViewType,
+                    isCorrect: false
+                });
+            }
+            
+            // Shuffle options
+            return shuffleArray(options);
+        }
+        
+        // Helper function to add a unique block to the structure
+        function addUniqueBlock(cubeStructure, occupiedPositions) {
+            // Try to find a free adjacent position
+            let added = false;
+            let attempts = 0;
+            
+            while (!added && attempts < 20) {
+                const baseCube = cubeStructure[Math.floor(Math.random() * cubeStructure.length)];
+                const direction = Math.floor(Math.random() * 6);
+                let x = baseCube.x;
+                let y = baseCube.y;
+                let z = baseCube.z;
+                
+                switch (direction) {
+                    case 0: x += 1; break;
+                    case 1: x -= 1; break;
+                    case 2: y += 1; break;
+                    case 3: y -= 1; break;
+                    case 4: z += 1; break;
+                    case 5: z -= 1; break;
+                }
+                
+                const posKey = `${x},${y},${z}`;
+                
+                // Check if position is free
+                if (!occupiedPositions.has(posKey)) {
+                    cubeStructure.push({ x, y, z });
+                    occupiedPositions.add(posKey);
+                    added = true;
+                }
+                
+                attempts++;
+            }
+            
+            // If we couldn't find a free adjacent spot, add a non-adjacent cube
+            if (!added) {
+                // Find max dimensions of current structure
+                let maxX = -Infinity, minX = Infinity;
+                let maxY = -Infinity, minY = Infinity;
+                let maxZ = -Infinity, minZ = Infinity;
+                
+                cubeStructure.forEach(cube => {
+                    maxX = Math.max(maxX, cube.x);
+                    minX = Math.min(minX, cube.x);
+                    maxY = Math.max(maxY, cube.y);
+                    minY = Math.min(minY, cube.y);
+                    maxZ = Math.max(maxZ, cube.z);
+                    minZ = Math.min(minZ, cube.z);
+                });
+                
+                // Add cube outside current bounds
+                let x, y, z;
+                let posKey;
+                
+                do {
+                    x = minX - 1 + Math.floor(Math.random() * (maxX - minX + 3));
+                    y = minY - 1 + Math.floor(Math.random() * (maxY - minY + 3));
+                    z = minZ - 1 + Math.floor(Math.random() * (maxZ - minZ + 3));
+                    
+                    // Ensure it's outside current structure but not too far
+                    const outsideCurrent = x > maxX || x < minX || y > maxY || y < minY || z > maxZ || z < minZ;
+                    const notTooFar = Math.abs(x) <= maxX + 1 && Math.abs(y) <= maxY + 1 && Math.abs(z) <= maxZ + 1;
+                    
+                    posKey = `${x},${y},${z}`;
+                    
+                    if (outsideCurrent && notTooFar && !occupiedPositions.has(posKey)) {
+                        cubeStructure.push({ x, y, z });
+                        occupiedPositions.add(posKey);
+                        break;
+                    }
+                } while (true);
+            }
+        }
+        
+        // Helper function to move a block randomly to a new unique position
+        function moveBlockRandomly(cubeStructure, index, occupiedPositions) {
+            const cube = cubeStructure[index];
+            const originalX = cube.x;
+            const originalY = cube.y;
+            const originalZ = cube.z;
+            
+            // Remove current position from occupied set
+            occupiedPositions.delete(`${originalX},${originalY},${originalZ}`);
+            
+            let moved = false;
+            let attempts = 0;
+            
+            while (!moved && attempts < 20) {
+                // Generate a new position by moving 1-2 units in a random direction
+                const direction = Math.floor(Math.random() * 6);
+                const distance = 1 + Math.floor(Math.random() * 2);
+                
+                let newX = originalX;
+                let newY = originalY;
+                let newZ = originalZ;
+                
+                switch (direction) {
+                    case 0: newX += distance; break;
+                    case 1: newX -= distance; break;
+                    case 2: newY += distance; break;
+                    case 3: newY -= distance; break;
+                    case 4: newZ += distance; break;
+                    case 5: newZ -= distance; break;
+                }
+                
+                const posKey = `${newX},${newY},${newZ}`;
+                
+                // Check if new position is free
+                if (!occupiedPositions.has(posKey)) {
+                    cube.x = newX;
+                    cube.y = newY;
+                    cube.z = newZ;
+                    occupiedPositions.add(posKey);
+                    moved = true;
+                }
+                
+                attempts++;
+            }
+            
+            // If we couldn't find a free spot, keep the original position
+            if (!moved) {
+                occupiedPositions.add(`${originalX},${originalY},${originalZ}`);
+            }
+        }
+        
+        // Check if a modified structure is visually distinct when viewed from the specified direction
+        function isVisuallyDistinct(newCubes, existingOptions, viewType) {
+            // For each existing option
+            for (const option of existingOptions) {
+                // Skip comparison with correct option for guaranteed difference
+                if (option.isCorrect) continue;
+                
+                // Create projection maps for both structures
+                const newProjection = createProjectionMap(newCubes, viewType);
+                const existingProjection = createProjectionMap(option.cubePositions, viewType);
+                
+                // Compare projections
+                if (areProjectionsSimilar(newProjection, existingProjection)) {
+                    return false; // Not visually distinct
+                }
+            }
+            
+            return true; // Visually distinct from all existing options
+        }
+        
+        // Create a 2D projection map based on view type
+        function createProjectionMap(cubes, viewType) {
+            const projectionMap = new Set();
+            
+            cubes.forEach(cube => {
+                let projectionKey;
+                
+                if (viewType === 'TOP') {
+                    // Project onto XZ plane
+                    projectionKey = `${cube.x},${cube.z}`;
+                } else if (viewType === 'FRONT') {
+                    // Project onto XY plane
+                    projectionKey = `${cube.x},${cube.y}`;
+                } else if (viewType === 'SIDE') {
+                    // Project onto YZ plane
+                    projectionKey = `${cube.y},${cube.z}`;
+                }
+                
+                projectionMap.add(projectionKey);
+            });
+            
+            return projectionMap;
+        }
+        
+        // Compare two projection maps to see if they're similar
+        function areProjectionsSimilar(projection1, projection2) {
+            // If they have different numbers of visible squares, they're different
+            if (projection1.size !== projection2.size) {
+                return false;
+            }
+            
+            // Check if all squares in projection1 are also in projection2
+            for (const square of projection1) {
+                if (!projection2.has(square)) {
+                    return false;
+                }
+            }
+            
+            // If we get here, the projections are identical
+            return true;
+        }
+        
+        // Create a fallback option that's guaranteed to be different
+        function createFallbackOption(originalCubes, existingOptions, viewType, optionIndex) {
+            // Start with a copy of the original structure
+            const fallbackCubes = JSON.parse(JSON.stringify(originalCubes));
+            
+            // Determine which plane to modify based on the view
+            let primaryAxis1, primaryAxis2;
+            
+            if (viewType === 'TOP') {
+                primaryAxis1 = 'x';
+                primaryAxis2 = 'z';
+            } else if (viewType === 'FRONT') {
+                primaryAxis1 = 'x';
+                primaryAxis2 = 'y';
+            } else if (viewType === 'SIDE') {
+                primaryAxis1 = 'y';
+                primaryAxis2 = 'z';
+            }
+            
+            // For the first fallback option, create an L shape
+            // For the second fallback option, create a block in the corner
+            if (optionIndex === 0) {
+                // Clear all blocks
+                fallbackCubes.length = 0;
+                
+                // Create an L shape
+                fallbackCubes.push({ x: 0, y: 0, z: 0 });
+                fallbackCubes.push({ x: 1, y: 0, z: 0 });
+                fallbackCubes.push({ x: 2, y: 0, z: 0 });
+                fallbackCubes.push({ x: 0, y: 1, z: 0 });
+                fallbackCubes.push({ x: 0, y: 2, z: 0 });
+            } else {
+                // Clear all blocks
+                fallbackCubes.length = 0;
+                
+                // Create a 2x2 block in one corner
+                fallbackCubes.push({ x: 0, y: 0, z: 0 });
+                fallbackCubes.push({ x: 1, y: 0, z: 0 });
+                fallbackCubes.push({ x: 0, y: 1, z: 0 });
+                fallbackCubes.push({ x: 1, y: 1, z: 0 });
+            }
+            
+            return fallbackCubes;
+        }
+        
+        // Shuffle array
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+        
+        // Load level
+        function loadLevel(levelIndex) {
+            if (levelIndex < 0 || levelIndex >= gameState.levels.length) {
+                return;
+            }
+            
+            gameState.currentLevel = levelIndex;
+            gameState.selectedOption = null;
+            gameState.answered = false;
+            gameState.showHint = false;
+            
+            const level = gameState.levels[levelIndex];
+            
+            // Update level indicator
+            document.getElementById('level').textContent = levelIndex + 1;
+            
+            // Update view type labels
+            document.getElementById('viewType').textContent = level.viewType;
+            document.getElementById('viewTypeIndicator').textContent = level.viewType + " VIEW";
+            
+            // Clear previous options
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            optionScenes = [];
+            optionCameras = [];
+            optionRenderers = [];
+            
+            // Create the block in the isometric view
+            if (currentBlock) {
+                isometricScene.remove(currentBlock);
+            }
+            currentBlock = createBlock(level.blockStructure);
+            isometricScene.add(currentBlock);
+            
+            // Position the camera for the isometric view
+            isometricCamera.position.set(8, 8, 8);
+            isometricCamera.lookAt(0, 0, 0);
+            
+            // Create option views
+            level.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.dataset.index = index;
+                
+                const canvasContainer = document.createElement('div');
+                canvasContainer.className = 'option-canvas';
+                
+                // Create a Three.js scene for this option
+                const scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xffffff);
+                
+                // Create appropriate camera based on view type
+                let camera;
+                if (option.viewType === 'TOP') {
+                    camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 1000);
+                    camera.position.set(0, 10, 0);
+                    camera.lookAt(0, 0, 0);
+                } else if (option.viewType === 'FRONT') {
+                    camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 1000);
+                    camera.position.set(0, 0, 10);
+                    camera.lookAt(0, 0, 0);
+                } else if (option.viewType === 'SIDE') {
+                    camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 1000);
+                    camera.position.set(10, 0, 0);
+                    camera.lookAt(0, 0, 0);
+                }
+                
+                // Create renderer
+                const renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(120, 120);
+                canvasContainer.appendChild(renderer.domElement);
+                
+                // Add lights
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(5, 10, 7);
+                scene.add(directionalLight);
+                
+                // Add the block
+                const block = createBlock(option.cubePositions);
+                // Center the block
+                const box = new THREE.Box3().setFromObject(block);
+                const center = box.getCenter(new THREE.Vector3());
+                block.position.sub(center);
+                scene.add(block);
+                
+                // Render immediately to ensure canvas is filled
+                renderer.render(scene, camera);
+                
+                // Save references
+                optionScenes.push(scene);
+                optionCameras.push(camera);
+                optionRenderers.push(renderer);
+                
+                optionElement.appendChild(canvasContainer);
+                
+                // Label
+                const optionLabel = document.createElement('div');
+                optionLabel.className = 'option-label';
+                optionLabel.textContent = `Option ${index + 1}`;
+                optionElement.appendChild(optionLabel);
+                
+                // Add event listener
+                optionElement.addEventListener('click', () => {
+                    if (!gameState.answered) {
+                        selectOption(index);
+                    }
+                });
+                
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            // Hide hint box
+            document.getElementById('hintBox').style.display = 'none';
+            
+            // Render options immediately
+            optionRenderers.forEach((renderer, index) => {
+                renderer.render(optionScenes[index], optionCameras[index]);
+            });
+        }
+        
+        // Select an option
+        function selectOption(index) {
+            const options = document.querySelectorAll('.option');
+            
+            // Clear previous selection
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select new option
+            options[index].classList.add('selected');
+            gameState.selectedOption = index;
+            
+            // Play selection sound
+            playSound('select');
+        }
+        
+        // Check the answer
+        function checkAnswer() {
+            if (gameState.selectedOption === null || gameState.answered) {
+                playSound('error');
+                showCharacterMessage("Please select an option first!");
+                return;
+            }
+            
+            gameState.answered = true;
+            const level = gameState.levels[gameState.currentLevel];
+            const selectedOption = level.options[gameState.selectedOption];
+            const options = document.querySelectorAll('.option');
+            
+            if (selectedOption.isCorrect) {
+                // Correct answer
+                options[gameState.selectedOption].classList.add('correct');
+                gameState.score += 10;
+                document.getElementById('score').textContent = gameState.score;
+                
+                // Play correct sound
+                playSound('correct');
+                
+                // Show celebration
+                showCelebration();
+                
+                // Show character reaction
+                setCharacterState('happy');
+                showCharacterMessage(characterMessages.correct[Math.floor(Math.random() * characterMessages.correct.length)]);
+                
+                // Enable next button
+                document.getElementById('nextBtn').disabled = false;
+            } else {
+                // Incorrect answer
+                options[gameState.selectedOption].classList.add('incorrect');
+                
+                // Find and highlight the correct answer
+                level.options.forEach((option, index) => {
+                    if (option.isCorrect) {
+                        options[index].classList.add('correct');
+                    }
+                });
+                
+                // Play incorrect sound
+                playSound('incorrect');
+                
+                // Show character reaction
+                setCharacterState('sad');
+                showCharacterMessage(characterMessages.incorrect[Math.floor(Math.random() * characterMessages.incorrect.length)]);
+                
+                // Enable next button
+                document.getElementById('nextBtn').disabled = false;
+            }
+        }
+        
+        // Toggle hint
+        function toggleHint() {
+            const hintBox = document.getElementById('hintBox');
+            if (gameState.showHint) {
+                hintBox.style.display = 'none';
+            } else {
+                // Custom hints based on view type
+                const level = gameState.levels[gameState.currentLevel];
+                let hintText = "";
+                
+                switch (level.viewType) {
+                    case 'TOP':
+                        hintText = "Hint: The TOP view is what you see when looking at the block from above. The green sides are facing up!";
+                        break;
+                    case 'FRONT':
+                        hintText = "Hint: The FRONT view is what you see when looking at the block from the front. Look for the pink faces!";
+                        break;
+                    case 'SIDE':
+                        hintText = "Hint: The SIDE view is what you see when looking at the block from the right side. Look for red faces!";
+                        break;
+                }
+                
+                hintBox.innerHTML = `<p>${hintText}</p>`;
+                hintBox.style.display = 'block';
+                
+                // Play hint sound
+                playSound('hint');
+                
+                // Show character message
+                showCharacterMessage(characterMessages.hint[gameState.viewTypes.indexOf(level.viewType)]);
+            }
+            
+            gameState.showHint = !gameState.showHint;
+        }
+        
+        // Next level
+        function nextLevel() {
+            if (gameState.currentLevel < gameState.levels.length - 1) {
+                loadLevel(gameState.currentLevel + 1);
+            } else {
+                // All levels completed
+                showCharacterMessage(characterMessages.levelComplete);
+                
+                // Regenerate levels
+                gameState.levels = [];
+                generateLevels();
+                loadLevel(0);
+            }
+            
+            // Play level transition sound
+            playSound('next');
+        }
+        
+        // Apply settings
+        function applySettings() {
+            gameState.settings.difficulty = document.getElementById('difficulty').value;
+            gameState.settings.blockComplexity = parseInt(document.getElementById('blockComplexity').value);
+            gameState.settings.soundVolume = parseInt(document.getElementById('soundVolume').value);
+            
+            // Apply volume setting
+            updateVolume();
+            
+            // Hide settings menu
+            document.querySelector('.settings-menu').style.display = 'none';
+            
+            // Regenerate levels with new settings
+            gameState.levels = [];
+            generateLevels();
+            loadLevel(0);
+            
+            // Play settings sound
+            playSound('settings');
+        }
+        
+        // Update volume setting
+        function updateVolume() {
+            if (masterGainNode) {
+                masterGainNode.gain.value = gameState.settings.soundVolume / 100;
+            }
+        }
+        
+        // Show celebration effects
+        function showCelebration() {
+            const celebration = document.getElementById('celebration');
+            celebration.innerHTML = '';
+            celebration.style.display = 'block';
+            
+            // Create confetti
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.top = -20 + 'px';
+                confetti.style.backgroundColor = getRandomColor();
+                confetti.style.width = (Math.random() * 8 + 5) + 'px';
+                confetti.style.height = (Math.random() * 8 + 5) + 'px';
+                confetti.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+                celebration.appendChild(confetti);
+                
+                // Animate confetti
+                const fallDuration = Math.random() * 3 + 2;
+                const fallDelay = Math.random();
+                
+                confetti.style.animation = `fall ${fallDuration}s ease ${fallDelay}s forwards`;
+            }
+            
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes fall {
+                    0% {
+                        transform: translateY(0) rotate(0deg);
+                        opacity: 1;
+                    }
+                    100% {
+                        transform: translateY(100vh) rotate(360deg);
+                        opacity: 0;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            // Hide celebration after a few seconds
+            setTimeout(() => {
+                celebration.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Get random color
+        function getRandomColor() {
+            const colors = ['#FF6B6B', '#FFD166', '#06D6A0', '#118AB2', '#EF476F'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+        
+        // Set character state
+        function setCharacterState(state) {
+            const mouth = document.getElementById('characterMouth');
+            mouth.setAttribute('d', characterStates[state] || characterStates.normal);
+            
+            // Reset to normal after a delay
+            setTimeout(() => {
+                mouth.setAttribute('d', characterStates.normal);
+            }, 3000);
+        }
+        
+        // Show character message
+        function showCharacterMessage(message) {
+            const bubble = document.getElementById('characterBubble');
+            bubble.textContent = message;
+            bubble.style.opacity = 1;
+            
+            // Hide message after a delay
+            setTimeout(() => {
+                bubble.style.opacity = 0;
+            }, 5000);
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Gently rotate the isometric view block to show 3D nature
+            if (currentBlock) {
+                // Very subtle rotation to show 3D nature without changing perspective too much
+                currentBlock.rotation.y = Math.sin(Date.now() * 0.0005) * 0.1;
+            }
+            
+            // Render isometric view
+            isometricRenderer.render(isometricScene, isometricCamera);
+        }
+        
+        // Sound effects
+        function playSound(type) {
+            if (!audioContext) return;
+            
+            // Resume audio context if suspended
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(masterGainNode);
+            
+            switch (type) {
+                case 'correct':
+                    // Happy sound
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    oscillator.frequency.linearRampToValueAtTime(880, audioContext.currentTime + 0.2);
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.5);
+                    
+                    // Add a second tone for chord effect
+                    setTimeout(() => {
+                        const osc2 = audioContext.createOscillator();
+                        const gain2 = audioContext.createGain();
+                        
+                        osc2.connect(gain2);
+                        gain2.connect(masterGainNode);
+                        
+                        osc2.type = 'sine';
+                        osc2.frequency.setValueAtTime(659.25, audioContext.currentTime);
+                        osc2.frequency.linearRampToValueAtTime(1108.73, audioContext.currentTime + 0.2);
+                        
+                        gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gain2.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.5);
+                        
+                        osc2.start();
+                        osc2.stop(audioContext.currentTime + 0.5);
+                    }, 100);
+                    break;
+                    
+                case 'incorrect':
+                    // Sad sound
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    oscillator.frequency.linearRampToValueAtTime(220, audioContext.currentTime + 0.3);
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+                    
+                case 'hint':
+                    // Hint sound
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(330, audioContext.currentTime);
+                    oscillator.frequency.linearRampToValueAtTime(440, audioContext.currentTime + 0.1);
+                    oscillator.frequency.linearRampToValueAtTime(330, audioContext.currentTime + 0.2);
+                    
+                    gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                    break;
+                    
+                case 'settings':
+                    // Settings sound
+                    oscillator.type = 'square';
+                    oscillator.frequency.setValueAtTime(220, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime + 0.1);
+                    oscillator.frequency.setValueAtTime(660, audioContext.currentTime + 0.2);
+                    
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime + 0.2);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+                    
+                case 'error':
+                    // Error sound
+                    oscillator.type = 'sawtooth';
+                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                    break;
+                    
+                case 'select':
+                    // Option selection sound
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.1);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                    break;
+                    
+                case 'next':
+                    // Next level sound
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(523, audioContext.currentTime + 0.1);
+                    oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.2);
+                    
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + 0.1);
+                    gainNode.gain.setValueAtTime(0.2, audioContext.currentTime + 0.2);
+                    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.4);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.4);
+                    break;
+            }
+        }
+        
+        // Handle window resize
+        function handleResize() {
+            // Update isometric renderer size based on container
+            const isometricContainer = document.getElementById('isometricView');
+            if (isometricContainer) {
+                const width = isometricContainer.clientWidth;
+                const height = isometricContainer.clientHeight;
+                
+                if (isometricRenderer) {
+                    isometricRenderer.setSize(width, height);
+                    isometricCamera.aspect = width / height;
+                    isometricCamera.updateProjectionMatrix();
+                }
+            }
+            
+            // Update option renderers
+            const optionCanvases = document.querySelectorAll('.option-canvas');
+            optionRenderers.forEach((renderer, index) => {
+                if (optionCanvases[index]) {
+                    const width = optionCanvases[index].clientWidth;
+                    const height = optionCanvases[index].clientHeight;
+                    
+                    renderer.setSize(width, height);
+                    renderer.render(optionScenes[index], optionCameras[index]);
+                }
+            });
+        }
+        
+        // Initialize the game when the page loads
+        window.addEventListener('load', initGame);
+        
+        // Handle window resize
+        window.addEventListener('resize', handleResize);
+    </script>
+</body>
+</html>

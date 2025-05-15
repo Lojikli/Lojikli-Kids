@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Adventure: Addition Strategies</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Neue', sans-serif;
+            background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #game-container {
+            width: 95%;
+            max-width: 900px;
+            height: 95vh;
+            max-height: 700px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #stars-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        #game-title {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.2em;
+            margin-top: 10px;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        #screen-intro, #screen-game, #screen-settings, #screen-explanation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.5s ease-in-out, opacity 0.5s ease-in-out;
+        }
+
+        #screen-intro {
+            z-index: 3;
+        }
+
+        #screen-game {
+            transform: translateX(100%);
+            opacity: 0;
+            z-index: 2;
+        }
+
+        #screen-settings {
+            transform: translateX(-100%);
+            opacity: 0;
+            z-index: 1;
+        }
+
+        #screen-explanation {
+            transform: translateY(100%);
+            opacity: 0;
+            z-index: 1;
+        }
+
+        .button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            padding: 12px 24px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.2s;
+            font-family: 'Comic Neue', sans-serif;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .button:hover {
+            background-color: #2980b9;
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .button:active {
+            transform: scale(0.98);
+        }
+
+        .character {
+            width: 180px;
+            height: 180px;
+            margin-bottom: 20px;
+        }
+
+        #game-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            height: 70%;
+        }
+
+        #problem-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+            position: relative;
+            width: 90%;
+            max-width: 600px;
+        }
+
+        .place-value-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .place-value-cell {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            background-color: #ecf0f1;
+            position: relative;
+        }
+
+        .place-value-label {
+            position: absolute;
+            top: -20px;
+            font-size: 0.7em;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+
+        #answer-input {
+            font-size: 1.8em;
+            width: 200px;
+            height: 60px;
+            border: 3px solid #3498db;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            font-family: 'Comic Neue', sans-serif;
+        }
+
+        #character-container {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+        }
+
+        #speech-bubble {
+            position: absolute;
+            bottom: 180px;
+            right: 20px;
+            width: 250px;
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-size: 1em;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        #speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            right: 30px;
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: white transparent;
+        }
+
+        #score-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 1.2em;
+            color: #2c3e50;
+        }
+
+        #level-display {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.2em;
+            color: #2c3e50;
+        }
+
+        .settings-container {
+            width: 80%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        .settings-label {
+            font-size: 1.2em;
+            color: #2c3e50;
+            width: 60%;
+        }
+
+        .settings-control {
+            width: 40%;
+        }
+
+        .slider {
+            width: 100%;
+            height: 25px;
+        }
+
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 5;
+            pointer-events: none;
+        }
+
+        #explanation-content {
+            width: 80%;
+            max-width: 600px;
+            height: 70%;
+            overflow-y: auto;
+            padding: 20px;
+            font-size: 1.2em;
+            line-height: 1.6;
+            color: #2c3e50;
+        }
+
+        #dashboard {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            margin-top: 10px;
+        }
+
+        .dashboard-button {
+            background-color: #2ecc71;
+            font-size: 1em;
+            padding: 8px 16px;
+        }
+
+        #help-button {
+            background-color: #f39c12;
+        }
+
+        #settings-button {
+            background-color: #9b59b6;
+        }
+
+        .explanation-image {
+            width: 80%;
+            max-width: 400px;
+            height: auto;
+            margin: 20px auto;
+            display: block;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .highlight {
+            animation: pulse 0.5s ease-in-out;
+        }
+
+        @media (max-width: 768px) {
+            #game-title {
+                font-size: 1.8em;
+            }
+
+            .place-value-cell {
+                width: 40px;
+                height: 40px;
+                font-size: 1.4em;
+            }
+
+            #character-container {
+                width: 120px;
+                height: 120px;
+            }
+
+            #speech-bubble {
+                width: 200px;
+                bottom: 150px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            #game-title {
+                font-size: 1.5em;
+            }
+
+            .place-value-cell {
+                width: 30px;
+                height: 30px;
+                font-size: 1.2em;
+            }
+
+            .button {
+                font-size: 1em;
+                padding: 8px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="stars-background"></canvas>
+        <canvas id="confetti-canvas"></canvas>
+
+        <!-- Introduction Screen -->
+        <div id="screen-intro">
+            <h1 id="game-title">Math Adventure: Addition Strategies</h1>
+            <svg class="character" viewBox="0 0 200 200">
+                <!-- Professor Digit character -->
+                <circle cx="100" cy="100" r="80" fill="#FFD966" />
+                <circle cx="70" cy="80" r="10" fill="white" />
+                <circle cx="70" cy="80" r="5" fill="#2c3e50" />
+                <circle cx="130" cy="80" r="10" fill="white" />
+                <circle cx="130" cy="80" r="5" fill="#2c3e50" />
+                <path d="M70 120 Q100 150 130 120" fill="none" stroke="#2c3e50" stroke-width="5" />
+                <path d="M60 50 L80 60" stroke="#2c3e50" stroke-width="4" />
+                <path d="M140 50 L120 60" stroke="#2c3e50" stroke-width="4" />
+                <rect x="85" y="40" width="30" height="20" fill="#3498db" />
+                <path d="M85 40 L100 20 L115 40" fill="#3498db" />
+            </svg>
+            <p style="font-size: 1.3em; text-align: center; width: 80%; margin-bottom: 30px;">
+                Join Professor Digit on an exciting math adventure! Learn amazing addition strategies that will make you a math superstar!
+            </p>
+            <button id="btn-start" class="button">Start Adventure</button>
+            <button id="btn-settings-intro" class="button" style="background-color: #9b59b6;">Settings</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="screen-game">
+            <h1 id="game-title">Math Adventure: Addition Strategies</h1>
+            
+            <div id="score-display">Score: 0</div>
+            <div id="level-display">Level: 1</div>
+            
+            <div id="game-area">
+                <div id="problem-display">
+                    <div class="place-value-grid" id="place-value-headers">
+                        <div class="place-value-cell">
+                            <span class="place-value-label">Million</span>
+                        </div>
+                        <div class="place-value-cell">
+                            <span class="place-value-label">H-Thou</span>
+                        </div>
+                        <div class="place-value-cell">
+                            <span class="place-value-label">T-Thou</span>
+                        </div>
+                        <div class="place-value-cell">
+                            <span class="place-value-label">Thou</span>
+                        </div>
+                        <div class="place-value-cell">
+                            <span class="place-value-label">Hundred</span>
+                        </div>
+                        <div class="place-value-cell">
+                            <span class="place-value-label">Ten</span>
+                        </div>
+                        <div class="place-value-cell">
+                            <span class="place-value-label">One</span>
+                        </div>
+                    </div>
+                    
+                    <div class="place-value-grid" id="first-number">
+                        <!-- First number cells will be populated by JS -->
+                    </div>
+                    
+                    <div class="place-value-grid" id="second-number">
+                        <!-- Second number cells will be populated by JS -->
+                    </div>
+                    
+                    <input type="text" id="answer-input" placeholder="Your answer" maxlength="7">
+                    
+                    <div id="dashboard">
+                        <button id="check-answer" class="button">Check Answer</button>
+                        <button id="next-problem" class="button">Next Problem</button>
+                        <button id="help-button" class="button dashboard-button">Hint</button>
+                        <button id="settings-button" class="button dashboard-button">Settings</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="character-container">
+                <svg viewBox="0 0 200 200">
+                    <!-- Professor Digit character -->
+                    <circle cx="100" cy="100" r="80" fill="#FFD966" />
+                    <circle cx="70" cy="80" r="10" fill="white" />
+                    <circle cx="70" cy="80" r="5" fill="#2c3e50" />
+                    <circle cx="130" cy="80" r="10" fill="white" />
+                    <circle cx="130" cy="80" r="5" fill="#2c3e50" />
+                    <path d="M70 120 Q100 150 130 120" fill="none" stroke="#2c3e50" stroke-width="5" id="character-mouth" />
+                    <path d="M60 50 L80 60" stroke="#2c3e50" stroke-width="4" />
+                    <path d="M140 50 L120 60" stroke="#2c3e50" stroke-width="4" />
+                    <rect x="85" y="40" width="30" height="20" fill="#3498db" />
+                    <path d="M85 40 L100 20 L115 40" fill="#3498db" />
+                </svg>
+            </div>
+            
+            <div id="speech-bubble">
+                Let's solve this addition problem together!
+            </div>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="screen-settings">
+            <h1 id="game-title">Game Settings</h1>
+            
+            <div class="settings-container">
+                <div class="settings-row">
+                    <span class="settings-label">Maximum Number:</span>
+                    <div class="settings-control">
+                        <select id="setting-max-number" class="slider">
+                            <option value="99">Up to 99</option>
+                            <option value="999">Up to 999</option>
+                            <option value="9999" selected>Up to 9999</option>
+                            <option value="99999">Up to 99999</option>
+                            <option value="999999">Up to 999999</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-row">
+                    <span class="settings-label">Addition Values:</span>
+                    <div class="settings-control">
+                        <select id="setting-addition-values" class="slider" multiple>
+                            <option value="9" selected>+9</option>
+                            <option value="10" selected>+10</option>
+                            <option value="19">+19</option>
+                            <option value="99">+99</option>
+                            <option value="100" selected>+100</option>
+                            <option value="999">+999</option>
+                            <option value="1000" selected>+1000</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-row">
+                    <span class="settings-label">Game Speed:</span>
+                    <div class="settings-control">
+                        <input type="range" min="1" max="5" value="3" class="slider" id="setting-game-speed">
+                    </div>
+                </div>
+                
+                <div class="settings-row">
+                    <span class="settings-label">Show Animation:</span>
+                    <div class="settings-control">
+                        <input type="checkbox" id="setting-show-animation" checked>
+                    </div>
+                </div>
+                
+                <div class="settings-row">
+                    <span class="settings-label">Sound Effects:</span>
+                    <div class="settings-control">
+                        <input type="checkbox" id="setting-sound-effects" checked>
+                    </div>
+                </div>
+                
+                <div class="settings-row">
+                    <span class="settings-label">Difficulty Level:</span>
+                    <div class="settings-control">
+                        <select id="setting-difficulty" class="slider">
+                            <option value="1">Level 1 - Easy</option>
+                            <option value="2">Level 2 - Medium</option>
+                            <option value="3">Level 3 - Hard</option>
+                            <option value="4">Level 4 - Expert</option>
+                            <option value="5">Level 5 - Genius</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="btn-save-settings" class="button">Save Settings</button>
+            <button id="btn-cancel-settings" class="button" style="background-color: #e74c3c;">Cancel</button>
+        </div>
+
+        <!-- Explanation Screen -->
+        <div id="screen-explanation">
+            <h1 id="game-title">Addition Strategies</h1>
+            
+            <div id="explanation-content">
+                <h2>Addition Strategy: Adding 9</h2>
+                <p>When you add 9 to a number, you can use a simple trick:</p>
+                <ol>
+                    <li>Add 10 to the number (which is easy - just increase the tens digit by 1)</li>
+                    <li>Then subtract 1 from the result</li>
+                </ol>
+                <p>For example: 24 + 9</p>
+                <p>Step 1: 24 + 10 = 34</p>
+                <p>Step 2: 34 - 1 = 33</p>
+                <p>So 24 + 9 = 33</p>
+                
+                <h2>Addition Strategy: Adding 10, 100, or 1000</h2>
+                <p>When you add 10, 100, or 1000, you're just increasing one place value:</p>
+                <ul>
+                    <li>To add 10: Increase the tens digit by 1</li>
+                    <li>To add 100: Increase the hundreds digit by 1</li>
+                    <li>To add 1000: Increase the thousands digit by 1</li>
+                </ul>
+                <p>For example:</p>
+                <p>452 + 10 = 462 (tens digit changes from 5 to 6)</p>
+                <p>452 + 100 = 552 (hundreds digit changes from 4 to 5)</p>
+                <p>452 + 1000 = 1452 (thousands digit changes from 0 to 1)</p>
+                
+                <h2>Place Value System</h2>
+                <p>Our number system is based on place values. Each position represents a different power of 10:</p>
+                <ul>
+                    <li>Ones place: 1s (10⁰)</li>
+                    <li>Tens place: 10s (10¹)</li>
+                    <li>Hundreds place: 100s (10²)</li>
+                    <li>Thousands place: 1,000s (10³)</li>
+                    <li>Ten thousands place: 10,000s (10⁴)</li>
+                    <li>Hundred thousands place: 100,000s (10⁵)</li>
+                    <li>Millions place: 1,000,000s (10⁶)</li>
+                </ul>
+                <p>Understanding place values helps us do mental math more easily!</p>
+            </div>
+            
+            <button id="btn-close-explanation" class="button">Back to Game</button>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        const gameState = {
+            score: 0,
+            level: 1,
+            totalProblems: 0,
+            correctAnswers: 0,
+            currentProblem: null,
+            settings: {
+                maxNumber: 9999,
+                additionValues: [9, 10, 100, 1000],
+                gameSpeed: 3,
+                showAnimation: true,
+                soundEffects: true,
+                difficulty: 1
+            }
+        };
+
+        // DOM Elements
+        const screenIntro = document.getElementById('screen-intro');
+        const screenGame = document.getElementById('screen-game');
+        const screenSettings = document.getElementById('screen-settings');
+        const screenExplanation = document.getElementById('screen-explanation');
+        const scoreDisplay = document.getElementById('score-display');
+        const levelDisplay = document.getElementById('level-display');
+        const answerInput = document.getElementById('answer-input');
+        const checkAnswerBtn = document.getElementById('check-answer');
+        const nextProblemBtn = document.getElementById('next-problem');
+        const helpBtn = document.getElementById('help-button');
+        const settingsBtn = document.getElementById('settings-button');
+        const speechBubble = document.getElementById('speech-bubble');
+        const startBtn = document.getElementById('btn-start');
+        const settingsIntroBtn = document.getElementById('btn-settings-intro');
+        const saveSettingsBtn = document.getElementById('btn-save-settings');
+        const cancelSettingsBtn = document.getElementById('btn-cancel-settings');
+        const closeExplanationBtn = document.getElementById('btn-close-explanation');
+        const firstNumberGrid = document.getElementById('first-number');
+        const secondNumberGrid = document.getElementById('second-number');
+        const characterMouth = document.getElementById('character-mouth');
+        const starsCanvas = document.getElementById('stars-background');
+        const starsCtx = starsCanvas.getContext('2d');
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const confettiCtx = confettiCanvas.getContext('2d');
+
+        // Audio context and sounds
+        let audioContext;
+        let correctSound;
+        let incorrectSound;
+        let clickSound;
+        let celebrationSound;
+        let hintSound;
+
+        // Initialize audio - with try/catch for security restrictions
+        function initAudio() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // Create oscillator-based sounds
+                correctSound = createSound([
+                    { frequency: 523.25, duration: 0.1 }, // C5
+                    { frequency: 659.25, duration: 0.1 }, // E5
+                    { frequency: 783.99, duration: 0.2 }  // G5
+                ]);
+                
+                incorrectSound = createSound([
+                    { frequency: 392.00, duration: 0.1 }, // G4
+                    { frequency: 369.99, duration: 0.3 }  // F#4
+                ]);
+                
+                clickSound = createSound([
+                    { frequency: 587.33, duration: 0.08 } // D5
+                ]);
+                
+                celebrationSound = createSound([
+                    { frequency: 523.25, duration: 0.1 }, // C5
+                    { frequency: 659.25, duration: 0.1 }, // E5
+                    { frequency: 783.99, duration: 0.1 }, // G5
+                    { frequency: 1046.50, duration: 0.3 } // C6
+                ]);
+                
+                hintSound = createSound([
+                    { frequency: 440.00, duration: 0.1 }, // A4
+                    { frequency: 493.88, duration: 0.1 }  // B4
+                ]);
+            } catch (error) {
+                console.log("Audio context could not be initialized:", error);
+                // Create dummy sound functions that do nothing
+                correctSound = incorrectSound = clickSound = celebrationSound = hintSound = function() {};
+            }
+        }
+
+        // Create sound function
+        function createSound(notes) {
+            return function play() {
+                if (!gameState.settings.soundEffects) return;
+                
+                let time = audioContext.currentTime;
+                
+                for (const note of notes) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = note.frequency;
+                    
+                    gainNode.gain.setValueAtTime(0.5, time);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, time + note.duration);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(time);
+                    oscillator.stop(time + note.duration);
+                    
+                    time += note.duration;
+                }
+            };
+        }
+
+        // Initialize the game
+        function init() {
+            // Set canvas dimensions
+            resizeCanvases();
+            window.addEventListener('resize', resizeCanvases);
+            
+            // Create stars background
+            createStars();
+            
+            // Event listeners
+            startBtn.addEventListener('click', startGame);
+            settingsIntroBtn.addEventListener('click', showSettings);
+            checkAnswerBtn.addEventListener('click', checkAnswer);
+            nextProblemBtn.addEventListener('click', generateProblem);
+            helpBtn.addEventListener('click', showHint);
+            settingsBtn.addEventListener('click', showSettings);
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            cancelSettingsBtn.addEventListener('click', hideSettings);
+            closeExplanationBtn.addEventListener('click', hideExplanation);
+            
+            // Initialize audio (will be triggered by user interaction)
+            startBtn.addEventListener('click', function() {
+                if (!audioContext) initAudio();
+            });
+            
+            // Allow pressing Enter to check answer
+            answerInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    checkAnswer();
+                }
+            });
+            
+            // Load settings from localStorage if available
+            loadSettings();
+            
+            // Set up the first number grid
+            for (let i = 0; i < 7; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'place-value-cell';
+                cell.id = `first-number-${i}`;
+                firstNumberGrid.appendChild(cell);
+            }
+            
+            // Set up the second number grid
+            for (let i = 0; i < 7; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'place-value-cell';
+                cell.id = `second-number-${i}`;
+                secondNumberGrid.appendChild(cell);
+            }
+        }
+
+        // Resize canvases function
+        function resizeCanvases() {
+            const container = document.getElementById('game-container');
+            starsCanvas.width = container.offsetWidth;
+            starsCanvas.height = container.offsetHeight;
+            confettiCanvas.width = container.offsetWidth;
+            confettiCanvas.height = container.offsetHeight;
+            
+            // Redraw stars if resized
+            createStars();
+        }
+
+        // Create stars background
+        function createStars() {
+            starsCtx.clearRect(0, 0, starsCanvas.width, starsCanvas.height);
+            const numStars = 100;
+            
+            for (let i = 0; i < numStars; i++) {
+                const x = Math.random() * starsCanvas.width;
+                const y = Math.random() * starsCanvas.height;
+                const radius = Math.random() * 2;
+                const opacity = Math.random() * 0.8 + 0.2;
+                
+                starsCtx.beginPath();
+                starsCtx.arc(x, y, radius, 0, Math.PI * 2);
+                starsCtx.fillStyle = `rgba(255, 255, 255, ${opacity})`;
+                starsCtx.fill();
+            }
+        }
+
+        // Start the game
+        function startGame() {
+            if (clickSound) clickSound();
+            
+            screenIntro.style.transform = 'translateX(-100%)';
+            screenIntro.style.opacity = '0';
+            
+            screenGame.style.transform = 'translateX(0)';
+            screenGame.style.opacity = '1';
+            
+            // Show speech bubble with delay
+            setTimeout(() => {
+                speechBubble.style.opacity = '1';
+                setTimeout(() => {
+                    speechBubble.style.opacity = '0';
+                }, 3000);
+            }, 500);
+            
+            generateProblem();
+        }
+
+        // Show settings screen
+        function showSettings() {
+            if (clickSound) clickSound();
+            
+            // Update settings UI to match current settings
+            document.getElementById('setting-max-number').value = gameState.settings.maxNumber;
+            
+            // Reset multiple select to match current settings
+            const additionValuesSelect = document.getElementById('setting-addition-values');
+            for (let i = 0; i < additionValuesSelect.options.length; i++) {
+                const option = additionValuesSelect.options[i];
+                option.selected = gameState.settings.additionValues.includes(parseInt(option.value));
+            }
+            
+            document.getElementById('setting-game-speed').value = gameState.settings.gameSpeed;
+            document.getElementById('setting-show-animation').checked = gameState.settings.showAnimation;
+            document.getElementById('setting-sound-effects').checked = gameState.settings.soundEffects;
+            document.getElementById('setting-difficulty').value = gameState.settings.difficulty;
+            
+            // Determine which screen we're coming from and animate accordingly
+            if (screenGame.style.opacity === '1') {
+                screenGame.style.transform = 'translateX(100%)';
+                screenGame.style.opacity = '0';
+            } else {
+                screenIntro.style.transform = 'translateX(100%)';
+                screenIntro.style.opacity = '0';
+            }
+            
+            screenSettings.style.transform = 'translateX(0)';
+            screenSettings.style.opacity = '1';
+        }
+
+        // Hide settings screen
+        function hideSettings() {
+            if (clickSound) clickSound();
+            
+            screenSettings.style.transform = 'translateX(-100%)';
+            screenSettings.style.opacity = '0';
+            
+            // Determine which screen to return to
+            if (gameState.totalProblems > 0) {
+                screenGame.style.transform = 'translateX(0)';
+                screenGame.style.opacity = '1';
+            } else {
+                screenIntro.style.transform = 'translateX(0)';
+                screenIntro.style.opacity = '1';
+            }
+        }
+
+        // Save settings function (no localStorage)
+        function saveSettings() {
+            if (clickSound) clickSound();
+            
+            // Get values from UI
+            gameState.settings.maxNumber = parseInt(document.getElementById('setting-max-number').value);
+            
+            // Get selected addition values
+            const additionValuesSelect = document.getElementById('setting-addition-values');
+            gameState.settings.additionValues = Array.from(additionValuesSelect.selectedOptions)
+                                                    .map(option => parseInt(option.value));
+            
+            // If no addition values are selected, default to [9, 10]
+            if (gameState.settings.additionValues.length === 0) {
+                gameState.settings.additionValues = [9, 10];
+                // Update UI to reflect this
+                for (let i = 0; i < additionValuesSelect.options.length; i++) {
+                    const option = additionValuesSelect.options[i];
+                    option.selected = [9, 10].includes(parseInt(option.value));
+                }
+            }
+            
+            gameState.settings.gameSpeed = parseInt(document.getElementById('setting-game-speed').value);
+            gameState.settings.showAnimation = document.getElementById('setting-show-animation').checked;
+            gameState.settings.soundEffects = document.getElementById('setting-sound-effects').checked;
+            gameState.settings.difficulty = parseInt(document.getElementById('setting-difficulty').value);
+            
+            // No localStorage saving - using memory only
+            console.log("Settings saved to memory only");
+            
+            // Return to appropriate screen
+            hideSettings();
+            
+            // If we're in the game, generate a new problem with the new settings
+            if (gameState.totalProblems > 0) {
+                generateProblem();
+            }
+        }
+
+        // Load settings function (no localStorage)
+        function loadSettings() {
+            // Using memory-only settings - no localStorage needed
+            // Default settings are already set in gameState.settings
+            console.log("Using default settings (localStorage not available)");
+        }
+
+        // Generate a new problem
+        function generateProblem() {
+            if (clickSound) clickSound();
+            
+            // Clear the answer input
+            answerInput.value = '';
+            answerInput.focus();
+            
+            // Get a random base number based on settings
+            const maxNumber = gameState.settings.maxNumber;
+            const baseNumber = Math.floor(Math.random() * maxNumber) + 1;
+            
+            // Get a random addition value from the settings
+            const additionValue = gameState.settings.additionValues[
+                Math.floor(Math.random() * gameState.settings.additionValues.length)
+            ];
+            
+            // Calculate the correct answer
+            const correctAnswer = baseNumber + additionValue;
+            
+            // Store the current problem
+            gameState.currentProblem = {
+                baseNumber,
+                additionValue,
+                correctAnswer
+            };
+            
+            // Display the problem
+            displayProblem(baseNumber, additionValue);
+            
+            // Show speech bubble with hint
+            speechBubble.textContent = getRandomEncouragement();
+            speechBubble.style.opacity = '1';
+            setTimeout(() => {
+                speechBubble.style.opacity = '0';
+            }, 3000);
+        }
+
+        // Display the problem in the place value grid
+        function displayProblem(baseNumber, additionValue) {
+            // Convert numbers to strings with leading zeros
+            const baseNumberStr = baseNumber.toString().padStart(7, ' ');
+            const additionValueStr = additionValue.toString().padStart(7, ' ');
+            
+            // Update the first number grid
+            for (let i = 0; i < 7; i++) {
+                const cell = document.getElementById(`first-number-${i}`);
+                cell.textContent = baseNumberStr[i] === ' ' ? '' : baseNumberStr[i];
+            }
+            
+            // Update the second number grid
+            for (let i = 0; i < 7; i++) {
+                const cell = document.getElementById(`second-number-${i}`);
+                cell.textContent = additionValueStr[i] === ' ' ? '' : additionValueStr[i];
+                
+                // Add plus sign to first non-empty cell
+                if (i === 0 && additionValueStr[i] !== ' ') {
+                    cell.textContent = '+' + cell.textContent;
+                } else if (i > 0 && additionValueStr[i] !== ' ' && additionValueStr.substring(0, i).trim() === '') {
+                    cell.textContent = '+' + cell.textContent;
+                }
+            }
+        }
+
+        // Check the user's answer
+        function checkAnswer() {
+            // Get the user's answer
+            const userAnswer = parseInt(answerInput.value.trim());
+            
+            // Check if the answer is valid
+            if (isNaN(userAnswer)) {
+                speechBubble.textContent = "Please enter a valid number!";
+                speechBubble.style.opacity = '1';
+                setTimeout(() => {
+                    speechBubble.style.opacity = '0';
+                }, 2000);
+                return;
+            }
+            
+            // Check if the answer is correct
+            const isCorrect = userAnswer === gameState.currentProblem.correctAnswer;
+            
+            if (isCorrect) {
+                // Play correct sound
+                if (correctSound) correctSound();
+                
+                // Update game state
+                gameState.score += 10 * gameState.settings.difficulty;
+                gameState.totalProblems++;
+                gameState.correctAnswers++;
+                
+                // Level up if appropriate
+                if (gameState.correctAnswers % 5 === 0 && gameState.level < 5) {
+                    gameState.level++;
+                    levelUp();
+                }
+                
+                // Update UI
+                scoreDisplay.textContent = `Score: ${gameState.score}`;
+                levelDisplay.textContent = `Level: ${gameState.level}`;
+                
+                // Show happy reaction
+                showHappyReaction();
+                
+                // Show speech bubble
+                speechBubble.textContent = getRandomPraise();
+                speechBubble.style.opacity = '1';
+                
+                // Show celebration effects
+                if (gameState.settings.showAnimation) {
+                    launchConfetti();
+                }
+                
+                // Play celebration sound
+                if (celebrationSound) celebrationSound();
+                
+                // Auto-generate next problem after delay
+                setTimeout(() => {
+                    speechBubble.style.opacity = '0';
+                    generateProblem();
+                }, 2000);
+            } else {
+                // Play incorrect sound
+                if (incorrectSound) incorrectSound();
+                
+                // Update game state
+                gameState.totalProblems++;
+                
+                // Show sad reaction
+                showSadReaction();
+                
+                // Show speech bubble with hint
+                const diff = Math.abs(userAnswer - gameState.currentProblem.correctAnswer);
+                let message = "";
+                
+                if (diff <= 5) {
+                    message = "So close! Try again.";
+                } else if (diff <= 20) {
+                    message = "Not quite right. Try again!";
+                } else {
+                    message = "That's not correct. Let me help you!";
+                }
+                
+                speechBubble.textContent = message;
+                speechBubble.style.opacity = '1';
+                
+                // Clear the answer input
+                answerInput.value = '';
+                answerInput.focus();
+                
+                // Auto-hide speech bubble after delay
+                setTimeout(() => {
+                    speechBubble.style.opacity = '0';
+                }, 2000);
+            }
+        }
+
+        // Show a hint for the current problem
+        function showHint() {
+            if (hintSound) hintSound();
+            
+            const { baseNumber, additionValue } = gameState.currentProblem;
+            let hintText = "";
+            
+            if (additionValue === 9) {
+                hintText = `Try adding 10 to ${baseNumber} which gives ${baseNumber + 10}, then subtract 1 to get ${baseNumber + 9}.`;
+            } else if (additionValue === 10) {
+                hintText = `When you add 10 to a number, the tens digit increases by 1. So ${baseNumber} + 10 = ${baseNumber + 10}.`;
+            } else if (additionValue === 100) {
+                hintText = `When you add 100 to a number, the hundreds digit increases by 1. So ${baseNumber} + 100 = ${baseNumber + 100}.`;
+            } else if (additionValue === 1000) {
+                hintText = `When you add 1000 to a number, the thousands digit increases by 1. So ${baseNumber} + 1000 = ${baseNumber + 1000}.`;
+            } else {
+                hintText = `Break down the addition: ${baseNumber} + ${additionValue} can be calculated step by step using place values.`;
+            }
+            
+            // Show the hint in the speech bubble
+            speechBubble.textContent = hintText;
+            speechBubble.style.opacity = '1';
+            
+            // Highlight relevant cells in the grid
+            highlightRelevantCells(additionValue);
+            
+            // Auto-hide speech bubble after delay
+            setTimeout(() => {
+                speechBubble.style.opacity = '0';
+            }, 5000);
+        }
+
+        // Show the explanation screen
+        function showExplanation() {
+            screenGame.style.transform = 'translateY(-100%)';
+            screenGame.style.opacity = '0';
+            
+            screenExplanation.style.transform = 'translateY(0)';
+            screenExplanation.style.opacity = '1';
+        }
+
+        // Hide the explanation screen
+        function hideExplanation() {
+            if (clickSound) clickSound();
+            
+            screenExplanation.style.transform = 'translateY(100%)';
+            screenExplanation.style.opacity = '0';
+            
+            screenGame.style.transform = 'translateY(0)';
+            screenGame.style.opacity = '1';
+        }
+
+        // Highlight relevant cells in the grid based on the addition value
+        function highlightRelevantCells(additionValue) {
+            // Reset all cell highlights
+            for (let i = 0; i < 7; i++) {
+                document.getElementById(`first-number-${i}`).classList.remove('highlight');
+                document.getElementById(`second-number-${i}`).classList.remove('highlight');
+            }
+            
+            // Find the cells to highlight based on place value
+            if (additionValue === 9 || additionValue === 10) {
+                // Highlight tens and ones place
+                document.getElementById('first-number-5').classList.add('highlight');
+                document.getElementById('first-number-6').classList.add('highlight');
+                document.getElementById('second-number-5').classList.add('highlight');
+                document.getElementById('second-number-6').classList.add('highlight');
+            } else if (additionValue === 100) {
+                // Highlight hundreds place
+                document.getElementById('first-number-4').classList.add('highlight');
+                document.getElementById('second-number-4').classList.add('highlight');
+            } else if (additionValue === 1000) {
+                // Highlight thousands place
+                document.getElementById('first-number-3').classList.add('highlight');
+                document.getElementById('second-number-3').classList.add('highlight');
+            }
+        }
+
+        // Show happy reaction
+        function showHappyReaction() {
+            characterMouth.setAttribute('d', 'M70 120 Q100 150 130 120');
+        }
+
+        // Show sad reaction
+        function showSadReaction() {
+            characterMouth.setAttribute('d', 'M70 130 Q100 100 130 130');
+            setTimeout(() => {
+                characterMouth.setAttribute('d', 'M70 120 Q100 150 130 120');
+            }, 2000);
+        }
+
+        // Level up animation
+        function levelUp() {
+            if (celebrationSound) celebrationSound();
+            
+            speechBubble.textContent = `Level up! You're now level ${gameState.level}!`;
+            speechBubble.style.opacity = '1';
+            
+            if (gameState.settings.showAnimation) {
+                launchConfetti();
+            }
+            
+            setTimeout(() => {
+                speechBubble.style.opacity = '0';
+            }, 3000);
+        }
+
+        // Launch confetti animation
+        function launchConfetti() {
+            const confettiParticles = [];
+            const particleCount = 100;
+            const gravity = 0.5;
+            const drag = 0.075;
+            
+            // Create confetti particles
+            for (let i = 0; i < particleCount; i++) {
+                confettiParticles.push({
+                    x: confettiCanvas.width / 2,
+                    y: confettiCanvas.height / 2,
+                    size: Math.random() * 10 + 5,
+                    color: randomConfettiColor(),
+                    velocity: {
+                        x: (Math.random() - 0.5) * 20,
+                        y: (Math.random() - 0.5) * 20 - 10
+                    },
+                    rotation: Math.random() * 360,
+                    rotationSpeed: (Math.random() - 0.5) * 5
+                });
+            }
+            
+            // Animate confetti
+            let frameId;
+            function animateConfetti() {
+                confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+                
+                let particlesAlive = 0;
+                for (const particle of confettiParticles) {
+                    if (particle.y < confettiCanvas.height + particle.size) {
+                        particlesAlive++;
+                        
+                        // Update position
+                        particle.velocity.y += gravity;
+                        particle.velocity.x *= (1 - drag);
+                        particle.velocity.y *= (1 - drag);
+                        particle.x += particle.velocity.x;
+                        particle.y += particle.velocity.y;
+                        particle.rotation += particle.rotationSpeed;
+                        
+                        // Draw particle
+                        confettiCtx.save();
+                        confettiCtx.translate(particle.x, particle.y);
+                        confettiCtx.rotate(particle.rotation * Math.PI / 180);
+                        confettiCtx.fillStyle = particle.color;
+                        confettiCtx.fillRect(-particle.size / 2, -particle.size / 2, particle.size, particle.size);
+                        confettiCtx.restore();
+                    }
+                }
+                
+                if (particlesAlive > 0) {
+                    frameId = requestAnimationFrame(animateConfetti);
+                } else {
+                    confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+                    cancelAnimationFrame(frameId);
+                }
+            }
+            
+            // Start animation
+            animateConfetti();
+        }
+
+        // Random confetti color
+        function randomConfettiColor() {
+            const colors = [
+                '#f94144', '#f3722c', '#f8961e', '#f9c74f', 
+                '#90be6d', '#43aa8b', '#4d908e', '#577590', 
+                '#277da1', '#ff99c8', '#fcf6bd', '#d0f4de'
+            ];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // Get random praise message
+        function getRandomPraise() {
+            const praises = [
+                "Fantastic job! You're a math superstar!",
+                "Correct! You're getting so good at this!",
+                "Amazing work! Keep it up!",
+                "You got it right! You're a math genius!",
+                "Perfect! You're mastering this concept!",
+                "Excellent! Your math skills are growing!",
+                "Wow! That's exactly right!",
+                "Great job! You're learning so fast!",
+                "Brilliant! You solved it perfectly!"
+            ];
+            return praises[Math.floor(Math.random() * praises.length)];
+        }
+
+        // Get random encouragement message
+        function getRandomEncouragement() {
+            const encouragements = [
+                "Let's solve this problem together!",
+                "Try using place value to solve this one!",
+                "You can do this! Think about each digit separately.",
+                "Remember our addition strategies!",
+                "Focus on the place values to solve this problem.",
+                "Look at the digits carefully. You've got this!",
+                "Remember to work from right to left!",
+                "Think about what we learned about adding these numbers!",
+                "Use your math superpowers to solve this one!"
+            ];
+            return encouragements[Math.floor(Math.random() * encouragements.length)];
+        }
+
+        // Initialize the game when the DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

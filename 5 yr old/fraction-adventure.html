@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraction Adventure: Learning Journey</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap');
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Comic Neue', sans-serif;
+        }
+        
+        body {
+            background-color: #f0f8ff;
+            overflow-x: hidden;
+        }
+        
+        #game-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        .screen {
+            display: none;
+            width: 100%;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 100, 0.1);
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .active-screen {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .title {
+            text-align: center;
+            color: #4a6cd4;
+            font-size: 36px;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #6a8ae0;
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .button {
+            background-color: #ff7eb9;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-size: 18px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(255, 126, 185, 0.3);
+            font-weight: bold;
+            margin: 10px;
+        }
+        
+        .button:hover {
+            background-color: #ff5ca8;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(255, 126, 185, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(255, 126, 185, 0.4);
+        }
+        
+        .button.green {
+            background-color: #7ed957;
+            box-shadow: 0 4px 8px rgba(126, 217, 87, 0.3);
+        }
+        
+        .button.green:hover {
+            background-color: #6bc046;
+            box-shadow: 0 6px 12px rgba(126, 217, 87, 0.4);
+        }
+        
+        .button.blue {
+            background-color: #57b9d9;
+            box-shadow: 0 4px 8px rgba(87, 185, 217, 0.3);
+        }
+        
+        .button.blue:hover {
+            background-color: #46a3c0;
+            box-shadow: 0 6px 12px rgba(87, 185, 217, 0.4);
+        }
+        
+        .button.purple {
+            background-color: #b957d9;
+            box-shadow: 0 4px 8px rgba(185, 87, 217, 0.3);
+        }
+        
+        .button.purple:hover {
+            background-color: #a346c0;
+            box-shadow: 0 6px 12px rgba(185, 87, 217, 0.4);
+        }
+        
+        .button.orange {
+            background-color: #ffab57;
+            box-shadow: 0 4px 8px rgba(255, 171, 87, 0.3);
+        }
+        
+        .button.orange:hover {
+            background-color: #ff9b37;
+            box-shadow: 0 6px 12px rgba(255, 171, 87, 0.4);
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .character {
+            position: absolute;
+            bottom: 0;
+            width: 180px;
+            height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 10;
+        }
+        
+        .character.professor {
+            left: 30px;
+        }
+        
+        .character.student {
+            right: 30px;
+        }
+        
+        .character .speech-bubble {
+            background-color: white;
+            border-radius: 20px;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            max-width: 280px;
+            min-width: 150px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .character .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            border-top: 10px solid white;
+        }
+        
+        .character .avatar {
+            width: 120px;
+            height: 120px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center bottom;
+        }
+        
+        .progress-container {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #7ed957;
+            transition: width 0.5s ease;
+        }
+        
+        .level-indicator {
+            text-align: center;
+            font-size: 18px;
+            color: #6a8ae0;
+            margin-bottom: 10px;
+        }
+        
+        .score-container {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+        }
+        
+        .score-item {
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+            color: #6a8ae0;
+        }
+        
+        .score-item.correct {
+            color: #7ed957;
+        }
+        
+        .score-item.incorrect {
+            color: #ff5ca8;
+        }
+        
+        .score-item img {
+            width: 24px;
+            height: 24px;
+            margin-right: 10px;
+        }
+        
+        .option-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .option {
+            background-color: #f0f8ff;
+            border: 3px solid #6a8ae0;
+            border-radius: 15px;
+            padding: 15px;
+            margin: 10px;
+            min-width: 150px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 18px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(106, 138, 224, 0.2);
+        }
+        
+        .option .fraction {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        .fraction-visual {
+            width: 100px;
+            height: 100px;
+            margin: 10px auto;
+            position: relative;
+        }
+        
+        .instructions {
+            background-color: #f9f9f9;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .instructions h3 {
+            color: #4a6cd4;
+            margin-bottom: 10px;
+        }
+        
+        .instructions p {
+            margin-bottom: 10px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .visual-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .fraction-model {
+            width: 200px;
+            height: 200px;
+            border-radius: 10px;
+            margin: 10px;
+            position: relative;
+            overflow: hidden;
+            border: 3px solid #6a8ae0;
+            background-color: white;
+        }
+        
+        .settings-container {
+            background-color: #f9f9f9;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .settings-container h3 {
+            color: #4a6cd4;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .settings-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .settings-row label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input[type="range"] {
+            width: 50%;
+        }
+        
+        .range-value {
+            width: 40px;
+            text-align: center;
+            font-weight: bold;
+            color: #4a6cd4;
+        }
+        
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                opacity: 1;
+                top: -10px;
+                transform: translateX(0) rotateZ(0deg);
+            }
+            100% {
+                opacity: 0;
+                top: 100%;
+                transform: translateX(100px) rotateZ(360deg);
+            }
+        }
+        
+        .problem-container {
+            text-align: center;
+            margin: 30px 0;
+            font-size: 36px;
+            color: #4a6cd4;
+            font-weight: bold;
+        }
+        
+        .fraction-display {
+            display: inline-block;
+            text-align: center;
+            margin: 0 15px;
+            vertical-align: middle;
+        }
+        
+        .numerator, .denominator {
+            display: block;
+            font-size: 32px;
+        }
+        
+        .fraction-line {
+            display: block;
+            width: 100%;
+            height: 3px;
+            background-color: #4a6cd4;
+            margin: 5px 0;
+        }
+        
+        .operator {
+            display: inline-block;
+            font-size: 36px;
+            vertical-align: middle;
+            margin: 0 10px;
+        }
+        
+        .answer-container {
+            margin: 30px 0;
+            text-align: center;
+        }
+        
+        .quiz-explanation {
+            background-color: #f0f8ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .feedback {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            margin: 20px 0;
+            min-height: 30px;
+        }
+        
+        .feedback.correct {
+            color: #7ed957;
+        }
+        
+        .feedback.incorrect {
+            color: #ff5ca8;
+        }
+        
+        .input-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .fraction-input {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 20px;
+        }
+        
+        .fraction-input input {
+            width: 60px;
+            height: 60px;
+            border: 3px solid #6a8ae0;
+            border-radius: 10px;
+            font-size: 24px;
+            text-align: center;
+            margin: 5px 0;
+        }
+        
+        .fraction-input .fraction-line {
+            width: 60px;
+            margin: 5px 0;
+        }
+        
+        #conclusion-screen {
+            text-align: center;
+        }
+        
+        #conclusion-screen img {
+            max-width: 300px;
+            margin: 20px auto;
+        }
+        
+        .certificate {
+            background-color: #fff9e6;
+            border: 3px dashed #ffab57;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 30px auto;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .certificate h2 {
+            color: #4a6cd4;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        
+        .certificate p {
+            font-size: 18px;
+            line-height: 1.5;
+            margin-bottom: 10px;
+        }
+        
+        .certificate .name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff7eb9;
+            margin: 20px 0;
+        }
+        
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .star {
+            width: 40px;
+            height: 40px;
+            background-color: #ffab57;
+            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+            margin: 0 5px;
+        }
+        
+        .advanced-options {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .advanced-topic {
+            background-color: #f0f8ff;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .advanced-topic:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .advanced-topic h3 {
+            color: #4a6cd4;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        
+        .advanced-topic p {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #555;
+        }
+        
+        .character-selection {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .character-option {
+            width: 150px;
+            height: 220px;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            border-radius: 15px;
+        }
+        
+        .character-option:hover {
+            transform: translateY(-5px);
+            background-color: rgba(106, 138, 224, 0.1);
+        }
+        
+        .character-option.selected {
+            background-color: rgba(106, 138, 224, 0.2);
+            border: 3px solid #6a8ae0;
+        }
+        
+        .character-option .avatar {
+            width: 100px;
+            height: 100px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center bottom;
+            margin-bottom: 10px;
+        }
+        
+        .character-option .name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #4a6cd4;
+            text-align: center;
+        }
+        
+        .custom-range {
+            appearance: none;
+            height: 10px;
+            border-radius: 5px;
+            background: #e0e0e0;
+            outline: none;
+        }
+        
+        .custom-range::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6a8ae0;
+            cursor: pointer;
+        }
+        
+        .custom-range::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #6a8ae0;
+            cursor: pointer;
+        }
+        
+        .topic-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .topic-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .topic-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .topic-card h3 {
+            color: #4a6cd4;
+            margin-bottom: 10px;
+        }
+        
+        .topic-card p {
+            color: #555;
+            font-size: 14px;
+        }
+
+        /* Animation for characters */
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+            100% {
+                transform: translateY(0px);
+            }
+        }
+        
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen active-screen">
+            <h1 class="title">Fraction Adventure</h1>
+            <h2 class="subtitle">A Mathematical Journey for Young Geniuses</h2>
+            
+            <div class="button-container">
+                <button id="start-button" class="button">Start Adventure</button>
+                <button id="settings-button" class="button blue">Settings</button>
+                <button id="learn-more-button" class="button purple">Learn More</button>
+            </div>
+            
+            <div class="instructions">
+                <h3>Welcome to Fraction Adventure!</h3>
+                <p>Join Professor Numerator and his assistant Denny Denominator on an exciting journey through the world of fractions! Learn how to add, subtract, and understand fractions in a fun and interactive way.</p>
+                <p>This game is designed for young math enthusiasts who want to explore the fascinating world of fractions. Whether you're just starting or already know the basics, there's something for everyone!</p>
+            </div>
+            
+            <div class="character professor">
+                <div class="speech-bubble" id="professor-speech">
+                    Hello there, young mathematician! Ready to explore the wonderful world of fractions?
+                </div>
+                <div class="avatar floating" id="professor-avatar"></div>
+            </div>
+            
+            <div class="character student">
+                <div class="speech-bubble" id="student-speech">
+                    I can't wait to show you how fun fractions can be!
+                </div>
+                <div class="avatar floating" id="student-avatar"></div>
+            </div>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="screen">
+            <h1 class="title">Game Settings</h1>
+            <h2 class="subtitle">Customize Your Learning Experience</h2>
+            
+            <div class="settings-container">
+                <h3>Difficulty Settings</h3>
+                <div class="settings-row">
+                    <label for="max-denominator">Maximum Denominator:</label>
+                    <input type="range" id="max-denominator" class="custom-range" min="5" max="20" value="10">
+                    <span class="range-value" id="max-denominator-value">10</span>
+                </div>
+                <div class="settings-row">
+                    <label for="problem-complexity">Problem Complexity:</label>
+                    <input type="range" id="problem-complexity" class="custom-range" min="1" max="5" value="2">
+                    <span class="range-value" id="problem-complexity-value">2</span>
+                </div>
+                <div class="settings-row">
+                    <label for="time-limit">Time Limit (seconds):</label>
+                    <input type="range" id="time-limit" class="custom-range" min="0" max="60" value="0">
+                    <span class="range-value" id="time-limit-value">∞</span>
+                </div>
+                <div class="settings-row">
+                    <label for="sound-effects">Sound Effects:</label>
+                    <input type="checkbox" id="sound-effects" checked>
+                </div>
+            </div>
+            
+            <div class="settings-container">
+                <h3>Choose Your Character</h3>
+                <div class="character-selection">
+                    <div class="character-option selected" data-character="alex">
+                        <div class="avatar" id="alex-avatar"></div>
+                        <div class="name">Alex</div>
+                    </div>
+                    <div class="character-option" data-character="mia">
+                        <div class="avatar" id="mia-avatar"></div>
+                        <div class="name">Mia</div>
+                    </div>
+                    <div class="character-option" data-character="leo">
+                        <div class="avatar" id="leo-avatar"></div>
+                        <div class="name">Leo</div>
+                    </div>
+                    <div class="character-option" data-character="zoe">
+                        <div class="avatar" id="zoe-avatar"></div>
+                        <div class="name">Zoe</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="settings-container">
+                <h3>Advanced Learning Settings</h3>
+                <div class="settings-row">
+                    <label for="show-visual-aids">Show Visual Aids:</label>
+                    <input type="checkbox" id="show-visual-aids" checked>
+                </div>
+                <div class="settings-row">
+                    <label for="explanation-detail">Explanation Detail:</label>
+                    <input type="range" id="explanation-detail" class="custom-range" min="1" max="3" value="2">
+                    <span class="range-value" id="explanation-detail-value">Medium</span>
+                </div>
+                <div class="settings-row">
+                    <label for="require-simplification">Require Simplification:</label>
+                    <input type="checkbox" id="require-simplification">
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button id="settings-back-button" class="button">Back to Menu</button>
+                <button id="settings-save-button" class="button green">Save Settings</button>
+                <button id="settings-reset-button" class="button orange">Reset to Default</button>
+            </div>
+        </div>
+        
+        <!-- Learn More Screen -->
+        <div id="learn-more-screen" class="screen">
+            <h1 class="title">All About Fractions</h1>
+            <h2 class="subtitle">Exploring the Fascinating World of Mathematical Parts</h2>
+            
+            <div class="instructions">
+                <h3>What are Fractions?</h3>
+                <p>A fraction represents a part of a whole or a collection. It consists of two numbers: the numerator (top) and the denominator (bottom). The numerator tells us how many parts we have, and the denominator tells us how many equal parts make up the whole.</p>
+            </div>
+            
+            <div class="topic-grid">
+                <div class="topic-card" id="topic-basics">
+                    <h3>Fraction Basics</h3>
+                    <p>Learn about numerators, denominators, and how fractions represent parts of a whole.</p>
+                </div>
+                <div class="topic-card" id="topic-types">
+                    <h3>Types of Fractions</h3>
+                    <p>Explore proper fractions, improper fractions, mixed numbers, and equivalents.</p>
+                </div>
+                <div class="topic-card" id="topic-operations">
+                    <h3>Fraction Operations</h3>
+                    <p>Discover how to add, subtract, multiply, and divide fractions with easy methods.</p>
+                </div>
+                <div class="topic-card" id="topic-comparisons">
+                    <h3>Comparing Fractions</h3>
+                    <p>Learn techniques to determine which fraction is greater, lesser, or equal.</p>
+                </div>
+                <div class="topic-card" id="topic-real-world">
+                    <h3>Real-World Applications</h3>
+                    <p>See how fractions are used in cooking, construction, music, and everyday life.</p>
+                </div>
+                <div class="topic-card" id="topic-decimals">
+                    <h3>Fractions & Decimals</h3>
+                    <p>Understand the relationship between fractions and decimal numbers.</p>
+                </div>
+                <div class="topic-card" id="topic-advanced">
+                    <h3>Advanced Concepts</h3>
+                    <p>Explore complex fraction topics for the truly math-curious minds!</p>
+                </div>
+                <div class="topic-card" id="topic-games">
+                    <h3>More Fraction Games</h3>
+                    <p>Discover additional fun games and activities to master fractions.</p>
+                </div>
+            </div>
+            
+            <div class="advanced-options">
+                <h3 class="subtitle">For Advanced Learners</h3>
+                <div class="advanced-topic" id="advanced-1">
+                    <h3>Rational Numbers and the Number Line</h3>
+                    <p>Explore how fractions fit into the broader number system and their precise positions on a number line.</p>
+                </div>
+                <div class="advanced-topic" id="advanced-2">
+                    <h3>Continued Fractions</h3>
+                    <p>Discover the fascinating world of continued fractions and how they can represent irrational numbers.</p>
+                </div>
+                <div class="advanced-topic" id="advanced-3">
+                    <h3>Fractions in Abstract Algebra</h3>
+                    <p>Learn how fractions connect to algebraic structures and fields in higher mathematics.</p>
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button id="learn-more-back-button" class="button">Back to Menu</button>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <div class="level-indicator">Level <span id="current-level">1</span>: <span id="level-name">Simple Addition</span></div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            
+            <div class="score-container">
+                <div class="score-item correct">Correct: <span id="correct-count">0</span></div>
+                <div class="score-item">Problems: <span id="problem-count">0</span>/<span id="total-problems">10</span></div>
+                <div class="score-item incorrect">Incorrect: <span id="incorrect-count">0</span></div>
+            </div>
+            
+            <div class="problem-container" id="problem-display">
+                <div class="fraction-display">
+                    <span class="numerator" id="problem-numerator1">1</span>
+                    <span class="fraction-line"></span>
+                    <span class="denominator" id="problem-denominator1">4</span>
+                </div>
+                <span class="operator" id="problem-operator">+</span>
+                <div class="fraction-display">
+                    <span class="numerator" id="problem-numerator2">1</span>
+                    <span class="fraction-line"></span>
+                    <span class="denominator" id="problem-denominator2">2</span>
+                </div>
+                <span class="operator">=</span>
+                <div class="fraction-display" id="answer-display">
+                    <span class="numerator">?</span>
+                    <span class="fraction-line"></span>
+                    <span class="denominator">?</span>
+                </div>
+            </div>
+            
+            <div class="visual-container" id="visual-container">
+                <!-- Visuals will be added dynamically -->
+            </div>
+            
+            <div class="feedback" id="feedback"></div>
+            
+            <div class="option-container" id="option-container">
+                <!-- Options will be added dynamically -->
+            </div>
+            
+            <div class="input-container" id="input-answer-container">
+                <div class="fraction-input">
+                    <input type="number" id="answer-numerator" placeholder="?">
+                    <div class="fraction-line"></div>
+                    <input type="number" id="answer-denominator" placeholder="?">
+                </div>
+                <button id="check-answer-button" class="button green">Check Answer</button>
+            </div>
+            
+            <div class="quiz-explanation" id="explanation">
+                <h3>How to solve this problem</h3>
+                <div id="explanation-content"></div>
+            </div>
+            
+            <div class="button-container">
+                <button id="hint-button" class="button blue">Hint</button>
+                <button id="skip-button" class="button orange">Skip</button>
+                <button id="game-menu-button" class="button">Menu</button>
+            </div>
+            
+            <div class="character professor">
+                <div class="speech-bubble" id="professor-game-speech"></div>
+                <div class="avatar floating" id="professor-game-avatar"></div>
+            </div>
+            
+            <div class="character student">
+                <div class="speech-bubble" id="student-game-speech"></div>
+                <div class="avatar floating" id="student-game-avatar"></div>
+            </div>
+        </div>
+        
+        <!-- Conclusion Screen -->
+        <div id="conclusion-screen" class="screen">
+            <h1 class="title">Congratulations!</h1>
+            <h2 class="subtitle">You've Completed Fraction Adventure</h2>
+            
+            <div class="certificate">
+                <h2>Certificate of Achievement</h2>
+                <p>This certifies that</p>
+                <div class="name" id="player-name">Young Mathematician</div>
+                <p>has successfully completed the Fraction Adventure and demonstrated exceptional understanding of fraction concepts.</p>
+                
+                <div class="stars-container">
+                    <div class="star"></div>
+                    <div class="star"></div>
+                    <div class="star"></div>
+                    <div class="star"></div>
+                    <div class="star"></div>
+                </div>
+                
+                <p><span id="certificate-date">May 14, 2025</span></p>
+            </div>
+            
+            <div class="score-container">
+                <div class="score-item correct">Final Score: <span id="final-score">0</span>/<span id="max-score">10</span></div>
+                <div class="score-item">Accuracy: <span id="accuracy">0</span>%</div>
+                <div class="score-item">Time: <span id="completion-time">0</span> minutes</div>
+            </div>
+            
+            <div class="button-container">
+                <button id="play-again-button" class="button green">Play Again</button>
+                <button id="advanced-level-button" class="button purple">Try Advanced Level</button>
+                <button id="conclusion-menu-button" class="button">Back to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // SVG Data for characters - Base64 encoded
+        const characterSVG = {
+            professor: `
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Professor with glasses, bowtie, and fraction symbols -->
+                    <circle cx="50" cy="40" r="25" fill="#FFD700"/>
+                    <circle cx="50" cy="40" r="22" fill="#FFEC8B"/>
+                    <ellipse cx="40" cy="37" rx="5" ry="6" fill="white"/>
+                    <ellipse cx="60" cy="37" rx="5" ry="6" fill="white"/>
+                    <circle cx="40" cy="37" r="2" fill="#333"/>
+                    <circle cx="60" cy="37" r="2" fill="#333"/>
+                    <line x1="35" y1="37" x2="45" y2="37" stroke="#333" stroke-width="1"/>
+                    <line x1="55" y1="37" x2="65" y2="37" stroke="#333" stroke-width="1"/>
+                    <path d="M42 50 C 50 55, 50 55, 58 50" stroke="#333" stroke-width="2" fill="none"/>
+                    <rect x="40" y="25" width="20" height="5" fill="#4A6CD4"/>
+                    <ellipse cx="35" cy="55" rx="3" ry="1.5" fill="#FF6347"/>
+                    <ellipse cx="65" cy="55" rx="3" ry="1.5" fill="#FF6347"/>
+                    <path d="M35 55 Q 50 60 65 55" fill="#FF6347"/>
+                    <text x="45" y="80" font-family="Arial" font-size="20" font-weight="bold" fill="#4A6CD4">3/4</text>
+                </svg>
+            `,
+            student: `
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Student with a big smile and fraction thought bubble -->
+                    <circle cx="50" cy="40" r="25" fill="#FF9999"/>
+                    <circle cx="50" cy="40" r="22" fill="#FFBABA"/>
+                    <circle cx="40" cy="35" r="3" fill="#333"/>
+                    <circle cx="60" cy="35" r="3" fill="#333"/>
+                    <path d="M40 50 C 45 57, 55 57, 60 50" stroke="#333" stroke-width="2" fill="none"/>
+                    <path d="M30 30 C 30 20, 45 15, 50 15 C 55 15, 70 20, 70 30" stroke="#A58FFF" stroke-width="2" fill="none"/>
+                    <path d="M50 15 L 50 10" stroke="#A58FFF" stroke-width="2" fill="none"/>
+                    <circle cx="50" cy="8" r="3" fill="#A58FFF"/>
+                    <text x="45" y="80" font-family="Arial" font-size="20" font-weight="bold" fill="#FF7EB9">1/2</text>
+                </svg>
+            `,
+            alex: `
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Alex with spiky hair and cool accessories -->
+                    <circle cx="50" cy="45" r="25" fill="#FFD38C"/>
+                    <circle cx="50" cy="45" r="22" fill="#FFEAC5"/>
+                    <circle cx="40" cy="40" r="3" fill="#333"/>
+                    <circle cx="60" cy="40" r="3" fill="#333"/>
+                    <path d="M40 52 C 45 55, 55 55, 60 52" stroke="#333" stroke-width="2" fill="none"/>
+                    <path d="M30 25 L 35 15" stroke="#333" stroke-width="3" fill="none"/>
+                    <path d="M40 20 L 42 10" stroke="#333" stroke-width="3" fill="none"/>
+                    <path d="M50 18 L 50 8" stroke="#333" stroke-width="3" fill="none"/>
+                    <path d="M60 20 L 58 10" stroke="#333" stroke-width="3" fill="none"/>
+                    <path d="M70 25 L 65 15" stroke="#333" stroke-width="3" fill="none"/>
+                    <rect x="25" y="38" width="5" height="10" rx="2" fill="#57B9D9"/>
+                </svg>
+            `,
+            mia: `
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Mia with pigtails and cute expression -->
+                    <circle cx="50" cy="45" r="25" fill="#FFADC7"/>
+                    <circle cx="50" cy="45" r="22" fill="#FFD0E0"/>
+                    <circle cx="40" cy="40" r="3" fill="#333"/>
+                    <circle cx="60" cy="40" r="3" fill="#333"/>
+                    <path d="M45 50 C 48 53, 52 53, 55 50" stroke="#333" stroke-width="2" fill="none"/>
+                    <path d="M20 40 Q 25 20 35 25" fill="#8B4513"/>
+                    <path d="M80 40 Q 75 20 65 25" fill="#8B4513"/>
+                    <rect x="18" y="38" width="5" height="5" rx="2" fill="#FF7EB9"/>
+                    <rect x="77" y="38" width="5" height="5" rx="2" fill="#FF7EB9"/>
+                </svg>
+            `,
+            leo: `
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Leo with cap and freckles -->
+                    <circle cx="50" cy="45" r="25" fill="#C5A67E"/>
+                    <circle cx="50" cy="45" r="22" fill="#E5C9A7"/>
+                    <circle cx="40" cy="40" r="3" fill="#333"/>
+                    <circle cx="60" cy="40" r="3" fill="#333"/>
+                    <path d="M42 50 C 47 54, 53 54, 58 50" stroke="#333" stroke-width="2" fill="none"/>
+                    <path d="M25 30 Q 50 10 75 30" fill="#7ED957"/>
+                    <rect x="25" y="30" width="50" height="5" fill="#7ED957"/>
+                    <circle cx="43" cy="35" r="1" fill="#8B4513"/>
+                    <circle cx="47" cy="37" r="1" fill="#8B4513"/>
+                    <circle cx="53" cy="37" r="1" fill="#8B4513"/>
+                    <circle cx="57" cy="35" r="1" fill="#8B4513"/>
+                </svg>
+            `,
+            zoe: `
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Zoe with curly hair and glasses -->
+                    <circle cx="50" cy="45" r="25" fill="#B08968"/>
+                    <circle cx="50" cy="45" r="22" fill="#D2B48C"/>
+                    <ellipse cx="40" cy="42" rx="6" ry="4" fill="white"/>
+                    <ellipse cx="60" cy="42" rx="6" ry="4" fill="white"/>
+                    <circle cx="40" cy="42" r="2" fill="#333"/>
+                    <circle cx="60" cy="42" r="2" fill="#333"/>
+                    <line x1="35" y1="42" x2="45" y2="42" stroke="#333" stroke-width="1"/>
+                    <line x1="55" y1="42" x2="65" y2="42" stroke="#333" stroke-width="1"/>
+                    <line x1="46" y1="42" x2="54" y2="42" stroke="#333" stroke-width="1"/>
+                    <path d="M45 50 C 48 52, 52 52, 55 50" stroke="#333" stroke-width="1.5" fill="none"/>
+                    <path d="M30 30 Q 28 25 30 20 Q 32 15 35 20 Q 37 25 35 30" fill="#8B4513"/>
+                    <path d="M40 20 Q 38 15 40 10 Q 42 5 45 10 Q 47 15 45 20" fill="#8B4513"/>
+                    <path d="M50 15 Q 48 10 50 5 Q 52 0 55 5 Q 57 10 55 15" fill="#8B4513"/>
+                    <path d="M60 20 Q 58 15 60 10 Q 62 5 65 10 Q 67 15 65 20" fill="#8B4513"/>
+                    <path d="M70 30 Q 68 25 70 20 Q 72 15 75 20 Q 77 25 75 30" fill="#8B4513"/>
+                </svg>
+            `
+        };
+
+        // Sound effects as Data URLs
+        const sounds = {
+            correct: "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAFSgD///////////////////////////////////////////8AAAATQ3JlYXRlZCB3aXRoIEdJTVAAAABDTEFNRQAAABEAAABSZWNvcmRlZCBieSBLZXl0YXIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UEAAAAA/QdwBTEAAh+g7gCmIAAAAACSsQAAAJMARVgAAASAAAaQAAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=",
+            incorrect: "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAFSgD///////////////////////////////////////////8AAAATQ3JlYXRlZCB3aXRoIEdJTVAAAABDTEFNRQAAABEAAABSZWNvcmRlZCBieSBLZXl0YXIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UEAAAAA/QdwBTEAAh+g7gCmIAAAAACSsQAAAJMARVgAAASAAAaQAAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=",
+            celebration: "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAFSgD///////////////////////////////////////////8AAAATQ3JlYXRlZCB3aXRoIEdJTVAAAABDTEFNRQAAABEAAABSZWNvcmRlZCBieSBLZXl0YXIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UEAAAAA/QdwBTEAAh+g7gCmIAAAAACSsQAAAJMARVgAAASAAAaQAAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=",
+            click: "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAFSgD///////////////////////////////////////////8AAAATQ3JlYXRlZCB3aXRoIEdJTVAAAABDTEFNRQAAABEAAABSZWNvcmRlZCBieSBLZXl0YXIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UEAAAAA/QdwBTEAAh+g7gCmIAAAAACSsQAAAJMARVgAAASAAAaQAAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU=",
+            pop: "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAFSgD///////////////////////////////////////////8AAAATQ3JlYXRlZCB3aXRoIEdJTVAAAABDTEFNRQAAABEAAABSZWNvcmRlZCBieSBLZXl0YXIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAP/7UEAAAAA/QdwBTEAAh+g7gCmIAAAAACSsQAAAJMARVgAAASAAAaQAAAAATEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="
+        };
+
+        // Audio objects
+        const audio = {
+            correct: new Audio(sounds.correct),
+            incorrect: new Audio(sounds.incorrect),
+            celebration: new Audio(sounds.celebration),
+            click: new Audio(sounds.click),
+            pop: new Audio(sounds.pop)
+        };
+
+        // Game state variables
+        const gameState = {
+            level: 1,
+            correctAnswers: 0,
+            incorrectAnswers: 0,
+            totalProblems: 10,
+            problemCount: 0,
+            currentProblem: null,
+            playerCharacter: 'alex',
+            maxDenominator: 10,
+            problemComplexity: 2,
+            timeLimit: 0,
+            soundEffects: true,
+            showVisualAids: true,
+            explanationDetail: 2,
+            requireSimplification: false,
+            gameStartTime: null,
+            levels: [
+                { name: "Simple Addition", description: "Add fractions with the same denominator" },
+                { name: "Simple Subtraction", description: "Subtract fractions with the same denominator" },
+                { name: "Mixed Operations", description: "Add and subtract fractions with the same denominator" },
+                { name: "Different Denominators", description: "Add and subtract fractions with different denominators" },
+                { name: "Mixed Numbers", description: "Work with mixed numbers (whole numbers and fractions)" },
+                { name: "Complex Problems", description: "Solve multi-step fraction problems" }
+            ]
+        };
+
+        // DOM elements
+        const elements = {
+            screens: {
+                welcome: document.getElementById('welcome-screen'),
+                settings: document.getElementById('settings-screen'),
+                learnMore: document.getElementById('learn-more-screen'),
+                game: document.getElementById('game-screen'),
+                conclusion: document.getElementById('conclusion-screen')
+            },
+            welcome: {
+                startButton: document.getElementById('start-button'),
+                settingsButton: document.getElementById('settings-button'),
+                learnMoreButton: document.getElementById('learn-more-button'),
+                professorSpeech: document.getElementById('professor-speech'),
+                studentSpeech: document.getElementById('student-speech'),
+                professorAvatar: document.getElementById('professor-avatar'),
+                studentAvatar: document.getElementById('student-avatar')
+            },
+            settings: {
+                maxDenominator: document.getElementById('max-denominator'),
+                maxDenominatorValue: document.getElementById('max-denominator-value'),
+                problemComplexity: document.getElementById('problem-complexity'),
+                problemComplexityValue: document.getElementById('problem-complexity-value'),
+                timeLimit: document.getElementById('time-limit'),
+                timeLimitValue: document.getElementById('time-limit-value'),
+                soundEffects: document.getElementById('sound-effects'),
+                showVisualAids: document.getElementById('show-visual-aids'),
+                explanationDetail: document.getElementById('explanation-detail'),
+                explanationDetailValue: document.getElementById('explanation-detail-value'),
+                requireSimplification: document.getElementById('require-simplification'),
+                backButton: document.getElementById('settings-back-button'),
+                saveButton: document.getElementById('settings-save-button'),
+                resetButton: document.getElementById('settings-reset-button'),
+                characterOptions: document.querySelectorAll('.character-option')
+            },
+            learnMore: {
+                backButton: document.getElementById('learn-more-back-button'),
+                topicCards: document.querySelectorAll('.topic-card'),
+                advancedTopics: document.querySelectorAll('.advanced-topic')
+            },
+            game: {
+                levelIndicator: document.getElementById('current-level'),
+                levelName: document.getElementById('level-name'),
+                progressBar: document.getElementById('progress-bar'),
+                correctCount: document.getElementById('correct-count'),
+                incorrectCount: document.getElementById('incorrect-count'),
+                problemCount: document.getElementById('problem-count'),
+                totalProblems: document.getElementById('total-problems'),
+                problemDisplay: document.getElementById('problem-display'),
+                problemNumerator1: document.getElementById('problem-numerator1'),
+                problemDenominator1: document.getElementById('problem-denominator1'),
+                problemOperator: document.getElementById('problem-operator'),
+                problemNumerator2: document.getElementById('problem-numerator2'),
+                problemDenominator2: document.getElementById('problem-denominator2'),
+                answerDisplay: document.getElementById('answer-display'),
+                visualContainer: document.getElementById('visual-container'),
+                feedback: document.getElementById('feedback'),
+                optionContainer: document.getElementById('option-container'),
+                inputAnswerContainer: document.getElementById('input-answer-container'),
+                answerNumerator: document.getElementById('answer-numerator'),
+                answerDenominator: document.getElementById('answer-denominator'),
+                checkAnswerButton: document.getElementById('check-answer-button'),
+                explanation: document.getElementById('explanation'),
+                explanationContent: document.getElementById('explanation-content'),
+                hintButton: document.getElementById('hint-button'),
+                skipButton: document.getElementById('skip-button'),
+                menuButton: document.getElementById('game-menu-button'),
+                professorSpeech: document.getElementById('professor-game-speech'),
+                studentSpeech: document.getElementById('student-game-speech'),
+                professorAvatar: document.getElementById('professor-game-avatar'),
+                studentAvatar: document.getElementById('student-game-avatar')
+            },
+            conclusion: {
+                playerName: document.getElementById('player-name'),
+                certificateDate: document.getElementById('certificate-date'),
+                finalScore: document.getElementById('final-score'),
+                maxScore: document.getElementById('max-score'),
+                accuracy: document.getElementById('accuracy'),
+                completionTime: document.getElementById('completion-time'),
+                playAgainButton: document.getElementById('play-again-button'),
+                advancedLevelButton: document.getElementById('advanced-level-button'),
+                menuButton: document.getElementById('conclusion-menu-button')
+            }
+        };
+
+        // Initialize character avatars
+        function initializeCharacters() {
+            elements.welcome.professorAvatar.innerHTML = characterSVG.professor;
+            elements.welcome.studentAvatar.innerHTML = characterSVG.student;
+            elements.game.professorAvatar.innerHTML = characterSVG.professor;
+            elements.game.studentAvatar.innerHTML = characterSVG.student;
+            
+            document.getElementById('alex-avatar').innerHTML = characterSVG.alex;
+            document.getElementById('mia-avatar').innerHTML = characterSVG.mia;
+            document.getElementById('leo-avatar').innerHTML = characterSVG.leo;
+            document.getElementById('zoe-avatar').innerHTML = characterSVG.zoe;
+        }
+
+        // Show a specific screen
+        function showScreen(screenId) {
+            // Hide all screens
+            Object.values(elements.screens).forEach(screen => {
+                screen.classList.remove('active-screen');
+            });
+            
+            // Show the requested screen
+            document.getElementById(screenId).classList.add('active-screen');
+            
+            // Play click sound
+            playSound('click');
+        }
+
+        // Play a sound effect
+        function playSound(soundName) {
+            if (gameState.soundEffects) {
+                audio[soundName].currentTime = 0;
+                audio[soundName].play().catch(e => console.log("Audio play error:", e));
+            }
+        }
+
+        // Show speech bubble for a character
+        function showSpeech(character, text, duration = 3000) {
+            const speechBubble = elements.game[character + 'Speech'] || elements.welcome[character + 'Speech'];
+            if (!speechBubble) return;
+            
+            speechBubble.textContent = text;
+            speechBubble.style.opacity = 1;
+            
+            setTimeout(() => {
+                speechBubble.style.opacity = 0;
+            }, duration);
+        }
+
+        // Generate confetti effect
+        function createConfetti() {
+            const confettiColors = ['#ff7eb9', '#ff65a3', '#7ed957', '#57b9d9', '#b957d9', '#ffab57'];
+            const container = document.getElementById('game-container');
+            
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+                confetti.style.left = Math.random() * 100 + '%';
+                
+                const size = Math.random() * 10 + 5;
+                confetti.style.width = size + 'px';
+                confetti.style.height = size + 'px';
+                
+                const animationDuration = Math.random() * 2 + 1;
+                confetti.style.animation = `confetti-fall ${animationDuration}s forwards`;
+                
+                container.appendChild(confetti);
+                
+                setTimeout(() => {
+                    container.removeChild(confetti);
+                }, animationDuration * 1000);
+            }
+            
+            playSound('celebration');
+        }
+
+        // Initialize settings values
+        function updateSettingsDisplay() {
+            elements.settings.maxDenominatorValue.textContent = gameState.maxDenominator;
+            elements.settings.problemComplexityValue.textContent = gameState.problemComplexity;
+            elements.settings.timeLimitValue.textContent = gameState.timeLimit === 0 ? '∞' : gameState.timeLimit;
+            
+            const explanationTexts = ['Basic', 'Medium', 'Detailed'];
+            elements.settings.explanationDetailValue.textContent = explanationTexts[gameState.explanationDetail - 1];
+            
+            elements.settings.maxDenominator.value = gameState.maxDenominator;
+            elements.settings.problemComplexity.value = gameState.problemComplexity;
+            elements.settings.timeLimit.value = gameState.timeLimit;
+            elements.settings.soundEffects.checked = gameState.soundEffects;
+            elements.settings.showVisualAids.checked = gameState.showVisualAids;
+            elements.settings.explanationDetail.value = gameState.explanationDetail;
+            elements.settings.requireSimplification.checked = gameState.requireSimplification;
+            
+            // Update character selection
+            elements.settings.characterOptions.forEach(option => {
+                if (option.dataset.character === gameState.playerCharacter) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+        }
+
+        // Generate a fraction problem based on the current level and settings
+        function generateProblem() {
+            let numerator1, denominator1, numerator2, denominator2, operator;
+            
+            // Determine operator based on level
+            if (gameState.level === 1) {
+                operator = '+';
+            } else if (gameState.level === 2) {
+                operator = '-';
+            } else {
+                operator = Math.random() < 0.5 ? '+' : '-';
+            }
+            
+            // Generate denominators based on level
+            if (gameState.level <= 3) {
+                // Same denominator for levels 1-3
+                denominator1 = Math.floor(Math.random() * (gameState.maxDenominator - 2)) + 2;
+                denominator2 = denominator1;
+            } else {
+                // Different denominators for levels 4+
+                denominator1 = Math.floor(Math.random() * (gameState.maxDenominator - 2)) + 2;
+                denominator2 = Math.floor(Math.random() * (gameState.maxDenominator - 2)) + 2;
+                
+                // Ensure they're not the same
+                if (denominator2 === denominator1) {
+                    denominator2 = denominator1 === gameState.maxDenominator ? denominator1 - 1 : denominator1 + 1;
+                }
+            }
+            
+            // Generate numerators
+            numerator1 = Math.floor(Math.random() * (denominator1 - 1)) + 1;
+            
+            if (operator === '-' && gameState.level <= 3) {
+                // For subtraction with same denominator, ensure result is positive
+                numerator2 = Math.floor(Math.random() * numerator1) + 1;
+            } else if (operator === '-' && gameState.level > 3) {
+                // For subtraction with different denominators, ensure result is positive
+                // by calculating the equivalent fraction and making sure it's smaller
+                const commonDenominator = lcm(denominator1, denominator2);
+                const adjustedNumerator1 = numerator1 * (commonDenominator / denominator1);
+                const maxNumerator2 = Math.floor(adjustedNumerator1 / (commonDenominator / denominator2));
+                numerator2 = maxNumerator2 > 0 ? Math.floor(Math.random() * maxNumerator2) + 1 : 1;
+            } else {
+                numerator2 = Math.floor(Math.random() * (denominator2 - 1)) + 1;
+            }
+            
+            // For level 5+, add mixed numbers
+            let wholeNumber1 = 0;
+            let wholeNumber2 = 0;
+            
+            if (gameState.level >= 5) {
+                wholeNumber1 = Math.floor(Math.random() * 3) + 1;
+                wholeNumber2 = Math.floor(Math.random() * 3);
+                
+                // Adjust numerators for mixed numbers
+                numerator1 += wholeNumber1 * denominator1;
+                numerator2 += wholeNumber2 * denominator2;
+            }
+            
+            // Store the current problem
+            gameState.currentProblem = {
+                numerator1,
+                denominator1,
+                numerator2,
+                denominator2,
+                operator,
+                wholeNumber1,
+                wholeNumber2
+            };
+            
+            // Calculate the answer
+            calculateAnswer();
+            
+            // Update the problem display
+            updateProblemDisplay();
+            
+            // Update visuals if enabled
+            if (gameState.showVisualAids) {
+                updateVisuals();
+            }
+            
+            // Reset feedback
+            elements.game.feedback.textContent = '';
+            elements.game.feedback.className = 'feedback';
+            
+            // Hide explanation
+            elements.game.explanation.style.display = 'none';
+            
+            // Reset input fields
+            elements.game.answerNumerator.value = '';
+            elements.game.answerDenominator.value = '';
+            
+            // Focus on answer input
+            elements.game.answerNumerator.focus();
+            
+            // Update progress bar
+            const progress = (gameState.problemCount / gameState.totalProblems) * 100;
+            elements.game.progressBar.style.width = progress + '%';
+            
+            // Show problem count
+            elements.game.problemCount.textContent = gameState.problemCount;
+            elements.game.totalProblems.textContent = gameState.totalProblems;
+            
+            // Character speech
+            const speeches = [
+                "What's this fraction equal to?",
+                "Can you solve this one?",
+                "Let's figure this out together!",
+                "Remember to find the common denominator!",
+                "You're doing great! Keep going!",
+                "I know you can solve this one!"
+            ];
+            
+            const randomSpeech = speeches[Math.floor(Math.random() * speeches.length)];
+            showSpeech(Math.random() < 0.5 ? 'professor' : 'student', randomSpeech, 3000);
+        }
+
+        // Calculate the answer for the current problem
+        function calculateAnswer() {
+            const { numerator1, denominator1, numerator2, denominator2, operator } = gameState.currentProblem;
+            let answer;
+            
+            if (denominator1 === denominator2) {
+                // Same denominator
+                if (operator === '+') {
+                    answer = { numerator: numerator1 + numerator2, denominator: denominator1 };
+                } else {
+                    answer = { numerator: numerator1 - numerator2, denominator: denominator1 };
+                }
+            } else {
+                // Different denominators
+                const commonDenominator = lcm(denominator1, denominator2);
+                const adjustedNumerator1 = numerator1 * (commonDenominator / denominator1);
+                const adjustedNumerator2 = numerator2 * (commonDenominator / denominator2);
+                
+                if (operator === '+') {
+                    answer = { numerator: adjustedNumerator1 + adjustedNumerator2, denominator: commonDenominator };
+                } else {
+                    answer = { numerator: adjustedNumerator1 - adjustedNumerator2, denominator: commonDenominator };
+                }
+            }
+            
+            // Simplify the fraction if required
+            if (gameState.requireSimplification) {
+                const gcd = calculateGCD(answer.numerator, answer.denominator);
+                answer.numerator /= gcd;
+                answer.denominator /= gcd;
+            }
+            
+            gameState.currentProblem.answer = answer;
+        }
+
+        // Update the problem display
+        function updateProblemDisplay() {
+            const { numerator1, denominator1, numerator2, denominator2, operator, wholeNumber1, wholeNumber2 } = gameState.currentProblem;
+            
+            // Display problem
+            elements.game.problemOperator.textContent = operator;
+            
+            // Format display for mixed numbers if needed
+            if (gameState.level >= 5) {
+                // Handle first fraction (mixed number)
+                const properNumerator1 = numerator1 % denominator1;
+                if (wholeNumber1 > 0) {
+                    elements.game.problemNumerator1.innerHTML = `${wholeNumber1}<sup>${properNumerator1}</sup>`;
+                } else {
+                    elements.game.problemNumerator1.textContent = properNumerator1;
+                }
+                elements.game.problemDenominator1.textContent = denominator1;
+                
+                // Handle second fraction (mixed number)
+                const properNumerator2 = numerator2 % denominator2;
+                if (wholeNumber2 > 0) {
+                    elements.game.problemNumerator2.innerHTML = `${wholeNumber2}<sup>${properNumerator2}</sup>`;
+                } else {
+                    elements.game.problemNumerator2.textContent = properNumerator2;
+                }
+                elements.game.problemDenominator2.textContent = denominator2;
+            } else {
+                // Regular fractions
+                elements.game.problemNumerator1.textContent = numerator1;
+                elements.game.problemDenominator1.textContent = denominator1;
+                elements.game.problemNumerator2.textContent = numerator2;
+                elements.game.problemDenominator2.textContent = denominator2;
+            }
+            
+            // Reset answer display
+            elements.game.answerDisplay.innerHTML = `
+                <span class="numerator">?</span>
+                <span class="fraction-line"></span>
+                <span class="denominator">?</span>
+            `;
+        }
+
+        // Update the visual representation of fractions
+        function updateVisuals() {
+            const { numerator1, denominator1, numerator2, denominator2, operator } = gameState.currentProblem;
+            const visualContainer = elements.game.visualContainer;
+            
+            // Clear existing visuals
+            visualContainer.innerHTML = '';
+            
+            // Create visual models for both fractions
+            const model1 = document.createElement('div');
+            model1.className = 'fraction-model';
+            
+            const model2 = document.createElement('div');
+            model2.className = 'fraction-model';
+            
+            // Create first fraction visual
+            createFractionVisual(model1, numerator1, denominator1);
+            
+            // Create operator element
+            const operatorElement = document.createElement('div');
+            operatorElement.className = 'operator';
+            operatorElement.textContent = operator;
+            
+            // Create second fraction visual
+            createFractionVisual(model2, numerator2, denominator2);
+            
+            // Append to visual container
+            visualContainer.appendChild(model1);
+            visualContainer.appendChild(operatorElement);
+            visualContainer.appendChild(model2);
+        }
+
+        // Create visual representation of a fraction
+        function createFractionVisual(container, numerator, denominator) {
+            // For circular representation
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute('width', '100%');
+            svg.setAttribute('height', '100%');
+            svg.setAttribute('viewBox', '0 0 100 100');
+            
+            // Calculate angles and create slices
+            const anglePerSlice = 360 / denominator;
+            
+            for (let i = 0; i < denominator; i++) {
+                const slice = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                
+                // Calculate slice path
+                const startAngle = i * anglePerSlice;
+                const endAngle = (i + 1) * anglePerSlice;
+                
+                const startX = 50 + 45 * Math.cos(startAngle * Math.PI / 180);
+                const startY = 50 + 45 * Math.sin(startAngle * Math.PI / 180);
+                
+                const endX = 50 + 45 * Math.cos(endAngle * Math.PI / 180);
+                const endY = 50 + 45 * Math.sin(endAngle * Math.PI / 180);
+                
+                // SVG path for a slice
+                const path = [
+                    `M 50 50`,
+                    `L ${startX} ${startY}`,
+                    `A 45 45 0 0 1 ${endX} ${endY}`,
+                    `Z`
+                ].join(' ');
+                
+                slice.setAttribute('d', path);
+                slice.setAttribute('stroke', '#4a6cd4');
+                slice.setAttribute('stroke-width', '1');
+                
+                // Fill color based on if it's part of the numerator
+                if (i < numerator) {
+                    slice.setAttribute('fill', '#ff7eb9');
+                } else {
+                    slice.setAttribute('fill', '#f0f8ff');
+                }
+                
+                svg.appendChild(slice);
+            }
+            
+            container.appendChild(svg);
+            
+            // Add text label
+            const label = document.createElement('div');
+            label.className = 'fraction';
+            label.textContent = `${numerator}/${denominator}`;
+            container.appendChild(label);
+        }
+
+        // Check the user's answer
+        function checkAnswer() {
+            const userNumerator = parseInt(elements.game.answerNumerator.value);
+            const userDenominator = parseInt(elements.game.answerDenominator.value);
+            
+            // Validate input
+            if (isNaN(userNumerator) || isNaN(userDenominator) || userDenominator === 0) {
+                elements.game.feedback.textContent = 'Please enter valid numbers!';
+                elements.game.feedback.className = 'feedback incorrect';
+                playSound('incorrect');
+                return;
+            }
+            
+            const { answer } = gameState.currentProblem;
+            let isCorrect = false;
+            
+            if (gameState.requireSimplification) {
+                // Answer must be in simplified form
+                isCorrect = userNumerator === answer.numerator && userDenominator === answer.denominator;
+            } else {
+                // Check if the fractions are equivalent
+                isCorrect = (userNumerator * answer.denominator) === (userDenominator * answer.numerator);
+            }
+            
+            if (isCorrect) {
+                // Correct answer
+                elements.game.feedback.textContent = 'Correct! Great job!';
+                elements.game.feedback.className = 'feedback correct';
+                playSound('correct');
+                gameState.correctAnswers++;
+                elements.game.correctCount.textContent = gameState.correctAnswers;
+                
+                // Show celebration for correct answer
+                if (gameState.soundEffects) {
+                    createConfetti();
+                }
+                
+                // Show explanation
+                showExplanation();
+                
+                // Character speech
+                const correctSpeeches = [
+                    "Fantastic! That's correct!",
+                    "Amazing work! You got it right!",
+                    "Great job! You're mastering fractions!",
+                    "Perfect! You're a fraction genius!",
+                    "Excellent! You've got this!"
+                ];
+                const randomSpeech = correctSpeeches[Math.floor(Math.random() * correctSpeeches.length)];
+                showSpeech('professor', randomSpeech, 3000);
+                
+                // Move to next problem after a delay
+                setTimeout(() => {
+                    nextProblem();
+                }, 2500);
+            } else {
+                // Incorrect answer
+                elements.game.feedback.textContent = `Oops, that's not right. Try again or use a hint!`;
+                elements.game.feedback.className = 'feedback incorrect';
+                playSound('incorrect');
+                gameState.incorrectAnswers++;
+                elements.game.incorrectCount.textContent = gameState.incorrectAnswers;
+                
+                // Character speech
+                const incorrectSpeeches = [
+                    "That's not quite right. Want to try again?",
+                    "Almost there! Double-check your work.",
+                    "Don't worry! Learning fractions takes practice.",
+                    "Let's think about this one again.",
+                    "You can do it! Want a hint?"
+                ];
+                const randomSpeech = incorrectSpeeches[Math.floor(Math.random() * incorrectSpeeches.length)];
+                showSpeech('student', randomSpeech, 3000);
+            }
+        }
+
+        // Show explanation for the current problem
+        function showExplanation() {
+            const { numerator1, denominator1, numerator2, denominator2, operator, answer } = gameState.currentProblem;
+            let explanationHtml = '';
+            
+            if (denominator1 === denominator2) {
+                // Same denominator
+                explanationHtml = `
+                    <p>Since the denominators are the same (${denominator1}), we can directly ${operator === '+' ? 'add' : 'subtract'} the numerators:</p>
+                    <p>${numerator1} ${operator} ${numerator2} = ${answer.numerator}</p>
+                    <p>The denominator stays the same: ${denominator1}</p>
+                    <p>So the answer is ${answer.numerator}/${answer.denominator}</p>
+                `;
+                
+                if (gameState.explanationDetail >= 2) {
+                    explanationHtml += `
+                        <p>Think of it like ${operator === '+' ? 'adding' : 'subtracting'} slices of the same pie. If the pie is cut into ${denominator1} equal pieces, and you have ${numerator1} slices and ${operator === '+' ? 'get' : 'give away'} ${numerator2} more slices, you end up with ${answer.numerator} slices.</p>
+                    `;
+                }
+            } else {
+                // Different denominators
+                const commonDenominator = lcm(denominator1, denominator2);
+                const factor1 = commonDenominator / denominator1;
+                const factor2 = commonDenominator / denominator2;
+                const adjustedNumerator1 = numerator1 * factor1;
+                const adjustedNumerator2 = numerator2 * factor2;
+                
+                explanationHtml = `
+                    <p>When the denominators are different, we need to find a common denominator:</p>
+                    <p>The least common multiple (LCM) of ${denominator1} and ${denominator2} is ${commonDenominator}.</p>
+                    <p>Convert the first fraction: ${numerator1}/${denominator1} = ${adjustedNumerator1}/${commonDenominator}</p>
+                    <p>Convert the second fraction: ${numerator2}/${denominator2} = ${adjustedNumerator2}/${commonDenominator}</p>
+                    <p>Now we can ${operator === '+' ? 'add' : 'subtract'} the numerators: ${adjustedNumerator1} ${operator} ${adjustedNumerator2} = ${answer.numerator}</p>
+                    <p>So the answer is ${answer.numerator}/${answer.denominator}</p>
+                `;
+                
+                if (gameState.explanationDetail >= 2) {
+                    explanationHtml += `
+                        <p>Think of it like converting to the same unit of measurement. Just as we can't add inches and centimeters directly, we need to convert fractions to the same "unit" (denominator) before ${operator === '+' ? 'adding' : 'subtracting'} them.</p>
+                    `;
+                }
+            }
+            
+            if (gameState.requireSimplification && gameState.explanationDetail >= 2) {
+                const gcd = calculateGCD(answer.numerator, answer.denominator);
+                if (gcd > 1) {
+                    explanationHtml += `
+                        <p>We can simplify this fraction by dividing both the numerator and denominator by their greatest common divisor (GCD), which is ${gcd}:</p>
+                        <p>${answer.numerator} ÷ ${gcd} = ${answer.numerator/gcd}</p>
+                        <p>${answer.denominator} ÷ ${gcd} = ${answer.denominator/gcd}</p>
+                        <p>So the simplified answer is ${answer.numerator/gcd}/${answer.denominator/gcd}</p>
+                    `;
+                }
+            }
+            
+            if (gameState.explanationDetail === 3) {
+                // Add more advanced explanation for high detail level
+                explanationHtml += `
+                    <p><strong>Mathematical Concept:</strong> When working with fractions, we're working with parts of a whole. The denominator tells us how many equal parts make up the whole, and the numerator tells us how many of those parts we have.</p>
+                    <p>If you're curious about more advanced fraction concepts, think about how fractions relate to division: ${numerator1}/${denominator1} is actually ${numerator1} ÷ ${denominator1}, which equals ${(numerator1/denominator1).toFixed(4)}.</p>
+                `;
+            }
+            
+            // Display the explanation
+            elements.game.explanationContent.innerHTML = explanationHtml;
+            elements.game.explanation.style.display = 'block';
+        }
+
+        // Provide a hint
+        function showHint() {
+            const { numerator1, denominator1, numerator2, denominator2, operator } = gameState.currentProblem;
+            let hintText = '';
+            
+            if (denominator1 === denominator2) {
+                hintText = `When the denominators are the same, you can directly ${operator === '+' ? 'add' : 'subtract'} the numerators and keep the same denominator.`;
+            } else {
+                hintText = `Find the least common multiple (LCM) of ${denominator1} and ${denominator2} to get a common denominator, then convert both fractions before ${operator === '+' ? 'adding' : 'subtracting'}.`;
+            }
+            
+            elements.game.feedback.textContent = hintText;
+            elements.game.feedback.className = 'feedback';
+            
+            // Character speech
+            showSpeech('professor', hintText, 5000);
+            
+            playSound('pop');
+        }
+
+        // Skip the current problem
+        function skipProblem() {
+            const { answer } = gameState.currentProblem;
+            
+            elements.game.feedback.textContent = `The answer is ${answer.numerator}/${answer.denominator}. Let's try a new problem!`;
+            elements.game.feedback.className = 'feedback';
+            
+            // Show the correct answer
+            showExplanation();
+            
+            // Character speech
+            showSpeech('student', "Let's move on to the next problem. You'll get it next time!", 3000);
+            
+            // Move to next problem after a delay
+            setTimeout(() => {
+                nextProblem();
+            }, 2500);
+        }
+
+        // Move to the next problem
+        function nextProblem() {
+            gameState.problemCount++;
+            
+            // Check if we've reached the end of the level
+            if (gameState.problemCount >= gameState.totalProblems) {
+                finishGame();
+            } else {
+                generateProblem();
+            }
+        }
+
+        // Handle game completion
+        function finishGame() {
+            // Calculate accuracy
+            const accuracy = Math.round((gameState.correctAnswers / gameState.totalProblems) * 100);
+            
+            // Calculate completion time
+            const endTime = new Date();
+            const timeDiff = (endTime - gameState.gameStartTime) / 1000 / 60; // in minutes
+            
+            // Update conclusion screen
+            elements.conclusion.finalScore.textContent = gameState.correctAnswers;
+            elements.conclusion.maxScore.textContent = gameState.totalProblems;
+            elements.conclusion.accuracy.textContent = accuracy;
+            elements.conclusion.completionTime.textContent = timeDiff.toFixed(1);
+            
+            // Update certificate date
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            elements.conclusion.certificateDate.textContent = formattedDate;
+            
+            // Show the conclusion screen
+            showScreen('conclusion-screen');
+            
+            // Celebration effect
+            createConfetti();
+            
+            // Character speech
+            if (accuracy >= 80) {
+                showSpeech('professor', "Amazing job! You're a fraction master!", 5000);
+            } else if (accuracy >= 50) {
+                showSpeech('professor', "Good work! Keep practicing and you'll be a fraction master soon!", 5000);
+            } else {
+                showSpeech('professor', "Great effort! Fractions take practice. Let's try again!", 5000);
+            }
+        }
+
+        // Start a new game
+        function startGame() {
+            // Reset game state
+            gameState.correctAnswers = 0;
+            gameState.incorrectAnswers = 0;
+            gameState.problemCount = 0;
+            gameState.gameStartTime = new Date();
+            
+            // Update level name
+            elements.game.levelName.textContent = gameState.levels[gameState.level - 1].name;
+            elements.game.levelIndicator.textContent = gameState.level;
+            
+            // Reset counters
+            elements.game.correctCount.textContent = 0;
+            elements.game.incorrectCount.textContent = 0;
+            elements.game.problemCount.textContent = 0;
+            elements.game.totalProblems.textContent = gameState.totalProblems;
+            
+            // Show game screen
+            showScreen('game-screen');
+            
+            // Generate first problem
+            generateProblem();
+            
+            // Welcome message
+            showSpeech('professor', `Welcome to Level ${gameState.level}: ${gameState.levels[gameState.level - 1].name}! Let's get started!`, 4000);
+        }
+
+        // Restart the game
+        function restartGame() {
+            gameState.level = 1;
+            startGame();
+        }
+
+        // Move to an advanced level
+        function advancedLevel() {
+            gameState.level = Math.min(gameState.level + 1, gameState.levels.length);
+            startGame();
+        }
+
+        // Calculate the greatest common divisor (GCD)
+        function calculateGCD(a, b) {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            
+            while (b) {
+                let t = b;
+                b = a % b;
+                a = t;
+            }
+            
+            return a;
+        }
+
+        // Calculate the least common multiple (LCM)
+        function lcm(a, b) {
+            return (a * b) / calculateGCD(a, b);
+        }
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            // Welcome screen buttons
+            elements.welcome.startButton.addEventListener('click', () => {
+                startGame();
+            });
+            
+            elements.welcome.settingsButton.addEventListener('click', () => {
+                showScreen('settings-screen');
+                updateSettingsDisplay();
+            });
+            
+            elements.welcome.learnMoreButton.addEventListener('click', () => {
+                showScreen('learn-more-screen');
+            });
+            
+            // Settings screen
+            elements.settings.maxDenominator.addEventListener('input', () => {
+                gameState.maxDenominator = parseInt(elements.settings.maxDenominator.value);
+                elements.settings.maxDenominatorValue.textContent = gameState.maxDenominator;
+            });
+            
+            elements.settings.problemComplexity.addEventListener('input', () => {
+                gameState.problemComplexity = parseInt(elements.settings.problemComplexity.value);
+                elements.settings.problemComplexityValue.textContent = gameState.problemComplexity;
+            });
+            
+            elements.settings.timeLimit.addEventListener('input', () => {
+                gameState.timeLimit = parseInt(elements.settings.timeLimit.value);
+                elements.settings.timeLimitValue.textContent = gameState.timeLimit === 0 ? '∞' : gameState.timeLimit;
+            });
+            
+            elements.settings.soundEffects.addEventListener('change', () => {
+                gameState.soundEffects = elements.settings.soundEffects.checked;
+            });
+            
+            elements.settings.showVisualAids.addEventListener('change', () => {
+                gameState.showVisualAids = elements.settings.showVisualAids.checked;
+            });
+            
+            elements.settings.explanationDetail.addEventListener('input', () => {
+                gameState.explanationDetail = parseInt(elements.settings.explanationDetail.value);
+                const explanationTexts = ['Basic', 'Medium', 'Detailed'];
+                elements.settings.explanationDetailValue.textContent = explanationTexts[gameState.explanationDetail - 1];
+            });
+            
+            elements.settings.requireSimplification.addEventListener('change', () => {
+                gameState.requireSimplification = elements.settings.requireSimplification.checked;
+            });
+            
+            elements.settings.backButton.addEventListener('click', () => {
+                showScreen('welcome-screen');
+            });
+            
+            elements.settings.saveButton.addEventListener('click', () => {
+                showScreen('welcome-screen');
+                showSpeech('professor', 'Settings saved! Your learning experience has been customized.', 3000);
+            });
+            
+            elements.settings.resetButton.addEventListener('click', () => {
+                // Reset to default settings
+                gameState.maxDenominator = 10;
+                gameState.problemComplexity = 2;
+                gameState.timeLimit = 0;
+                gameState.soundEffects = true;
+                gameState.showVisualAids = true;
+                gameState.explanationDetail = 2;
+                gameState.requireSimplification = false;
+                gameState.playerCharacter = 'alex';
+                
+                updateSettingsDisplay();
+                showSpeech('student', 'Settings have been reset to default!', 3000);
+            });
+            
+            // Character selection
+            elements.settings.characterOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    // Update selected character
+                    elements.settings.characterOptions.forEach(opt => opt.classList.remove('selected'));
+                    option.classList.add('selected');
+                    gameState.playerCharacter = option.dataset.character;
+                    
+                    // Update student avatar
+                    elements.welcome.studentAvatar.innerHTML = characterSVG[gameState.playerCharacter];
+                    elements.game.studentAvatar.innerHTML = characterSVG[gameState.playerCharacter];
+                    
+                    playSound('pop');
+                });
+            });
+            
+            // Learn more screen
+            elements.learnMore.backButton.addEventListener('click', () => {
+                showScreen('welcome-screen');
+            });
+            
+            // Topic cards
+            elements.learnMore.topicCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const topicId = card.id.replace('topic-', '');
+                    showTopic(topicId);
+                });
+            });
+            
+            // Advanced topics
+            elements.learnMore.advancedTopics.forEach(topic => {
+                topic.addEventListener('click', () => {
+                    const topicId = topic.id;
+                    showAdvancedTopic(topicId);
+                });
+            });
+            
+            // Game screen
+            elements.game.checkAnswerButton.addEventListener('click', () => {
+                checkAnswer();
+            });
+            
+            elements.game.hintButton.addEventListener('click', () => {
+                showHint();
+            });
+            
+            elements.game.skipButton.addEventListener('click', () => {
+                skipProblem();
+            });
+            
+            elements.game.menuButton.addEventListener('click', () => {
+                showScreen('welcome-screen');
+            });
+            
+            // Enter key to check answer
+            elements.game.answerNumerator.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    elements.game.answerDenominator.focus();
+                }
+            });
+            
+            elements.game.answerDenominator.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    checkAnswer();
+                }
+            });
+            
+            // Conclusion screen
+            elements.conclusion.playAgainButton.addEventListener('click', () => {
+                restartGame();
+            });
+            
+            elements.conclusion.advancedLevelButton.addEventListener('click', () => {
+                advancedLevel();
+            });
+            
+            elements.conclusion.menuButton.addEventListener('click', () => {
+                showScreen('welcome-screen');
+            });
+        }
+
+        // Show topic details (placeholder function)
+        function showTopic(topicId) {
+            console.log('Showing topic:', topicId);
+            // In a full implementation, this would show detailed content for each topic
+            showSpeech('professor', `Let's learn about ${topicId.replace(/-/g, ' ')}!`, 3000);
+        }
+
+        // Show advanced topic details (placeholder function)
+        function showAdvancedTopic(topicId) {
+            console.log('Showing advanced topic:', topicId);
+            // In a full implementation, this would show detailed content for each advanced topic
+            showSpeech('professor', `Ready for some advanced math?`, 3000);
+        }
+
+        // Initialize the game
+        function initializeGame() {
+            // Set up characters
+            initializeCharacters();
+            
+            // Initialize event listeners
+            initializeEventListeners();
+            
+            // Show welcome messages with slight delay
+            setTimeout(() => {
+                elements.welcome.professorSpeech.style.opacity = 1;
+            }, 500);
+            
+            setTimeout(() => {
+                elements.welcome.studentSpeech.style.opacity = 1;
+            }, 1500);
+            
+            // Preload sounds
+            Object.values(audio).forEach(sound => {
+                sound.load();
+            });
+        }
+
+        // Start the game initialization
+        initializeGame();
+    </script>
+</body>
+</html>

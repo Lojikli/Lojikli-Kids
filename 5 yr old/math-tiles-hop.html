@@ -1,0 +1,1565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Tiles Hop Adventure</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #0f0f1e;
+            font-family: Arial, Helvetica, sans-serif;
+            color: white;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        canvas {
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 255, 0.5);
+        }
+        #settings-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
+            display: none;
+            z-index: 100;
+        }
+        #settings-panel h3 {
+            margin-top: 0;
+            color: #FFD700;
+        }
+        .setting-item {
+            margin-bottom: 15px;
+        }
+        .setting-item label {
+            display: block;
+            margin-bottom: 5px;
+            color: #9ce3ff;
+        }
+        .setting-item input[type="range"] {
+            width: 100%;
+        }
+        .setting-item select {
+            width: 100%;
+            padding: 5px;
+            border-radius: 5px;
+        }
+        #settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 8px 15px;
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            z-index: 10;
+        }
+        #settings-btn:hover {
+            background-color: #6a1f9d;
+        }
+        #close-settings {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        #info-display {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            z-index: 10;
+        }
+        #start-screen, #game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 50;
+        }
+        #start-screen h1, #game-over-screen h1 {
+            color: #FFD700;
+            font-size: 3rem;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        #start-screen p, #game-over-screen p {
+            font-size: 1.2rem;
+            text-align: center;
+            max-width: 600px;
+            margin-bottom: 30px;
+        }
+        button.action-btn {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        button.action-btn:hover {
+            background-color: #45a049;
+            transform: scale(1.05);
+        }
+        #game-over-screen {
+            display: none;
+        }
+        #score-display, #high-score-display {
+            font-size: 1.5rem;
+            margin: 10px 0;
+        }
+        .setting-value {
+            display: inline-block;
+            width: 40px;
+            text-align: right;
+            color: #FFD700;
+        }
+        #problem-display {
+            font-size: 2rem;
+            font-weight: bold;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px 20px;
+            border-radius: 10px;
+            z-index: 10;
+        }
+        .character-bubble {
+            position: absolute;
+            background-color: white;
+            color: #333;
+            padding: 10px 15px;
+            border-radius: 15px;
+            font-size: 1rem;
+            max-width: 250px;
+            z-index: 20;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .character-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent;
+        }
+        .tile-number {
+            position: absolute;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            transform: translateX(-50%);
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .star {
+            position: absolute;
+            pointer-events: none;
+        }
+        .difficulty-btn {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .difficulty-btn:hover {
+            background-color: #6a1f9d;
+        }
+        .difficulty-btn.active {
+            background-color: #FFD700;
+            color: #333;
+        }
+        .help-text {
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 20px 0;
+            color: #9ce3ff;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+        <div id="problem-display"></div>
+        <div id="info-display">
+            <div id="score-text">Score: 0</div>
+            <div id="level-text">Level: 1</div>
+        </div>
+        <button id="settings-btn">Settings</button>
+        
+        <div id="settings-panel">
+            <h3>Game Settings</h3>
+            <button id="close-settings">×</button>
+            
+            <div class="setting-item">
+                <label for="math-operation">Math Operation:</label>
+                <select id="math-operation">
+                    <option value="addition">Addition</option>
+                    <option value="subtraction">Subtraction</option>
+                    <option value="multiplication">Multiplication</option>
+                    <option value="mixed">Mixed</option>
+                </select>
+            </div>
+            
+            <div class="setting-item">
+                <label for="max-number">Largest Number: <span class="setting-value" id="max-number-value">10</span></label>
+                <input type="range" id="max-number" min="5" max="20" value="10">
+            </div>
+            
+            <div class="setting-item">
+                <label for="game-speed">Game Speed: <span class="setting-value" id="game-speed-value">5</span></label>
+                <input type="range" id="game-speed" min="1" max="10" value="5">
+            </div>
+            
+            <div class="setting-item">
+                <label for="jump-height">Jump Height: <span class="setting-value" id="jump-height-value">15</span></label>
+                <input type="range" id="jump-height" min="10" max="20" value="15">
+            </div>
+            
+            <div class="setting-item">
+                <label for="sound-volume">Sound Volume: <span class="setting-value" id="sound-volume-value">70</span>%</label>
+                <input type="range" id="sound-volume" min="0" max="100" value="70">
+            </div>
+            
+            <div class="setting-item">
+                <label for="music-volume">Music Volume: <span class="setting-value" id="music-volume-value">50</span>%</label>
+                <input type="range" id="music-volume" min="0" max="100" value="50">
+            </div>
+            
+            <h3>Advanced Settings</h3>
+            
+            <div class="setting-item">
+                <label for="gravity">Gravity: <span class="setting-value" id="gravity-value">0.5</span></label>
+                <input type="range" id="gravity" min="0.1" max="1" step="0.1" value="0.5">
+            </div>
+            
+            <div class="setting-item">
+                <label for="tile-frequency">Tile Frequency: <span class="setting-value" id="tile-frequency-value">70</span></label>
+                <input type="range" id="tile-frequency" min="40" max="100" value="70">
+            </div>
+            
+            <div class="setting-item">
+                <label for="correct-tile-probability">Correct Tile Probability: <span class="setting-value" id="correct-tile-probability-value">30</span>%</label>
+                <input type="range" id="correct-tile-probability" min="10" max="50" value="30">
+            </div>
+        </div>
+        
+        <div id="start-screen">
+            <h1>Math Tiles Hop Adventure</h1>
+            <p>Jump on the tiles with the correct answer to the math problem. Use the left and right arrow keys to move and spacebar to jump. The longer you play, the harder it gets!</p>
+            
+            <div class="help-text">Choose your difficulty level:</div>
+            <div>
+                <button class="difficulty-btn active" data-difficulty="easy">Easy</button>
+                <button class="difficulty-btn" data-difficulty="medium">Medium</button>
+                <button class="difficulty-btn" data-difficulty="hard">Hard</button>
+            </div>
+            
+            <button class="action-btn" id="start-btn">Start Game</button>
+        </div>
+        
+        <div id="game-over-screen">
+            <h1>Game Over!</h1>
+            <div id="score-display">Your Score: 0</div>
+            <div id="high-score-display">High Score: 0</div>
+            <p id="game-over-message">Great effort! You're getting better at math!</p>
+            <button class="action-btn" id="restart-btn">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize the game
+        document.addEventListener("DOMContentLoaded", function() {
+            // Canvas setup
+            const canvas = document.getElementById("game-canvas");
+            const ctx = canvas.getContext("2d");
+            
+            // Set canvas dimensions to a reasonable fixed size
+            canvas.width = 800;
+            canvas.height = 600;
+            
+            // Audio context for sound effects
+            let audioContext;
+            
+            // Game state
+            const gameState = {
+                running: false,
+                score: 0,
+                highScore: 0, // Initialize to 0 without localStorage
+                level: 1,
+                levelProgress: 0,
+                difficulty: "easy",
+                
+                // Game settings
+                settings: {
+                    mathOperation: "addition",
+                    maxNumber: 10,
+                    gameSpeed: 5,
+                    jumpHeight: 15,
+                    soundVolume: 0.7,
+                    musicVolume: 0.5,
+                    gravity: 0.5,
+                    tileFrequency: 70,
+                    correctTileProbability: 30
+                },
+                
+                // Characters
+                characters: {
+                    player: {
+                        x: canvas.width / 2,
+                        y: canvas.height - 100,
+                        width: 40,
+                        height: 40,
+                        velocityX: 0,
+                        velocityY: 0,
+                        jumping: false,
+                        color: "#FFD700",
+                        eyeColor: "#000000",
+                        mouthColor: "#FF0000",
+                        bodyColor: "#4b0082",
+                        hatColor: "#FF6347"
+                    },
+                    professor: {
+                        x: 100,
+                        y: 100,
+                        width: 60,
+                        height: 80,
+                        visible: true,
+                        bubble: {
+                            x: 170,
+                            y: 80,
+                            width: 250,
+                            height: 100,
+                            text: "",
+                            visible: false
+                        }
+                    }
+                },
+                
+                // Game objects
+                currentProblem: {
+                    text: "",
+                    answer: 0
+                },
+                tiles: [],
+                particles: [],
+                stars: [],
+                animations: {
+                    timers: []
+                }
+            };
+            
+            // Responsive canvas sizing
+            function resizeCanvas() {
+                const container = document.getElementById("game-container");
+                // Maintain aspect ratio
+                const aspectRatio = canvas.width / canvas.height;
+                
+                let newWidth = container.clientWidth;
+                let newHeight = container.clientHeight;
+                
+                if (newWidth / newHeight > aspectRatio) {
+                    newWidth = newHeight * aspectRatio;
+                } else {
+                    newHeight = newWidth / aspectRatio;
+                }
+                
+                // Apply max size
+                newWidth = Math.min(newWidth, 800);
+                newHeight = Math.min(newHeight, 600);
+                
+                canvas.style.width = `${newWidth}px`;
+                canvas.style.height = `${newHeight}px`;
+            }
+            
+            // Initialize game
+            function initGame() {
+                try {
+                    // Try to load high score from localStorage
+                    const savedHighScore = localStorage.getItem("mathTilesHighScore");
+                    if (savedHighScore) {
+                        gameState.highScore = parseInt(savedHighScore);
+                    }
+                } catch (e) {
+                    console.log("Could not load high score from localStorage:", e);
+                    // Continue with default high score
+                }
+                
+                loadGameSettings();
+                resizeCanvas();
+                window.addEventListener("resize", resizeCanvas);
+                
+                // Initialize audio context
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.error("Web Audio API is not supported in this browser");
+                }
+                
+                // Event listeners
+                document.addEventListener("keydown", handleKeyDown);
+                document.addEventListener("keyup", handleKeyUp);
+                
+                // UI event listeners
+                document.getElementById("settings-btn").addEventListener("click", toggleSettings);
+                document.getElementById("close-settings").addEventListener("click", toggleSettings);
+                document.getElementById("start-btn").addEventListener("click", startGame);
+                document.getElementById("restart-btn").addEventListener("click", restartGame);
+                
+                // Settings sliders
+                document.getElementById("max-number").addEventListener("input", updateSetting);
+                document.getElementById("game-speed").addEventListener("input", updateSetting);
+                document.getElementById("jump-height").addEventListener("input", updateSetting);
+                document.getElementById("sound-volume").addEventListener("input", updateSetting);
+                document.getElementById("music-volume").addEventListener("input", updateSetting);
+                document.getElementById("gravity").addEventListener("input", updateSetting);
+                document.getElementById("tile-frequency").addEventListener("input", updateSetting);
+                document.getElementById("correct-tile-probability").addEventListener("input", updateSetting);
+                document.getElementById("math-operation").addEventListener("change", updateSetting);
+                
+                // Difficulty buttons
+                const difficultyButtons = document.querySelectorAll(".difficulty-btn");
+                difficultyButtons.forEach(button => {
+                    button.addEventListener("click", function() {
+                        difficultyButtons.forEach(btn => btn.classList.remove("active"));
+                        this.classList.add("active");
+                        gameState.difficulty = this.dataset.difficulty;
+                        setDifficultySettings(gameState.difficulty);
+                    });
+                });
+                
+                // Display high score
+                document.getElementById("high-score-display").textContent = `High Score: ${gameState.highScore}`;
+                
+                // Show start screen
+                showStartScreen();
+            }
+            
+            // Load settings from local storage
+            function loadGameSettings() {
+                try {
+                    const savedSettings = localStorage.getItem("mathTilesSettings");
+                    if (savedSettings) {
+                        const parsedSettings = JSON.parse(savedSettings);
+                        gameState.settings = { ...gameState.settings, ...parsedSettings };
+                        
+                        // Update UI to match loaded settings
+                        document.getElementById("max-number").value = gameState.settings.maxNumber;
+                        document.getElementById("max-number-value").textContent = gameState.settings.maxNumber;
+                        
+                        document.getElementById("game-speed").value = gameState.settings.gameSpeed;
+                        document.getElementById("game-speed-value").textContent = gameState.settings.gameSpeed;
+                        
+                        document.getElementById("jump-height").value = gameState.settings.jumpHeight;
+                        document.getElementById("jump-height-value").textContent = gameState.settings.jumpHeight;
+                        
+                        document.getElementById("sound-volume").value = gameState.settings.soundVolume * 100;
+                        document.getElementById("sound-volume-value").textContent = gameState.settings.soundVolume * 100;
+                        
+                        document.getElementById("music-volume").value = gameState.settings.musicVolume * 100;
+                        document.getElementById("music-volume-value").textContent = gameState.settings.musicVolume * 100;
+                        
+                        document.getElementById("gravity").value = gameState.settings.gravity;
+                        document.getElementById("gravity-value").textContent = gameState.settings.gravity;
+                        
+                        document.getElementById("tile-frequency").value = gameState.settings.tileFrequency;
+                        document.getElementById("tile-frequency-value").textContent = gameState.settings.tileFrequency;
+                        
+                        document.getElementById("correct-tile-probability").value = gameState.settings.correctTileProbability;
+                        document.getElementById("correct-tile-probability-value").textContent = gameState.settings.correctTileProbability;
+                        
+                        document.getElementById("math-operation").value = gameState.settings.mathOperation;
+                    }
+                } catch (e) {
+                    console.log("Could not load settings from localStorage:", e);
+                    // Continue with default settings
+                }
+            }
+            
+            // Save settings to local storage
+            function saveGameSettings() {
+                try {
+                    localStorage.setItem("mathTilesSettings", JSON.stringify(gameState.settings));
+                } catch (e) {
+                    console.log("Could not save settings to localStorage:", e);
+                    // Continue without saving
+                }
+            }
+            
+            // Update settings
+            function updateSetting(e) {
+                const setting = e.target.id;
+                const value = e.target.value;
+                
+                switch(setting) {
+                    case "max-number":
+                        gameState.settings.maxNumber = parseInt(value);
+                        document.getElementById("max-number-value").textContent = value;
+                        break;
+                    case "game-speed":
+                        gameState.settings.gameSpeed = parseInt(value);
+                        document.getElementById("game-speed-value").textContent = value;
+                        break;
+                    case "jump-height":
+                        gameState.settings.jumpHeight = parseInt(value);
+                        document.getElementById("jump-height-value").textContent = value;
+                        break;
+                    case "sound-volume":
+                        gameState.settings.soundVolume = parseInt(value) / 100;
+                        document.getElementById("sound-volume-value").textContent = value;
+                        break;
+                    case "music-volume":
+                        gameState.settings.musicVolume = parseInt(value) / 100;
+                        document.getElementById("music-volume-value").textContent = value;
+                        // Adjust background music volume if it's playing
+                        if (gameState.backgroundMusic) {
+                            gameState.backgroundMusic.volume = gameState.settings.musicVolume;
+                        }
+                        break;
+                    case "gravity":
+                        gameState.settings.gravity = parseFloat(value);
+                        document.getElementById("gravity-value").textContent = value;
+                        break;
+                    case "tile-frequency":
+                        gameState.settings.tileFrequency = parseInt(value);
+                        document.getElementById("tile-frequency-value").textContent = value;
+                        break;
+                    case "correct-tile-probability":
+                        gameState.settings.correctTileProbability = parseInt(value);
+                        document.getElementById("correct-tile-probability-value").textContent = value;
+                        break;
+                    case "math-operation":
+                        gameState.settings.mathOperation = value;
+                        break;
+                }
+                
+                saveGameSettings();
+            }
+            
+            // Set difficulty settings
+            function setDifficultySettings(difficulty) {
+                switch(difficulty) {
+                    case "easy":
+                        gameState.settings.maxNumber = 10;
+                        gameState.settings.gameSpeed = 3;
+                        gameState.settings.mathOperation = "addition";
+                        break;
+                    case "medium":
+                        gameState.settings.maxNumber = 15;
+                        gameState.settings.gameSpeed = 5;
+                        gameState.settings.mathOperation = "mixed";
+                        break;
+                    case "hard":
+                        gameState.settings.maxNumber = 20;
+                        gameState.settings.gameSpeed = 7;
+                        gameState.settings.mathOperation = "mixed";
+                        break;
+                }
+                
+                // Update UI
+                document.getElementById("max-number").value = gameState.settings.maxNumber;
+                document.getElementById("max-number-value").textContent = gameState.settings.maxNumber;
+                
+                document.getElementById("game-speed").value = gameState.settings.gameSpeed;
+                document.getElementById("game-speed-value").textContent = gameState.settings.gameSpeed;
+                
+                document.getElementById("math-operation").value = gameState.settings.mathOperation;
+                
+                saveGameSettings();
+            }
+            
+            // Toggle settings panel
+            function toggleSettings() {
+                const settingsPanel = document.getElementById("settings-panel");
+                if (settingsPanel.style.display === "block") {
+                    settingsPanel.style.display = "none";
+                } else {
+                    settingsPanel.style.display = "block";
+                }
+            }
+            
+            // Show start screen
+            function showStartScreen() {
+                document.getElementById("start-screen").style.display = "flex";
+                document.getElementById("game-over-screen").style.display = "none";
+            }
+            
+            // Show game over screen
+            function showGameOverScreen() {
+                document.getElementById("game-over-screen").style.display = "flex";
+                document.getElementById("start-screen").style.display = "none";
+                document.getElementById("score-display").textContent = `Your Score: ${gameState.score}`;
+                document.getElementById("high-score-display").textContent = `High Score: ${gameState.highScore}`;
+                
+                // Custom message based on score
+                let message = "";
+                if (gameState.score >= 20) {
+                    message = "Amazing! You're a math superstar! 🌟";
+                } else if (gameState.score >= 10) {
+                    message = "Great job! Your math skills are impressive! 👍";
+                } else if (gameState.score >= 5) {
+                    message = "Good effort! Keep practicing to improve! 😊";
+                } else {
+                    message = "Nice try! Math takes practice. You'll get better! 💪";
+                }
+                document.getElementById("game-over-message").textContent = message;
+            }
+            
+            // Start the game
+            function startGame() {
+                // Hide start screen
+                document.getElementById("start-screen").style.display = "none";
+                
+                // Reset game state
+                gameState.running = true;
+                gameState.score = 0;
+                gameState.level = 1;
+                gameState.levelProgress = 0;
+                gameState.tiles = [];
+                gameState.characters.player.x = canvas.width / 2;
+                gameState.characters.player.y = canvas.height - 100;
+                gameState.characters.player.velocityY = 0;
+                
+                // Generate first problem
+                generateMathProblem();
+                
+                // Start background music
+                playBackgroundMusic();
+                
+                // Show welcome message
+                showCharacterMessage("Welcome to Math Tiles Hop! Jump on the correct answer tiles to score points!", 4000);
+                
+                // Start game loop
+                requestAnimationFrame(gameLoop);
+            }
+            
+            // Restart the game
+            function restartGame() {
+                // Hide game over screen
+                document.getElementById("game-over-screen").style.display = "none";
+                
+                // Start the game
+                startGame();
+            }
+            
+            // Game loop
+            function gameLoop(timestamp) {
+                if (!gameState.running) return;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Update game state
+                updatePlayer();
+                updateTiles();
+                updateParticles();
+                updateStars();
+                
+                // Generate new tiles randomly
+                if (Math.random() * 100 < gameState.settings.tileFrequency / 10) {
+                    generateTile();
+                }
+                
+                // Draw game elements
+                drawBackground();
+                drawTiles();
+                drawPlayer();
+                drawCharacters();
+                drawParticles();
+                drawStars();
+                
+                // Check for game over condition
+                if (gameState.characters.player.y > canvas.height + 100) {
+                    gameOver();
+                    return;
+                }
+                
+                // Update UI
+                document.getElementById("score-text").textContent = `Score: ${gameState.score}`;
+                document.getElementById("level-text").textContent = `Level: ${gameState.level}`;
+                document.getElementById("problem-display").textContent = gameState.currentProblem.text;
+                
+                // Continue the loop
+                requestAnimationFrame(gameLoop);
+            }
+            
+            // Update player
+            function updatePlayer() {
+                // Apply gravity
+                gameState.characters.player.velocityY += gameState.settings.gravity;
+                
+                // Update position
+                gameState.characters.player.x += gameState.characters.player.velocityX;
+                gameState.characters.player.y += gameState.characters.player.velocityY;
+                
+                // Boundary checks
+                if (gameState.characters.player.x < 0) {
+                    gameState.characters.player.x = 0;
+                }
+                if (gameState.characters.player.x + gameState.characters.player.width > canvas.width) {
+                    gameState.characters.player.x = canvas.width - gameState.characters.player.width;
+                }
+            }
+            
+            // Update tiles
+            function updateTiles() {
+                const tileSpeed = gameState.settings.gameSpeed * 0.5;
+                
+                // Move tiles up
+                gameState.tiles.forEach(tile => {
+                    tile.y -= tileSpeed;
+                    
+                    // Check for collision with player
+                    if (!tile.hit && 
+                        gameState.characters.player.x < tile.x + tile.width &&
+                        gameState.characters.player.x + gameState.characters.player.width > tile.x &&
+                        gameState.characters.player.y + gameState.characters.player.height > tile.y &&
+                        gameState.characters.player.y < tile.y + tile.height &&
+                        gameState.characters.player.velocityY > 0) {
+                        
+                        // Land on tile
+                        gameState.characters.player.y = tile.y - gameState.characters.player.height;
+                        gameState.characters.player.velocityY = -gameState.settings.jumpHeight;
+                        gameState.characters.player.jumping = true;
+                        
+                        // Check if correct answer
+                        if (tile.number === gameState.currentProblem.answer) {
+                            // Correct answer
+                            playSuccessSound();
+                            createParticleEffect(gameState.characters.player.x + gameState.characters.player.width / 2, 
+                                                gameState.characters.player.y + gameState.characters.player.height / 2);
+                            
+                            // Increment score
+                            gameState.score++;
+                            
+                            // Update level progress
+                            gameState.levelProgress++;
+                            if (gameState.levelProgress >= 5) {
+                                levelUp();
+                            }
+                            
+                            // Generate new problem
+                            generateMathProblem();
+                            
+                            // Show encouraging message
+                            const messages = [
+                                "Excellent! That's correct!",
+                                "Great job! You're so smart!",
+                                "Perfect! Keep going!",
+                                "Amazing! You're doing great!",
+                                "Wow! You're a math whiz!"
+                            ];
+                            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                            showCharacterMessage(randomMessage, 2000);
+                        } else {
+                            // Incorrect answer
+                            playErrorSound();
+                            
+                            // Show hint message
+                            showCharacterMessage(`Not quite. The answer to ${gameState.currentProblem.text} is ${gameState.currentProblem.answer}.`, 3000);
+                        }
+                        
+                        // Mark tile as hit
+                        tile.hit = true;
+                    }
+                });
+                
+                // Remove tiles that are off-screen
+                gameState.tiles = gameState.tiles.filter(tile => tile.y > -tile.height);
+            }
+            
+            // Update particles
+            function updateParticles() {
+                gameState.particles.forEach((particle, index) => {
+                    particle.x += particle.velocityX;
+                    particle.y += particle.velocityY;
+                    particle.life -= 0.02;
+                    
+                    if (particle.life <= 0) {
+                        gameState.particles.splice(index, 1);
+                    }
+                });
+            }
+            
+            // Update stars
+            function updateStars() {
+                gameState.stars.forEach((star, index) => {
+                    star.y -= star.speed;
+                    star.rotation += 0.1;
+                    star.alpha -= 0.01;
+                    
+                    if (star.alpha <= 0) {
+                        gameState.stars.splice(index, 1);
+                    }
+                });
+            }
+            
+            // Generate math problem
+            function generateMathProblem() {
+                let num1, num2, answer, text, operation;
+                
+                // Choose operation based on settings and level
+                if (gameState.settings.mathOperation === "mixed") {
+                    const operations = ["addition", "subtraction"];
+                    if (gameState.level >= 3) {
+                        operations.push("multiplication");
+                    }
+                    operation = operations[Math.floor(Math.random() * operations.length)];
+                } else {
+                    operation = gameState.settings.mathOperation;
+                }
+                
+                // Generate problem based on operation
+                switch(operation) {
+                    case "addition":
+                        num1 = Math.floor(Math.random() * gameState.settings.maxNumber) + 1;
+                        num2 = Math.floor(Math.random() * gameState.settings.maxNumber) + 1;
+                        answer = num1 + num2;
+                        text = `${num1} + ${num2} = ?`;
+                        break;
+                    case "subtraction":
+                        num1 = Math.floor(Math.random() * gameState.settings.maxNumber) + 1;
+                        num2 = Math.floor(Math.random() * num1) + 1; // Ensure positive result
+                        answer = num1 - num2;
+                        text = `${num1} - ${num2} = ?`;
+                        break;
+                    case "multiplication":
+                        // For young children, keep multiplication simple
+                        num1 = Math.floor(Math.random() * 5) + 1;
+                        num2 = Math.floor(Math.random() * 5) + 1;
+                        answer = num1 * num2;
+                        text = `${num1} × ${num2} = ?`;
+                        break;
+                }
+                
+                // Update current problem
+                gameState.currentProblem = {
+                    text: text,
+                    answer: answer
+                };
+                
+                // Update display
+                document.getElementById("problem-display").textContent = text;
+            }
+            
+            // Generate tile
+            function generateTile() {
+                // Determine if this tile should have the correct answer
+                const isCorrectTile = Math.random() * 100 < gameState.settings.correctTileProbability;
+                
+                let tileNumber;
+                if (isCorrectTile) {
+                    tileNumber = gameState.currentProblem.answer;
+                } else {
+                    // Generate incorrect answer (close to correct answer)
+                    const offset = Math.floor(Math.random() * 5) + 1;
+                    tileNumber = Math.random() < 0.5 ? 
+                                gameState.currentProblem.answer + offset : 
+                                Math.max(1, gameState.currentProblem.answer - offset);
+                }
+                
+                // Random tile properties
+                const tileWidth = Math.random() * 50 + 80;
+                const tileX = Math.random() * (canvas.width - tileWidth);
+                
+                // Create new tile
+                const newTile = {
+                    x: tileX,
+                    y: canvas.height,
+                    width: tileWidth,
+                    height: 20,
+                    number: tileNumber,
+                    hit: false,
+                    color: isCorrectTile ? "#4CAF50" : "#3F51B5" // Green for correct, blue for incorrect
+                };
+                
+                gameState.tiles.push(newTile);
+            }
+            
+            // Level up
+            function levelUp() {
+                gameState.level++;
+                gameState.levelProgress = 0;
+                
+                // Increase difficulty
+                gameState.settings.gameSpeed = Math.min(gameState.settings.gameSpeed + 0.5, 10);
+                
+                // Level up effects
+                playCelebrationSound();
+                createStarEffect();
+                
+                // Show level up message
+                showCharacterMessage(`Level up! You're now at level ${gameState.level}. Great job!`, 3000);
+            }
+            
+            // Game over
+            function gameOver() {
+                gameState.running = false;
+                
+                // Update high score
+                if (gameState.score > gameState.highScore) {
+                    gameState.highScore = gameState.score;
+                    try {
+                        localStorage.setItem("mathTilesHighScore", gameState.highScore);
+                    } catch (e) {
+                        console.log("Could not save high score to localStorage:", e);
+                        // Continue without saving
+                    }
+                }
+                
+                // Play game over sound
+                playGameOverSound();
+                
+                // Show game over screen
+                showGameOverScreen();
+            }
+            
+            // Handle key down events
+            function handleKeyDown(e) {
+                if (!gameState.running) return;
+                
+                switch(e.code) {
+                    case "ArrowLeft":
+                    case "KeyA":
+                        gameState.characters.player.velocityX = -5;
+                        break;
+                    case "ArrowRight":
+                    case "KeyD":
+                        gameState.characters.player.velocityX = 5;
+                        break;
+                    case "Space":
+                    case "ArrowUp":
+                    case "KeyW":
+                        // Jump if on a platform
+                        if (!gameState.characters.player.jumping && gameState.characters.player.velocityY === 0) {
+                            gameState.characters.player.velocityY = -gameState.settings.jumpHeight;
+                            gameState.characters.player.jumping = true;
+                            playJumpSound();
+                        }
+                        break;
+                }
+            }
+            
+            // Handle key up events
+            function handleKeyUp(e) {
+                if (!gameState.running) return;
+                
+                switch(e.code) {
+                    case "ArrowLeft":
+                    case "KeyA":
+                    case "ArrowRight":
+                    case "KeyD":
+                        gameState.characters.player.velocityX = 0;
+                        break;
+                }
+            }
+            
+            // Drawing functions
+            function drawBackground() {
+                // Gradient background
+                const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+                gradient.addColorStop(0, "#1a237e");
+                gradient.addColorStop(1, "#303F9F");
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw stars
+                for (let i = 0; i < 50; i++) {
+                    const x = Math.random() * canvas.width;
+                    const y = Math.random() * canvas.height;
+                    const size = Math.random() * 2;
+                    ctx.fillStyle = "rgba(255, 255, 255, 0.8)";
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            
+            function drawTiles() {
+                gameState.tiles.forEach(tile => {
+                    // Draw tile base with gradient
+                    const gradient = ctx.createLinearGradient(tile.x, tile.y, tile.x + tile.width, tile.y);
+                    gradient.addColorStop(0, tile.color);
+                    gradient.addColorStop(1, lightenColor(tile.color, 30));
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.beginPath();
+                    ctx.roundRect(tile.x, tile.y, tile.width, tile.height, 5);
+                    ctx.fill();
+                    
+                    // Add 3D effect
+                    ctx.fillStyle = darkenColor(tile.color, 30);
+                    ctx.beginPath();
+                    ctx.roundRect(tile.x, tile.y + tile.height, tile.width, 5, 5);
+                    ctx.fill();
+                    
+                    // Draw number
+                    ctx.fillStyle = "white";
+                    ctx.font = "bold 24px Arial";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "middle";
+                    ctx.fillText(tile.number, tile.x + tile.width / 2, tile.y + tile.height / 2);
+                });
+            }
+            
+            function drawPlayer() {
+                const player = gameState.characters.player;
+                
+                // Body
+                ctx.fillStyle = player.bodyColor;
+                ctx.beginPath();
+                ctx.roundRect(player.x, player.y + player.height * 0.4, player.width, player.height * 0.6, 5);
+                ctx.fill();
+                
+                // Head
+                ctx.fillStyle = player.color;
+                ctx.beginPath();
+                ctx.arc(player.x + player.width / 2, player.y + player.height * 0.3, player.width * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eyes
+                ctx.fillStyle = player.eyeColor;
+                ctx.beginPath();
+                ctx.arc(player.x + player.width * 0.35, player.y + player.height * 0.25, player.width * 0.08, 0, Math.PI * 2);
+                ctx.arc(player.x + player.width * 0.65, player.y + player.height * 0.25, player.width * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Mouth (smiling or surprised based on jumping)
+                if (player.jumping) {
+                    ctx.fillStyle = player.mouthColor;
+                    ctx.beginPath();
+                    ctx.arc(player.x + player.width / 2, player.y + player.height * 0.35, player.width * 0.1, 0, Math.PI * 2);
+                    ctx.fill();
+                } else {
+                    ctx.strokeStyle = player.mouthColor;
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(player.x + player.width / 2, player.y + player.height * 0.35, player.width * 0.15, 0.1 * Math.PI, 0.9 * Math.PI);
+                    ctx.stroke();
+                }
+                
+                // Hat
+                ctx.fillStyle = player.hatColor;
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.width * 0.2, player.y + player.height * 0.15);
+                ctx.lineTo(player.x + player.width * 0.8, player.y + player.height * 0.15);
+                ctx.lineTo(player.x + player.width / 2, player.y - player.height * 0.1);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Arms (bouncing while jumping)
+                ctx.strokeStyle = player.bodyColor;
+                ctx.lineWidth = 5;
+                ctx.lineCap = "round";
+                
+                const armAngle = player.jumping ? Math.sin(Date.now() / 100) * 0.2 : 0.3;
+                
+                // Left arm
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.width * 0.2, player.y + player.height * 0.5);
+                ctx.lineTo(player.x - player.width * 0.2, player.y + player.height * 0.5 - Math.sin(armAngle) * player.height * 0.2);
+                ctx.stroke();
+                
+                // Right arm
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.width * 0.8, player.y + player.height * 0.5);
+                ctx.lineTo(player.x + player.width * 1.2, player.y + player.height * 0.5 - Math.sin(armAngle) * player.height * 0.2);
+                ctx.stroke();
+                
+                // Legs
+                ctx.strokeStyle = player.bodyColor;
+                ctx.lineWidth = 5;
+                
+                // Left leg
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.width * 0.35, player.y + player.height);
+                ctx.lineTo(player.x + player.width * 0.25, player.y + player.height * 1.2);
+                ctx.stroke();
+                
+                // Right leg
+                ctx.beginPath();
+                ctx.moveTo(player.x + player.width * 0.65, player.y + player.height);
+                ctx.lineTo(player.x + player.width * 0.75, player.y + player.height * 1.2);
+                ctx.stroke();
+            }
+            
+            function drawCharacters() {
+                const professor = gameState.characters.professor;
+                
+                if (professor.visible) {
+                    // Body with lab coat
+                    ctx.fillStyle = "#FFFFFF";
+                    ctx.beginPath();
+                    ctx.ellipse(professor.x + professor.width / 2, professor.y + professor.height * 0.65, 
+                              professor.width * 0.4, professor.height * 0.35, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Head
+                    ctx.fillStyle = "#FFE0B2";
+                    ctx.beginPath();
+                    ctx.arc(professor.x + professor.width / 2, professor.y + professor.height * 0.25, 
+                           professor.width * 0.35, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Eyes with glasses
+                    ctx.fillStyle = "#000000";
+                    ctx.beginPath();
+                    ctx.arc(professor.x + professor.width * 0.35, professor.y + professor.height * 0.22, 
+                           professor.width * 0.06, 0, Math.PI * 2);
+                    ctx.arc(professor.x + professor.width * 0.65, professor.y + professor.height * 0.22, 
+                           professor.width * 0.06, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Glasses
+                    ctx.strokeStyle = "#795548";
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(professor.x + professor.width * 0.35, professor.y + professor.height * 0.22, 
+                           professor.width * 0.1, 0, Math.PI * 2);
+                    ctx.arc(professor.x + professor.width * 0.65, professor.y + professor.height * 0.22, 
+                           professor.width * 0.1, 0, Math.PI * 2);
+                    ctx.moveTo(professor.x + professor.width * 0.45, professor.y + professor.height * 0.22);
+                    ctx.lineTo(professor.x + professor.width * 0.55, professor.y + professor.height * 0.22);
+                    ctx.stroke();
+                    
+                    // Beard
+                    ctx.fillStyle = "#A0522D";
+                    ctx.beginPath();
+                    ctx.arc(professor.x + professor.width / 2, professor.y + professor.height * 0.32, 
+                           professor.width * 0.25, Math.PI * 0.1, Math.PI * 0.9, false);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // Arms
+                    ctx.strokeStyle = "#FFFFFF";
+                    ctx.lineWidth = 8;
+                    ctx.lineCap = "round";
+                    ctx.beginPath();
+                    ctx.moveTo(professor.x + professor.width * 0.25, professor.y + professor.height * 0.6);
+                    ctx.lineTo(professor.x + professor.width * 0.1, professor.y + professor.height * 0.7);
+                    ctx.moveTo(professor.x + professor.width * 0.75, professor.y + professor.height * 0.6);
+                    ctx.lineTo(professor.x + professor.width * 0.9, professor.y + professor.height * 0.7);
+                    ctx.stroke();
+                    
+                    // Speech bubble
+                    if (professor.bubble.visible) {
+                        // Bubble
+                        ctx.fillStyle = "#FFFFFF";
+                        ctx.beginPath();
+                        ctx.roundRect(professor.bubble.x, professor.bubble.y, 
+                                    professor.bubble.width, professor.bubble.height, 10);
+                        ctx.fill();
+                        
+                        // Pointer
+                        ctx.beginPath();
+                        ctx.moveTo(professor.bubble.x + 20, professor.bubble.y + professor.bubble.height);
+                        ctx.lineTo(professor.bubble.x - 10, professor.bubble.y + professor.bubble.height + 20);
+                        ctx.lineTo(professor.bubble.x + 40, professor.bubble.y + professor.bubble.height);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        // Text
+                        ctx.fillStyle = "#000000";
+                        ctx.font = "14px Arial";
+                        ctx.textAlign = "left";
+                        ctx.textBaseline = "top";
+                        
+                        // Word wrap
+                        const words = professor.bubble.text.split(' ');
+                        let line = '';
+                        let y = professor.bubble.y + 10;
+                        const maxWidth = professor.bubble.width - 20;
+                        const lineHeight = 18;
+                        
+                        for (let i = 0; i < words.length; i++) {
+                            const testLine = line + words[i] + ' ';
+                            const metrics = ctx.measureText(testLine);
+                            const testWidth = metrics.width;
+                            
+                            if (testWidth > maxWidth && i > 0) {
+                                ctx.fillText(line, professor.bubble.x + 10, y);
+                                line = words[i] + ' ';
+                                y += lineHeight;
+                            } else {
+                                line = testLine;
+                            }
+                        }
+                        ctx.fillText(line, professor.bubble.x + 10, y);
+                    }
+                }
+            }
+            
+            function drawParticles() {
+                gameState.particles.forEach(particle => {
+                    ctx.globalAlpha = particle.life;
+                    ctx.fillStyle = particle.color;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.globalAlpha = 1;
+            }
+            
+            function drawStars() {
+                gameState.stars.forEach(star => {
+                    ctx.save();
+                    ctx.globalAlpha = star.alpha;
+                    ctx.translate(star.x, star.y);
+                    ctx.rotate(star.rotation);
+                    
+                    // Draw star shape
+                    ctx.fillStyle = star.color;
+                    ctx.beginPath();
+                    for (let i = 0; i < 5; i++) {
+                        const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+                        const outerX = Math.cos(angle) * star.size;
+                        const outerY = Math.sin(angle) * star.size;
+                        
+                        const innerAngle = angle + Math.PI / 5;
+                        const innerX = Math.cos(innerAngle) * (star.size / 2);
+                        const innerY = Math.sin(innerAngle) * (star.size / 2);
+                        
+                        if (i === 0) {
+                            ctx.moveTo(outerX, outerY);
+                        } else {
+                            ctx.lineTo(outerX, outerY);
+                        }
+                        
+                        ctx.lineTo(innerX, innerY);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    ctx.restore();
+                });
+            }
+            
+            // Character message function
+            function showCharacterMessage(message, duration = 3000) {
+                const professor = gameState.characters.professor;
+                
+                // Update message
+                professor.bubble.text = message;
+                professor.bubble.visible = true;
+                
+                // Hide after duration
+                setTimeout(() => {
+                    professor.bubble.visible = false;
+                }, duration);
+            }
+            
+            // Special effects
+            function createParticleEffect(x, y) {
+                // Clear any existing particles
+                gameState.particles = [];
+                
+                // Create new particles
+                const colors = ["#FF5252", "#FFEB3B", "#2196F3", "#4CAF50", "#9C27B0"];
+                
+                for (let i = 0; i < 30; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 3 + 1;
+                    const size = Math.random() * 5 + 3;
+                    
+                    gameState.particles.push({
+                        x: x,
+                        y: y,
+                        velocityX: Math.cos(angle) * speed,
+                        velocityY: Math.sin(angle) * speed,
+                        size: size,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        life: 1
+                    });
+                }
+            }
+            
+            function createStarEffect() {
+                // Create stars
+                const colors = ["#FFEB3B", "#FFD700", "#FFA500"];
+                
+                for (let i = 0; i < 15; i++) {
+                    gameState.stars.push({
+                        x: Math.random() * canvas.width,
+                        y: canvas.height,
+                        size: Math.random() * 20 + 10,
+                        color: colors[Math.floor(Math.random() * colors.length)],
+                        speed: Math.random() * 5 + 2,
+                        rotation: 0,
+                        alpha: 1
+                    });
+                }
+            }
+            
+            // Sound functions
+            function playJumpSound() {
+                if (!audioContext) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = "sine";
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(440, audioContext.currentTime + 0.2);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+            }
+            
+            function playSuccessSound() {
+                if (!audioContext) return;
+                
+                const noteDurations = [0, 0.1, 0.2, 0.3];
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                
+                noteDurations.forEach((time, i) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = "sine";
+                    oscillator.frequency.setValueAtTime(notes[i], audioContext.currentTime + time);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + time);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume, audioContext.currentTime + time + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + time + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + time);
+                    oscillator.stop(audioContext.currentTime + time + 0.3);
+                });
+            }
+            
+            function playErrorSound() {
+                if (!audioContext) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = "sawtooth";
+                oscillator.frequency.setValueAtTime(330, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(220, audioContext.currentTime + 0.2);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+            }
+            
+            function playCelebrationSound() {
+                if (!audioContext) return;
+                
+                const noteDurations = [0, 0.15, 0.3, 0.45, 0.6, 0.75];
+                const notes = [523.25, 587.33, 659.25, 698.46, 783.99, 880.00]; // C5, D5, E5, F5, G5, A5
+                
+                noteDurations.forEach((time, i) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = "sine";
+                    oscillator.frequency.setValueAtTime(notes[i], audioContext.currentTime + time);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + time);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume, audioContext.currentTime + time + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + time + 0.2);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + time);
+                    oscillator.stop(audioContext.currentTime + time + 0.2);
+                });
+                
+                // Add final chord
+                setTimeout(() => {
+                    const chordNotes = [523.25, 659.25, 783.99]; // C, E, G chord
+                    
+                    chordNotes.forEach(note => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = "sine";
+                        oscillator.frequency.setValueAtTime(note, audioContext.currentTime);
+                        
+                        gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.7, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.start();
+                        oscillator.stop(audioContext.currentTime + 0.8);
+                    });
+                }, 900);
+            }
+            
+            function playGameOverSound() {
+                if (!audioContext) return;
+                
+                const noteDurations = [0, 0.2, 0.4];
+                const notes = [440, 349.23, 293.66]; // A4, F4, D4
+                
+                noteDurations.forEach((time, i) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = "sine";
+                    oscillator.frequency.setValueAtTime(notes[i], audioContext.currentTime + time);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + time);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume, audioContext.currentTime + time + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + time + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + time);
+                    oscillator.stop(audioContext.currentTime + time + 0.3);
+                });
+            }
+            
+            function playBackgroundMusic() {
+                if (!audioContext) return;
+                
+                // Simple background music using oscillators
+                const baseFrequency = 261.63; // C4
+                const notes = [
+                    { note: 0, duration: 1 },    // C
+                    { note: 4, duration: 1 },    // E
+                    { note: 7, duration: 1 },    // G
+                    { note: 4, duration: 1 },    // E
+                    { note: 0, duration: 1 },    // C
+                    { note: 2, duration: 1 },    // D
+                    { note: 5, duration: 1 },    // F
+                    { note: 2, duration: 1 }     // D
+                ];
+                
+                function playNote(time, noteObj) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    const frequency = baseFrequency * Math.pow(2, noteObj.note / 12);
+                    
+                    oscillator.type = "sine";
+                    oscillator.frequency.setValueAtTime(frequency, time);
+                    
+                    gainNode.gain.setValueAtTime(0, time);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.musicVolume * 0.2, time + 0.1);
+                    gainNode.gain.exponentialRampToValueAtTime(0.0001, time + noteObj.duration - 0.1);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(time);
+                    oscillator.stop(time + noteObj.duration);
+                }
+                
+                // Schedule notes to create a loop
+                let currentTime = audioContext.currentTime;
+                
+                function scheduleLoop() {
+                    notes.forEach(noteObj => {
+                        playNote(currentTime, noteObj);
+                        currentTime += noteObj.duration;
+                    });
+                    
+                    // Schedule next loop
+                    setTimeout(scheduleLoop, (currentTime - audioContext.currentTime) * 1000 - 100);
+                }
+                
+                scheduleLoop();
+            }
+            
+            // Helper functions
+            function lightenColor(color, percent) {
+                const num = parseInt(color.replace("#", ""), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) + amt;
+                const G = (num >> 8 & 0x00FF) + amt;
+                const B = (num & 0x0000FF) + amt;
+                
+                return "#" + (
+                    0x1000000 +
+                    (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                    (B < 255 ? B < 1 ? 0 : B : 255)
+                ).toString(16).slice(1);
+            }
+            
+            function darkenColor(color, percent) {
+                const num = parseInt(color.replace("#", ""), 16);
+                const amt = Math.round(2.55 * percent);
+                const R = (num >> 16) - amt;
+                const G = (num >> 8 & 0x00FF) - amt;
+                const B = (num & 0x0000FF) - amt;
+                
+                return "#" + (
+                    0x1000000 +
+                    (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                    (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                    (B < 255 ? B < 1 ? 0 : B : 255)
+                ).toString(16).slice(1);
+            }
+            
+            // Initialize the game
+            initGame();
+        });
+    </script>
+</body>
+</html>

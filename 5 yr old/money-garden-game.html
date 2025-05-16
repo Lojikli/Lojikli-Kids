@@ -1,0 +1,2317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Money Garden: Compound Interest Adventure</title>
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --primary-light: #81C784;
+            --primary-dark: #388E3C;
+            --secondary-color: #FFC107;
+            --secondary-light: #FFD54F;
+            --secondary-dark: #FFA000;
+            --text-color: #333333;
+            --light-text: #FFFFFF;
+            --background-color: #F5F5F5;
+            --coin-color: #FFD700;
+            --coin-border: #DAA520;
+            --blue-color: #2196F3;
+            --purple-color: #9C27B0;
+            --red-color: #F44336;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overflow-x: hidden;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            min-height: 100vh;
+        }
+
+        .screen {
+            width: 100%;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            transition: opacity 0.5s ease;
+            overflow-y: auto;
+        }
+
+        .hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .title {
+            font-size: 48px;
+            color: var(--primary-dark);
+            text-align: center;
+            margin: 20px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .subtitle {
+            font-size: 24px;
+            color: var(--text-color);
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .button {
+            background-color: var(--primary-color);
+            color: var(--light-text);
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 20px;
+            margin: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .character {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            transition: all 0.5s ease;
+        }
+
+        .speech-bubble {
+            position: absolute;
+            background-color: var(--light-text);
+            border-radius: 20px;
+            padding: 15px;
+            max-width: 300px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            font-size: 18px;
+            z-index: 10;
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: var(--light-text) transparent;
+            transform: translateX(-50%);
+        }
+
+        /* Game screen specific styles */
+        #garden-container {
+            width: 100%;
+            height: 400px;
+            background-color: #8BC34A;
+            border-radius: 20px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .soil {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 30%;
+            background-color: #795548;
+        }
+
+        .sky {
+            position: absolute;
+            width: 100%;
+            height: 70%;
+            background: linear-gradient(to bottom, #87CEEB, #B3E5FC);
+        }
+
+        .sun {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            width: 80px;
+            height: 80px;
+            background-color: #FFEB3B;
+            border-radius: 50%;
+            box-shadow: 0 0 30px #FFEB3B;
+            animation: sun-pulse 4s infinite;
+        }
+
+        @keyframes sun-pulse {
+            0% { transform: scale(1); box-shadow: 0 0 30px #FFEB3B; }
+            50% { transform: scale(1.1); box-shadow: 0 0 50px #FFEB3B; }
+            100% { transform: scale(1); box-shadow: 0 0 30px #FFEB3B; }
+        }
+
+        .money-plant {
+            position: absolute;
+            bottom: 30%;
+            width: 60px;
+            transform-origin: bottom center;
+            transform: scale(0.1);
+            opacity: 0;
+            transition: all 1s ease;
+        }
+
+        .money-plant.visible {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .plant-stem {
+            width: 8px;
+            height: 80px;
+            background-color: var(--primary-dark);
+            margin: 0 auto;
+        }
+
+        .plant-leaf {
+            position: absolute;
+            width: 30px;
+            height: 20px;
+            background-color: var(--primary-light);
+            border-radius: 50% 50% 50% 0;
+            transform: rotate(-45deg);
+        }
+
+        .plant-leaf:nth-child(2) {
+            top: 20px;
+            left: -15px;
+        }
+
+        .plant-leaf:nth-child(3) {
+            top: 40px;
+            right: -15px;
+            transform: rotate(45deg);
+            border-radius: 50% 50% 0 50%;
+        }
+
+        .coin {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background-color: var(--coin-color);
+            border: 2px solid var(--coin-border);
+            border-radius: 50%;
+            text-align: center;
+            line-height: 26px;
+            font-weight: bold;
+            color: var(--coin-border);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+        }
+
+        .controls-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .slider-container {
+            width: 100%;
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .slider-label {
+            font-size: 18px;
+            margin-bottom: 5px;
+            color: var(--primary-dark);
+        }
+
+        .slider-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--secondary-dark);
+            margin-bottom: 5px;
+        }
+
+        .slider {
+            width: 80%;
+            height: 15px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--primary-light);
+            border-radius: 10px;
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 30px;
+            height: 30px;
+            background: var(--secondary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 30px;
+            height: 30px;
+            background: var(--secondary-color);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+
+        .results-container {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .result-box {
+            width: 45%;
+            min-width: 200px;
+            padding: 15px;
+            border-radius: 15px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 10px;
+            text-align: center;
+        }
+
+        .result-title {
+            font-size: 20px;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
+
+        .result-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--secondary-dark);
+        }
+
+        .guide-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+            position: relative;
+        }
+
+        .guide-title {
+            font-size: 24px;
+            color: var(--primary-dark);
+            margin-bottom: 15px;
+        }
+
+        .guide-text {
+            font-size: 18px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        /* Quiz styles */
+        .quiz-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin: 20px 0;
+        }
+
+        .quiz-question {
+            font-size: 22px;
+            color: var(--primary-dark);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .quiz-options {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .quiz-option {
+            width: 80%;
+            padding: 15px;
+            margin: 10px 0;
+            background-color: var(--light-text);
+            border: 2px solid var(--primary-light);
+            border-radius: 50px;
+            font-size: 18px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quiz-option:hover {
+            background-color: var(--primary-light);
+            color: var(--light-text);
+        }
+
+        .quiz-option.selected {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-dark);
+            color: var(--light-text);
+        }
+
+        .quiz-option.correct {
+            background-color: var(--primary-color);
+            border-color: var(--primary-dark);
+            color: var(--light-text);
+        }
+
+        .quiz-option.incorrect {
+            background-color: var(--red-color);
+            border-color: darkred;
+            color: var(--light-text);
+        }
+
+        /* Character styles */
+        #penny {
+            bottom: 20px;
+            left: 20px;
+        }
+
+        #professor-savings {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        #penny-bubble {
+            left: 150px;
+            bottom: 120px;
+        }
+
+        #professor-bubble {
+            right: 150px;
+            bottom: 120px;
+        }
+
+        .character-svg {
+            width: 120px;
+            height: 150px;
+        }
+
+        /* Reward screen */
+        .reward-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .reward-text {
+            font-size: 36px;
+            color: var(--primary-dark);
+            text-align: center;
+            margin: 20px 0;
+            animation: bounce 1s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .reward-animation {
+            width: 400px;
+            height: 300px;
+            margin: 20px 0;
+            position: relative;
+        }
+
+        /* Particles for celebrations */
+        .star, .bubble {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            width: 100%;
+            height: 30px;
+            background-color: var(--light-text);
+            border-radius: 15px;
+            margin: 20px 0;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary-color);
+            width: 0%;
+            transition: width 0.5s ease;
+            position: relative;
+            border-radius: 15px;
+        }
+
+        .progress-text {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            color: var(--light-text);
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Time travel slider */
+        .time-travel-container {
+            position: relative;
+            width: 100%;
+            padding: 20px;
+            background-color: var(--blue-color);
+            border-radius: 20px;
+            margin: 20px 0;
+            color: var(--light-text);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .time-travel-title {
+            font-size: 24px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .time-display {
+            font-size: 28px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        /* Savings comparison chart */
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            position: relative;
+            margin: 20px 0;
+            background-color: var(--light-text);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 22px;
+            color: var(--primary-dark);
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .bar-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            height: 80%;
+            width: 100%;
+        }
+
+        .bar-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 30%;
+        }
+
+        .bar {
+            width: 60px;
+            background-color: var(--primary-color);
+            border-radius: 10px 10px 0 0;
+            transition: height 1s ease;
+            position: relative;
+        }
+
+        .bar-label {
+            margin-top: 10px;
+            font-size: 16px;
+            text-align: center;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+
+        .bar-value {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            bottom: 100%;
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--text-color);
+            padding: 5px 0;
+        }
+
+        /* Media queries for responsiveness */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 36px;
+            }
+
+            .subtitle {
+                font-size: 20px;
+            }
+
+            .button {
+                padding: 12px 24px;
+                font-size: 18px;
+            }
+
+            .result-box {
+                width: 100%;
+            }
+
+            .character {
+                width: 100px;
+                height: 100px;
+            }
+
+            .speech-bubble {
+                max-width: 200px;
+                font-size: 16px;
+            }
+
+            .quiz-option {
+                width: 90%;
+            }
+        }
+
+        /* Learning path style */
+        .learning-path {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            height: 50px;
+            position: relative;
+            margin: 30px 0;
+        }
+
+        .path-segment {
+            width: 40px;
+            height: 40px;
+            background-color: var(--light-text);
+            border: 3px solid var(--primary-light);
+            border-radius: 50%;
+            position: relative;
+            z-index: 2;
+        }
+
+        .path-segment:after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background-color: var(--light-text);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            transform: scale(0.8);
+            z-index: -1;
+        }
+
+        .path-segment.completed {
+            border-color: var(--primary-dark);
+        }
+
+        .path-segment.completed:after {
+            background-color: var(--primary-color);
+            transform: scale(0.6);
+        }
+
+        .path-segment.current {
+            border-color: var(--secondary-dark);
+        }
+
+        .path-segment.current:after {
+            background-color: var(--secondary-color);
+            transform: scale(0.7);
+            animation: pulse-path 1.5s infinite;
+        }
+
+        @keyframes pulse-path {
+            0%, 100% { transform: scale(0.7); }
+            50% { transform: scale(0.9); }
+        }
+
+        .learning-path:before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 5px;
+            background-color: var(--primary-light);
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+
+        /* Hint button and text */
+        .hint-container {
+            position: relative;
+            margin: 10px 0;
+        }
+
+        .hint-button {
+            background-color: var(--blue-color);
+            color: var(--light-text);
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .hint-button:hover {
+            background-color: #1565C0;
+            transform: scale(1.1);
+        }
+
+        .hint-text {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 250px;
+            padding: 15px;
+            background-color: var(--light-text);
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+
+        /* Settings screen */
+        .settings-container {
+            width: 80%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+        }
+
+        .settings-group {
+            width: 100%;
+            margin: 15px 0;
+        }
+
+        .settings-title {
+            font-size: 22px;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .toggle-label {
+            font-size: 18px;
+            margin-right: 15px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        .volume-container {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .volume-label {
+            font-size: 18px;
+            margin-right: 15px;
+            min-width: 120px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 16px;
+            color: var(--text-color);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="screen visible">
+            <h1 class="title">Money Garden</h1>
+            <h2 class="subtitle">Learn about Compound Interest and Growing Your Savings!</h2>
+            
+            <div class="character" id="penny">
+                <svg class="character-svg" viewBox="0 0 120 150">
+                    <!-- Penny character -->
+                    <circle cx="60" cy="40" r="30" fill="#FFD700" stroke="#DAA520" stroke-width="2"/>
+                    <text x="60" y="45" font-size="12" text-anchor="middle" fill="#DAA520" font-weight="bold">¢</text>
+                    <!-- Body -->
+                    <ellipse cx="60" cy="100" rx="25" ry="35" fill="#81C784"/>
+                    <!-- Arms -->
+                    <line x1="40" y1="90" x2="25" y2="80" stroke="#81C784" stroke-width="6" stroke-linecap="round"/>
+                    <line x1="80" y1="90" x2="95" y2="80" stroke="#81C784" stroke-width="6" stroke-linecap="round"/>
+                    <!-- Legs -->
+                    <line x1="50" y1="130" x2="45" y2="145" stroke="#81C784" stroke-width="8" stroke-linecap="round"/>
+                    <line x1="70" y1="130" x2="75" y2="145" stroke="#81C784" stroke-width="8" stroke-linecap="round"/>
+                    <!-- Face -->
+                    <circle cx="50" cy="35" r="4" fill="black"/>
+                    <circle cx="70" cy="35" r="4" fill="black"/>
+                    <path d="M50 50 Q60 60 70 50" stroke="black" stroke-width="2" fill="none"/>
+                </svg>
+                <div id="penny-bubble" class="speech-bubble">
+                    Hi! I'm Penny! Let's learn about growing money with compound interest!
+                </div>
+            </div>
+            
+            <div class="character" id="professor-savings">
+                <svg class="character-svg" viewBox="0 0 120 150">
+                    <!-- Professor Savings character -->
+                    <circle cx="60" cy="40" r="30" fill="#FFD700" stroke="#DAA520" stroke-width="2"/>
+                    <text x="60" y="50" font-size="30" text-anchor="middle" fill="#DAA520" font-weight="bold">$</text>
+                    <!-- Body -->
+                    <ellipse cx="60" cy="100" rx="25" ry="35" fill="#2196F3"/>
+                    <!-- Arms -->
+                    <line x1="40" y1="90" x2="25" y2="80" stroke="#2196F3" stroke-width="6" stroke-linecap="round"/>
+                    <line x1="80" y1="90" x2="95" y2="80" stroke="#2196F3" stroke-width="6" stroke-linecap="round"/>
+                    <!-- Legs -->
+                    <line x1="50" y1="130" x2="45" y2="145" stroke="#2196F3" stroke-width="8" stroke-linecap="round"/>
+                    <line x1="70" y1="130" x2="75" y2="145" stroke="#2196F3" stroke-width="8" stroke-linecap="round"/>
+                    <!-- Face -->
+                    <circle cx="50" cy="35" r="4" fill="black"/>
+                    <circle cx="70" cy="35" r="4" fill="black"/>
+                    <path d="M50 55 Q60 60 70 55" stroke="black" stroke-width="2" fill="none"/>
+                    <!-- Glasses -->
+                    <circle cx="50" cy="35" r="8" fill="none" stroke="black" stroke-width="1.5"/>
+                    <circle cx="70" cy="35" r="8" fill="none" stroke="black" stroke-width="1.5"/>
+                    <line x1="58" y1="35" x2="62" y2="35" stroke="black" stroke-width="1.5"/>
+                    <!-- Beard -->
+                    <path d="M50 55 Q60 65 70 55 Q60 75 50 55" fill="#A0522D"/>
+                </svg>
+                <div id="professor-bubble" class="speech-bubble">
+                    Hello there! I'm Professor Savings. I'll show you how to make your money grow over time!
+                </div>
+            </div>
+            
+            <button id="startButton" class="button">Start the Adventure!</button>
+            <button id="settingsButton" class="button">Settings</button>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen hidden">
+            <h1 class="title">Money Garden</h1>
+            
+            <div class="progress-container">
+                <div id="progressBar" class="progress-bar">
+                    <div class="progress-text">0%</div>
+                </div>
+            </div>
+            
+            <div id="learningPath" class="learning-path">
+                <!-- Path segments will be added here -->
+            </div>
+            
+            <div id="garden-container">
+                <div class="sky"></div>
+                <div class="sun"></div>
+                <div class="soil"></div>
+                <!-- Money plants will be added here -->
+            </div>
+            
+            <div class="time-travel-container">
+                <h3 class="time-travel-title">Time Travel</h3>
+                <div id="timeDisplay" class="time-display">Year 1</div>
+                <input type="range" min="1" max="50" value="1" class="slider" id="timeSlider">
+            </div>
+            
+            <div class="controls-container">
+                <h3 class="guide-title">Grow Your Money!</h3>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Starting Money</div>
+                    <div id="startingMoneyValue" class="slider-value">$100</div>
+                    <input type="range" min="10" max="1000" value="100" step="10" class="slider" id="startingMoneySlider">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Monthly Add</div>
+                    <div id="monthlyAddValue" class="slider-value">$10</div>
+                    <input type="range" min="0" max="100" value="10" step="5" class="slider" id="monthlyAddSlider">
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Interest Rate</div>
+                    <div id="interestRateValue" class="slider-value">5%</div>
+                    <input type="range" min="1" max="10" value="5" step="0.5" class="slider" id="interestRateSlider">
+                </div>
+                
+                <div class="hint-container">
+                    <button id="hintButton" class="hint-button">?</button>
+                    <div id="hintText" class="hint-text">
+                        Interest is like magic that makes your money grow! Higher interest rates make it grow faster!
+                    </div>
+                </div>
+            </div>
+            
+            <div class="results-container">
+                <div class="result-box">
+                    <div class="result-title">Total Money</div>
+                    <div id="totalMoneyValue" class="result-value">$100</div>
+                </div>
+                <div class="result-box">
+                    <div class="result-title">Money You Added</div>
+                    <div id="contributedValue" class="result-value">$100</div>
+                </div>
+                <div class="result-box">
+                    <div class="result-title">Interest Earned</div>
+                    <div id="interestEarnedValue" class="result-value">$0</div>
+                </div>
+                <div class="result-box">
+                    <div class="result-title">Money at Age 65</div>
+                    <div id="retirementValueValue" class="result-value">$0</div>
+                </div>
+            </div>
+            
+            <div class="chart-container">
+                <h3 class="chart-title">Watch Your Money Grow!</h3>
+                <div class="bar-container">
+                    <div class="bar-group">
+                        <div id="startingBar" class="bar" style="height: 30px;">
+                            <div class="bar-value">$100</div>
+                        </div>
+                        <div class="bar-label">Start</div>
+                    </div>
+                    <div class="bar-group">
+                        <div id="contributionsBar" class="bar" style="height: 30px;">
+                            <div class="bar-value">$100</div>
+                        </div>
+                        <div class="bar-label">You Add</div>
+                    </div>
+                    <div class="bar-group">
+                        <div id="totalBar" class="bar" style="height: 30px;">
+                            <div class="bar-value">$100</div>
+                        </div>
+                        <div class="bar-label">Total</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="guide-container">
+                <h3 class="guide-title">What is Compound Interest?</h3>
+                <p class="guide-text">
+                    Compound interest is like a magical snowball effect for your money! When you save money in a bank or investment account, you earn interest (extra money) on your savings. Over time, you earn interest not just on the money you put in, but also on the interest you've already earned!
+                </p>
+                <p class="guide-text">
+                    This makes your money grow faster and faster, just like a snowball rolling down a hill gets bigger and bigger!
+                </p>
+                <button id="quizButton" class="button">Take a Quiz!</button>
+            </div>
+            
+            <button id="continueButton" class="button">Continue Learning</button>
+        </div>
+        
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="screen hidden">
+            <h1 class="title">Money Quiz!</h1>
+            
+            <div class="progress-container">
+                <div id="quizProgressBar" class="progress-bar">
+                    <div class="progress-text">Question 1/5</div>
+                </div>
+            </div>
+            
+            <div class="quiz-container">
+                <div class="character" id="quiz-professor">
+                    <svg class="character-svg" viewBox="0 0 120 150">
+                        <!-- Quiz Professor character -->
+                        <circle cx="60" cy="40" r="30" fill="#9C27B0" stroke="#6A1B9A" stroke-width="2"/>
+                        <text x="60" y="50" font-size="30" text-anchor="middle" fill="#FFFFFF" font-weight="bold">?</text>
+                        <!-- Body -->
+                        <ellipse cx="60" cy="100" rx="25" ry="35" fill="#9C27B0"/>
+                        <!-- Arms -->
+                        <line x1="40" y1="90" x2="25" y2="80" stroke="#9C27B0" stroke-width="6" stroke-linecap="round"/>
+                        <line x1="80" y1="90" x2="95" y2="80" stroke="#9C27B0" stroke-width="6" stroke-linecap="round"/>
+                        <!-- Legs -->
+                        <line x1="50" y1="130" x2="45" y2="145" stroke="#9C27B0" stroke-width="8" stroke-linecap="round"/>
+                        <line x1="70" y1="130" x2="75" y2="145" stroke="#9C27B0" stroke-width="8" stroke-linecap="round"/>
+                        <!-- Face -->
+                        <circle cx="50" cy="35" r="4" fill="white"/>
+                        <circle cx="70" cy="35" r="4" fill="white"/>
+                        <path d="M50 50 Q60 60 70 50" stroke="white" stroke-width="2" fill="none"/>
+                    </svg>
+                    <div id="quizProfessorBubble" class="speech-bubble">
+                        Let's test what you've learned about saving money and compound interest!
+                    </div>
+                </div>
+                
+                <div id="quizQuestion" class="quiz-question">
+                    Loading question...
+                </div>
+                
+                <div id="quizOptions" class="quiz-options">
+                    <!-- Options will be generated here -->
+                </div>
+                
+                <button id="submitAnswerButton" class="button">Submit Answer</button>
+            </div>
+        </div>
+        
+        <!-- Reward Screen -->
+        <div id="rewardScreen" class="screen hidden">
+            <h1 class="title">Congratulations!</h1>
+            
+            <div class="reward-container">
+                <div id="rewardText" class="reward-text">
+                    You're a Money Saving Expert!
+                </div>
+                
+                <div id="rewardAnimation" class="reward-animation">
+                    <!-- Animation will be created here -->
+                </div>
+                
+                <button id="restartButton" class="button">Start a New Adventure</button>
+            </div>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen hidden">
+            <h1 class="title">Settings</h1>
+            
+            <div class="settings-container">
+                <div class="settings-group">
+                    <h3 class="settings-title">Sound</h3>
+                    
+                    <div class="toggle-container">
+                        <span class="toggle-label">Sound Effects</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="soundToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="volume-container">
+                        <span class="volume-label">Volume</span>
+                        <input type="range" min="0" max="1" value="0.5" step="0.1" class="slider" id="volumeSlider">
+                    </div>
+                </div>
+                
+                <div class="settings-group">
+                    <h3 class="settings-title">Display</h3>
+                    
+                    <div class="toggle-container">
+                        <span class="toggle-label">Show Animations</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="animationsToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="toggle-container">
+                        <span class="toggle-label">Show Tips</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="tipsToggle" checked>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="backButton" class="button">Back to Menu</button>
+        </div>
+    </div>
+
+    <script>
+        // Wait for the DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Game state
+            const gameState = {
+                currentScreen: 'welcomeScreen',
+                currentLevel: 1,
+                maxLevel: 5,
+                score: 0,
+                progress: 0,
+                
+                // Financial parameters
+                startingMoney: 100,
+                monthlyAdd: 10,
+                interestRate: 0.05,
+                currentYear: 1,
+                maxYears: 50,
+                
+                // Quiz state
+                currentQuiz: {
+                    question: '',
+                    options: [],
+                    correctAnswer: '',
+                    userAnswer: ''
+                },
+                
+                // Settings
+                settings: {
+                    soundEnabled: true,
+                    soundVolume: 0.5,
+                    animationsEnabled: true,
+                    tipsEnabled: true
+                },
+                
+                // Animation tracking
+                animations: {
+                    stars: [],
+                    bubbles: [],
+                    timers: []
+                }
+            };
+            
+            // Audio context for sound effects
+            let audioContext;
+            
+            // DOM elements
+            const elements = {
+                screens: {
+                    welcomeScreen: document.getElementById('welcomeScreen'),
+                    gameScreen: document.getElementById('gameScreen'),
+                    quizScreen: document.getElementById('quizScreen'),
+                    rewardScreen: document.getElementById('rewardScreen'),
+                    settingsScreen: document.getElementById('settingsScreen')
+                },
+                
+                buttons: {
+                    startButton: document.getElementById('startButton'),
+                    settingsButton: document.getElementById('settingsButton'),
+                    continueButton: document.getElementById('continueButton'),
+                    quizButton: document.getElementById('quizButton'),
+                    submitAnswerButton: document.getElementById('submitAnswerButton'),
+                    restartButton: document.getElementById('restartButton'),
+                    backButton: document.getElementById('backButton'),
+                    hintButton: document.getElementById('hintButton')
+                },
+                
+                sliders: {
+                    startingMoneySlider: document.getElementById('startingMoneySlider'),
+                    monthlyAddSlider: document.getElementById('monthlyAddSlider'),
+                    interestRateSlider: document.getElementById('interestRateSlider'),
+                    timeSlider: document.getElementById('timeSlider'),
+                    volumeSlider: document.getElementById('volumeSlider')
+                },
+                
+                values: {
+                    startingMoneyValue: document.getElementById('startingMoneyValue'),
+                    monthlyAddValue: document.getElementById('monthlyAddValue'),
+                    interestRateValue: document.getElementById('interestRateValue'),
+                    timeDisplay: document.getElementById('timeDisplay'),
+                    totalMoneyValue: document.getElementById('totalMoneyValue'),
+                    contributedValue: document.getElementById('contributedValue'),
+                    interestEarnedValue: document.getElementById('interestEarnedValue'),
+                    retirementValueValue: document.getElementById('retirementValueValue')
+                },
+                
+                charts: {
+                    startingBar: document.getElementById('startingBar'),
+                    contributionsBar: document.getElementById('contributionsBar'),
+                    totalBar: document.getElementById('totalBar')
+                },
+                
+                containers: {
+                    gardenContainer: document.getElementById('garden-container'),
+                    progressBar: document.getElementById('progressBar'),
+                    quizProgressBar: document.getElementById('quizProgressBar'),
+                    learningPath: document.getElementById('learningPath'),
+                    quizOptions: document.getElementById('quizOptions')
+                },
+                
+                displays: {
+                    quizQuestion: document.getElementById('quizQuestion'),
+                    rewardText: document.getElementById('rewardText'),
+                    rewardAnimation: document.getElementById('rewardAnimation'),
+                    hintText: document.getElementById('hintText')
+                },
+                
+                toggles: {
+                    soundToggle: document.getElementById('soundToggle'),
+                    animationsToggle: document.getElementById('animationsToggle'),
+                    tipsToggle: document.getElementById('tipsToggle')
+                },
+                
+                characters: {
+                    penny: document.getElementById('penny'),
+                    professorSavings: document.getElementById('professor-savings'),
+                    pennyBubble: document.getElementById('penny-bubble'),
+                    professorBubble: document.getElementById('professor-bubble'),
+                    quizProfessor: document.getElementById('quiz-professor'),
+                    quizProfessorBubble: document.getElementById('quizProfessorBubble')
+                }
+            };
+            
+            // Initialize the game
+            function initGame() {
+                // Initialize Web Audio API
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.warn('Web Audio API not supported:', e);
+                }
+                
+                // Set up event listeners
+                setupEventListeners();
+                
+                // Show introduction
+                showIntroduction();
+                
+                // Create learning path
+                createLearningPath();
+                
+                // Calculate initial values
+                calculateCompoundInterest();
+                updateDisplayValues();
+                updateCharts();
+                
+                // Create plants based on initial values
+                createPlants();
+            }
+            
+            // Set up event listeners
+            function setupEventListeners() {
+                // Button listeners
+                elements.buttons.startButton.addEventListener('click', function() {
+                    playButtonSound();
+                    showScreen('gameScreen');
+                });
+                
+                elements.buttons.settingsButton.addEventListener('click', function() {
+                    playButtonSound();
+                    showScreen('settingsScreen');
+                });
+                
+                elements.buttons.continueButton.addEventListener('click', function() {
+                    playButtonSound();
+                    showScreen('quizScreen');
+                    generateQuizQuestion();
+                });
+                
+                elements.buttons.quizButton.addEventListener('click', function() {
+                    playButtonSound();
+                    showScreen('quizScreen');
+                    generateQuizQuestion();
+                });
+                
+                elements.buttons.submitAnswerButton.addEventListener('click', function() {
+                    playButtonSound();
+                    checkQuizAnswer();
+                });
+                
+                elements.buttons.restartButton.addEventListener('click', function() {
+                    playButtonSound();
+                    continueGame();
+                });
+                
+                elements.buttons.backButton.addEventListener('click', function() {
+                    playButtonSound();
+                    showScreen('welcomeScreen');
+                });
+                
+                elements.buttons.hintButton.addEventListener('click', function() {
+                    playSelectSound();
+                    toggleHint();
+                });
+                
+                // Slider listeners
+                elements.sliders.startingMoneySlider.addEventListener('input', function() {
+                    playTickSound();
+                    gameState.startingMoney = parseInt(this.value);
+                    elements.values.startingMoneyValue.textContent = '$' + gameState.startingMoney;
+                    calculateCompoundInterest();
+                    updateDisplayValues();
+                    updateCharts();
+                    createPlants();
+                });
+                
+                elements.sliders.monthlyAddSlider.addEventListener('input', function() {
+                    playTickSound();
+                    gameState.monthlyAdd = parseInt(this.value);
+                    elements.values.monthlyAddValue.textContent = '$' + gameState.monthlyAdd;
+                    calculateCompoundInterest();
+                    updateDisplayValues();
+                    updateCharts();
+                    createPlants();
+                });
+                
+                elements.sliders.interestRateSlider.addEventListener('input', function() {
+                    playTickSound();
+                    gameState.interestRate = parseFloat(this.value) / 100;
+                    elements.values.interestRateValue.textContent = this.value + '%';
+                    calculateCompoundInterest();
+                    updateDisplayValues();
+                    updateCharts();
+                    createPlants();
+                });
+                
+                elements.sliders.timeSlider.addEventListener('input', function() {
+                    playTickSound();
+                    gameState.currentYear = parseInt(this.value);
+                    elements.values.timeDisplay.textContent = 'Year ' + gameState.currentYear;
+                    updateDisplayValues();
+                    updateCharts();
+                    showPlantGrowth();
+                });
+                
+                elements.sliders.volumeSlider.addEventListener('input', function() {
+                    gameState.settings.soundVolume = parseFloat(this.value);
+                });
+                
+                // Toggle listeners
+                elements.toggles.soundToggle.addEventListener('change', function() {
+                    gameState.settings.soundEnabled = this.checked;
+                });
+                
+                elements.toggles.animationsToggle.addEventListener('change', function() {
+                    gameState.settings.animationsEnabled = this.checked;
+                });
+                
+                elements.toggles.tipsToggle.addEventListener('change', function() {
+                    gameState.settings.tipsEnabled = this.checked;
+                });
+            }
+            
+            // Show introduction messages
+            function showIntroduction() {
+                setTimeout(() => {
+                    showMessage(elements.characters.pennyBubble, "Hi! I'm Penny! Let's learn about growing money with compound interest!");
+                }, 500);
+                
+                setTimeout(() => {
+                    showMessage(elements.characters.professorBubble, "Hello there! I'm Professor Savings. I'll show you how to make your money grow over time!");
+                }, 3000);
+            }
+            
+            // Calculate compound interest
+            function calculateCompoundInterest() {
+                const results = [];
+                
+                // Initial investment
+                let balance = gameState.startingMoney;
+                let totalContributions = gameState.startingMoney;
+                
+                // Calculate for each year
+                for (let year = 1; year <= gameState.maxYears; year++) {
+                    // Monthly contributions for the year
+                    const yearlyContribution = gameState.monthlyAdd * 12;
+                    totalContributions += yearlyContribution;
+                    
+                    // Add contributions
+                    balance += yearlyContribution;
+                    
+                    // Apply interest at the end of the year
+                    const interestEarned = balance * gameState.interestRate;
+                    balance += interestEarned;
+                    
+                    // Store results
+                    results.push({
+                        year,
+                        balance: Math.round(balance * 100) / 100,
+                        totalContributions: Math.round(totalContributions * 100) / 100,
+                        interestEarned: Math.round((balance - totalContributions) * 100) / 100
+                    });
+                }
+                
+                return results;
+            }
+            
+            // Update display values
+            function updateDisplayValues() {
+                const results = calculateCompoundInterest();
+                const currentYearData = results[gameState.currentYear - 1];
+                
+                // Format currency
+                const formatCurrency = (value) => {
+                    return '$' + value.toLocaleString();
+                };
+                
+                // Update values
+                elements.values.totalMoneyValue.textContent = formatCurrency(currentYearData.balance);
+                elements.values.contributedValue.textContent = formatCurrency(currentYearData.totalContributions);
+                elements.values.interestEarnedValue.textContent = formatCurrency(currentYearData.interestEarned);
+                
+                // Calculate retirement value (age 65 - assume starting at age 10)
+                const retirementYear = Math.min(55, gameState.maxYears - 1);
+                const retirementData = results[retirementYear];
+                elements.values.retirementValueValue.textContent = formatCurrency(retirementData.balance);
+                
+                // Update progress bar
+                const progressPercent = (gameState.currentYear / gameState.maxYears) * 100;
+                elements.containers.progressBar.style.width = progressPercent + '%';
+                elements.containers.progressBar.querySelector('.progress-text').textContent = Math.round(progressPercent) + '%';
+            }
+            
+            // Update charts
+            function updateCharts() {
+                const results = calculateCompoundInterest();
+                const currentYearData = results[gameState.currentYear - 1];
+                
+                // Get the max value for scaling
+                const maxValue = Math.max(
+                    currentYearData.balance,
+                    currentYearData.totalContributions,
+                    gameState.startingMoney
+                );
+                
+                // Update bar heights (max height: 200px)
+                const maxBarHeight = 200;
+                const startingBarHeight = (gameState.startingMoney / maxValue) * maxBarHeight;
+                const contributionsBarHeight = (currentYearData.totalContributions / maxValue) * maxBarHeight;
+                const totalBarHeight = (currentYearData.balance / maxValue) * maxBarHeight;
+                
+                // Set bar heights
+                elements.charts.startingBar.style.height = startingBarHeight + 'px';
+                elements.charts.contributionsBar.style.height = contributionsBarHeight + 'px';
+                elements.charts.totalBar.style.height = totalBarHeight + 'px';
+                
+                // Update bar values
+                elements.charts.startingBar.querySelector('.bar-value').textContent = '$' + gameState.startingMoney.toLocaleString();
+                elements.charts.contributionsBar.querySelector('.bar-value').textContent = '$' + currentYearData.totalContributions.toLocaleString();
+                elements.charts.totalBar.querySelector('.bar-value').textContent = '$' + currentYearData.balance.toLocaleString();
+                
+                // Change color based on growth
+                const interestRatio = currentYearData.interestEarned / currentYearData.totalContributions;
+                
+                let totalBarColor;
+                if (interestRatio > 1) {
+                    totalBarColor = '#9C27B0'; // Purple for amazing growth
+                } else if (interestRatio > 0.5) {
+                    totalBarColor = '#4CAF50'; // Green for good growth
+                } else {
+                    totalBarColor = '#2196F3'; // Blue for moderate growth
+                }
+                
+                elements.charts.totalBar.style.backgroundColor = totalBarColor;
+            }
+            
+            // Create money plants
+            function createPlants() {
+                // Clear existing plants
+                const existingPlants = elements.containers.gardenContainer.querySelectorAll('.money-plant');
+                existingPlants.forEach(plant => plant.remove());
+                
+                // Calculate how many plants to show based on money
+                const results = calculateCompoundInterest();
+                const finalYearData = results[gameState.maxYears - 1];
+                
+                // Create one plant per $1000 in final balance, up to 10 plants
+                const numPlants = Math.min(10, Math.max(1, Math.floor(finalYearData.balance / 1000)));
+                
+                // Create plants
+                for (let i = 0; i < numPlants; i++) {
+                    createMoneyPlant(i, numPlants);
+                }
+                
+                // Show plant growth based on current year
+                setTimeout(showPlantGrowth, 100);
+            }
+            
+            // Create a single money plant
+            function createMoneyPlant(index, totalPlants) {
+                const plant = document.createElement('div');
+                plant.className = 'money-plant';
+                
+                // Position the plant evenly across the garden
+                const position = ((index + 1) / (totalPlants + 1)) * 100;
+                plant.style.left = position + '%';
+                
+                // Create plant elements
+                const stem = document.createElement('div');
+                stem.className = 'plant-stem';
+                
+                const leaf1 = document.createElement('div');
+                leaf1.className = 'plant-leaf';
+                
+                const leaf2 = document.createElement('div');
+                leaf2.className = 'plant-leaf';
+                
+                // Add coins based on interest rate (more coins = higher rate)
+                const numCoins = Math.max(1, Math.round(gameState.interestRate * 50));
+                
+                // Append elements
+                plant.appendChild(stem);
+                plant.appendChild(leaf1);
+                plant.appendChild(leaf2);
+                
+                // Add coins
+                for (let i = 0; i < numCoins; i++) {
+                    const coin = createCoin(plant);
+                    coin.style.opacity = '0';
+                    plant.appendChild(coin);
+                }
+                
+                // Add to garden
+                elements.containers.gardenContainer.appendChild(plant);
+                
+                // Add with a slight delay for animation effect
+                setTimeout(() => {
+                    plant.classList.add('visible');
+                }, index * 200);
+            }
+            
+            // Create a coin element
+            function createCoin(plant) {
+                const coin = document.createElement('div');
+                coin.className = 'coin';
+                
+                // Random position on the plant
+                const randomTop = Math.random() * 80;
+                const randomLeft = 15 + Math.random() * 30;
+                
+                coin.style.top = randomTop + 'px';
+                coin.style.left = randomLeft + 'px';
+                
+                // Coin value
+                coin.textContent = '$';
+                
+                return coin;
+            }
+            
+            // Show plant growth based on current year
+            function showPlantGrowth() {
+                const plants = elements.containers.gardenContainer.querySelectorAll('.money-plant');
+                const growthPercent = gameState.currentYear / gameState.maxYears;
+                
+                plants.forEach(plant => {
+                    // Scale the plant based on time
+                    const growthScale = 0.5 + (growthPercent * 0.5);
+                    plant.style.transform = `scale(${growthScale})`;
+                    
+                    // Show coins based on time
+                    const coins = plant.querySelectorAll('.coin');
+                    const numCoinsToShow = Math.ceil(coins.length * growthPercent);
+                    
+                    coins.forEach((coin, index) => {
+                        if (index < numCoinsToShow) {
+                            coin.style.opacity = '1';
+                        } else {
+                            coin.style.opacity = '0';
+                        }
+                    });
+                });
+                
+                // Show a celebration effect when reaching milestone years
+                if (gameState.currentYear === 10 || gameState.currentYear === 25 || gameState.currentYear === 50) {
+                    createParticleEffect();
+                    playSuccessSound();
+                }
+            }
+            
+            // Generate quiz questions
+            function generateQuizQuestion() {
+                // Array of possible questions
+                const questions = [
+                    {
+                        question: "What is compound interest?",
+                        options: [
+                            "Extra money you earn on your savings AND on the interest you've already earned",
+                            "Money you lose when you spend it",
+                            "A type of coin",
+                            "A bank fee you have to pay"
+                        ],
+                        correctAnswer: "Extra money you earn on your savings AND on the interest you've already earned"
+                    },
+                    {
+                        question: "If you save more money each month, what happens to your total savings?",
+                        options: [
+                            "They grow faster",
+                            "They grow slower",
+                            "Nothing changes",
+                            "They disappear"
+                        ],
+                        correctAnswer: "They grow faster"
+                    },
+                    {
+                        question: "What happens to your money when the interest rate is higher?",
+                        options: [
+                            "It grows faster",
+                            "It grows slower",
+                            "It stays the same",
+                            "It disappears"
+                        ],
+                        correctAnswer: "It grows faster"
+                    },
+                    {
+                        question: "Why is saving money for a long time (many years) better?",
+                        options: [
+                            "Because compound interest has more time to work its magic",
+                            "Because money gets heavier over time",
+                            "Because banks only give interest after 10 years",
+                            "It's not better to save for a long time"
+                        ],
+                        correctAnswer: "Because compound interest has more time to work its magic"
+                    },
+                    {
+                        question: "If you have $100 and earn 10% interest each year, how much will you have after 1 year?",
+                        options: [
+                            "$110",
+                            "$100",
+                            "$10",
+                            "$1000"
+                        ],
+                        correctAnswer: "$110"
+                    },
+                    {
+                        question: "What grows your money more: saving for 10 years or saving for 40 years?",
+                        options: [
+                            "Saving for 40 years",
+                            "Saving for 10 years",
+                            "Both are exactly the same",
+                            "Savings never grow"
+                        ],
+                        correctAnswer: "Saving for 40 years"
+                    },
+                    {
+                        question: "What's better: putting money in a piggy bank or in a savings account that earns interest?",
+                        options: [
+                            "A savings account with interest",
+                            "A piggy bank",
+                            "Both are exactly the same",
+                            "Neither one"
+                        ],
+                        correctAnswer: "A savings account with interest"
+                    }
+                ];
+                
+                // Pick a random question that hasn't been used yet
+                const availableQuestions = questions.filter(q => 
+                    !gameState.currentQuiz.previousQuestions || 
+                    !gameState.currentQuiz.previousQuestions.includes(q.question)
+                );
+                
+                // If we've used all questions, reset
+                const questionIndex = availableQuestions.length > 0 ? 
+                    Math.floor(Math.random() * availableQuestions.length) : 
+                    Math.floor(Math.random() * questions.length);
+                
+                const selectedQuestion = availableQuestions.length > 0 ? 
+                    availableQuestions[questionIndex] : 
+                    questions[questionIndex];
+                
+                // Set current quiz
+                gameState.currentQuiz = {
+                    question: selectedQuestion.question,
+                    options: selectedQuestion.options,
+                    correctAnswer: selectedQuestion.correctAnswer,
+                    userAnswer: '',
+                    previousQuestions: gameState.currentQuiz.previousQuestions || []
+                };
+                
+                // Add to previous questions
+                gameState.currentQuiz.previousQuestions.push(selectedQuestion.question);
+                
+                // Update UI
+                elements.displays.quizQuestion.textContent = gameState.currentQuiz.question;
+                
+                // Clear previous options
+                elements.containers.quizOptions.innerHTML = '';
+                
+                // Create option elements
+                gameState.currentQuiz.options.forEach(option => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'quiz-option';
+                    optionElement.textContent = option;
+                    optionElement.addEventListener('click', function() {
+                        selectQuizOption(this);
+                    });
+                    elements.containers.quizOptions.appendChild(optionElement);
+                });
+                
+                // Update quiz progress
+                elements.containers.quizProgressBar.style.width = ((gameState.score + 1) * 20) + '%';
+                elements.containers.quizProgressBar.querySelector('.progress-text').textContent = `Question ${gameState.score + 1}/5`;
+                
+                // Show quiz professor message
+                showMessage(elements.characters.quizProfessorBubble, "Let's test what you've learned! Select the best answer.");
+            }
+            
+            // Select a quiz option
+            function selectQuizOption(optionElement) {
+                // Clear any previous selections
+                const options = elements.containers.quizOptions.querySelectorAll('.quiz-option');
+                options.forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Select the clicked option
+                optionElement.classList.add('selected');
+                
+                // Store user's answer
+                gameState.currentQuiz.userAnswer = optionElement.textContent;
+                
+                // Play select sound
+                playSelectSound();
+            }
+            
+            // Check quiz answer
+            function checkQuizAnswer() {
+                if (!gameState.currentQuiz.userAnswer) {
+                    // No answer selected
+                    showMessage(elements.characters.quizProfessorBubble, "Please select an answer first!");
+                    return;
+                }
+                
+                // Check if the answer is correct
+                if (gameState.currentQuiz.userAnswer === gameState.currentQuiz.correctAnswer) {
+                    // Correct answer
+                    playSuccessSound();
+                    createParticleEffect();
+                    
+                    // Show celebration message
+                    showMessage(elements.characters.quizProfessorBubble, "Excellent! That's correct!");
+                    
+                    // Increment score
+                    gameState.score++;
+                    
+                    // Proceed to next question or end quiz
+                    if (gameState.score >= 5) {
+                        // Quiz completed
+                        setTimeout(() => {
+                            completeQuiz();
+                        }, 2000);
+                    } else {
+                        // Next question
+                        setTimeout(() => {
+                            generateQuizQuestion();
+                        }, 2000);
+                    }
+                } else {
+                    // Incorrect answer
+                    playErrorSound();
+                    
+                    // Show hint message
+                    showMessage(elements.characters.quizProfessorBubble, `Not quite. The correct answer is ${gameState.currentQuiz.correctAnswer}.`);
+                    
+                    // Highlight correct answer
+                    const options = elements.containers.quizOptions.querySelectorAll('.quiz-option');
+                    options.forEach(option => {
+                        if (option.textContent === gameState.currentQuiz.correctAnswer) {
+                            option.classList.add('correct');
+                        } else if (option.classList.contains('selected')) {
+                            option.classList.add('incorrect');
+                        }
+                    });
+                    
+                    // Next question after delay
+                    setTimeout(() => {
+                        generateQuizQuestion();
+                    }, 3000);
+                }
+            }
+            
+            // Complete the quiz
+            function completeQuiz() {
+                // Show reward screen
+                showScreen('rewardScreen');
+                
+                // Set reward text based on score
+                if (gameState.score >= 5) {
+                    elements.displays.rewardText.textContent = "Amazing! You're a Money Saving Expert!";
+                } else if (gameState.score >= 3) {
+                    elements.displays.rewardText.textContent = "Great job! You're getting really good with money!";
+                } else {
+                    elements.displays.rewardText.textContent = "Good effort! Keep practicing to master saving!";
+                }
+                
+                // Create celebration animation
+                createRewardAnimation();
+            }
+            
+            // Continue game after quiz
+            function continueGame() {
+                // Reset game state for next session
+                gameState.currentLevel = 1;
+                gameState.score = 0;
+                gameState.progress = 0;
+                
+                // Reset current year
+                gameState.currentYear = 1;
+                elements.sliders.timeSlider.value = 1;
+                elements.values.timeDisplay.textContent = 'Year 1';
+                
+                // Update learning path
+                updateLearningPath();
+                
+                // Calculate new values
+                calculateCompoundInterest();
+                updateDisplayValues();
+                updateCharts();
+                
+                // Show the game screen
+                showScreen('gameScreen');
+            }
+            
+            // Show a screen
+            function showScreen(screenName) {
+                // Hide all screens
+                Object.values(elements.screens).forEach(screen => {
+                    screen.classList.remove('visible');
+                    screen.classList.add('hidden');
+                });
+                
+                // Show the requested screen
+                elements.screens[screenName].classList.remove('hidden');
+                elements.screens[screenName].classList.add('visible');
+                
+                // Update current screen in game state
+                gameState.currentScreen = screenName;
+            }
+            
+            // Toggle hint visibility
+            function toggleHint() {
+                const hintText = elements.displays.hintText;
+                
+                if (hintText.style.opacity === '1') {
+                    hintText.style.opacity = '0';
+                } else {
+                    hintText.style.opacity = '1';
+                    
+                    // Auto-hide after 5 seconds
+                    setTimeout(() => {
+                        hintText.style.opacity = '0';
+                    }, 5000);
+                }
+            }
+            
+            // Show a character message
+            function showMessage(bubbleElement, message) {
+                // Set the message text
+                bubbleElement.textContent = message;
+                
+                // Show the bubble
+                bubbleElement.style.opacity = '1';
+                
+                // Auto-hide after delay based on message length
+                const delay = Math.max(3000, message.length * 50);
+                setTimeout(() => {
+                    bubbleElement.style.opacity = '0';
+                }, delay);
+            }
+            
+            // Create learning path
+            function createLearningPath() {
+                const pathContainer = elements.containers.learningPath;
+                
+                // Clear any existing segments
+                pathContainer.innerHTML = '';
+                
+                // Create segments for each level
+                for (let i = 0; i < gameState.maxLevel; i++) {
+                    const segment = document.createElement('div');
+                    segment.className = 'path-segment';
+                    segment.setAttribute('data-level', i + 1);
+                    pathContainer.appendChild(segment);
+                }
+                
+                // Update path
+                updateLearningPath();
+            }
+            
+            // Update learning path
+            function updateLearningPath() {
+                const segments = elements.containers.learningPath.querySelectorAll('.path-segment');
+                
+                segments.forEach((segment, index) => {
+                    const level = index + 1;
+                    
+                    if (level < gameState.currentLevel) {
+                        segment.className = 'path-segment completed';
+                    } else if (level === gameState.currentLevel) {
+                        segment.className = 'path-segment current';
+                    } else {
+                        segment.className = 'path-segment';
+                    }
+                });
+            }
+            
+            // Create celebration particle effect
+            function createParticleEffect() {
+                if (!gameState.settings.animationsEnabled) return;
+                
+                // Clear any existing particles
+                clearParticles();
+                
+                // Create stars or bubbles
+                const particleCount = 30;
+                const particleTypes = ['star', 'bubble'];
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particleType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                    createParticle(particleType);
+                }
+            }
+            
+            // Create a single particle
+            function createParticle(type) {
+                const container = document.getElementById('game-container');
+                
+                if (type === 'star') {
+                    // Create a star
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    
+                    // Random position
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight;
+                    
+                    // Random size
+                    const size = Math.random() * 30 + 10;
+                    
+                    // Star SVG
+                    star.innerHTML = `
+                        <svg width="${size}" height="${size}" viewBox="0 0 51 48">
+                            <path fill="#FFD700" d="m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z"/>
+                        </svg>
+                    `;
+                    
+                    star.style.left = `${x}px`;
+                    star.style.top = `${y}px`;
+                    container.appendChild(star);
+                    
+                    // Animation
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 5 + 2;
+                    const dx = Math.cos(angle) * speed;
+                    const dy = Math.sin(angle) * speed;
+                    
+                    let opacity = 1;
+                    let posX = x;
+                    let posY = y;
+                    
+                    const animation = setInterval(() => {
+                        opacity -= 0.01;
+                        posX += dx;
+                        posY += dy;
+                        
+                        star.style.opacity = opacity;
+                        star.style.left = `${posX}px`;
+                        star.style.top = `${posY}px`;
+                        
+                        if (opacity <= 0) {
+                            clearInterval(animation);
+                            star.remove();
+                        }
+                    }, 20);
+                    
+                    gameState.animations.stars.push(star);
+                    gameState.animations.timers.push(animation);
+                } else {
+                    // Create a bubble
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    
+                    // Random position
+                    const x = Math.random() * window.innerWidth;
+                    const y = window.innerHeight + 20;
+                    
+                    // Random size
+                    const size = Math.random() * 40 + 20;
+                    
+                    // Random color
+                    const colors = ['#FF9A00', '#4b0082', '#4CAF50', '#f44336', '#2196F3'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    bubble.style.width = `${size}px`;
+                    bubble.style.height = `${size}px`;
+                    bubble.style.backgroundColor = color;
+                    bubble.style.left = `${x}px`;
+                    bubble.style.top = `${y}px`;
+                    bubble.style.opacity = '0.7';
+                    bubble.style.borderRadius = '50%';
+                    container.appendChild(bubble);
+                    
+                    // Animation
+                    const speed = Math.random() * 3 + 1;
+                    let posY = y;
+                    
+                    const animation = setInterval(() => {
+                        posY -= speed;
+                        bubble.style.top = `${posY}px`;
+                        
+                        if (posY < -size) {
+                            clearInterval(animation);
+                            bubble.remove();
+                        }
+                    }, 20);
+                    
+                    gameState.animations.bubbles.push(bubble);
+                    gameState.animations.timers.push(animation);
+                }
+            }
+            
+            // Clear all particles
+            function clearParticles() {
+                // Clear all animation timers
+                gameState.animations.timers.forEach(timer => {
+                    clearInterval(timer);
+                });
+                
+                // Remove all stars and bubbles
+                gameState.animations.stars.forEach(star => {
+                    if (star.parentNode) {
+                        star.remove();
+                    }
+                });
+                
+                gameState.animations.bubbles.forEach(bubble => {
+                    if (bubble.parentNode) {
+                        bubble.remove();
+                    }
+                });
+                
+                // Reset arrays
+                gameState.animations.stars = [];
+                gameState.animations.bubbles = [];
+                gameState.animations.timers = [];
+            }
+            
+            // Create reward animation
+            function createRewardAnimation() {
+                if (!gameState.settings.animationsEnabled) return;
+                
+                const container = elements.displays.rewardAnimation;
+                
+                // Clear container
+                container.innerHTML = '';
+                
+                // Create canvas for celebration
+                const canvas = document.createElement('canvas');
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                container.appendChild(canvas);
+                
+                const ctx = canvas.getContext('2d');
+                
+                // Draw trophy
+                drawTrophy(ctx, canvas.width / 2, canvas.height / 2);
+                
+                // Start particle animation
+                createParticleEffect();
+                
+                // Play celebration sound
+                playCelebrationSound();
+            }
+            
+            // Draw trophy
+            function drawTrophy(ctx, x, y) {
+                // Trophy base
+                ctx.fillStyle = '#FFD700';
+                
+                // Cup
+                ctx.beginPath();
+                ctx.moveTo(x - 30, y - 50);
+                ctx.lineTo(x + 30, y - 50);
+                ctx.quadraticCurveTo(x + 50, y - 50, x + 50, y - 30);
+                ctx.quadraticCurveTo(x + 50, y, x + 30, y);
+                ctx.quadraticCurveTo(x + 15, y + 10, x + 15, y + 30);
+                ctx.lineTo(x - 15, y + 30);
+                ctx.quadraticCurveTo(x - 15, y + 10, x - 30, y);
+                ctx.quadraticCurveTo(x - 50, y, x - 50, y - 30);
+                ctx.quadraticCurveTo(x - 50, y - 50, x - 30, y - 50);
+                ctx.fill();
+                
+                // Base
+                ctx.fillStyle = '#A67C00';
+                ctx.beginPath();
+                ctx.rect(x - 25, y + 30, 50, 10);
+                ctx.fill();
+                
+                ctx.fillStyle = '#8D6E00';
+                ctx.beginPath();
+                ctx.rect(x - 35, y + 40, 70, 10);
+                ctx.fill();
+                
+                // Dollar sign
+                ctx.fillStyle = '#4b0082';
+                ctx.font = '40px Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('$', x, y);
+                
+                // Money symbols
+                const symbols = ['$', '¢', '%'];
+                const colors = ['#4CAF50', '#2196F3', '#9C27B0'];
+                
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i / 5) * Math.PI * 2;
+                    const radius = 70;
+                    const symbolX = x + Math.cos(angle) * radius;
+                    const symbolY = y + Math.sin(angle) * radius;
+                    
+                    ctx.fillStyle = colors[i % colors.length];
+                    ctx.font = '30px Arial, sans-serif';
+                    ctx.fillText(symbols[i % symbols.length], symbolX, symbolY);
+                }
+            }
+            
+            // Sound functions
+            function playButtonSound() {
+                if (audioContext && gameState.settings.soundEnabled && gameState.settings.soundVolume > 0) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(gameState.settings.soundVolume, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                }
+            }
+            
+            function playTickSound() {
+                if (audioContext && gameState.settings.soundEnabled && gameState.settings.soundVolume > 0) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                }
+            }
+            
+            function playSelectSound() {
+                if (audioContext && gameState.settings.soundEnabled && gameState.settings.soundVolume > 0) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+                    
+                    gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                }
+            }
+            
+            function playSuccessSound() {
+                if (audioContext && gameState.settings.soundEnabled && gameState.settings.soundVolume > 0) {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    
+                    notes.forEach((frequency, index) => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.1);
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                        gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.1 + 0.01);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + index * 0.1 + 0.3);
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.start(audioContext.currentTime + index * 0.1);
+                        oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                    });
+                }
+            }
+            
+            function playErrorSound() {
+                if (audioContext && gameState.settings.soundEnabled && gameState.settings.soundVolume > 0) {
+                    const frequencies = [349.23, 329.63, 311.13]; // F4, E4, D#4/Eb4
+                    
+                    frequencies.forEach((frequency, index) => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.15);
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.15);
+                        gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.15 + 0.01);
+                        gainNode.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + index * 0.15 + 0.3);
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.start(audioContext.currentTime + index * 0.15);
+                        oscillator.stop(audioContext.currentTime + index * 0.15 + 0.3);
+                    });
+                }
+            }
+            
+            function playCelebrationSound() {
+                if (audioContext && gameState.settings.soundEnabled && gameState.settings.soundVolume > 0) {
+                    // Major scale ascending and then chord
+                    const notes = [
+                        { freq: 523.25, time: 0 },    // C5
+                        { freq: 587.33, time: 0.15 }, // D5
+                        { freq: 659.25, time: 0.3 },  // E5
+                        { freq: 698.46, time: 0.45 }, // F5
+                        { freq: 783.99, time: 0.6 },  // G5
+                        { freq: 880.00, time: 0.75 }, // A5
+                        { freq: 987.77, time: 0.9 },  // B5
+                        { freq: 1046.50, time: 1.05 }, // C6
+                        // Final chord
+                        { freq: 523.25, time: 1.3 }, // C5
+                        { freq: 659.25, time: 1.3 }, // E5
+                        { freq: 783.99, time: 1.3 }, // G5
+                        { freq: 1046.50, time: 1.3 }  // C6
+                    ];
+                    
+                    notes.forEach(note => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                        gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime + note.time + 0.01);
+                        
+                        // Longer sustain for the final chord
+                        if (note.time === 1.3) {
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 1.0);
+                            oscillator.start(audioContext.currentTime + note.time);
+                            oscillator.stop(audioContext.currentTime + note.time + 1.0);
+                        } else {
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 0.2);
+                            oscillator.start(audioContext.currentTime + note.time);
+                            oscillator.stop(audioContext.currentTime + note.time + 0.2);
+                        }
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                    });
+                }
+            }
+            
+            // Initialize the game when the window loads
+            window.addEventListener('load', initGame);
+        });
+    </script>
+</body>
+</html>

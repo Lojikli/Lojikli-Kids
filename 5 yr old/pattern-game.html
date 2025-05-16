@@ -1,0 +1,2886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pattern Planet: Adventure Learning Game</title>
+    <style>
+        /* Basic styling */
+        body {
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            background-color: #e9f7ff;
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            color: #333;
+        }
+        
+        #game-container {
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0, 0, 100, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        h1, h2, h3 {
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+            color: #4b0082;
+            text-align: center;
+        }
+
+        h1 {
+            background: linear-gradient(45deg, #ff6b6b, #4b0082, #4d39d8, #1cb0f6);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 2.5em;
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        /* Game screens */
+        .screen {
+            width: 100%;
+            height: 100vh;
+            max-height: 800px;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: all 0.5s ease;
+            background: #ffffff;
+        }
+        
+        .screen.visible {
+            display: flex;
+        }
+        
+        .screen.hidden {
+            display: none;
+        }
+        
+        /* Buttons */
+        .btn {
+            background-color: #FF9A00;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 0 #cc7a00;
+            outline: none;
+        }
+        
+        .btn:hover {
+            background-color: #FFB240;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #cc7a00;
+        }
+        
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #cc7a00;
+        }
+        
+        .btn-green {
+            background-color: #4CAF50;
+            box-shadow: 0 4px 0 #388E3C;
+        }
+        
+        .btn-green:hover {
+            background-color: #66BB6A;
+            box-shadow: 0 6px 0 #388E3C;
+        }
+        
+        .btn-green:active {
+            box-shadow: 0 2px 0 #388E3C;
+        }
+        
+        .btn-blue {
+            background-color: #2196F3;
+            box-shadow: 0 4px 0 #0b7dda;
+        }
+        
+        .btn-blue:hover {
+            background-color: #42a5f5;
+            box-shadow: 0 6px 0 #0b7dda;
+        }
+        
+        .btn-blue:active {
+            box-shadow: 0 2px 0 #0b7dda;
+        }
+        
+        .btn-purple {
+            background-color: #9C27B0;
+            box-shadow: 0 4px 0 #7B1FA2;
+        }
+        
+        .btn-purple:hover {
+            background-color: #BA68C8;
+            box-shadow: 0 6px 0 #7B1FA2;
+        }
+        
+        .btn-purple:active {
+            box-shadow: 0 2px 0 #7B1FA2;
+        }
+        
+        /* Game area */
+        #game-area {
+            width: 100%;
+            height: 300px;
+            background-color: #f8f8ff;
+            border-radius: 20px;
+            margin: 20px 0;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Characters */
+        .character {
+            position: absolute;
+            transition: all 0.5s ease;
+        }
+        
+        .speech-bubble {
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px;
+            max-width: 300px;
+            position: absolute;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            z-index: 100;
+            font-size: 1.2em;
+            line-height: 1.4;
+            border: 3px solid #4b0082;
+        }
+        
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: #4b0082 transparent transparent transparent;
+        }
+        
+        /* Pattern items */
+        .pattern-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        .pattern-item {
+            width: 60px;
+            height: 60px;
+            margin: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .pattern-item:hover {
+            transform: scale(1.1);
+        }
+        
+        .pattern-item.selected {
+            border: 3px solid #4b0082;
+            transform: scale(1.05);
+        }
+        
+        .pattern-item.correct {
+            background-color: #4CAF50 !important;
+            color: white;
+        }
+        
+        .pattern-item.incorrect {
+            background-color: #f44336 !important;
+            color: white;
+        }
+        
+        /* Quiz options */
+        .quiz-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .quiz-option {
+            background-color: #e0e0e0;
+            color: #333;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 120px;
+        }
+        
+        .quiz-option:hover {
+            background-color: #d0d0d0;
+            transform: translateY(-2px);
+        }
+        
+        .quiz-option.selected {
+            background-color: #9C27B0;
+            color: white;
+        }
+        
+        .quiz-option.correct {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .quiz-option.incorrect {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        /* Hint */
+        .hint-container {
+            position: relative;
+            margin: 10px 0;
+        }
+        
+        .hint-button {
+            background-color: #f0f0f0;
+            color: #333;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-weight: bold;
+            font-size: 1.2em;
+            cursor: pointer;
+        }
+        
+        .hint-text {
+            background-color: #fff9c4;
+            padding: 10px 15px;
+            border-radius: 10px;
+            max-width: 400px;
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Progress bar */
+        .progress-container {
+            width: 80%;
+            background-color: #f0f0f0;
+            border-radius: 20px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: linear-gradient(45deg, #ff6b6b, #4b0082, #4d39d8, #1cb0f6);
+            width: 0%;
+            border-radius: 20px;
+            transition: width 0.5s ease;
+        }
+        
+        /* Score display */
+        .score-display {
+            font-size: 1.5em;
+            color: #4b0082;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        /* Learning path */
+        .learning-path {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 80%;
+            margin: 20px 0;
+        }
+        
+        .path-segment {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            margin: 0 10px;
+            position: relative;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .path-segment:not(:last-child):after {
+            content: '';
+            position: absolute;
+            right: -20px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 4px;
+            background-color: #e0e0e0;
+        }
+        
+        .path-segment.completed {
+            background-color: #4CAF50;
+        }
+        
+        .path-segment.completed:not(:last-child):after {
+            background-color: #4CAF50;
+        }
+        
+        .path-segment.current {
+            background-color: #2196F3;
+            transform: scale(1.2);
+        }
+        
+        /* Particles */
+        .star, .bubble {
+            position: absolute;
+            z-index: 1000;
+        }
+        
+        .bubble {
+            border-radius: 50%;
+        }
+        
+        /* Settings panel */
+        .settings-panel {
+            background-color: #ffffff;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        
+        .setting-group {
+            margin: 15px 0;
+        }
+        
+        .setting-label {
+            font-size: 1.2em;
+            margin-bottom: 10px;
+            display: block;
+        }
+        
+        .setting-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .setting-option {
+            padding: 8px 15px;
+            background-color: #f0f0f0;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .setting-option:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .setting-option.selected {
+            background-color: #2196F3;
+            color: white;
+        }
+        
+        /* Game level designs */
+        .level-container {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .btn {
+                padding: 12px 24px;
+                font-size: 1em;
+            }
+            
+            .pattern-item {
+                width: 50px;
+                height: 50px;
+                font-size: 1.2em;
+                margin: 5px;
+            }
+            
+            .quiz-option {
+                padding: 8px 15px;
+                font-size: 1em;
+                min-width: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen visible">
+            <h1>Pattern Planet</h1>
+            <h2>Adventure Learning Game</h2>
+            
+            <div id="start-characters" style="position: relative; width: 100%; height: 200px; margin: 20px 0;">
+                <!-- Characters will be drawn here by JavaScript -->
+            </div>
+            
+            <p style="text-align: center; font-size: 1.2em; max-width: 600px;">
+                Join Patty the Pattern Master and friends on an exciting adventure to discover the magic of patterns!
+                Learn about sequences, logic, and prediction while having loads of fun!
+            </p>
+            
+            <button id="startButton" class="btn btn-green">Start Adventure!</button>
+            <button id="settingsButton" class="btn">Settings</button>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen hidden">
+            <h1>Game Settings</h1>
+            
+            <div class="settings-panel">
+                <div class="setting-group">
+                    <label class="setting-label">Game Difficulty:</label>
+                    <div class="setting-options">
+                        <div class="setting-option selected" data-difficulty="easy">Easy</div>
+                        <div class="setting-option" data-difficulty="medium">Medium</div>
+                        <div class="setting-option" data-difficulty="hard">Hard</div>
+                        <div class="setting-option" data-difficulty="genius">Genius</div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <label class="setting-label">Pattern Types:</label>
+                    <div class="setting-options">
+                        <div class="setting-option selected" data-pattern="colors">Colors</div>
+                        <div class="setting-option selected" data-pattern="shapes">Shapes</div>
+                        <div class="setting-option selected" data-pattern="numbers">Numbers</div>
+                        <div class="setting-option selected" data-pattern="letters">Letters</div>
+                        <div class="setting-option" data-pattern="combined">Combined</div>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <label class="setting-label">Sound Volume:</label>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="50" style="width: 100%;">
+                </div>
+                
+                <div class="setting-group">
+                    <label class="setting-label">Special Learning Modes:</label>
+                    <div class="setting-options">
+                        <div class="setting-option" data-mode="fibonacci">Fibonacci</div>
+                        <div class="setting-option" data-mode="prime">Prime Numbers</div>
+                        <div class="setting-option" data-mode="symmetry">Symmetry</div>
+                        <div class="setting-option" data-mode="fractals">Fractals</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="backFromSettingsButton" class="btn">Back to Menu</button>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen hidden">
+            <div class="score-display">Score: <span id="scoreValue">0</span></div>
+            
+            <div class="progress-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            
+            <div id="level-display" style="font-size: 1.2em; margin: 10px 0;"></div>
+            
+            <div id="game-area">
+                <!-- Game elements will be dynamically inserted here -->
+            </div>
+            
+            <div id="patternContainer" class="pattern-container">
+                <!-- Pattern items will be dynamically inserted here -->
+            </div>
+            
+            <div id="patty-character" class="character" style="bottom: 10px; left: 20px;">
+                <!-- Character will be drawn by JavaScript -->
+            </div>
+            
+            <div id="patty-bubble" class="speech-bubble" style="bottom: 150px; left: 120px;">
+                Let's find the pattern!
+            </div>
+            
+            <div class="hint-container">
+                <button id="hintButton" class="hint-button">?</button>
+                <div id="hintText" class="hint-text">
+                    Hint will appear here...
+                </div>
+            </div>
+            
+            <button id="checkAnswerButton" class="btn btn-blue">Check Answer</button>
+            <button id="nextButton" class="btn" style="display: none;">Next Pattern</button>
+        </div>
+        
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="screen hidden">
+            <h2>Pattern Quiz Challenge!</h2>
+            
+            <div id="quizProfessor-character" class="character" style="top: 20px; right: 30px;">
+                <!-- Character will be drawn by JavaScript -->
+            </div>
+            
+            <div id="quizProfessorBubble" class="speech-bubble" style="top: 30px; right: 150px;">
+                Can you solve this quiz?
+            </div>
+            
+            <div id="quizQuestion" style="font-size: 1.2em; margin: 20px 0; text-align: center; max-width: 80%;">
+                Quiz question will appear here...
+            </div>
+            
+            <div id="quizOptions" class="quiz-options">
+                <!-- Quiz options will be dynamically inserted here -->
+            </div>
+            
+            <button id="submitQuizButton" class="btn btn-purple">Submit Answer</button>
+        </div>
+        
+        <!-- Reward Screen -->
+        <div id="rewardScreen" class="screen hidden">
+            <h1>Fantastic Job!</h1>
+            
+            <div id="rewardText" style="font-size: 1.5em; margin: 20px 0; text-align: center; color: #4b0082;">
+                You're amazing with patterns!
+            </div>
+            
+            <div id="rewardAnimation" style="width: 100%; height: 300px; position: relative;">
+                <!-- Reward animation will be drawn here -->
+            </div>
+            
+            <div id="learningPath" class="learning-path">
+                <!-- Learning path segments will be inserted here -->
+            </div>
+            
+            <button id="continueButton" class="btn btn-green">Continue Adventure</button>
+            <button id="homeButton" class="btn">Back to Home</button>
+        </div>
+    </div>
+
+    <script>
+        // Game initialization
+        document.addEventListener('DOMContentLoaded', function() {
+            // Audio context initialization
+            let audioContext;
+            
+            try {
+                // Fix for browsers requiring user interaction before creating AudioContext
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioContext();
+                
+                // Suspend until user interaction
+                if (audioContext.state === 'running') {
+                    audioContext.suspend();
+                }
+            } catch (e) {
+                console.log('Web Audio API not supported in this browser');
+            }
+            
+            // Game state
+            const gameState = {
+                score: 0,
+                currentLevel: 1,
+                maxLevel: 10,
+                progress: 0,
+                settings: {
+                    difficulty: 'easy',
+                    patternTypes: ['colors', 'shapes', 'numbers', 'letters'],
+                    soundVolume: 0.5,
+                    specialModes: []
+                },
+                currentPattern: [],
+                userPattern: [],
+                currentQuiz: {
+                    question: '',
+                    options: [],
+                    correctAnswer: '',
+                    userAnswer: ''
+                },
+                animations: {
+                    stars: [],
+                    bubbles: [],
+                    timers: []
+                }
+            };
+            
+            // DOM elements
+            const elements = {
+                screens: {
+                    startScreen: document.getElementById('startScreen'),
+                    settingsScreen: document.getElementById('settingsScreen'),
+                    gameScreen: document.getElementById('gameScreen'),
+                    quizScreen: document.getElementById('quizScreen'),
+                    rewardScreen: document.getElementById('rewardScreen')
+                },
+                buttons: {
+                    startButton: document.getElementById('startButton'),
+                    settingsButton: document.getElementById('settingsButton'),
+                    backFromSettingsButton: document.getElementById('backFromSettingsButton'),
+                    checkAnswerButton: document.getElementById('checkAnswerButton'),
+                    nextButton: document.getElementById('nextButton'),
+                    hintButton: document.getElementById('hintButton'),
+                    submitQuizButton: document.getElementById('submitQuizButton'),
+                    continueButton: document.getElementById('continueButton'),
+                    homeButton: document.getElementById('homeButton')
+                },
+                displays: {
+                    scoreValue: document.getElementById('scoreValue'),
+                    progressBar: document.getElementById('progressBar'),
+                    levelDisplay: document.getElementById('level-display'),
+                    patternContainer: document.getElementById('patternContainer'),
+                    hintText: document.getElementById('hintText'),
+                    quizQuestion: document.getElementById('quizQuestion'),
+                    quizOptions: document.getElementById('quizOptions'),
+                    rewardText: document.getElementById('rewardText'),
+                    rewardAnimation: document.getElementById('rewardAnimation'),
+                    learningPath: document.getElementById('learningPath')
+                },
+                characters: {
+                    startCharacters: document.getElementById('start-characters'),
+                    patty: document.getElementById('patty-character'),
+                    pattyBubble: document.getElementById('patty-bubble'),
+                    quizProfessor: document.getElementById('quizProfessor-character'),
+                    quizProfessorBubble: document.getElementById('quizProfessorBubble')
+                },
+                settings: {
+                    volumeSlider: document.getElementById('volumeSlider'),
+                    difficultyOptions: document.querySelectorAll('[data-difficulty]'),
+                    patternOptions: document.querySelectorAll('[data-pattern]'),
+                    modeOptions: document.querySelectorAll('[data-mode]')
+                }
+            };
+            
+            // Event listeners for buttons
+            elements.buttons.startButton.addEventListener('click', startGame);
+            elements.buttons.settingsButton.addEventListener('click', function() {
+                showScreen('settingsScreen');
+            });
+            elements.buttons.backFromSettingsButton.addEventListener('click', function() {
+                showScreen('startScreen');
+            });
+            elements.buttons.checkAnswerButton.addEventListener('click', checkAnswer);
+            elements.buttons.nextButton.addEventListener('click', nextLevel);
+            elements.buttons.hintButton.addEventListener('click', toggleHint);
+            elements.buttons.submitQuizButton.addEventListener('click', checkQuizAnswer);
+            elements.buttons.continueButton.addEventListener('click', continueGame);
+            elements.buttons.homeButton.addEventListener('click', function() {
+                showScreen('startScreen');
+            });
+            
+            // Settings event listeners
+            elements.settings.volumeSlider.addEventListener('input', function() {
+                gameState.settings.soundVolume = this.value / 100;
+            });
+            
+            elements.settings.difficultyOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    elements.settings.difficultyOptions.forEach(opt => opt.classList.remove('selected'));
+                    this.classList.add('selected');
+                    gameState.settings.difficulty = this.dataset.difficulty;
+                });
+            });
+            
+            elements.settings.patternOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                    
+                    // Update pattern types
+                    gameState.settings.patternTypes = Array.from(
+                        elements.settings.patternOptions
+                    ).filter(opt => opt.classList.contains('selected'))
+                     .map(opt => opt.dataset.pattern);
+                });
+            });
+            
+            elements.settings.modeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    this.classList.toggle('selected');
+                    
+                    // Update special modes
+                    gameState.settings.specialModes = Array.from(
+                        elements.settings.modeOptions
+                    ).filter(opt => opt.classList.contains('selected'))
+                     .map(opt => opt.dataset.mode);
+                });
+            });
+            
+            // Initialize the game
+            function initGame() {
+                // Draw characters
+                drawCharacters();
+                
+                // Create learning path
+                createLearningPath();
+                
+                // Enable audio context on first user interaction
+                document.addEventListener('click', function enableAudio() {
+                    if (audioContext && audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                    document.removeEventListener('click', enableAudio);
+                }, { once: true });
+            }
+            
+            // Start the game
+            function startGame() {
+                playButtonSound();
+                
+                // Reset game state
+                gameState.score = 0;
+                gameState.currentLevel = 1;
+                gameState.progress = 0;
+                
+                // Update display
+                elements.displays.scoreValue.textContent = gameState.score;
+                elements.displays.progressBar.style.width = '0%';
+                
+                // Load the first level
+                loadLevel(gameState.currentLevel);
+                
+                // Show the game screen
+                showScreen('gameScreen');
+            }
+            
+            // Load a level
+            function loadLevel(level) {
+                // Update level display
+                elements.displays.levelDisplay.textContent = `Level ${level}`;
+                
+                // Generate a pattern based on level and settings
+                generatePattern(level);
+                
+                // Update learning path
+                updateLearningPath();
+                
+                // Show level introduction message
+                const messages = [
+                    "Let's find the pattern!",
+                    "What comes next in this sequence?",
+                    "Can you spot the pattern?",
+                    "What's the rule for this pattern?",
+                    "Complete the sequence!",
+                    "This one is tricky! Find the pattern.",
+                    "Pattern power activated! What's next?",
+                    "Super pattern challenge! What comes next?",
+                    "Master level pattern! Can you solve it?",
+                    "Ultimate pattern challenge! You can do it!"
+                ];
+                
+                showMessage(elements.characters.pattyBubble, messages[Math.min(level - 1, messages.length - 1)]);
+                
+                // Set hint for the current level
+                updateHint(level);
+                
+                // Hide the next button and show check answer button
+                elements.buttons.nextButton.style.display = 'none';
+                elements.buttons.checkAnswerButton.style.display = 'block';
+                
+                // Clear user pattern
+                gameState.userPattern = [];
+            }
+            
+            // Generate a pattern based on level
+            function generatePattern(level) {
+                // Clear pattern container
+                elements.displays.patternContainer.innerHTML = '';
+                
+                // Get the pattern type based on settings and level
+                const availableTypes = gameState.settings.patternTypes;
+                const patternType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+                
+                // Generate pattern based on type and difficulty
+                let pattern = [];
+                
+                if (patternType === 'colors') {
+                    pattern = generateColorPattern(level);
+                } else if (patternType === 'shapes') {
+                    pattern = generateShapePattern(level);
+                } else if (patternType === 'numbers') {
+                    pattern = generateNumberPattern(level);
+                } else if (patternType === 'letters') {
+                    pattern = generateLetterPattern(level);
+                } else if (patternType === 'combined') {
+                    pattern = generateCombinedPattern(level);
+                }
+                
+                // Store the current pattern
+                gameState.currentPattern = pattern;
+                
+                // Display pattern (except the last item which is the answer)
+                for (let i = 0; i < pattern.length - 1; i++) {
+                    createPatternItem(pattern[i], i);
+                }
+                
+                // Create answer slots
+                const answerCount = getAnswerCount(level);
+                for (let i = 0; i < answerCount; i++) {
+                    createAnswerSlot(i);
+                }
+            }
+            
+            // Get the number of answers needed based on level
+            function getAnswerCount(level) {
+                if (level <= 3) return 1;
+                if (level <= 6) return 2;
+                return 3;
+            }
+            
+            // Generate a color pattern
+            function generateColorPattern(level) {
+                const colors = ['#FF5252', '#4CAF50', '#2196F3', '#FFC107', '#9C27B0', '#00BCD4', '#FF9800', '#607D8B'];
+                let pattern = [];
+                
+                // Simple repeating pattern for early levels
+                if (level <= 3) {
+                    const repeatCount = 2 + Math.floor(Math.random() * 2);
+                    const colorSet = [];
+                    
+                    // Randomly select colors
+                    for (let i = 0; i < repeatCount; i++) {
+                        colorSet.push(colors[Math.floor(Math.random() * colors.length)]);
+                    }
+                    
+                    // Create pattern by repeating the color set
+                    for (let i = 0; i < 5; i++) {
+                        pattern.push({
+                            type: 'color',
+                            value: colorSet[i % repeatCount]
+                        });
+                    }
+                }
+                // Alternating patterns
+                else if (level <= 6) {
+                    const colorA = colors[Math.floor(Math.random() * colors.length)];
+                    let colorB;
+                    do {
+                        colorB = colors[Math.floor(Math.random() * colors.length)];
+                    } while (colorB === colorA);
+                    
+                    const colorC = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    // ABAB pattern
+                    if (level <= 4) {
+                        pattern = [
+                            { type: 'color', value: colorA },
+                            { type: 'color', value: colorB },
+                            { type: 'color', value: colorA },
+                            { type: 'color', value: colorB },
+                            { type: 'color', value: colorA }
+                        ];
+                    }
+                    // ABCABC pattern
+                    else {
+                        pattern = [
+                            { type: 'color', value: colorA },
+                            { type: 'color', value: colorB },
+                            { type: 'color', value: colorC },
+                            { type: 'color', value: colorA },
+                            { type: 'color', value: colorB },
+                            { type: 'color', value: colorC }
+                        ];
+                    }
+                }
+                // Growing patterns
+                else {
+                    const baseColors = [
+                        colors[Math.floor(Math.random() * colors.length)],
+                        colors[Math.floor(Math.random() * colors.length)]
+                    ];
+                    
+                    // Create pattern
+                    pattern = [
+                        { type: 'color', value: baseColors[0] },
+                        { type: 'color', value: baseColors[1] },
+                        { type: 'color', value: baseColors[0] },
+                        { type: 'color', value: baseColors[1] },
+                        { type: 'color', value: baseColors[0] },
+                        { type: 'color', value: baseColors[1] },
+                        { type: 'color', value: baseColors[0] }
+                    ];
+                }
+                
+                return pattern;
+            }
+            
+            // Generate a shape pattern
+            function generateShapePattern(level) {
+                const shapes = ['circle', 'square', 'triangle', 'star', 'heart', 'diamond'];
+                let pattern = [];
+                
+                // Simple repeating pattern for early levels
+                if (level <= 3) {
+                    const repeatCount = 2 + Math.floor(Math.random() * 2);
+                    const shapeSet = [];
+                    
+                    // Randomly select shapes
+                    for (let i = 0; i < repeatCount; i++) {
+                        shapeSet.push(shapes[Math.floor(Math.random() * shapes.length)]);
+                    }
+                    
+                    // Create pattern by repeating the shape set
+                    for (let i = 0; i < 5; i++) {
+                        pattern.push({
+                            type: 'shape',
+                            value: shapeSet[i % repeatCount]
+                        });
+                    }
+                }
+                // Alternating patterns
+                else if (level <= 6) {
+                    const shapeA = shapes[Math.floor(Math.random() * shapes.length)];
+                    let shapeB;
+                    do {
+                        shapeB = shapes[Math.floor(Math.random() * shapes.length)];
+                    } while (shapeB === shapeA);
+                    
+                    const shapeC = shapes[Math.floor(Math.random() * shapes.length)];
+                    
+                    // ABAB pattern
+                    if (level <= 4) {
+                        pattern = [
+                            { type: 'shape', value: shapeA },
+                            { type: 'shape', value: shapeB },
+                            { type: 'shape', value: shapeA },
+                            { type: 'shape', value: shapeB },
+                            { type: 'shape', value: shapeA }
+                        ];
+                    }
+                    // ABCABC pattern
+                    else {
+                        pattern = [
+                            { type: 'shape', value: shapeA },
+                            { type: 'shape', value: shapeB },
+                            { type: 'shape', value: shapeC },
+                            { type: 'shape', value: shapeA },
+                            { type: 'shape', value: shapeB },
+                            { type: 'shape', value: shapeC }
+                        ];
+                    }
+                }
+                // Growing patterns
+                else {
+                    // Create pattern
+                    pattern = [
+                        { type: 'shape', value: 'circle' },
+                        { type: 'shape', value: 'square' },
+                        { type: 'shape', value: 'triangle' },
+                        { type: 'shape', value: 'circle' },
+                        { type: 'shape', value: 'square' },
+                        { type: 'shape', value: 'triangle' }
+                    ];
+                }
+                
+                return pattern;
+            }
+            
+            // Generate a number pattern
+            function generateNumberPattern(level) {
+                let pattern = [];
+                
+                // Simple counting for early levels
+                if (level <= 2) {
+                    const start = Math.floor(Math.random() * 5) + 1;
+                    
+                    for (let i = 0; i < 5; i++) {
+                        pattern.push({
+                            type: 'number',
+                            value: start + i
+                        });
+                    }
+                }
+                // Even or odd numbers
+                else if (level <= 4) {
+                    const start = Math.floor(Math.random() * 5) * 2 + (level === 3 ? 0 : 1); // Even for level 3, odd for level 4
+                    
+                    for (let i = 0; i < 5; i++) {
+                        pattern.push({
+                            type: 'number',
+                            value: start + i * 2
+                        });
+                    }
+                }
+                // Simple arithmetic sequences
+                else if (level <= 6) {
+                    const start = Math.floor(Math.random() * 5) + 1;
+                    const step = Math.floor(Math.random() * 3) + 2;
+                    
+                    for (let i = 0; i < 6; i++) {
+                        pattern.push({
+                            type: 'number',
+                            value: start + i * step
+                        });
+                    }
+                }
+                // Fibonacci-like sequence for higher levels
+                else if (level <= 8) {
+                    let a = 1;
+                    let b = 1;
+                    
+                    pattern.push({ type: 'number', value: a });
+                    pattern.push({ type: 'number', value: b });
+                    
+                    for (let i = 0; i < 5; i++) {
+                        const next = a + b;
+                        pattern.push({ type: 'number', value: next });
+                        a = b;
+                        b = next;
+                    }
+                }
+                // More complex patterns for highest levels
+                else {
+                    const operations = [
+                        (n) => n * 2,
+                        (n) => n + 3,
+                        (n) => n * n,
+                        (n) => Math.floor(n / 2) + 1
+                    ];
+                    
+                    const operation = operations[Math.floor(Math.random() * operations.length)];
+                    let value = Math.floor(Math.random() * 3) + 1;
+                    
+                    for (let i = 0; i < 6; i++) {
+                        pattern.push({ type: 'number', value: value });
+                        value = operation(value);
+                    }
+                }
+                
+                return pattern;
+            }
+            
+            // Generate a letter pattern
+            function generateLetterPattern(level) {
+                let pattern = [];
+                
+                // Simple alphabetical sequence
+                if (level <= 3) {
+                    const startCode = 65 + Math.floor(Math.random() * 15); // Start with a random letter (A-P)
+                    
+                    for (let i = 0; i < 5; i++) {
+                        pattern.push({
+                            type: 'letter',
+                            value: String.fromCharCode(startCode + i)
+                        });
+                    }
+                }
+                // Skip letters
+                else if (level <= 6) {
+                    const startCode = 65 + Math.floor(Math.random() * 10); // Start with a random letter (A-J)
+                    const skip = 2 + Math.floor(Math.random() * 2); // Skip 2 or 3 letters
+                    
+                    for (let i = 0; i < 5; i++) {
+                        pattern.push({
+                            type: 'letter',
+                            value: String.fromCharCode(startCode + i * skip)
+                        });
+                    }
+                }
+                // Vowels or consonants
+                else {
+                    const vowels = ['A', 'E', 'I', 'O', 'U'];
+                    const consonants = ['B', 'C', 'D', 'F', 'G', 'H', 'J', 'K', 'L', 'M'];
+                    
+                    if (Math.random() < 0.5) {
+                        // Alternating vowels and consonants
+                        for (let i = 0; i < 6; i++) {
+                            pattern.push({
+                                type: 'letter',
+                                value: i % 2 === 0 ? 
+                                    vowels[Math.floor(Math.random() * vowels.length)] : 
+                                    consonants[Math.floor(Math.random() * consonants.length)]
+                            });
+                        }
+                    } else {
+                        // Words pattern (first letters of a sequence)
+                        const words = [
+                            ['R', 'O', 'Y', 'G', 'B', 'I', 'V'], // Rainbow colors
+                            ['M', 'T', 'W', 'T', 'F', 'S', 'S'], // Days of week
+                            ['J', 'F', 'M', 'A', 'M', 'J', 'J']  // Months
+                        ];
+                        
+                        const selectedWord = words[Math.floor(Math.random() * words.length)];
+                        
+                        for (let i = 0; i < selectedWord.length; i++) {
+                            pattern.push({
+                                type: 'letter',
+                                value: selectedWord[i]
+                            });
+                        }
+                    }
+                }
+                
+                return pattern;
+            }
+            
+            // Generate a combined pattern (mixing types)
+            function generateCombinedPattern(level) {
+                let pattern = [];
+                
+                // Simple alternating types
+                if (level <= 5) {
+                    const typeA = gameState.settings.patternTypes[Math.floor(Math.random() * gameState.settings.patternTypes.length)];
+                    let typeB;
+                    do {
+                        typeB = gameState.settings.patternTypes[Math.floor(Math.random() * gameState.settings.patternTypes.length)];
+                    } while (typeB === typeA);
+                    
+                    const colors = ['#FF5252', '#4CAF50', '#2196F3', '#FFC107', '#9C27B0'];
+                    const shapes = ['circle', 'square', 'triangle', 'star', 'heart'];
+                    const numbers = [1, 2, 3, 4, 5];
+                    const letters = ['A', 'B', 'C', 'D', 'E'];
+                    
+                    const getItemForType = (type, index) => {
+                        if (type === 'colors') {
+                            return { type: 'color', value: colors[index % colors.length] };
+                        } else if (type === 'shapes') {
+                            return { type: 'shape', value: shapes[index % shapes.length] };
+                        } else if (type === 'numbers') {
+                            return { type: 'number', value: numbers[index % numbers.length] };
+                        } else {
+                            return { type: 'letter', value: letters[index % letters.length] };
+                        }
+                    };
+                    
+                    // Alternating types pattern
+                    for (let i = 0; i < 6; i++) {
+                        pattern.push(getItemForType(i % 2 === 0 ? typeA : typeB, Math.floor(i/2)));
+                    }
+                }
+                // More complex for higher levels
+                else {
+                    // Transformation pattern (same value represented in different types)
+                    const baseValues = [1, 2, 3, 4, 5];
+                    const types = ['number', 'letter', 'shape', 'color'];
+                    
+                    for (let i = 0; i < 5; i++) {
+                        const value = baseValues[i];
+                        let type = types[i % types.length];
+                        
+                        if (type === 'number') {
+                            pattern.push({ type: 'number', value: value });
+                        } else if (type === 'letter') {
+                            pattern.push({ type: 'letter', value: String.fromCharCode(64 + value) });
+                        } else if (type === 'shape') {
+                            const shapes = ['circle', 'square', 'triangle', 'star', 'heart'];
+                            pattern.push({ type: 'shape', value: shapes[value - 1] });
+                        } else {
+                            const colors = ['#FF5252', '#4CAF50', '#2196F3', '#FFC107', '#9C27B0'];
+                            pattern.push({ type: 'color', value: colors[value - 1] });
+                        }
+                    }
+                }
+                
+                return pattern;
+            }
+            
+            // Create pattern item
+            function createPatternItem(item, index) {
+                const patternItem = document.createElement('div');
+                patternItem.className = 'pattern-item';
+                
+                if (item.type === 'color') {
+                    patternItem.style.backgroundColor = item.value;
+                } else if (item.type === 'shape') {
+                    patternItem.innerHTML = getShapeSVG(item.value);
+                    patternItem.style.backgroundColor = '#f0f0f0';
+                } else if (item.type === 'number') {
+                    patternItem.textContent = item.value;
+                    patternItem.style.backgroundColor = '#f0f0f0';
+                } else if (item.type === 'letter') {
+                    patternItem.textContent = item.value;
+                    patternItem.style.backgroundColor = '#f0f0f0';
+                }
+                
+                elements.displays.patternContainer.appendChild(patternItem);
+            }
+            
+            // Create answer slot
+            function createAnswerSlot(index) {
+                const answerSlot = document.createElement('div');
+                answerSlot.className = 'pattern-item';
+                answerSlot.style.backgroundColor = '#e0e0e0';
+                answerSlot.style.border = '2px dashed #9C27B0';
+                answerSlot.setAttribute('data-index', index);
+                answerSlot.textContent = '?';
+                
+                // Add options popup when clicked
+                answerSlot.addEventListener('click', function() {
+                    // Get the correct answer
+                    const correctAnswer = gameState.currentPattern[gameState.currentPattern.length - 1 - index];
+                    
+                    // Create options based on the pattern type
+                    let options = [];
+                    
+                    if (correctAnswer.type === 'color') {
+                        options = ['#FF5252', '#4CAF50', '#2196F3', '#FFC107', '#9C27B0', '#00BCD4'].map(color => {
+                            return { type: 'color', value: color };
+                        });
+                    } else if (correctAnswer.type === 'shape') {
+                        options = ['circle', 'square', 'triangle', 'star', 'heart', 'diamond'].map(shape => {
+                            return { type: 'shape', value: shape };
+                        });
+                    } else if (correctAnswer.type === 'number') {
+                        // Generate options based on the pattern
+                        let numberOptions = [];
+                        const correctValue = correctAnswer.value;
+                        
+                        // Include the correct answer
+                        numberOptions.push(correctValue);
+                        
+                        // Add some reasonable alternatives
+                        for (let i = 0; i < 5; i++) {
+                            let option;
+                            do {
+                                option = correctValue + Math.floor(Math.random() * 10) - 5;
+                            } while (option <= 0 || numberOptions.includes(option));
+                            
+                            numberOptions.push(option);
+                        }
+                        
+                        options = numberOptions.map(num => {
+                            return { type: 'number', value: num };
+                        });
+                    } else if (correctAnswer.type === 'letter') {
+                        // Generate letter options
+                        let letterOptions = [];
+                        const correctValue = correctAnswer.value;
+                        const correctCode = correctValue.charCodeAt(0);
+                        
+                        // Include the correct answer
+                        letterOptions.push(correctValue);
+                        
+                        // Add some reasonable alternatives
+                        for (let i = 0; i < 5; i++) {
+                            let option;
+                            do {
+                                const offset = Math.floor(Math.random() * 10) - 5;
+                                option = String.fromCharCode(correctCode + offset);
+                            } while (option < 'A' || option > 'Z' || letterOptions.includes(option));
+                            
+                            letterOptions.push(option);
+                        }
+                        
+                        options = letterOptions.map(letter => {
+                            return { type: 'letter', value: letter };
+                        });
+                    }
+                    
+                    // Shuffle options
+                    options = shuffleArray(options);
+                    
+                    // Create and show options popup
+                    showOptionsPopup(options, answerSlot, index);
+                });
+                
+                elements.displays.patternContainer.appendChild(answerSlot);
+            }
+            
+            // Show options popup for answer selection
+            function showOptionsPopup(options, targetSlot, slotIndex) {
+                // Create popup container
+                const popup = document.createElement('div');
+                popup.className = 'options-popup';
+                popup.style.position = 'absolute';
+                popup.style.zIndex = '100';
+                popup.style.backgroundColor = 'white';
+                popup.style.borderRadius = '10px';
+                popup.style.boxShadow = '0 4px 10px rgba(0, 0, 0, 0.2)';
+                popup.style.padding = '10px';
+                popup.style.display = 'flex';
+                popup.style.flexWrap = 'wrap';
+                popup.style.maxWidth = '300px';
+                
+                // Get position of the target slot
+                const slotRect = targetSlot.getBoundingClientRect();
+                const containerRect = elements.displays.patternContainer.getBoundingClientRect();
+                
+                // Position popup
+                popup.style.top = (slotRect.bottom - containerRect.top + 10) + 'px';
+                popup.style.left = (slotRect.left - containerRect.left - 50) + 'px';
+                
+                // Add options to popup
+                options.forEach((option, index) => {
+                    const optionElem = document.createElement('div');
+                    optionElem.className = 'pattern-item';
+                    optionElem.style.margin = '5px';
+                    optionElem.style.cursor = 'pointer';
+                    
+                    if (option.type === 'color') {
+                        optionElem.style.backgroundColor = option.value;
+                    } else if (option.type === 'shape') {
+                        optionElem.innerHTML = getShapeSVG(option.value);
+                        optionElem.style.backgroundColor = '#f0f0f0';
+                    } else if (option.type === 'number') {
+                        optionElem.textContent = option.value;
+                        optionElem.style.backgroundColor = '#f0f0f0';
+                    } else if (option.type === 'letter') {
+                        optionElem.textContent = option.value;
+                        optionElem.style.backgroundColor = '#f0f0f0';
+                    }
+                    
+                    // Select option on click
+                    optionElem.addEventListener('click', function() {
+                        selectOption(option, targetSlot, slotIndex);
+                        document.body.removeChild(popup);
+                        playSelectSound();
+                    });
+                    
+                    popup.appendChild(optionElem);
+                });
+                
+                // Close popup when clicking outside
+                document.addEventListener('click', function closePopup(e) {
+                    if (!popup.contains(e.target) && e.target !== targetSlot) {
+                        if (document.body.contains(popup)) {
+                            document.body.removeChild(popup);
+                        }
+                        document.removeEventListener('click', closePopup);
+                    }
+                });
+                
+                // Add popup to body
+                document.body.appendChild(popup);
+            }
+            
+            // Select an option for the answer slot
+            function selectOption(option, targetSlot, slotIndex) {
+                // Clear existing content
+                targetSlot.innerHTML = '';
+                targetSlot.textContent = '';
+                
+                // Apply the selected option
+                if (option.type === 'color') {
+                    targetSlot.style.backgroundColor = option.value;
+                } else if (option.type === 'shape') {
+                    targetSlot.innerHTML = getShapeSVG(option.value);
+                    targetSlot.style.backgroundColor = '#f0f0f0';
+                } else if (option.type === 'number') {
+                    targetSlot.textContent = option.value;
+                    targetSlot.style.backgroundColor = '#f0f0f0';
+                } else if (option.type === 'letter') {
+                    targetSlot.textContent = option.value;
+                    targetSlot.style.backgroundColor = '#f0f0f0';
+                }
+                
+                // Store user's answer
+                if (!gameState.userPattern[slotIndex]) {
+                    gameState.userPattern.push(option);
+                } else {
+                    gameState.userPattern[slotIndex] = option;
+                }
+            }
+            
+            // Check the user's answer
+            function checkAnswer() {
+                const answerCount = getAnswerCount(gameState.currentLevel);
+                
+                // Make sure all answer slots are filled
+                if (gameState.userPattern.length < answerCount) {
+                    showMessage(elements.characters.pattyBubble, "Please fill in all the answer slots!");
+                    return;
+                }
+                
+                // Compare user's pattern with the correct pattern
+                let correct = true;
+                
+                for (let i = 0; i < answerCount; i++) {
+                    const userAnswer = gameState.userPattern[i];
+                    const correctAnswer = gameState.currentPattern[gameState.currentPattern.length - 1 - i];
+                    
+                    if (userAnswer.type !== correctAnswer.type || userAnswer.value !== correctAnswer.value) {
+                        correct = false;
+                        break;
+                    }
+                }
+                
+                if (correct) {
+                    // Correct answer
+                    gameState.score++;
+                    elements.displays.scoreValue.textContent = gameState.score;
+                    
+                    // Update progress
+                    gameState.progress += 10;
+                    elements.displays.progressBar.style.width = gameState.progress + '%';
+                    
+                    // Show success message
+                    showMessage(elements.characters.pattyBubble, "Excellent! You got it right!");
+                    
+                    // Play success sound and animation
+                    playSuccessSound();
+                    createParticleEffect();
+                    
+                    // Show next button and hide check answer button
+                    elements.buttons.nextButton.style.display = 'block';
+                    elements.buttons.checkAnswerButton.style.display = 'none';
+                } else {
+                    // Incorrect answer
+                    showMessage(elements.characters.pattyBubble, "Not quite. Try again!");
+                    
+                    // Play error sound
+                    playErrorSound();
+                }
+            }
+            
+            // Proceed to next level
+            function nextLevel() {
+                // Check if quiz time
+                if (gameState.currentLevel % 3 === 0) {
+                    // Load quiz
+                    generateQuizQuestion();
+                    showScreen('quizScreen');
+                } else {
+                    // Load next level
+                    gameState.currentLevel++;
+                    
+                    if (gameState.currentLevel > gameState.maxLevel) {
+                        // Game completed
+                        completeGame();
+                    } else {
+                        // Load next level
+                        loadLevel(gameState.currentLevel);
+                    }
+                }
+            }
+            
+            // Generate a quiz question
+            function generateQuizQuestion() {
+                // Define different types of questions
+                const questionTypes = [
+                    {
+                        type: 'identifying',
+                        generate: () => {
+                            const patterns = [
+                                { name: 'repeating', description: 'repeating pattern (e.g., ABABAB)' },
+                                { name: 'growing', description: 'growing pattern (like 2, 4, 6, 8)' },
+                                { name: 'alternating', description: 'alternating pattern (switching between different items)' },
+                                { name: 'symmetric', description: 'symmetric pattern (same forwards as backwards)' }
+                            ];
+                            
+                            const selectedPattern = patterns[Math.floor(Math.random() * patterns.length)];
+                            
+                            return {
+                                question: `What do we call a ${selectedPattern.description}?`,
+                                options: patterns.map(p => p.name),
+                                correctAnswer: selectedPattern.name
+                            };
+                        }
+                    },
+                    {
+                        type: 'prediction',
+                        generate: () => {
+                            const sequences = [
+                                { sequence: '2, 4, 6, 8, ?', options: ['10', '9', '12', '16'], answer: '10' },
+                                { sequence: 'A, C, E, G, ?', options: ['H', 'I', 'J', 'K'], answer: 'I' },
+                                { sequence: '1, 3, 6, 10, ?', options: ['15', '12', '18', '20'], answer: '15' },
+                                { sequence: 'Red, Blue, Red, Blue, ?', options: ['Green', 'Red', 'Yellow', 'Blue'], answer: 'Red' }
+                            ];
+                            
+                            const selected = sequences[Math.floor(Math.random() * sequences.length)];
+                            
+                            return {
+                                question: `What comes next in this pattern: ${selected.sequence}`,
+                                options: selected.options,
+                                correctAnswer: selected.answer
+                            };
+                        }
+                    },
+                    {
+                        type: 'concepts',
+                        generate: () => {
+                            const concepts = [
+                                {
+                                    question: 'Why are patterns important in math?',
+                                    options: ['They make math fun', 'They help us predict what comes next', 'They use lots of colors', 'They are always hard'],
+                                    answer: 'They help us predict what comes next'
+                                },
+                                {
+                                    question: 'What can we learn from patterns?',
+                                    options: ['Only colors', 'How to count by twos', 'How things are organized and connected', 'Nothing important'],
+                                    answer: 'How things are organized and connected'
+                                }
+                            ];
+                            
+                            const selected = concepts[Math.floor(Math.random() * concepts.length)];
+                            
+                            return {
+                                question: selected.question,
+                                options: selected.options,
+                                correctAnswer: selected.answer
+                            };
+                        }
+                    }
+                ];
+                
+                // Choose a question type appropriate for the current level
+                let typeIndex;
+                if (gameState.currentLevel <= 3) {
+                    typeIndex = 0; // Identifying patterns for early levels
+                } else if (gameState.currentLevel <= 6) {
+                    typeIndex = 1; // Prediction for middle levels
+                } else {
+                    typeIndex = 2; // Concepts for higher levels
+                }
+                
+                const questionType = questionTypes[typeIndex];
+                const quizQuestion = questionType.generate();
+                
+                // Store the quiz
+                gameState.currentQuiz = {
+                    question: quizQuestion.question,
+                    options: quizQuestion.options,
+                    correctAnswer: quizQuestion.correctAnswer,
+                    userAnswer: ''
+                };
+                
+                // Display the quiz
+                elements.displays.quizQuestion.textContent = gameState.currentQuiz.question;
+                
+                // Clear previous options
+                elements.displays.quizOptions.innerHTML = '';
+                
+                // Add options
+                gameState.currentQuiz.options.forEach(option => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'quiz-option';
+                    optionElement.textContent = option;
+                    optionElement.addEventListener('click', function() {
+                        selectQuizOption(this);
+                    });
+                    elements.displays.quizOptions.appendChild(optionElement);
+                });
+                
+                // Show quiz professor message
+                showMessage(elements.characters.quizProfessorBubble, "Can you answer this question about patterns?");
+            }
+            
+            // Select a quiz option
+            function selectQuizOption(optionElement) {
+                // Clear any previous selections
+                const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+                options.forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Select the clicked option
+                optionElement.classList.add('selected');
+                
+                // Store user's answer
+                gameState.currentQuiz.userAnswer = optionElement.textContent;
+                
+                // Play select sound
+                playSelectSound();
+            }
+            
+            // Check quiz answer
+            function checkQuizAnswer() {
+                if (!gameState.currentQuiz.userAnswer) {
+                    // No answer selected
+                    showMessage(elements.characters.quizProfessorBubble, "Please select an answer first!");
+                    return;
+                }
+                
+                // Check if the answer is correct
+                if (gameState.currentQuiz.userAnswer === gameState.currentQuiz.correctAnswer) {
+                    // Correct answer
+                    playSuccessSound();
+                    createParticleEffect();
+                    
+                    // Show celebration message
+                    showMessage(elements.characters.quizProfessorBubble, "Excellent! That's correct!");
+                    
+                    // Increment score
+                    gameState.score++;
+                    elements.displays.scoreValue.textContent = gameState.score;
+                    
+                    // Proceed to next level after delay
+                    setTimeout(() => {
+                        gameState.currentLevel++;
+                        if (gameState.currentLevel > gameState.maxLevel) {
+                            // Game completed
+                            completeGame();
+                        } else {
+                            // Load next level
+                            loadLevel(gameState.currentLevel);
+                            showScreen('gameScreen');
+                        }
+                    }, 2000);
+                } else {
+                    // Incorrect answer
+                    playErrorSound();
+                    
+                    // Show hint message
+                    showMessage(elements.characters.quizProfessorBubble, `Not quite. The correct answer is ${gameState.currentQuiz.correctAnswer}.`);
+                    
+                    // Highlight correct answer
+                    const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+                    options.forEach(option => {
+                        if (option.textContent === gameState.currentQuiz.correctAnswer) {
+                            option.classList.add('correct');
+                        } else if (option.classList.contains('selected')) {
+                            option.classList.add('incorrect');
+                        }
+                    });
+                    
+                    // Proceed to next level after delay
+                    setTimeout(() => {
+                        gameState.currentLevel++;
+                        if (gameState.currentLevel > gameState.maxLevel) {
+                            // Game completed
+                            completeGame();
+                        } else {
+                            // Load next level
+                            loadLevel(gameState.currentLevel);
+                            showScreen('gameScreen');
+                        }
+                    }, 3000);
+                }
+            }
+            
+            // Complete the game
+            function completeGame() {
+                // Show reward screen
+                showScreen('rewardScreen');
+                
+                // Set reward text based on score
+                if (gameState.score >= gameState.maxLevel - 1) {
+                    elements.displays.rewardText.textContent = "Amazing! You're a Pattern Master!";
+                } else if (gameState.score >= Math.floor(gameState.maxLevel / 2)) {
+                    elements.displays.rewardText.textContent = "Great job! You're getting really good with patterns!";
+                } else {
+                    elements.displays.rewardText.textContent = "Good effort! Keep practicing to master patterns!";
+                }
+                
+                // Create celebration animation
+                createRewardAnimation();
+                
+                // Update learning path
+                updateLearningPath();
+            }
+            
+            // Continue game after completing
+            function continueGame() {
+                // Reset game state for next session
+                gameState.currentLevel = 1;
+                gameState.score = 0;
+                gameState.progress = 0;
+                
+                // Load the first level
+                loadLevel(gameState.currentLevel);
+                
+                // Show the game screen
+                showScreen('gameScreen');
+            }
+            
+            // Show a specific screen
+            function showScreen(screenName) {
+                // Hide all screens
+                Object.values(elements.screens).forEach(screen => {
+                    screen.classList.remove('visible');
+                    screen.classList.add('hidden');
+                });
+                
+                // Show the requested screen
+                elements.screens[screenName].classList.remove('hidden');
+                elements.screens[screenName].classList.add('visible');
+                
+                // Play button sound
+                playButtonSound();
+            }
+            
+            // Toggle hint visibility
+            function toggleHint() {
+                const hintText = elements.displays.hintText;
+                
+                if (hintText.style.opacity === '1') {
+                    hintText.style.opacity = '0';
+                } else {
+                    hintText.style.opacity = '1';
+                    
+                    // Auto-hide after 5 seconds
+                    setTimeout(() => {
+                        hintText.style.opacity = '0';
+                    }, 5000);
+                }
+                
+                // Play button sound
+                playTickSound();
+            }
+            
+            // Update hint text based on level
+            function updateHint(level) {
+                let hintText = '';
+                
+                if (level <= 3) {
+                    hintText = "Look for items that repeat in the same order. What comes next?";
+                } else if (level <= 6) {
+                    hintText = "Try to find the rule for this pattern. Does it grow by a certain amount each time?";
+                } else if (level <= 9) {
+                    hintText = "This is a more complex pattern. Is it a combination of simpler patterns?";
+                } else {
+                    hintText = "Look for mathematical relationships between the numbers or how the pattern transforms.";
+                }
+                
+                elements.displays.hintText.textContent = hintText;
+            }
+            
+            // Show a character message
+            function showMessage(bubbleElement, message) {
+                // Set the message text
+                bubbleElement.textContent = message;
+                
+                // Show the bubble
+                bubbleElement.style.opacity = '1';
+                
+                // Auto-hide after delay based on message length
+                const delay = Math.max(3000, message.length * 50);
+                setTimeout(() => {
+                    bubbleElement.style.opacity = '0';
+                }, delay);
+            }
+            
+            // Create learning path
+            function createLearningPath() {
+                const pathContainer = elements.displays.learningPath;
+                
+                // Clear any existing segments
+                pathContainer.innerHTML = '';
+                
+                // Create segments for each level
+                for (let i = 0; i < gameState.maxLevel; i++) {
+                    const segment = document.createElement('div');
+                    segment.className = 'path-segment';
+                    segment.setAttribute('data-level', i + 1);
+                    pathContainer.appendChild(segment);
+                }
+            }
+            
+            // Update learning path
+            function updateLearningPath() {
+                const segments = elements.displays.learningPath.querySelectorAll('.path-segment');
+                
+                segments.forEach((segment, index) => {
+                    const level = index + 1;
+                    
+                    if (level < gameState.currentLevel) {
+                        segment.className = 'path-segment completed';
+                    } else if (level === gameState.currentLevel) {
+                        segment.className = 'path-segment current';
+                    } else {
+                        segment.className = 'path-segment';
+                    }
+                });
+            }
+            
+            // Draw characters
+            function drawCharacters() {
+                // Draw start screen characters
+                const pattyStart = createCharacterSVG('patty', 150, 150);
+                pattyStart.style.position = 'absolute';
+                pattyStart.style.left = '30%';
+                pattyStart.style.transform = 'translateX(-50%)';
+                elements.characters.startCharacters.appendChild(pattyStart);
+                
+                const professorStart = createCharacterSVG('professor', 150, 150);
+                professorStart.style.position = 'absolute';
+                professorStart.style.right = '30%';
+                professorStart.style.transform = 'translateX(50%)';
+                elements.characters.startCharacters.appendChild(professorStart);
+                
+                // Draw game characters
+                const patty = createCharacterSVG('patty', 100, 100);
+                elements.characters.patty.appendChild(patty);
+                
+                const professor = createCharacterSVG('professor', 100, 100);
+                elements.characters.quizProfessor.appendChild(professor);
+            }
+            
+            // Create character SVG
+            function createCharacterSVG(character, width, height) {
+                const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                svg.setAttribute('width', width);
+                svg.setAttribute('height', height);
+                svg.setAttribute('viewBox', '0 0 100 100');
+                
+                if (character === 'patty') {
+                    // Draw Patty - Pattern Master
+                    // Body
+                    const body = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                    body.setAttribute('cx', '50');
+                    body.setAttribute('cy', '65');
+                    body.setAttribute('rx', '25');
+                    body.setAttribute('ry', '30');
+                    body.setAttribute('fill', '#FF9A00');
+                    svg.appendChild(body);
+                    
+                    // Head
+                    const head = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    head.setAttribute('cx', '50');
+                    head.setAttribute('cy', '30');
+                    head.setAttribute('r', '20');
+                    head.setAttribute('fill', '#FFEB3B');
+                    svg.appendChild(head);
+                    
+                    // Eyes
+                    const leftEye = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    leftEye.setAttribute('cx', '42');
+                    leftEye.setAttribute('cy', '25');
+                    leftEye.setAttribute('r', '4');
+                    leftEye.setAttribute('fill', 'white');
+                    svg.appendChild(leftEye);
+                    
+                    const rightEye = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    rightEye.setAttribute('cx', '58');
+                    rightEye.setAttribute('cy', '25');
+                    rightEye.setAttribute('r', '4');
+                    rightEye.setAttribute('fill', 'white');
+                    svg.appendChild(rightEye);
+                    
+                    const leftPupil = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    leftPupil.setAttribute('cx', '42');
+                    leftPupil.setAttribute('cy', '25');
+                    leftPupil.setAttribute('r', '2');
+                    leftPupil.setAttribute('fill', 'black');
+                    svg.appendChild(leftPupil);
+                    
+                    const rightPupil = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    rightPupil.setAttribute('cx', '58');
+                    rightPupil.setAttribute('cy', '25');
+                    rightPupil.setAttribute('r', '2');
+                    rightPupil.setAttribute('fill', 'black');
+                    svg.appendChild(rightPupil);
+                    
+                    // Smile
+                    const smile = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    smile.setAttribute('d', 'M40,35 Q50,45 60,35');
+                    smile.setAttribute('fill', 'none');
+                    smile.setAttribute('stroke', 'black');
+                    smile.setAttribute('stroke-width', '2');
+                    svg.appendChild(smile);
+                    
+                    // Arms
+                    const leftArm = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    leftArm.setAttribute('x1', '30');
+                    leftArm.setAttribute('y1', '55');
+                    leftArm.setAttribute('x2', '15');
+                    leftArm.setAttribute('y2', '45');
+                    leftArm.setAttribute('stroke', '#FFEB3B');
+                    leftArm.setAttribute('stroke-width', '5');
+                    leftArm.setAttribute('stroke-linecap', 'round');
+                    svg.appendChild(leftArm);
+                    
+                    const rightArm = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    rightArm.setAttribute('x1', '70');
+                    rightArm.setAttribute('y1', '55');
+                    rightArm.setAttribute('x2', '85');
+                    rightArm.setAttribute('y2', '45');
+                    rightArm.setAttribute('stroke', '#FFEB3B');
+                    rightArm.setAttribute('stroke-width', '5');
+                    rightArm.setAttribute('stroke-linecap', 'round');
+                    svg.appendChild(rightArm);
+                    
+                    // Legs
+                    const leftLeg = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    leftLeg.setAttribute('x1', '40');
+                    leftLeg.setAttribute('y1', '90');
+                    leftLeg.setAttribute('x2', '35');
+                    leftLeg.setAttribute('y2', '105');
+                    leftLeg.setAttribute('stroke', '#FF9A00');
+                    leftLeg.setAttribute('stroke-width', '8');
+                    leftLeg.setAttribute('stroke-linecap', 'round');
+                    svg.appendChild(leftLeg);
+                    
+                    const rightLeg = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    rightLeg.setAttribute('x1', '60');
+                    rightLeg.setAttribute('y1', '90');
+                    rightLeg.setAttribute('x2', '65');
+                    rightLeg.setAttribute('y2', '105');
+                    rightLeg.setAttribute('stroke', '#FF9A00');
+                    rightLeg.setAttribute('stroke-width', '8');
+                    rightLeg.setAttribute('stroke-linecap', 'round');
+                    svg.appendChild(rightLeg);
+                    
+                    // Pattern symbol on chest
+                    const pattern = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    pattern.setAttribute('x', '50');
+                    pattern.setAttribute('y', '70');
+                    pattern.setAttribute('font-size', '15');
+                    pattern.setAttribute('fill', '#4b0082');
+                    pattern.setAttribute('text-anchor', 'middle');
+                    pattern.textContent = '123';
+                    svg.appendChild(pattern);
+                } else if (character === 'professor') {
+                    // Draw Professor - Quiz Master
+                    // Body
+                    const body = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+                    body.setAttribute('cx', '50');
+                    body.setAttribute('cy', '65');
+                    body.setAttribute('rx', '25');
+                    body.setAttribute('ry', '30');
+                    body.setAttribute('fill', '#2196F3');
+                    svg.appendChild(body);
+                    
+                    // Head
+                    const head = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    head.setAttribute('cx', '50');
+                    head.setAttribute('cy', '30');
+                    head.setAttribute('r', '20');
+                    head.setAttribute('fill', '#FFD700');
+                    svg.appendChild(head);
+                    
+                    // Eyes
+                    const leftEye = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    leftEye.setAttribute('cx', '42');
+                    leftEye.setAttribute('cy', '25');
+                    leftEye.setAttribute('r', '4');
+                    leftEye.setAttribute('fill', 'white');
+                    svg.appendChild(leftEye);
+                    
+                    const rightEye = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    rightEye.setAttribute('cx', '58');
+                    rightEye.setAttribute('cy', '25');
+                    rightEye.setAttribute('r', '4');
+                    rightEye.setAttribute('fill', 'white');
+                    svg.appendChild(rightEye);
+                    
+                    const leftPupil = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    leftPupil.setAttribute('cx', '42');
+                    leftPupil.setAttribute('cy', '25');
+                    leftPupil.setAttribute('r', '2');
+                    leftPupil.setAttribute('fill', 'black');
+                    svg.appendChild(leftPupil);
+                    
+                    const rightPupil = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    rightPupil.setAttribute('cx', '58');
+                    rightPupil.setAttribute('cy', '25');
+                    rightPupil.setAttribute('r', '2');
+                    rightPupil.setAttribute('fill', 'black');
+                    svg.appendChild(rightPupil);
+                    
+                    // Glasses
+                    const leftGlass = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    leftGlass.setAttribute('cx', '42');
+                    leftGlass.setAttribute('cy', '25');
+                    leftGlass.setAttribute('r', '6');
+                    leftGlass.setAttribute('fill', 'none');
+                    leftGlass.setAttribute('stroke', 'black');
+                    leftGlass.setAttribute('stroke-width', '1.5');
+                    svg.appendChild(leftGlass);
+                    
+                    const rightGlass = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    rightGlass.setAttribute('cx', '58');
+                    rightGlass.setAttribute('cy', '25');
+                    rightGlass.setAttribute('r', '6');
+                    rightGlass.setAttribute('fill', 'none');
+                    rightGlass.setAttribute('stroke', 'black');
+                    rightGlass.setAttribute('stroke-width', '1.5');
+                    svg.appendChild(rightGlass);
+                    
+                    const bridge = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    bridge.setAttribute('x1', '48');
+                    bridge.setAttribute('y1', '25');
+                    bridge.setAttribute('x2', '52');
+                    bridge.setAttribute('y2', '25');
+                    bridge.setAttribute('stroke', 'black');
+                    bridge.setAttribute('stroke-width', '1.5');
+                    svg.appendChild(bridge);
+                    
+                    // Smile
+                    const smile = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    smile.setAttribute('d', 'M40,35 Q50,45 60,35');
+                    smile.setAttribute('fill', 'none');
+                    smile.setAttribute('stroke', 'black');
+                    smile.setAttribute('stroke-width', '2');
+                    svg.appendChild(smile);
+                    
+                    // Beard
+                    const beard = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    beard.setAttribute('d', 'M40,35 Q50,50 60,35 Q50,40 40,35');
+                    beard.setAttribute('fill', '#A0522D');
+                    svg.appendChild(beard);
+                    
+                    // Hair
+                    const hair = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                    hair.setAttribute('d', 'M30,20 Q50,0 70,20 Q50,10 30,20');
+                    hair.setAttribute('fill', '#A0522D');
+                    svg.appendChild(hair);
+                    
+                    // Arms
+                    const leftArm = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    leftArm.setAttribute('x1', '30');
+                    leftArm.setAttribute('y1', '55');
+                    leftArm.setAttribute('x2', '15');
+                    leftArm.setAttribute('y2', '45');
+                    leftArm.setAttribute('stroke', '#FFD700');
+                    leftArm.setAttribute('stroke-width', '5');
+                    leftArm.setAttribute('stroke-linecap', 'round');
+                    svg.appendChild(leftArm);
+                    
+                    const rightArm = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    rightArm.setAttribute('x1', '70');
+                    rightArm.setAttribute('y1', '55');
+                    rightArm.setAttribute('x2', '85');
+                    rightArm.setAttribute('y2', '45');
+                    rightArm.setAttribute('stroke', '#FFD700');
+                    rightArm.setAttribute('stroke-width', '5');
+                    rightArm.setAttribute('stroke-linecap', 'round');
+                    svg.appendChild(rightArm);
+                    
+                    // Legs
+                    const leftLeg = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    leftLeg.setAttribute('x1', '40');
+                    leftLeg.setAttribute('y1', '90');
+                    leftLeg.setAttribute('x2', '35');
+                    leftLeg.setAttribute('y2', '105');
+                    leftLeg.setAttribute('stroke', '#2196F3');
+                    leftLeg.setAttribute('stroke-width', '8');
+                    leftLeg.setAttribute('stroke-linecap', 'round');
+                    svg.appendChild(leftLeg);
+                    
+                    const rightLeg = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                    rightLeg.setAttribute('x1', '60');
+                    rightLeg.setAttribute('y1', '90');
+                    rightLeg.setAttribute('x2', '65');
+                    rightLeg.setAttribute('y2', '105');
+                    rightLeg.setAttribute('stroke', '#2196F3');
+                    rightLeg.setAttribute('stroke-width', '8');
+                    rightLeg.setAttribute('stroke-linecap', 'round');
+                    svg.appendChild(rightLeg);
+                    
+                    // Book
+                    const book = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    book.setAttribute('x', '40');
+                    book.setAttribute('y', '65');
+                    book.setAttribute('width', '20');
+                    book.setAttribute('height', '15');
+                    book.setAttribute('fill', '#9C27B0');
+                    svg.appendChild(book);
+                    
+                    // Book title
+                    const title = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                    title.setAttribute('x', '50');
+                    title.setAttribute('y', '75');
+                    title.setAttribute('font-size', '8');
+                    title.setAttribute('fill', 'white');
+                    title.setAttribute('text-anchor', 'middle');
+                    title.textContent = 'ABC';
+                    svg.appendChild(title);
+                }
+                
+                return svg;
+            }
+            
+            // Get SVG for different shapes
+            function getShapeSVG(shape) {
+                let svg = '';
+                
+                if (shape === 'circle') {
+                    svg = '<svg viewBox="0 0 100 100" width="100%" height="100%"><circle cx="50" cy="50" r="40" fill="#2196F3" /></svg>';
+                } else if (shape === 'square') {
+                    svg = '<svg viewBox="0 0 100 100" width="100%" height="100%"><rect x="10" y="10" width="80" height="80" fill="#4CAF50" /></svg>';
+                } else if (shape === 'triangle') {
+                    svg = '<svg viewBox="0 0 100 100" width="100%" height="100%"><polygon points="50,10 90,90 10,90" fill="#FF5252" /></svg>';
+                } else if (shape === 'star') {
+                    svg = '<svg viewBox="0 0 100 100" width="100%" height="100%"><polygon points="50,10 61,40 94,40 68,60 79,90 50,70 21,90 32,60 6,40 39,40" fill="#FFC107" /></svg>';
+                } else if (shape === 'heart') {
+                    svg = '<svg viewBox="0 0 100 100" width="100%" height="100%"><path d="M50,30 C20,-5 0,25 0,50 C0,75 50,95 50,95 C50,95 100,75 100,50 C100,25 80,-5 50,30 Z" fill="#F48FB1" /></svg>';
+                } else if (shape === 'diamond') {
+                    svg = '<svg viewBox="0 0 100 100" width="100%" height="100%"><polygon points="50,10 90,50 50,90 10,50" fill="#9C27B0" /></svg>';
+                }
+                
+                return svg;
+            }
+            
+            // Create celebration particle effect
+            function createParticleEffect() {
+                // Clear any existing particles
+                clearParticles();
+                
+                // Create stars or bubbles
+                const particleCount = 30;
+                const particleTypes = ['star', 'bubble'];
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particleType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                    createParticle(particleType);
+                }
+            }
+            
+            // Create a single particle
+            function createParticle(type) {
+                const gameArea = document.getElementById('game-area');
+                
+                if (type === 'star') {
+                    // Create a star
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    
+                    // Random position
+                    const x = Math.random() * gameArea.clientWidth;
+                    const y = Math.random() * gameArea.clientHeight;
+                    
+                    // Random size
+                    const size = Math.random() * 30 + 10;
+                    
+                    // Star SVG
+                    star.innerHTML = `
+                        <svg width="${size}" height="${size}" viewBox="0 0 51 48">
+                            <path fill="#FFD700" d="m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z"/>
+                        </svg>
+                    `;
+                    
+                    star.style.left = `${x}px`;
+                    star.style.top = `${y}px`;
+                    gameArea.appendChild(star);
+                    
+                    // Animation
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 5 + 2;
+                    const dx = Math.cos(angle) * speed;
+                    const dy = Math.sin(angle) * speed;
+                    
+                    let opacity = 1;
+                    let posX = x;
+                    let posY = y;
+                    
+                    const animation = setInterval(() => {
+                        opacity -= 0.01;
+                        posX += dx;
+                        posY += dy;
+                        
+                        star.style.opacity = opacity;
+                        star.style.left = `${posX}px`;
+                        star.style.top = `${posY}px`;
+                        
+                        if (opacity <= 0) {
+                            clearInterval(animation);
+                            star.remove();
+                        }
+                    }, 20);
+                    
+                    gameState.animations.stars.push(star);
+                    gameState.animations.timers.push(animation);
+                } else {
+                    // Create a bubble
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    
+                    // Random position
+                    const x = Math.random() * gameArea.clientWidth;
+                    const y = gameArea.clientHeight + 20;
+                    
+                    // Random size
+                    const size = Math.random() * 40 + 20;
+                    
+                    // Random color
+                    const colors = ['#FF9A00', '#4b0082', '#4CAF50', '#f44336', '#2196F3'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    bubble.style.width = `${size}px`;
+                    bubble.style.height = `${size}px`;
+                    bubble.style.backgroundColor = color;
+                    bubble.style.left = `${x}px`;
+                    bubble.style.top = `${y}px`;
+                    bubble.style.opacity = '0.7';
+                    gameArea.appendChild(bubble);
+                    
+                    // Animation
+                    const speed = Math.random() * 3 + 1;
+                    let posY = y;
+                    
+                    const animation = setInterval(() => {
+                        posY -= speed;
+                        bubble.style.top = `${posY}px`;
+                        
+                        if (posY < -size) {
+                            clearInterval(animation);
+                            bubble.remove();
+                        }
+                    }, 20);
+                    
+                    gameState.animations.bubbles.push(bubble);
+                    gameState.animations.timers.push(animation);
+                }
+            }
+            
+            // Clear all particles
+            function clearParticles() {
+                // Clear all animation timers
+                gameState.animations.timers.forEach(timer => {
+                    clearInterval(timer);
+                });
+                
+                // Remove all stars and bubbles
+                gameState.animations.stars.forEach(star => {
+                    if (star.parentNode) {
+                        star.remove();
+                    }
+                });
+                
+                gameState.animations.bubbles.forEach(bubble => {
+                    if (bubble.parentNode) {
+                        bubble.remove();
+                    }
+                });
+                
+                // Reset arrays
+                gameState.animations.stars = [];
+                gameState.animations.bubbles = [];
+                gameState.animations.timers = [];
+            }
+            
+            // Create reward animation
+            function createRewardAnimation() {
+                const container = elements.displays.rewardAnimation;
+                
+                // Clear container
+                container.innerHTML = '';
+                
+                // Create canvas for celebration
+                const canvas = document.createElement('canvas');
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                container.appendChild(canvas);
+                
+                const ctx = canvas.getContext('2d');
+                
+                // Draw celebration background
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, 'rgba(255, 154, 0, 0.2)');
+                gradient.addColorStop(1, 'rgba(75, 0, 130, 0.2)');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw characters
+                drawRewardCharacters(ctx, canvas.width, canvas.height);
+                
+                // Trophy
+                drawTrophy(ctx, canvas.width / 2, canvas.height / 2);
+                
+                // Start particle animation
+                createParticleEffect();
+                
+                // Play celebration sound
+                playCelebrationSound();
+            }
+            
+            // Draw characters for reward screen
+            function drawRewardCharacters(ctx, width, height) {
+                // Patty on left
+                ctx.save();
+                ctx.translate(width * 0.25, height * 0.6);
+                ctx.scale(0.8, 0.8);
+                
+                // Body
+                ctx.fillStyle = '#FF9A00';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 25, 30, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Head
+                ctx.fillStyle = '#FFEB3B';
+                ctx.beginPath();
+                ctx.arc(0, -35, 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(-8, -40, 4, 0, Math.PI * 2);
+                ctx.arc(8, -40, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(-8, -40, 2, 0, Math.PI * 2);
+                ctx.arc(8, -40, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Smile
+                ctx.beginPath();
+                ctx.moveTo(-10, -30);
+                ctx.quadraticCurveTo(0, -20, 10, -30);
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Arms raised in celebration
+                ctx.strokeStyle = '#FFEB3B';
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(-20, -10);
+                ctx.lineTo(-30, -30);
+                ctx.moveTo(20, -10);
+                ctx.lineTo(30, -30);
+                ctx.stroke();
+                
+                ctx.restore();
+                
+                // Professor on right
+                ctx.save();
+                ctx.translate(width * 0.75, height * 0.6);
+                ctx.scale(0.8, 0.8);
+                
+                // Body
+                ctx.fillStyle = '#2196F3';
+                ctx.beginPath();
+                ctx.ellipse(0, 0, 25, 30, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Head
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(0, -35, 20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(-8, -40, 4, 0, Math.PI * 2);
+                ctx.arc(8, -40, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(-8, -40, 2, 0, Math.PI * 2);
+                ctx.arc(8, -40, 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glasses
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(-8, -40, 6, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(8, -40, 6, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(-2, -40);
+                ctx.lineTo(2, -40);
+                ctx.stroke();
+                
+                // Beard
+                ctx.fillStyle = '#A0522D';
+                ctx.beginPath();
+                ctx.moveTo(-10, -30);
+                ctx.quadraticCurveTo(0, -15, 10, -30);
+                ctx.quadraticCurveTo(0, -25, -10, -30);
+                ctx.fill();
+                
+                // Arms raised in celebration
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(-20, -10);
+                ctx.lineTo(-30, -30);
+                ctx.moveTo(20, -10);
+                ctx.lineTo(30, -30);
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+            
+            // Draw trophy
+            function drawTrophy(ctx, x, y) {
+                // Trophy base
+                ctx.fillStyle = '#FFD700';
+                
+                // Cup
+                ctx.beginPath();
+                ctx.moveTo(x - 30, y - 50);
+                ctx.lineTo(x + 30, y - 50);
+                ctx.quadraticCurveTo(x + 50, y - 50, x + 50, y - 30);
+                ctx.quadraticCurveTo(x + 50, y, x + 30, y);
+                ctx.quadraticCurveTo(x + 15, y + 10, x + 15, y + 30);
+                ctx.lineTo(x - 15, y + 30);
+                ctx.quadraticCurveTo(x - 15, y + 10, x - 30, y);
+                ctx.quadraticCurveTo(x - 50, y, x - 50, y - 30);
+                ctx.quadraticCurveTo(x - 50, y - 50, x - 30, y - 50);
+                ctx.fill();
+                
+                // Base
+                ctx.fillStyle = '#A67C00';
+                ctx.beginPath();
+                ctx.rect(x - 25, y + 30, 50, 10);
+                ctx.fill();
+                
+                ctx.fillStyle = '#8D6E00';
+                ctx.beginPath();
+                ctx.rect(x - 35, y + 40, 70, 10);
+                ctx.fill();
+                
+                // Pattern symbol
+                ctx.strokeStyle = '#4b0082';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(x - 20, y - 25);
+                ctx.lineTo(x + 20, y - 25);
+                ctx.lineTo(x - 20, y);
+                ctx.lineTo(x + 20, y);
+                ctx.stroke();
+                
+                // Stars around trophy
+                for (let i = 0; i < 5; i++) {
+                    const angle = (i / 5) * Math.PI * 2;
+                    const starX = x + Math.cos(angle) * 70;
+                    const starY = y + Math.sin(angle) * 70;
+                    
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    drawStar(ctx, starX, starY, 5, 10, 5);
+                    ctx.fill();
+                }
+            }
+            
+            // Draw a star shape
+            function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+                let rot = Math.PI / 2 * 3;
+                let x = cx;
+                let y = cy;
+                let step = Math.PI / spikes;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, cy - outerRadius);
+                
+                for (let i = 0; i < spikes; i++) {
+                    x = cx + Math.cos(rot) * outerRadius;
+                    y = cy + Math.sin(rot) * outerRadius;
+                    ctx.lineTo(x, y);
+                    rot += step;
+
+                    x = cx + Math.cos(rot) * innerRadius;
+                    y = cy + Math.sin(rot) * innerRadius;
+                    ctx.lineTo(x, y);
+                    rot += step;
+                }
+                
+                ctx.lineTo(cx, cy - outerRadius);
+                ctx.closePath();
+            }
+            
+            // Sound functions
+            function playButtonSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(gameState.settings.soundVolume, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                }
+            }
+            
+            function playTickSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                }
+            }
+            
+            function playSelectSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+                    
+                    gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                }
+            }
+            
+            function playSuccessSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    
+                    notes.forEach((frequency, index) => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.1);
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                        gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.1 + 0.01);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + index * 0.1 + 0.3);
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.start(audioContext.currentTime + index * 0.1);
+                        oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                    });
+                }
+            }
+            
+            function playErrorSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    const frequencies = [349.23, 329.63, 311.13]; // F4, E4, D#4/Eb4
+                    
+                    frequencies.forEach((frequency, index) => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.15);
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.15);
+                        gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.15 + 0.01);
+                        gainNode.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + index * 0.15 + 0.3);
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.start(audioContext.currentTime + index * 0.15);
+                        oscillator.stop(audioContext.currentTime + index * 0.15 + 0.3);
+                    });
+                }
+            }
+            
+            function playCelebrationSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    // Major scale ascending and then chord
+                    const notes = [
+                        { freq: 523.25, time: 0 },    // C5
+                        { freq: 587.33, time: 0.15 }, // D5
+                        { freq: 659.25, time: 0.3 },  // E5
+                        { freq: 698.46, time: 0.45 }, // F5
+                        { freq: 783.99, time: 0.6 },  // G5
+                        { freq: 880.00, time: 0.75 }, // A5
+                        { freq: 987.77, time: 0.9 },  // B5
+                        { freq: 1046.50, time: 1.05 }, // C6
+                        // Final chord
+                        { freq: 523.25, time: 1.3 }, // C5
+                        { freq: 659.25, time: 1.3 }, // E5
+                        { freq: 783.99, time: 1.3 }, // G5
+                        { freq: 1046.50, time: 1.3 }  // C6
+                    ];
+                    
+                    notes.forEach(note => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                        gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime + note.time + 0.01);
+                        
+                        // Longer sustain for the final chord
+                        if (note.time === 1.3) {
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 1.0);
+                            oscillator.start(audioContext.currentTime + note.time);
+                            oscillator.stop(audioContext.currentTime + note.time + 1.0);
+                        } else {
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 0.2);
+                            oscillator.start(audioContext.currentTime + note.time);
+                            oscillator.stop(audioContext.currentTime + note.time + 0.2);
+                        }
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                    });
+                }
+            }
+            
+            // Utility function: shuffle array
+            function shuffleArray(array) {
+                const newArray = [...array];
+                for (let i = newArray.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+                }
+                return newArray;
+            }
+            
+            // Key event listeners
+            document.addEventListener('keydown', function(e) {
+                // Space or Enter to check answer or submit quiz
+                if ((e.key === ' ' || e.key === 'Enter') && elements.screens.gameScreen.classList.contains('visible')) {
+                    if (elements.buttons.checkAnswerButton.style.display !== 'none') {
+                        checkAnswer();
+                    } else if (elements.buttons.nextButton.style.display !== 'none') {
+                        nextLevel();
+                    }
+                }
+                
+                // Space or Enter to submit quiz
+                if ((e.key === ' ' || e.key === 'Enter') && elements.screens.quizScreen.classList.contains('visible')) {
+                    checkQuizAnswer();
+                }
+                
+                // H key to toggle hint
+                if (e.key === 'h' && elements.screens.gameScreen.classList.contains('visible')) {
+                    toggleHint();
+                }
+            });
+            
+            // Special learning modes
+            elements.settings.modeOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    if (this.dataset.mode === 'fibonacci') {
+                        showFibonacciExample();
+                    } else if (this.dataset.mode === 'prime') {
+                        showPrimeNumbersExample();
+                    } else if (this.dataset.mode === 'symmetry') {
+                        showSymmetryExample();
+                    } else if (this.dataset.mode === 'fractals') {
+                        showFractalsExample();
+                    }
+                });
+            });
+            
+            // Special learning mode examples
+            function showFibonacciExample() {
+                const oldDifficulty = gameState.settings.difficulty;
+                const oldPatternTypes = [...gameState.settings.patternTypes];
+                
+                // Set to number patterns
+                gameState.settings.difficulty = 'genius';
+                gameState.settings.patternTypes = ['numbers'];
+                
+                // Create Fibonacci pattern
+                gameState.currentPattern = [
+                    { type: 'number', value: 1 },
+                    { type: 'number', value: 1 },
+                    { type: 'number', value: 2 },
+                    { type: 'number', value: 3 },
+                    { type: 'number', value: 5 },
+                    { type: 'number', value: 8 }
+                ];
+                
+                // Show game screen
+                showScreen('gameScreen');
+                
+                // Display pattern
+                elements.displays.patternContainer.innerHTML = '';
+                for (let i = 0; i < gameState.currentPattern.length - 1; i++) {
+                    createPatternItem(gameState.currentPattern[i], i);
+                }
+                
+                // Create answer slot
+                createAnswerSlot(0);
+                
+                // Show Fibonacci explanation
+                showMessage(elements.characters.pattyBubble, "This is a Fibonacci sequence! Each number is the sum of the two numbers before it: 1, 1, 2, 3, 5, 8, 13...");
+                
+                // Update hint
+                elements.displays.hintText.textContent = "In a Fibonacci sequence, add the previous two numbers to get the next one. This pattern appears in nature, like in flower petals and pinecones!";
+                
+                // Restore settings after interaction
+                elements.buttons.checkAnswerButton.addEventListener('click', function restoreSettings() {
+                    gameState.settings.difficulty = oldDifficulty;
+                    gameState.settings.patternTypes = oldPatternTypes;
+                    elements.buttons.checkAnswerButton.removeEventListener('click', restoreSettings);
+                });
+            }
+            
+            function showPrimeNumbersExample() {
+                const oldDifficulty = gameState.settings.difficulty;
+                const oldPatternTypes = [...gameState.settings.patternTypes];
+                
+                // Set to number patterns
+                gameState.settings.difficulty = 'genius';
+                gameState.settings.patternTypes = ['numbers'];
+                
+                // Create Prime Numbers pattern
+                gameState.currentPattern = [
+                    { type: 'number', value: 2 },
+                    { type: 'number', value: 3 },
+                    { type: 'number', value: 5 },
+                    { type: 'number', value: 7 },
+                    { type: 'number', value: 11 },
+                    { type: 'number', value: 13 }
+                ];
+                
+                // Show game screen
+                showScreen('gameScreen');
+                
+                // Display pattern
+                elements.displays.patternContainer.innerHTML = '';
+                for (let i = 0; i < gameState.currentPattern.length - 1; i++) {
+                    createPatternItem(gameState.currentPattern[i], i);
+                }
+                
+                // Create answer slot
+                createAnswerSlot(0);
+                
+                // Show Prime Numbers explanation
+                showMessage(elements.characters.pattyBubble, "These are Prime Numbers! They can only be divided by 1 and themselves. 2, 3, 5, 7, 11, 13, 17...");
+                
+                // Update hint
+                elements.displays.hintText.textContent = "Prime numbers are special numbers that can only be divided by 1 and themselves without a remainder. They're like the building blocks of all numbers!";
+                
+                // Restore settings after interaction
+                elements.buttons.checkAnswerButton.addEventListener('click', function restoreSettings() {
+                    gameState.settings.difficulty = oldDifficulty;
+                    gameState.settings.patternTypes = oldPatternTypes;
+                    elements.buttons.checkAnswerButton.removeEventListener('click', restoreSettings);
+                });
+            }
+            
+            function showSymmetryExample() {
+                const oldDifficulty = gameState.settings.difficulty;
+                const oldPatternTypes = [...gameState.settings.patternTypes];
+                
+                // Set to shape patterns
+                gameState.settings.difficulty = 'genius';
+                gameState.settings.patternTypes = ['shapes'];
+                
+                // Create Symmetry pattern
+                gameState.currentPattern = [
+                    { type: 'shape', value: 'circle' },
+                    { type: 'shape', value: 'square' },
+                    { type: 'shape', value: 'triangle' },
+                    { type: 'shape', value: 'triangle' },
+                    { type: 'shape', value: 'square' },
+                    { type: 'shape', value: 'circle' }
+                ];
+                
+                // Show game screen
+                showScreen('gameScreen');
+                
+                // Display pattern
+                elements.displays.patternContainer.innerHTML = '';
+                for (let i = 0; i < gameState.currentPattern.length - 1; i++) {
+                    createPatternItem(gameState.currentPattern[i], i);
+                }
+                
+                // Create answer slot
+                createAnswerSlot(0);
+                
+                // Show Symmetry explanation
+                showMessage(elements.characters.pattyBubble, "This is a symmetrical pattern! It reads the same backward as forward, like a mirror. Circle, Square, Triangle, Triangle, Square, Circle.");
+                
+                // Update hint
+                elements.displays.hintText.textContent = "Symmetry means something is the same on both sides, like a butterfly's wings. Symmetrical patterns are the same reading forward or backward!";
+                
+                // Restore settings after interaction
+                elements.buttons.checkAnswerButton.addEventListener('click', function restoreSettings() {
+                    gameState.settings.difficulty = oldDifficulty;
+                    gameState.settings.patternTypes = oldPatternTypes;
+                    elements.buttons.checkAnswerButton.removeEventListener('click', restoreSettings);
+                });
+            }
+            
+            function showFractalsExample() {
+                const oldDifficulty = gameState.settings.difficulty;
+                const oldPatternTypes = [...gameState.settings.patternTypes];
+                
+                // Set to number patterns
+                gameState.settings.difficulty = 'genius';
+                gameState.settings.patternTypes = ['numbers'];
+                
+                // Create a simple fractal representation (powers of 2)
+                gameState.currentPattern = [
+                    { type: 'number', value: 1 },
+                    { type: 'number', value: 2 },
+                    { type: 'number', value: 4 },
+                    { type: 'number', value: 8 },
+                    { type: 'number', value: 16 },
+                    { type: 'number', value: 32 }
+                ];
+                
+                // Show game screen
+                showScreen('gameScreen');
+                
+                // Display pattern
+                elements.displays.patternContainer.innerHTML = '';
+                for (let i = 0; i < gameState.currentPattern.length - 1; i++) {
+                    createPatternItem(gameState.currentPattern[i], i);
+                }
+                
+                // Create answer slot
+                createAnswerSlot(0);
+                
+                // Show Fractals explanation
+                showMessage(elements.characters.pattyBubble, "This pattern shows doubling, which relates to fractals! Fractals are patterns that repeat at different scales, like snowflakes or tree branches.");
+                
+                // Update hint
+                elements.displays.hintText.textContent = "Fractals are amazing patterns in nature that repeat themselves at different sizes. Look at a fern leaf - each small part looks like the whole leaf!";
+                
+                // Restore settings after interaction
+                elements.buttons.checkAnswerButton.addEventListener('click', function restoreSettings() {
+                    gameState.settings.difficulty = oldDifficulty;
+                    gameState.settings.patternTypes = oldPatternTypes;
+                    elements.buttons.checkAnswerButton.removeEventListener('click', restoreSettings);
+                });
+            }
+            
+            // Initialize the game when the window loads
+            window.addEventListener('load', initGame);
+        });
+    </script>
+</body>
+</html>

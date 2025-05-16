@@ -1,0 +1,2496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Explorer</title>
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #030b1a;
+            color: white;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Game Container */
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Game Canvas */
+        #game-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Game Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s;
+            z-index: 10;
+            padding: 20px;
+        }
+
+        .hidden {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* Start Screen */
+        #start-screen {
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), 
+                        radial-gradient(circle at center, #1a3a6c 0%, #030b1a 70%);
+            text-align: center;
+        }
+
+        #title {
+            font-size: 3.5rem;
+            color: #f8f8ff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00aaff, 0 0 20px #00aaff;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { text-shadow: 0 0 10px #00aaff, 0 0 20px #00aaff; }
+            50% { text-shadow: 0 0 15px #00aaff, 0 0 30px #00aaff, 0 0 40px #00aaff; }
+            100% { text-shadow: 0 0 10px #00aaff, 0 0 20px #00aaff; }
+        }
+
+        #subtitle {
+            font-size: 1.5rem;
+            color: #c4e0ff;
+            margin-bottom: 40px;
+        }
+
+        /* Game Screen */
+        #game-screen {
+            background: none;
+        }
+
+        /* Quiz Screen */
+        #quiz-screen {
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), 
+                        radial-gradient(circle at center, #1a3a6c 0%, #030b1a 70%);
+            text-align: center;
+        }
+
+        #quiz-title {
+            font-size: 2.5rem;
+            color: #f8f8ff;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #00aaff;
+        }
+
+        #quiz-question {
+            font-size: 1.5rem;
+            color: #ffffff;
+            margin-bottom: 30px;
+            max-width: 80%;
+            text-align: center;
+        }
+
+        /* Reward Screen */
+        #reward-screen {
+            background: linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.6)), 
+                        radial-gradient(circle at center, #472a9c 0%, #030b1a 70%);
+            text-align: center;
+        }
+
+        #reward-title {
+            font-size: 2.5rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px #ffd700;
+        }
+
+        #reward-text {
+            font-size: 1.5rem;
+            color: #ffffff;
+            margin-bottom: 30px;
+            max-width: 80%;
+            text-align: center;
+        }
+
+        #reward-animation {
+            width: 400px;
+            height: 300px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Settings Screen */
+        #settings-screen {
+            background: linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.8)), 
+                        radial-gradient(circle at center, #1a3a6c 0%, #030b1a 70%);
+        }
+
+        #settings-title {
+            font-size: 2.5rem;
+            color: #f8f8ff;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px #00aaff;
+        }
+
+        /* Buttons */
+        .button {
+            background: linear-gradient(to bottom, #00aaff, #0077cc);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin: 10px;
+            min-width: 200px;
+            transition: all 0.2s;
+            box-shadow: 0 5px 15px rgba(0, 119, 204, 0.4);
+        }
+
+        .button:hover {
+            background: linear-gradient(to bottom, #00bbff, #0088dd);
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(0, 119, 204, 0.5);
+        }
+
+        .button:active {
+            transform: translateY(1px);
+            box-shadow: 0 3px 10px rgba(0, 119, 204, 0.3);
+        }
+
+        /* Quiz Options */
+        #quiz-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+            margin-bottom: 30px;
+        }
+
+        .quiz-option {
+            background: linear-gradient(to bottom, #2a5298, #1a3a6c);
+            width: 100%;
+            padding: 15px;
+            margin: 8px 0;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+            font-size: 1.2rem;
+            box-shadow: 0 5px 15px rgba(26, 58, 108, 0.4);
+        }
+
+        .quiz-option:hover {
+            background: linear-gradient(to bottom, #3a62a8, #2a4a7c);
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(26, 58, 108, 0.5);
+        }
+
+        .quiz-option.selected {
+            background: linear-gradient(to bottom, #4a72b8, #3a5a8c);
+            border: 2px solid #7fc1ff;
+        }
+
+        .quiz-option.correct {
+            background: linear-gradient(to bottom, #4CAF50, #2E7D32);
+            border: 2px solid #8BC34A;
+        }
+
+        .quiz-option.incorrect {
+            background: linear-gradient(to bottom, #f44336, #b71c1c);
+            border: 2px solid #ff8a80;
+        }
+
+        /* Character Bubbles */
+        .character-container {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            align-items: flex-end;
+            z-index: 20;
+        }
+
+        #astronaut-container {
+            left: 20px;
+        }
+
+        #alien-container {
+            right: 20px;
+        }
+
+        .character {
+            width: 150px;
+            height: 150px;
+            position: relative;
+        }
+
+        .speech-bubble {
+            background-color: #ffffff;
+            color: #000000;
+            padding: 15px;
+            border-radius: 20px;
+            max-width: 250px;
+            position: absolute;
+            bottom: 120px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            font-size: 1rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        #astronaut-bubble {
+            left: 70px;
+        }
+
+        #astronaut-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 30px;
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: #ffffff transparent;
+        }
+
+        #alien-bubble {
+            right: 70px;
+        }
+
+        #alien-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            right: 30px;
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: #ffffff transparent;
+        }
+
+        /* Settings Controls */
+        .settings-section {
+            margin: 15px 0;
+            width: 80%;
+            max-width: 600px;
+        }
+
+        .settings-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #c4e0ff;
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .slider-label {
+            width: 40%;
+            font-size: 1.1rem;
+        }
+
+        .slider {
+            -webkit-appearance: none;
+            width: 50%;
+            height: 10px;
+            border-radius: 5px;
+            background: #1a3a6c;
+            outline: none;
+            margin: 0 10px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00aaff;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #00aaff;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            width: 10%;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        /* Toggle Switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .toggle-label {
+            width: 80%;
+            font-size: 1.1rem;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #1a3a6c;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #00aaff;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+
+        /* Learning Path */
+        #learning-path-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            width: 80%;
+            max-width: 800px;
+            display: flex;
+            justify-content: center;
+        }
+
+        #learning-path {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 20px;
+        }
+
+        .path-segment {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #1a3a6c;
+            transition: all 0.3s;
+            position: relative;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        .path-segment.completed {
+            background-color: #4CAF50;
+        }
+
+        .path-segment.current {
+            background-color: #00aaff;
+            transform: scale(1.2);
+            box-shadow: 0 0 10px #00aaff;
+        }
+
+        /* Info Panel */
+        #info-panel {
+            position: absolute;
+            right: 20px;
+            top: 80px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            width: 300px;
+            z-index: 5;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s;
+            transform: translateX(320px);
+        }
+
+        #info-panel.visible {
+            transform: translateX(0);
+        }
+
+        #info-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #00aaff;
+        }
+
+        #info-content {
+            font-size: 1rem;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        #info-toggle {
+            position: absolute;
+            left: -40px;
+            top: 10px;
+            width: 30px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 5px 0 0 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: -5px 0 10px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Controls Info */
+        #controls-info {
+            position: absolute;
+            left: 20px;
+            top: 80px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            width: 300px;
+            z-index: 5;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #controls-title {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #00aaff;
+        }
+
+        #controls-content {
+            font-size: 1rem;
+            line-height: 1.4;
+        }
+
+        /* Hint System */
+        #hint-container {
+            position: absolute;
+            bottom: 170px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            width: 80%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        #hint-toggle {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid #00aaff;
+            color: #00aaff;
+            border-radius: 20px;
+            padding: 5px 15px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #hint-toggle:hover {
+            background: rgba(0, 170, 255, 0.2);
+        }
+
+        #hint-text {
+            background: rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 1rem;
+            line-height: 1.4;
+            color: #c4e0ff;
+            max-width: 100%;
+        }
+
+        /* Star / Particle Effects */
+        .star, .bubble {
+            position: absolute;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        /* Planet Details */
+        #planet-details {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            padding: 15px;
+            width: 80%;
+            max-width: 500px;
+            z-index: 5;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        #planet-details.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        #planet-name {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #00aaff;
+        }
+
+        #planet-description {
+            font-size: 1rem;
+            line-height: 1.4;
+            margin-bottom: 10px;
+        }
+
+        #planet-facts {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .planet-fact {
+            background: rgba(0, 170, 255, 0.2);
+            border-radius: 8px;
+            padding: 8px;
+            margin: 5px;
+            text-align: center;
+            min-width: 100px;
+        }
+
+        .fact-label {
+            font-size: 0.8rem;
+            color: #c4e0ff;
+        }
+
+        .fact-value {
+            font-size: 1rem;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            #title {
+                font-size: 2.5rem;
+            }
+            
+            #subtitle {
+                font-size: 1.2rem;
+            }
+
+            .button {
+                font-size: 1rem;
+                padding: 12px 24px;
+                min-width: 180px;
+            }
+
+            .character {
+                width: 100px;
+                height: 100px;
+            }
+
+            .speech-bubble {
+                max-width: 200px;
+                bottom: 90px;
+                font-size: 0.9rem;
+            }
+
+            #info-panel, #controls-info {
+                width: 250px;
+            }
+
+            .settings-section {
+                width: 95%;
+            }
+
+            .slider-label, .toggle-label {
+                font-size: 0.9rem;
+            }
+
+            #planet-details {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas"></canvas>
+
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen visible">
+            <h1 id="title">Solar System Explorer</h1>
+            <h2 id="subtitle">Journey through space and learn amazing facts!</h2>
+            <button id="start-button" class="button">Start Adventure</button>
+            <button id="settings-button" class="button">Settings</button>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen hidden">
+            <div id="learning-path-container">
+                <div id="learning-path"></div>
+            </div>
+
+            <div id="controls-info">
+                <h3 id="controls-title">How to Play</h3>
+                <div id="controls-content">
+                    <p>• Click/Tap on planets to select them</p>
+                    <p>• Press SPACE to start/stop orbits</p>
+                    <p>• Use UP/DOWN arrows to zoom</p>
+                    <p>• Press Q to start a quiz</p>
+                    <p>• Adjust settings to change the simulation</p>
+                </div>
+            </div>
+
+            <div id="info-panel">
+                <div id="info-toggle">i</div>
+                <h3 id="info-title">The Sun</h3>
+                <div id="info-content">
+                    The Sun is the star at the center of our Solar System. It's about 4.6 billion years old and is made mostly of hydrogen and helium. It provides light and heat that makes life on Earth possible.
+                </div>
+            </div>
+
+            <div id="hint-container">
+                <button id="hint-toggle">Show Hint</button>
+                <div id="hint-text">
+                    Try clicking on different planets to learn about them. You can change how fast they orbit in the settings!
+                </div>
+            </div>
+
+            <div id="planet-details">
+                <h3 id="planet-name">Earth</h3>
+                <p id="planet-description">
+                    Earth is our home planet. It's the only place we know of so far that's inhabited by living things. It has a breathable atmosphere and liquid water.
+                </p>
+                <div id="planet-facts">
+                    <div class="planet-fact">
+                        <div class="fact-label">Diameter</div>
+                        <div class="fact-value">12,742 km</div>
+                    </div>
+                    <div class="planet-fact">
+                        <div class="fact-label">Day Length</div>
+                        <div class="fact-value">24 hours</div>
+                    </div>
+                    <div class="planet-fact">
+                        <div class="fact-label">Moons</div>
+                        <div class="fact-value">1</div>
+                    </div>
+                </div>
+            </div>
+
+            <button id="quiz-start-button" class="button" style="position: absolute; top: 20px; right: 20px;">Take Quiz</button>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen hidden">
+            <h2 id="quiz-title">Space Quiz</h2>
+            <p id="quiz-question">Which planet is closest to the Sun?</p>
+            <div id="quiz-options"></div>
+            <button id="quiz-submit" class="button">Submit Answer</button>
+        </div>
+
+        <!-- Reward Screen -->
+        <div id="reward-screen" class="screen hidden">
+            <h2 id="reward-title">Congratulations!</h2>
+            <p id="reward-text">You're a Space Explorer now!</p>
+            <div id="reward-animation"></div>
+            <button id="continue-button" class="button">Continue Exploring</button>
+        </div>
+
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="screen hidden">
+            <h2 id="settings-title">Game Settings</h2>
+            
+            <div class="settings-section">
+                <h3 class="settings-title">Simulation</h3>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Orbit Speed</div>
+                    <input type="range" min="1" max="10" value="5" class="slider" id="orbit-speed">
+                    <div class="slider-value" id="orbit-speed-value">5</div>
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Planet Size</div>
+                    <input type="range" min="1" max="10" value="5" class="slider" id="planet-size">
+                    <div class="slider-value" id="planet-size-value">5</div>
+                </div>
+                
+                <div class="toggle-container">
+                    <div class="toggle-label">Show Planet Names</div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="show-labels" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="toggle-container">
+                    <div class="toggle-label">Show Orbit Paths</div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="show-orbits" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="toggle-container">
+                    <div class="toggle-label">Realistic Distances</div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="realistic-distances">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3 class="settings-title">Game</h3>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Sound Volume</div>
+                    <input type="range" min="0" max="10" value="7" class="slider" id="sound-volume">
+                    <div class="slider-value" id="sound-volume-value">7</div>
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Background Stars</div>
+                    <input type="range" min="100" max="2000" value="500" step="100" class="slider" id="star-count">
+                    <div class="slider-value" id="star-count-value">500</div>
+                </div>
+                
+                <div class="toggle-container">
+                    <div class="toggle-label">Show Character Tips</div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="show-tips" checked>
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                
+                <div class="slider-container">
+                    <div class="slider-label">Learning Difficulty</div>
+                    <input type="range" min="1" max="5" value="2" class="slider" id="difficulty-level">
+                    <div class="slider-value" id="difficulty-level-value">2</div>
+                </div>
+            </div>
+            
+            <button id="settings-back" class="button">Back to Menu</button>
+        </div>
+
+        <!-- Character Containers -->
+        <div id="astronaut-container" class="character-container">
+            <div class="character" id="astronaut"></div>
+            <div class="speech-bubble" id="astronaut-bubble">
+                Welcome to Solar System Explorer! Click on planets to learn about them.
+            </div>
+        </div>
+        
+        <div id="alien-container" class="character-container">
+            <div class="character" id="alien"></div>
+            <div class="speech-bubble" id="alien-bubble">
+                I'm Stella the Star Guide! I'll help you learn about space!
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game elements
+        const elements = {
+            screens: {
+                startScreen: document.getElementById('start-screen'),
+                gameScreen: document.getElementById('game-screen'),
+                quizScreen: document.getElementById('quiz-screen'),
+                rewardScreen: document.getElementById('reward-screen'),
+                settingsScreen: document.getElementById('settings-screen')
+            },
+            buttons: {
+                startButton: document.getElementById('start-button'),
+                settingsButton: document.getElementById('settings-button'),
+                quizStartButton: document.getElementById('quiz-start-button'),
+                quizSubmit: document.getElementById('quiz-submit'),
+                continueButton: document.getElementById('continue-button'),
+                settingsBack: document.getElementById('settings-back'),
+                hintToggle: document.getElementById('hint-toggle')
+            },
+            displays: {
+                quizQuestion: document.getElementById('quiz-question'),
+                quizOptions: document.getElementById('quiz-options'),
+                rewardText: document.getElementById('reward-text'),
+                rewardAnimation: document.getElementById('reward-animation'),
+                hintText: document.getElementById('hint-text'),
+                learningPath: document.getElementById('learning-path'),
+                planetDetails: document.getElementById('planet-details'),
+                planetName: document.getElementById('planet-name'),
+                planetDescription: document.getElementById('planet-description'),
+                planetFacts: document.getElementById('planet-facts'),
+                infoPanel: document.getElementById('info-panel'),
+                infoTitle: document.getElementById('info-title'),
+                infoContent: document.getElementById('info-content'),
+                infoToggle: document.getElementById('info-toggle')
+            },
+            settings: {
+                orbitSpeed: document.getElementById('orbit-speed'),
+                orbitSpeedValue: document.getElementById('orbit-speed-value'),
+                planetSize: document.getElementById('planet-size'),
+                planetSizeValue: document.getElementById('planet-size-value'),
+                showLabels: document.getElementById('show-labels'),
+                showOrbits: document.getElementById('show-orbits'),
+                realisticDistances: document.getElementById('realistic-distances'),
+                soundVolume: document.getElementById('sound-volume'),
+                soundVolumeValue: document.getElementById('sound-volume-value'),
+                starCount: document.getElementById('star-count'),
+                starCountValue: document.getElementById('star-count-value'),
+                showTips: document.getElementById('show-tips'),
+                difficultyLevel: document.getElementById('difficulty-level'),
+                difficultyLevelValue: document.getElementById('difficulty-level-value')
+            },
+            characters: {
+                astronaut: document.getElementById('astronaut'),
+                astronautBubble: document.getElementById('astronaut-bubble'),
+                alien: document.getElementById('alien'),
+                alienBubble: document.getElementById('alien-bubble')
+            },
+            canvas: document.getElementById('game-canvas')
+        };
+
+        // Game state
+        const gameState = {
+            currentLevel: 1,
+            maxLevel: 8,
+            score: 0,
+            progress: 0,
+            isPaused: false,
+            isOrbiting: true,
+            selectedPlanet: null,
+            zoom: 1,
+            currentQuiz: {
+                question: '',
+                options: [],
+                correctAnswer: '',
+                userAnswer: ''
+            },
+            settings: {
+                orbitSpeed: 5,
+                planetSize: 5,
+                showLabels: true,
+                showOrbits: true,
+                realisticDistances: false,
+                soundVolume: 0.7,
+                starCount: 500,
+                showTips: true,
+                difficultyLevel: 2
+            },
+            animations: {
+                stars: [],
+                bubbles: [],
+                timers: []
+            },
+            tips: [
+                "Did you know that Jupiter has 79 moons?",
+                "Mercury is the fastest planet, orbiting the Sun every 88 Earth days!",
+                "Venus is the hottest planet, even though Mercury is closer to the Sun!",
+                "A day on Venus is longer than a year on Venus!",
+                "Earth is the only planet not named after a god or goddess!",
+                "Mars has the largest dust storms in our solar system!",
+                "Saturn's rings are made mostly of ice and rock!",
+                "Uranus rotates on its side like a rolling ball!",
+                "Neptune has the strongest winds in the solar system!",
+                "Pluto is now classified as a dwarf planet!"
+            ],
+            planetsData: [
+                {
+                    name: "Mercury",
+                    description: "Mercury is the smallest planet in our solar system and closest to the Sun. It has a rocky surface covered with craters, similar to our Moon.",
+                    color: "#A9A9A9",
+                    orbitRadius: 0.4,
+                    size: 0.38,
+                    orbitSpeed: 4.1,
+                    facts: [
+                        { label: "Diameter", value: "4,880 km" },
+                        { label: "Day Length", value: "59 Earth days" },
+                        { label: "Moons", value: "0" },
+                        { label: "Temperature", value: "-173°C to 427°C" }
+                    ]
+                },
+                {
+                    name: "Venus",
+                    description: "Venus is the hottest planet in our solar system due to its thick atmosphere trapping heat. It's sometimes called Earth's sister planet because they're similar in size.",
+                    color: "#FFA500",
+                    orbitRadius: 0.7,
+                    size: 0.95,
+                    orbitSpeed: 1.6,
+                    facts: [
+                        { label: "Diameter", value: "12,104 km" },
+                        { label: "Day Length", value: "243 Earth days" },
+                        { label: "Moons", value: "0" },
+                        { label: "Temperature", value: "462°C" }
+                    ]
+                },
+                {
+                    name: "Earth",
+                    description: "Earth is our home planet. It's the only place we know of so far that's inhabited by living things. It has liquid water and a breathable atmosphere that helps protect us from harmful radiation.",
+                    color: "#1E90FF",
+                    orbitRadius: 1,
+                    size: 1,
+                    orbitSpeed: 1,
+                    facts: [
+                        { label: "Diameter", value: "12,742 km" },
+                        { label: "Day Length", value: "24 hours" },
+                        { label: "Moons", value: "1" },
+                        { label: "Temperature", value: "-88°C to 58°C" }
+                    ]
+                },
+                {
+                    name: "Mars",
+                    description: "Mars is known as the Red Planet because iron minerals in its soil rust or oxidize, giving it a reddish appearance. It has seasons, polar ice caps, volcanoes, canyons, and weather.",
+                    color: "#FF4500",
+                    orbitRadius: 1.5,
+                    size: 0.53,
+                    orbitSpeed: 0.5,
+                    facts: [
+                        { label: "Diameter", value: "6,779 km" },
+                        { label: "Day Length", value: "24.6 hours" },
+                        { label: "Moons", value: "2" },
+                        { label: "Temperature", value: "-87°C to -5°C" }
+                    ]
+                },
+                {
+                    name: "Jupiter",
+                    description: "Jupiter is the largest planet in our solar system. It's a gas giant with swirling clouds and a powerful magnetic field. Its most famous feature is the Great Red Spot, a giant storm.",
+                    color: "#F5DEB3",
+                    orbitRadius: 5.2,
+                    size: 11.2,
+                    orbitSpeed: 0.08,
+                    facts: [
+                        { label: "Diameter", value: "139,820 km" },
+                        { label: "Day Length", value: "9.9 hours" },
+                        { label: "Moons", value: "79" },
+                        { label: "Temperature", value: "-145°C" }
+                    ]
+                },
+                {
+                    name: "Saturn",
+                    description: "Saturn is famous for its beautiful rings, which are made of ice and rock. Like Jupiter, it's a gas giant with a thick atmosphere and no solid surface.",
+                    color: "#FFD700",
+                    orbitRadius: 9.5,
+                    size: 9.45,
+                    orbitSpeed: 0.03,
+                    facts: [
+                        { label: "Diameter", value: "116,460 km" },
+                        { label: "Day Length", value: "10.7 hours" },
+                        { label: "Moons", value: "82" },
+                        { label: "Temperature", value: "-178°C" }
+                    ]
+                },
+                {
+                    name: "Uranus",
+                    description: "Uranus is an ice giant that rotates on its side like a rolling ball. It has a very cold atmosphere which is mostly hydrogen and helium, with some methane that gives it a blue-green color.",
+                    color: "#00FFFF",
+                    orbitRadius: 19.2,
+                    size: 4,
+                    orbitSpeed: 0.01,
+                    facts: [
+                        { label: "Diameter", value: "50,724 km" },
+                        { label: "Day Length", value: "17.2 hours" },
+                        { label: "Moons", value: "27" },
+                        { label: "Temperature", value: "-224°C" }
+                    ]
+                },
+                {
+                    name: "Neptune",
+                    description: "Neptune is the windiest planet in our solar system, with winds reaching speeds of over 2,100 km/hour. It's a cold, blue world with a dynamic atmosphere and faint rings.",
+                    color: "#4169E1",
+                    orbitRadius: 30.1,
+                    size: 3.88,
+                    orbitSpeed: 0.006,
+                    facts: [
+                        { label: "Diameter", value: "49,244 km" },
+                        { label: "Day Length", value: "16.1 hours" },
+                        { label: "Moons", value: "14" },
+                        { label: "Temperature", value: "-214°C" }
+                    ]
+                }
+            ]
+        };
+
+        // Quiz data
+        const quizData = [
+            // Level 1 - Basic Knowledge
+            [
+                {
+                    question: "Which is the closest planet to the Sun?",
+                    options: ["Venus", "Mercury", "Earth", "Mars"],
+                    correctAnswer: "Mercury"
+                },
+                {
+                    question: "Which planet is known as the Red Planet?",
+                    options: ["Venus", "Jupiter", "Mars", "Saturn"],
+                    correctAnswer: "Mars"
+                },
+                {
+                    question: "What is the name of our galaxy?",
+                    options: ["Andromeda", "Milky Way", "Orion", "Sombrero"],
+                    correctAnswer: "Milky Way"
+                },
+                {
+                    question: "Which planet has beautiful rings around it?",
+                    options: ["Jupiter", "Saturn", "Uranus", "Neptune"],
+                    correctAnswer: "Saturn"
+                },
+                {
+                    question: "What is the largest planet in our solar system?",
+                    options: ["Earth", "Mars", "Jupiter", "Saturn"],
+                    correctAnswer: "Jupiter"
+                }
+            ],
+            // Level 2 - More Facts
+            [
+                {
+                    question: "How many moons does Mars have?",
+                    options: ["0", "1", "2", "4"],
+                    correctAnswer: "2"
+                },
+                {
+                    question: "Which planet spins on its side like a rolling ball?",
+                    options: ["Earth", "Mars", "Saturn", "Uranus"],
+                    correctAnswer: "Uranus"
+                },
+                {
+                    question: "What makes Venus the hottest planet?",
+                    options: ["It's closest to the Sun", "Its thick atmosphere", "It has active volcanoes", "It has no water"],
+                    correctAnswer: "Its thick atmosphere"
+                },
+                {
+                    question: "What is the Great Red Spot on Jupiter?",
+                    options: ["A volcano", "A desert", "A storm", "An ocean"],
+                    correctAnswer: "A storm"
+                },
+                {
+                    question: "Which planet has the strongest winds in our solar system?",
+                    options: ["Earth", "Jupiter", "Saturn", "Neptune"],
+                    correctAnswer: "Neptune"
+                }
+            ],
+            // Level 3 - Medium Difficulty
+            [
+                {
+                    question: "What are Saturn's rings made of?",
+                    options: ["Gas", "Ice and rock", "Metal", "Stardust"],
+                    correctAnswer: "Ice and rock"
+                },
+                {
+                    question: "Which planet rotates in the opposite direction to most other planets?",
+                    options: ["Mercury", "Venus", "Uranus", "Neptune"],
+                    correctAnswer: "Venus"
+                },
+                {
+                    question: "About how long does it take Mercury to orbit the Sun?",
+                    options: ["88 Earth days", "225 Earth days", "365 Earth days", "687 Earth days"],
+                    correctAnswer: "88 Earth days"
+                },
+                {
+                    question: "Which planet has the most moons?",
+                    options: ["Earth", "Mars", "Jupiter", "Saturn"],
+                    correctAnswer: "Saturn"
+                },
+                {
+                    question: "What causes Earth to have seasons?",
+                    options: ["Distance from the Sun", "Rotation speed", "The Moon's gravity", "Tilted axis"],
+                    correctAnswer: "Tilted axis"
+                }
+            ],
+            // Level 4 - Complex Concepts
+            [
+                {
+                    question: "What is the asteroid belt?",
+                    options: ["A weapon in space", "A ring around Earth", "A region of space between Mars and Jupiter", "A satellite system"],
+                    correctAnswer: "A region of space between Mars and Jupiter"
+                },
+                {
+                    question: "What is a light-year?",
+                    options: ["The brightness of a star", "The time light takes to leave the Sun", "The distance light travels in one year", "A year on a planet with lots of light"],
+                    correctAnswer: "The distance light travels in one year"
+                },
+                {
+                    question: "Which is NOT a dwarf planet in our solar system?",
+                    options: ["Pluto", "Eris", "Neptune", "Ceres"],
+                    correctAnswer: "Neptune"
+                },
+                {
+                    question: "What is a nebula?",
+                    options: ["A planet's path", "A giant cloud of dust and gas in space", "A type of star", "A black hole"],
+                    correctAnswer: "A giant cloud of dust and gas in space"
+                },
+                {
+                    question: "What happens during a solar eclipse?",
+                    options: ["The Sun covers the Moon", "The Moon covers the Sun", "The Earth covers the Sun", "The Sun disappears"],
+                    correctAnswer: "The Moon covers the Sun"
+                }
+            ],
+            // Level 5 - Advanced Science
+            [
+                {
+                    question: "What is gravity?",
+                    options: ["A planet", "A force that pulls objects together", "A type of atmosphere", "A comet"],
+                    correctAnswer: "A force that pulls objects together"
+                },
+                {
+                    question: "What makes stars twinkle when we see them from Earth?",
+                    options: ["They blink", "Earth's atmosphere", "Moon's reflection", "Sun's light"],
+                    correctAnswer: "Earth's atmosphere"
+                },
+                {
+                    question: "What is a constellation?",
+                    options: ["A group of planets", "A pattern of stars in the sky", "A type of galaxy", "A space mission"],
+                    correctAnswer: "A pattern of stars in the sky"
+                },
+                {
+                    question: "What is a black hole?",
+                    options: ["A dead star", "A hole in space with strong gravity", "An empty region of space", "A dark planet"],
+                    correctAnswer: "A hole in space with strong gravity"
+                },
+                {
+                    question: "What is the Sun mostly made of?",
+                    options: ["Rock", "Lava", "Hydrogen and helium", "Iron"],
+                    correctAnswer: "Hydrogen and helium"
+                }
+            ],
+            // Level 6 - More Advanced
+            [
+                {
+                    question: "Why does the Moon have phases?",
+                    options: ["It changes shape", "Different amounts of sunlight reflect off it", "Clouds cover parts of it", "Earth's shadow falls on it"],
+                    correctAnswer: "Different amounts of sunlight reflect off it"
+                },
+                {
+                    question: "What is Kepler's First Law about planetary motion?",
+                    options: ["Planets move in circles", "Planets move in elliptical orbits", "Planets move at constant speed", "Planets accelerate near the Sun"],
+                    correctAnswer: "Planets move in elliptical orbits"
+                },
+                {
+                    question: "What causes the Earth's magnetic field?",
+                    options: ["The Moon's gravity", "Earth's rotation", "Molten iron in Earth's core", "Solar radiation"],
+                    correctAnswer: "Molten iron in Earth's core"
+                },
+                {
+                    question: "What is a supernova?",
+                    options: ["A new star", "A planet explosion", "A massive star explosion", "A comet"],
+                    correctAnswer: "A massive star explosion"
+                },
+                {
+                    question: "What will happen to our Sun eventually?",
+                    options: ["Explode as a supernova", "Become a black hole", "Expand into a red giant", "Stay the same forever"],
+                    correctAnswer: "Expand into a red giant"
+                }
+            ],
+            // Level 7 - Conceptual Understanding
+            [
+                {
+                    question: "What is the difference between a star and a planet?",
+                    options: ["Size only", "Stars are hotter", "Stars produce their own light, planets reflect light", "Stars move, planets don't"],
+                    correctAnswer: "Stars produce their own light, planets reflect light"
+                },
+                {
+                    question: "How is gravity related to a planet's mass?",
+                    options: ["Gravity decreases with mass", "Gravity is not related to mass", "Gravity increases with mass", "Gravity only relates to size"],
+                    correctAnswer: "Gravity increases with mass"
+                },
+                {
+                    question: "Why is space exploration important?",
+                    options: ["To find aliens", "To learn about our origins and discover resources", "To build space hotels", "It's not important"],
+                    correctAnswer: "To learn about our origins and discover resources"
+                },
+                {
+                    question: "What is the Big Bang theory?",
+                    options: ["A TV show", "A theory about Earth's creation", "A theory about how the universe began", "A theory about black holes"],
+                    correctAnswer: "A theory about how the universe began"
+                },
+                {
+                    question: "What keeps planets in orbit around the Sun?",
+                    options: ["Magnetic force", "Gravity", "The Sun's heat", "Wind"],
+                    correctAnswer: "Gravity"
+                }
+            ],
+            // Level 8 - Creative Thinking
+            [
+                {
+                    question: "If you could visit any planet, which would be safest to land on without special equipment?",
+                    options: ["Mars", "Venus", "Jupiter", "None of them"],
+                    correctAnswer: "None of them"
+                },
+                {
+                    question: "What might you need to survive on Mars?",
+                    options: ["Sunscreen", "Oxygen, water, and pressure suit", "Warm clothes", "Umbrella"],
+                    correctAnswer: "Oxygen, water, and pressure suit"
+                },
+                {
+                    question: "What might aliens from another solar system find most interesting about Earth?",
+                    options: ["Our buildings", "Our plants and animals", "Our technology", "All of these could be interesting"],
+                    correctAnswer: "All of these could be interesting"
+                },
+                {
+                    question: "If humans lived on Jupiter, how might they be different?",
+                    options: ["They couldn't live there - it's a gas giant", "They'd be stronger", "They'd be shorter", "They'd be faster"],
+                    correctAnswer: "They couldn't live there - it's a gas giant"
+                },
+                {
+                    question: "What types of jobs might people have in space colonies of the future?",
+                    options: ["Only astronauts", "Same as Earth jobs", "Specialized space jobs like asteroid miners", "No jobs would be needed"],
+                    correctAnswer: "Specialized space jobs like asteroid miners"
+                }
+            ]
+        ];
+
+        // Character designs (made with SVG)
+        const createAstronaut = (container) => {
+            const astronaut = document.createElement('div');
+            astronaut.innerHTML = `
+                <svg width="100%" height="100%" viewBox="0 0 200 200">
+                    <!-- Helmet -->
+                    <ellipse cx="100" cy="70" rx="40" ry="45" fill="#e0e0e0" stroke="#999" stroke-width="2" />
+                    <ellipse cx="100" cy="70" rx="30" ry="35" fill="#cceeff" stroke="#999" stroke-width="1" />
+                    
+                    <!-- Suit -->
+                    <rect x="70" y="95" width="60" height="70" rx="10" ry="10" fill="#ffffff" stroke="#999" stroke-width="2" />
+                    
+                    <!-- Backpack -->
+                    <rect x="60" y="100" width="20" height="40" rx="5" ry="5" fill="#cccccc" stroke="#999" stroke-width="1" />
+                    <rect x="120" y="100" width="20" height="40" rx="5" ry="5" fill="#cccccc" stroke="#999" stroke-width="1" />
+                    
+                    <!-- Arms -->
+                    <rect x="50" y="100" width="25" height="15" rx="7" ry="7" fill="#ffffff" stroke="#999" stroke-width="2" transform="rotate(-20, 50, 100)" />
+                    <rect x="125" y="100" width="25" height="15" rx="7" ry="7" fill="#ffffff" stroke="#999" stroke-width="2" transform="rotate(20, 150, 100)" />
+                    
+                    <!-- Hands -->
+                    <circle cx="45" cy="107" r="8" fill="#e0e0e0" stroke="#999" stroke-width="1" />
+                    <circle cx="155" cy="107" r="8" fill="#e0e0e0" stroke="#999" stroke-width="1" />
+                    
+                    <!-- Legs -->
+                    <rect x="80" y="165" width="18" height="25" rx="5" ry="5" fill="#ffffff" stroke="#999" stroke-width="2" />
+                    <rect x="102" y="165" width="18" height="25" rx="5" ry="5" fill="#ffffff" stroke="#999" stroke-width="2" />
+                    
+                    <!-- Feet -->
+                    <ellipse cx="89" cy="190" rx="12" ry="5" fill="#cccccc" stroke="#999" stroke-width="1" />
+                    <ellipse cx="111" cy="190" rx="12" ry="5" fill="#cccccc" stroke="#999" stroke-width="1" />
+                    
+                    <!-- NASA Logo -->
+                    <circle cx="100" cy="110" r="10" fill="#0039A6" />
+                    <text x="100" y="113" font-family="Arial" font-size="10" fill="white" text-anchor="middle">NASA</text>
+                    
+                    <!-- Face (through visor) -->
+                    <ellipse cx="90" cy="65" rx="3" ry="4" fill="#000" />
+                    <ellipse cx="110" cy="65" rx="3" ry="4" fill="#000" />
+                    <path d="M 90 80 Q 100 85 110 80" fill="none" stroke="#000" stroke-width="2" />
+                </svg>
+            `;
+            container.appendChild(astronaut);
+        };
+
+        const createAlien = (container) => {
+            const alien = document.createElement('div');
+            alien.innerHTML = `
+                <svg width="100%" height="100%" viewBox="0 0 200 200">
+                    <!-- Head -->
+                    <ellipse cx="100" cy="70" rx="40" ry="50" fill="#acffac" stroke="#68cc68" stroke-width="2" />
+                    
+                    <!-- Eyes -->
+                    <ellipse cx="85" cy="60" rx="12" ry="18" fill="white" stroke="#68cc68" stroke-width="1" />
+                    <ellipse cx="115" cy="60" rx="12" ry="18" fill="white" stroke="#68cc68" stroke-width="1" />
+                    <ellipse cx="85" cy="60" rx="6" ry="9" fill="black" />
+                    <ellipse cx="115" cy="60" rx="6" ry="9" fill="black" />
+                    <ellipse cx="82" cy="57" rx="3" ry="3" fill="white" />
+                    <ellipse cx="112" cy="57" rx="3" ry="3" fill="white" />
+                    
+                    <!-- Smile -->
+                    <path d="M 85 85 Q 100 95 115 85" fill="none" stroke="#68cc68" stroke-width="2" />
+                    
+                    <!-- Antennas -->
+                    <line x1="85" y1="25" x2="85" y2="40" stroke="#68cc68" stroke-width="2" />
+                    <line x1="115" y1="25" x2="115" y2="40" stroke="#68cc68" stroke-width="2" />
+                    <circle cx="85" cy="25" r="5" fill="#ff9efc" />
+                    <circle cx="115" cy="25" r="5" fill="#ff9efc" />
+                    
+                    <!-- Body -->
+                    <ellipse cx="100" cy="130" rx="25" ry="30" fill="#acffac" stroke="#68cc68" stroke-width="2" />
+                    
+                    <!-- Arms -->
+                    <path d="M 80 110 Q 60 120 65 140" fill="none" stroke="#acffac" stroke-width="8" stroke-linecap="round" />
+                    <path d="M 120 110 Q 140 120 135 140" fill="none" stroke="#acffac" stroke-width="8" stroke-linecap="round" />
+                    
+                    <!-- Hands -->
+                    <circle cx="65" cy="140" r="6" fill="#acffac" stroke="#68cc68" stroke-width="1" />
+                    <circle cx="135" cy="140" r="6" fill="#acffac" stroke="#68cc68" stroke-width="1" />
+                    
+                    <!-- Legs -->
+                    <path d="M 90 160 Q 85 170 90 180" fill="none" stroke="#acffac" stroke-width="8" stroke-linecap="round" />
+                    <path d="M 110 160 Q 115 170 110 180" fill="none" stroke="#acffac" stroke-width="8" stroke-linecap="round" />
+                    
+                    <!-- Feet -->
+                    <ellipse cx="90" cy="180" r="8" ry="5" fill="#acffac" stroke="#68cc68" stroke-width="1" />
+                    <ellipse cx="110" cy="180" r="8" ry="5" fill="#acffac" stroke="#68cc68" stroke-width="1" />
+                    
+                    <!-- Space Badge -->
+                    <circle cx="100" cy="115" r="8" fill="#5555ff" />
+                    <path d="M 100 111 L 102 115 L 106 115 L 103 118 L 104 122 L 100 120 L 96 122 L 97 118 L 94 115 L 98 115 Z" fill="yellow" />
+                </svg>
+            `;
+            container.appendChild(alien);
+        };
+
+        // Canvas setup and rendering
+        let ctx;
+        let canvasWidth;
+        let canvasHeight;
+        let centerX;
+        let centerY;
+        let stars = [];
+
+        function setupCanvas() {
+            const canvas = elements.canvas;
+            ctx = canvas.getContext('2d');
+            
+            // Set canvas size to match container
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            canvasWidth = canvas.width;
+            canvasHeight = canvas.height;
+            centerX = canvasWidth / 2;
+            centerY = canvasHeight / 2;
+            
+            // Create stars
+            createStars();
+            
+            // Start animation loop
+            animationLoop();
+        }
+
+        function createStars() {
+            stars = [];
+            const starCount = gameState.settings.starCount;
+            
+            for (let i = 0; i < starCount; i++) {
+                stars.push({
+                    x: Math.random() * canvasWidth,
+                    y: Math.random() * canvasHeight,
+                    size: Math.random() * 2 + 0.5,
+                    brightness: Math.random() * 0.8 + 0.2,
+                    speed: Math.random() * 0.05 + 0.01
+                });
+            }
+        }
+
+        function animationLoop() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            
+            // Draw background stars
+            drawStars();
+            
+            // Draw Sun
+            drawSun();
+            
+            // Draw planets
+            drawPlanets();
+            
+            // Request next frame
+            requestAnimationFrame(animationLoop);
+        }
+
+        function drawStars() {
+            ctx.fillStyle = 'white';
+            
+            stars.forEach(star => {
+                // Twinkle effect
+                const twinkle = Math.sin(Date.now() * star.speed) * 0.2 + 0.8;
+                
+                ctx.globalAlpha = star.brightness * twinkle;
+                ctx.beginPath();
+                ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            
+            ctx.globalAlpha = 1.0;
+        }
+
+        function drawSun() {
+            const sunRadius = 30 * gameState.zoom * (gameState.settings.planetSize / 5);
+            const gradient = ctx.createRadialGradient(
+                centerX, centerY, 0,
+                centerX, centerY, sunRadius
+            );
+            
+            gradient.addColorStop(0, '#FFFFA0');
+            gradient.addColorStop(0.8, '#FFA500');
+            gradient.addColorStop(1, '#FF4500');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, sunRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Sun glow effect
+            const glowSize = sunRadius * 1.5;
+            const glowGradient = ctx.createRadialGradient(
+                centerX, centerY, sunRadius,
+                centerX, centerY, glowSize
+            );
+            
+            glowGradient.addColorStop(0, 'rgba(255, 69, 0, 0.3)');
+            glowGradient.addColorStop(1, 'rgba(255, 69, 0, 0)');
+            
+            ctx.fillStyle = glowGradient;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, glowSize, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw sun name if labels are enabled
+            if (gameState.settings.showLabels) {
+                ctx.fillStyle = 'white';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('Sun', centerX, centerY + sunRadius + 20);
+            }
+        }
+
+        function drawPlanets() {
+            const planetData = gameState.planetsData;
+            const orbitMultiplier = gameState.settings.realisticDistances ? 3 : 1;
+            const baseOrbitRadius = 60 * gameState.zoom; // Base distance from sun
+            
+            planetData.forEach((planet, index) => {
+                // Calculate orbit radius
+                const orbitRadius = baseOrbitRadius * planet.orbitRadius * orbitMultiplier;
+                
+                // Draw orbit if enabled
+                if (gameState.settings.showOrbits) {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, orbitRadius, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+                
+                // Calculate planet position
+                let planetX, planetY;
+                
+                if (gameState.isOrbiting) {
+                    // Orbital movement - each planet has different speed
+                    const orbitSpeed = 0.001 * planet.orbitSpeed * gameState.settings.orbitSpeed;
+                    const angle = (Date.now() * orbitSpeed) % (Math.PI * 2);
+                    planetX = centerX + Math.cos(angle) * orbitRadius;
+                    planetY = centerY + Math.sin(angle) * orbitRadius;
+                } else {
+                    // Static position
+                    planetX = centerX + orbitRadius;
+                    planetY = centerY;
+                }
+                
+                // Calculate planet size
+                const planetRadius = 5 * planet.size * gameState.zoom * (gameState.settings.planetSize / 5);
+                
+                // Draw the planet
+                ctx.fillStyle = planet.color;
+                ctx.beginPath();
+                ctx.arc(planetX, planetY, planetRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Special effects for some planets
+                
+                // Saturn's rings
+                if (planet.name === "Saturn") {
+                    ctx.save();
+                    ctx.translate(planetX, planetY);
+                    ctx.scale(1, 0.3);
+                    ctx.strokeStyle = 'rgba(210, 180, 140, 0.8)';
+                    ctx.lineWidth = planetRadius * 0.4;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, planetRadius * 1.8, 0, Math.PI * 2);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+                
+                // Draw planet name if labels are enabled
+                if (gameState.settings.showLabels) {
+                    ctx.fillStyle = 'white';
+                    ctx.font = '14px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText(planet.name, planetX, planetY + planetRadius + 15);
+                }
+                
+                // Store planet position and size for click detection
+                planet.currentX = planetX;
+                planet.currentY = planetY;
+                planet.currentRadius = planetRadius;
+            });
+        }
+
+        // Handle canvas clicks to select planets
+        function handleCanvasClick(e) {
+            const rect = elements.canvas.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const clickY = e.clientY - rect.top;
+            
+            // Check if sun was clicked
+            const sunRadius = 30 * gameState.zoom * (gameState.settings.planetSize / 5);
+            const distToSun = Math.sqrt(Math.pow(clickX - centerX, 2) + Math.pow(clickY - centerY, 2));
+            
+            if (distToSun <= sunRadius) {
+                // Sun was clicked
+                gameState.selectedPlanet = null;
+                showPlanetDetails(false);
+                
+                // Show info about the sun
+                elements.displays.infoTitle.textContent = "The Sun";
+                elements.displays.infoContent.textContent = "The Sun is the star at the center of our Solar System. It's about 4.6 billion years old and is made mostly of hydrogen and helium. It provides light and heat that makes life on Earth possible.";
+                elements.displays.infoPanel.classList.add('visible');
+                
+                // Character tip
+                if (gameState.settings.showTips) {
+                    showMessage(elements.characters.alienBubble, "The Sun is so big that about 1.3 million Earths could fit inside it!");
+                }
+                
+                return;
+            }
+            
+            // Check if a planet was clicked
+            for (let i = 0; i < gameState.planetsData.length; i++) {
+                const planet = gameState.planetsData[i];
+                const dist = Math.sqrt(Math.pow(clickX - planet.currentX, 2) + Math.pow(clickY - planet.currentY, 2));
+                
+                if (dist <= planet.currentRadius) {
+                    // Planet was clicked
+                    gameState.selectedPlanet = planet;
+                    displayPlanetDetails(planet);
+                    
+                    // Hide info panel
+                    elements.displays.infoPanel.classList.remove('visible');
+                    
+                    // Character tip
+                    if (gameState.settings.showTips) {
+                        const tips = [
+                            `${planet.name} is ${planet.facts[0].value} in diameter!`,
+                            `A day on ${planet.name} lasts ${planet.facts[1].value}!`,
+                            `${planet.name} has ${planet.facts[2].value} moons!`,
+                            `The temperature on ${planet.name} can be ${planet.facts[3].value}!`
+                        ];
+                        
+                        const randomTip = tips[Math.floor(Math.random() * tips.length)];
+                        showMessage(elements.characters.alienBubble, randomTip);
+                    }
+                    
+                    return;
+                }
+            }
+            
+            // No planet was clicked
+            gameState.selectedPlanet = null;
+            showPlanetDetails(false);
+            elements.displays.infoPanel.classList.remove('visible');
+        }
+
+        // Display planet details
+        function displayPlanetDetails(planet) {
+            elements.displays.planetName.textContent = planet.name;
+            elements.displays.planetDescription.textContent = planet.description;
+            
+            // Clear previous facts
+            elements.displays.planetFacts.innerHTML = '';
+            
+            // Add new facts
+            planet.facts.forEach(fact => {
+                const factElement = document.createElement('div');
+                factElement.className = 'planet-fact';
+                
+                const labelElement = document.createElement('div');
+                labelElement.className = 'fact-label';
+                labelElement.textContent = fact.label;
+                
+                const valueElement = document.createElement('div');
+                valueElement.className = 'fact-value';
+                valueElement.textContent = fact.value;
+                
+                factElement.appendChild(labelElement);
+                factElement.appendChild(valueElement);
+                elements.displays.planetFacts.appendChild(factElement);
+            });
+            
+            showPlanetDetails(true);
+        }
+
+        // Show/hide planet details panel
+        function showPlanetDetails(show) {
+            if (show) {
+                elements.displays.planetDetails.classList.add('visible');
+            } else {
+                elements.displays.planetDetails.classList.remove('visible');
+            }
+        }
+
+        // Quiz functions
+        function startQuiz() {
+            // Switch to quiz screen
+            showScreen('quizScreen');
+            
+            // Reset quiz state
+            gameState.score = 0;
+            
+            // Generate first question
+            generateQuizQuestion();
+        }
+
+        function generateQuizQuestion() {
+            // Get appropriate questions based on difficulty level
+            const level = Math.min(gameState.settings.difficultyLevel - 1, quizData.length - 1);
+            const questions = quizData[level];
+            
+            // Select a random question
+            const questionIndex = Math.floor(Math.random() * questions.length);
+            const question = questions[questionIndex];
+            
+            // Set current quiz
+            gameState.currentQuiz = {
+                question: question.question,
+                options: question.options,
+                correctAnswer: question.correctAnswer,
+                userAnswer: ''
+            };
+            
+            // Display the question
+            elements.displays.quizQuestion.textContent = question.question;
+            
+            // Clear previous options
+            elements.displays.quizOptions.innerHTML = '';
+            
+            // Add new options
+            question.options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', function() {
+                    selectQuizOption(this);
+                });
+                elements.displays.quizOptions.appendChild(optionElement);
+            });
+        }
+
+        function selectQuizOption(optionElement) {
+            // Clear any previous selections
+            const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+            options.forEach(option => {
+                option.classList.remove('selected');
+                option.classList.remove('correct');
+                option.classList.remove('incorrect');
+            });
+            
+            // Select the clicked option
+            optionElement.classList.add('selected');
+            
+            // Store user's answer
+            gameState.currentQuiz.userAnswer = optionElement.textContent;
+            
+            // Play select sound
+            playSelectSound();
+        }
+
+        function checkQuizAnswer() {
+            if (!gameState.currentQuiz.userAnswer) {
+                // No answer selected
+                showMessage(elements.characters.astronautBubble, "Please select an answer first!");
+                return;
+            }
+            
+            // Check if the answer is correct
+            if (gameState.currentQuiz.userAnswer === gameState.currentQuiz.correctAnswer) {
+                // Correct answer
+                playSuccessSound();
+                createParticleEffect();
+                
+                // Show celebration message
+                showMessage(elements.characters.alienBubble, "Excellent! That's correct!");
+                
+                // Increment score
+                gameState.score++;
+                
+                // Proceed to next question or end quiz
+                if (gameState.score >= 5) {
+                    // Quiz completed
+                    setTimeout(() => {
+                        completeQuiz();
+                    }, 2000);
+                } else {
+                    // Next question
+                    setTimeout(() => {
+                        generateQuizQuestion();
+                    }, 2000);
+                }
+            } else {
+                // Incorrect answer
+                playErrorSound();
+                
+                // Show hint message
+                showMessage(elements.characters.astronautBubble, `Not quite. The correct answer is ${gameState.currentQuiz.correctAnswer}.`);
+                
+                // Highlight correct answer
+                const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+                options.forEach(option => {
+                    if (option.textContent === gameState.currentQuiz.correctAnswer) {
+                        option.classList.add('correct');
+                    } else if (option.classList.contains('selected')) {
+                        option.classList.add('incorrect');
+                    }
+                });
+                
+                // Next question after delay
+                setTimeout(() => {
+                    generateQuizQuestion();
+                }, 3000);
+            }
+        }
+
+        function completeQuiz() {
+            // Show reward screen
+            showScreen('rewardScreen');
+            
+            // Set reward text based on score
+            if (gameState.score >= 5) {
+                elements.displays.rewardText.textContent = "Amazing! You're a Space Master!";
+                showMessage(elements.characters.alienBubble, "Wow! You know so much about space!");
+            } else if (gameState.score >= 3) {
+                elements.displays.rewardText.textContent = "Great job! You're getting really good with space facts!";
+                showMessage(elements.characters.alienBubble, "You're learning so much about space!");
+            } else {
+                elements.displays.rewardText.textContent = "Good effort! Keep exploring to master space knowledge!";
+                showMessage(elements.characters.alienBubble, "Don't worry! Space is big and there's lots to learn!");
+            }
+            
+            // Create celebration animation
+            createRewardAnimation();
+            
+            // Increase difficulty for next time if did well
+            if (gameState.score >= 4 && gameState.settings.difficultyLevel < 5) {
+                gameState.settings.difficultyLevel++;
+                elements.settings.difficultyLevel.value = gameState.settings.difficultyLevel;
+                elements.settings.difficultyLevelValue.textContent = gameState.settings.difficultyLevel;
+            }
+        }
+
+        // Continue game after quiz
+        function continueGame() {
+            // Reset game state for next session
+            gameState.score = 0;
+            
+            // Show the game screen
+            showScreen('gameScreen');
+            
+            // Character tip
+            if (gameState.settings.showTips) {
+                const randomTip = gameState.tips[Math.floor(Math.random() * gameState.tips.length)];
+                showMessage(elements.characters.alienBubble, randomTip);
+            }
+        }
+
+        // Show a screen
+        function showScreen(screenName) {
+            // Hide all screens
+            Object.values(elements.screens).forEach(screen => {
+                screen.classList.remove('visible');
+                screen.classList.add('hidden');
+            });
+            
+            // Show the requested screen
+            elements.screens[screenName].classList.remove('hidden');
+            elements.screens[screenName].classList.add('visible');
+        }
+
+        // Toggle hint visibility
+        function toggleHint() {
+            const hintText = elements.displays.hintText;
+            
+            if (hintText.style.opacity === '1') {
+                hintText.style.opacity = '0';
+            } else {
+                hintText.style.opacity = '1';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    hintText.style.opacity = '0';
+                }, 5000);
+            }
+            
+            playButtonSound();
+        }
+
+        // Show a character message
+        function showMessage(bubbleElement, message) {
+            // Set the message text
+            bubbleElement.textContent = message;
+            
+            // Show the bubble
+            bubbleElement.style.opacity = '1';
+            
+            // Auto-hide after delay based on message length
+            const delay = Math.max(3000, message.length * 50);
+            setTimeout(() => {
+                bubbleElement.style.opacity = '0';
+            }, delay);
+        }
+
+        // Create learning path
+        function createLearningPath() {
+            const pathContainer = elements.displays.learningPath;
+            
+            // Clear any existing segments
+            pathContainer.innerHTML = '';
+            
+            // Create segments for each level
+            for (let i = 0; i < gameState.maxLevel; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'path-segment';
+                segment.setAttribute('data-level', i + 1);
+                pathContainer.appendChild(segment);
+            }
+        }
+
+        // Update learning path
+        function updateLearningPath() {
+            const segments = elements.displays.learningPath.querySelectorAll('.path-segment');
+            
+            segments.forEach((segment, index) => {
+                const level = index + 1;
+                
+                if (level < gameState.currentLevel) {
+                    segment.className = 'path-segment completed';
+                } else if (level === gameState.currentLevel) {
+                    segment.className = 'path-segment current';
+                } else {
+                    segment.className = 'path-segment';
+                }
+            });
+        }
+
+        // Helper function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Create celebration particle effect
+        function createParticleEffect() {
+            // Clear any existing particles
+            clearParticles();
+            
+            // Create stars or bubbles
+            const particleCount = 30;
+            const particleTypes = ['star', 'bubble'];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particleType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                createParticle(particleType);
+            }
+        }
+
+        // Create a single particle
+        function createParticle(type) {
+            const container = document.getElementById('game-container');
+            
+            if (type === 'star') {
+                // Create a star
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                
+                // Random size
+                const size = Math.random() * 30 + 10;
+                
+                // Star SVG
+                star.innerHTML = `
+                    <svg width="${size}" height="${size}" viewBox="0 0 51 48">
+                        <path fill="#FFD700" d="m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z"/>
+                    </svg>
+                `;
+                
+                star.style.left = `${x}px`;
+                star.style.top = `${y}px`;
+                container.appendChild(star);
+                
+                // Animation
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                const dx = Math.cos(angle) * speed;
+                const dy = Math.sin(angle) * speed;
+                
+                let opacity = 1;
+                let posX = x;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    opacity -= 0.01;
+                    posX += dx;
+                    posY += dy;
+                    
+                    star.style.opacity = opacity;
+                    star.style.left = `${posX}px`;
+                    star.style.top = `${posY}px`;
+                    
+                    if (opacity <= 0) {
+                        clearInterval(animation);
+                        star.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.stars.push(star);
+                gameState.animations.timers.push(animation);
+            } else {
+                // Create a bubble
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = window.innerHeight + 20;
+                
+                // Random size
+                const size = Math.random() * 40 + 20;
+                
+                // Random color
+                const colors = ['#FF9A00', '#4b0082', '#4CAF50', '#f44336', '#2196F3'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.backgroundColor = color;
+                bubble.style.left = `${x}px`;
+                bubble.style.top = `${y}px`;
+                bubble.style.opacity = '0.7';
+                bubble.style.borderRadius = '50%';
+                container.appendChild(bubble);
+                
+                // Animation
+                const speed = Math.random() * 3 + 1;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    posY -= speed;
+                    bubble.style.top = `${posY}px`;
+                    
+                    if (posY < -size) {
+                        clearInterval(animation);
+                        bubble.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.bubbles.push(bubble);
+                gameState.animations.timers.push(animation);
+            }
+        }
+
+        // Clear all particles
+        function clearParticles() {
+            // Clear all animation timers
+            gameState.animations.timers.forEach(timer => {
+                clearInterval(timer);
+            });
+            
+            // Remove all stars and bubbles
+            gameState.animations.stars.forEach(star => {
+                if (star.parentNode) {
+                    star.remove();
+                }
+            });
+            
+            gameState.animations.bubbles.forEach(bubble => {
+                if (bubble.parentNode) {
+                    bubble.remove();
+                }
+            });
+            
+            // Reset arrays
+            gameState.animations.stars = [];
+            gameState.animations.bubbles = [];
+            gameState.animations.timers = [];
+        }
+
+        // Create reward animation
+        function createRewardAnimation() {
+            const container = elements.displays.rewardAnimation;
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create canvas for celebration
+            const canvas = document.createElement('canvas');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            container.appendChild(canvas);
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Trophy
+            drawTrophy(ctx, canvas.width / 2, canvas.height / 2);
+            
+            // Start particle animation
+            createParticleEffect();
+            
+            // Play celebration sound
+            playCelebrationSound();
+        }
+
+        // Draw trophy
+        function drawTrophy(ctx, x, y) {
+            // Trophy base
+            ctx.fillStyle = '#FFD700';
+            
+            // Cup
+            ctx.beginPath();
+            ctx.moveTo(x - 30, y - 50);
+            ctx.lineTo(x + 30, y - 50);
+            ctx.quadraticCurveTo(x + 50, y - 50, x + 50, y - 30);
+            ctx.quadraticCurveTo(x + 50, y, x + 30, y);
+            ctx.quadraticCurveTo(x + 15, y + 10, x + 15, y + 30);
+            ctx.lineTo(x - 15, y + 30);
+            ctx.quadraticCurveTo(x - 15, y + 10, x - 30, y);
+            ctx.quadraticCurveTo(x - 50, y, x - 50, y - 30);
+            ctx.quadraticCurveTo(x - 50, y - 50, x - 30, y - 50);
+            ctx.fill();
+            
+            // Base
+            ctx.fillStyle = '#A67C00';
+            ctx.beginPath();
+            ctx.rect(x - 25, y + 30, 50, 10);
+            ctx.fill();
+            
+            ctx.fillStyle = '#8D6E00';
+            ctx.beginPath();
+            ctx.rect(x - 35, y + 40, 70, 10);
+            ctx.fill();
+            
+            // Star on trophy
+            ctx.fillStyle = '#FFFFFF';
+            ctx.beginPath();
+            const starPoints = 5;
+            const outerRadius = 20;
+            const innerRadius = 10;
+            
+            for (let i = 0; i < starPoints * 2; i++) {
+                const radius = i % 2 === 0 ? outerRadius : innerRadius;
+                const angle = (i * Math.PI) / starPoints;
+                const sx = x + Math.sin(angle) * radius;
+                const sy = y - 20 + Math.cos(angle) * radius;
+                
+                if (i === 0) {
+                    ctx.moveTo(sx, sy);
+                } else {
+                    ctx.lineTo(sx, sy);
+                }
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+            
+            // Text
+            ctx.fillStyle = '#4b0082';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SPACE', x, y + 15);
+            ctx.fillText('EXPLORER', x, y + 35);
+        }
+
+        // Sound functions using Web Audio API
+        let audioContext;
+
+        function initAudio() {
+            // Create audio context
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            audioContext = new AudioContext();
+        }
+
+        function playButtonSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+
+        function playSelectSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+            }
+        }
+
+        function playSuccessSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                
+                notes.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.1);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.1 + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + index * 0.1 + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.1);
+                    oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                });
+            }
+        }
+
+        function playErrorSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const frequencies = [349.23, 329.63, 311.13]; // F4, E4, D#4/Eb4
+                
+                frequencies.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.15);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.15);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.15 + 0.01);
+                    gainNode.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + index * 0.15 + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.15);
+                    oscillator.stop(audioContext.currentTime + index * 0.15 + 0.3);
+                });
+            }
+        }
+
+        function playCelebrationSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                // Major scale ascending and then chord
+                const notes = [
+                    { freq: 523.25, time: 0 },    // C5
+                    { freq: 587.33, time: 0.15 }, // D5
+                    { freq: 659.25, time: 0.3 },  // E5
+                    { freq: 698.46, time: 0.45 }, // F5
+                    { freq: 783.99, time: 0.6 },  // G5
+                    { freq: 880.00, time: 0.75 }, // A5
+                    { freq: 987.77, time: 0.9 },  // B5
+                    { freq: 1046.50, time: 1.05 }, // C6
+                    // Final chord
+                    { freq: 523.25, time: 1.3 }, // C5
+                    { freq: 659.25, time: 1.3 }, // E5
+                    { freq: 783.99, time: 1.3 }, // G5
+                    { freq: 1046.50, time: 1.3 }  // C6
+                ];
+                
+                notes.forEach(note => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime + note.time + 0.01);
+                    
+                    // Longer sustain for the final chord
+                    if (note.time === 1.3) {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 1.0);
+                        oscillator.start(audioContext.currentTime + note.time);
+                        oscillator.stop(audioContext.currentTime + note.time + 1.0);
+                    } else {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 0.2);
+                        oscillator.start(audioContext.currentTime + note.time);
+                        oscillator.stop(audioContext.currentTime + note.time + 0.2);
+                    }
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                });
+            }
+        }
+
+        // Handle keyboard events
+        function handleKeyPress(e) {
+            // Space toggles orbit animation
+            if (e.code === 'Space') {
+                gameState.isOrbiting = !gameState.isOrbiting;
+                playButtonSound();
+                
+                if (gameState.isOrbiting) {
+                    showMessage(elements.characters.astronautBubble, "The planets are now orbiting the Sun!");
+                } else {
+                    showMessage(elements.characters.astronautBubble, "The planets have stopped orbiting!");
+                }
+            }
+            
+            // Arrow keys for zoom
+            if (e.code === 'ArrowUp') {
+                gameState.zoom = Math.min(gameState.zoom * 1.1, 2);
+                playButtonSound();
+            }
+            
+            if (e.code === 'ArrowDown') {
+                gameState.zoom = Math.max(gameState.zoom * 0.9, 0.5);
+                playButtonSound();
+            }
+            
+            // Q to start quiz
+            if (e.code === 'KeyQ') {
+                startQuiz();
+            }
+            
+            // H to toggle hint
+            if (e.code === 'KeyH') {
+                toggleHint();
+            }
+        }
+
+        // Handle settings changes
+        function handleSettingsChange() {
+            // Orbit Speed
+            elements.settings.orbitSpeed.addEventListener('input', () => {
+                gameState.settings.orbitSpeed = parseInt(elements.settings.orbitSpeed.value);
+                elements.settings.orbitSpeedValue.textContent = elements.settings.orbitSpeed.value;
+            });
+            
+            // Planet Size
+            elements.settings.planetSize.addEventListener('input', () => {
+                gameState.settings.planetSize = parseInt(elements.settings.planetSize.value);
+                elements.settings.planetSizeValue.textContent = elements.settings.planetSize.value;
+            });
+            
+            // Show Labels
+            elements.settings.showLabels.addEventListener('change', () => {
+                gameState.settings.showLabels = elements.settings.showLabels.checked;
+            });
+            
+            // Show Orbits
+            elements.settings.showOrbits.addEventListener('change', () => {
+                gameState.settings.showOrbits = elements.settings.showOrbits.checked;
+            });
+            
+            // Realistic Distances
+            elements.settings.realisticDistances.addEventListener('change', () => {
+                gameState.settings.realisticDistances = elements.settings.realisticDistances.checked;
+            });
+            
+            // Sound Volume
+            elements.settings.soundVolume.addEventListener('input', () => {
+                gameState.settings.soundVolume = parseInt(elements.settings.soundVolume.value) / 10;
+                elements.settings.soundVolumeValue.textContent = elements.settings.soundVolume.value;
+            });
+            
+            // Star Count
+            elements.settings.starCount.addEventListener('input', () => {
+                gameState.settings.starCount = parseInt(elements.settings.starCount.value);
+                elements.settings.starCountValue.textContent = elements.settings.starCount.value;
+                createStars();
+            });
+            
+            // Show Tips
+            elements.settings.showTips.addEventListener('change', () => {
+                gameState.settings.showTips = elements.settings.showTips.checked;
+            });
+            
+            // Difficulty Level
+            elements.settings.difficultyLevel.addEventListener('input', () => {
+                gameState.settings.difficultyLevel = parseInt(elements.settings.difficultyLevel.value);
+                elements.settings.difficultyLevelValue.textContent = elements.settings.difficultyLevel.value;
+            });
+        }
+
+        // Info panel toggle
+        function handleInfoPanelToggle() {
+            elements.displays.infoToggle.addEventListener('click', () => {
+                elements.displays.infoPanel.classList.toggle('visible');
+                playButtonSound();
+            });
+        }
+
+        // Initialize the game
+        function initGame() {
+            // Initialize audio
+            initAudio();
+            
+            // Create characters
+            createAstronaut(elements.characters.astronaut);
+            createAlien(elements.characters.alien);
+            
+            // Create learning path
+            createLearningPath();
+            updateLearningPath();
+            
+            // Set up event listeners
+            elements.buttons.startButton.addEventListener('click', () => {
+                showScreen('gameScreen');
+                playButtonSound();
+                
+                // Show welcome tip
+                if (gameState.settings.showTips) {
+                    setTimeout(() => {
+                        showMessage(elements.characters.astronautBubble, "Welcome to Solar System Explorer! Click on planets to learn about them.");
+                    }, 500);
+                    
+                    setTimeout(() => {
+                        showMessage(elements.characters.alienBubble, "I'm Stella the Star Guide! I'll help you learn about space!");
+                    }, 3000);
+                }
+            });
+            
+            elements.buttons.settingsButton.addEventListener('click', () => {
+                showScreen('settingsScreen');
+                playButtonSound();
+            });
+            
+            elements.buttons.quizStartButton.addEventListener('click', () => {
+                startQuiz();
+                playButtonSound();
+            });
+            
+            elements.buttons.quizSubmit.addEventListener('click', () => {
+                checkQuizAnswer();
+                playButtonSound();
+            });
+            
+            elements.buttons.continueButton.addEventListener('click', () => {
+                continueGame();
+                playButtonSound();
+            });
+            
+            elements.buttons.settingsBack.addEventListener('click', () => {
+                showScreen('startScreen');
+                playButtonSound();
+            });
+            
+            elements.buttons.hintToggle.addEventListener('click', () => {
+                toggleHint();
+            });
+            
+            // Canvas click handler
+            elements.canvas.addEventListener('click', handleCanvasClick);
+            
+            // Keyboard events
+            window.addEventListener('keydown', handleKeyPress);
+            
+            // Settings change handlers
+            handleSettingsChange();
+            
+            // Info panel toggle
+            handleInfoPanelToggle();
+            
+            // Set up canvas
+            setupCanvas();
+            
+            // Handle window resize
+            window.addEventListener('resize', () => {
+                setupCanvas();
+            });
+        }
+
+        // Initialize the game when the window loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

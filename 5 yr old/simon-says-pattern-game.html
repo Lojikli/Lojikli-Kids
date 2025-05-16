@@ -1,0 +1,1829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Simon Says Pattern Explorer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            touch-action: manipulation;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+
+        body {
+            background-color: #2c3e50;
+            overflow: hidden;
+            touch-action: manipulation;
+            color: white;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 100vh;
+            max-height: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding: 10px;
+            overflow: hidden;
+        }
+
+        #header {
+            width: 100%;
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 10px;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: #ffdb58;
+            margin-bottom: 5px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        #stats {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            padding: 5px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .stat-box {
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 5px 10px;
+            flex-grow: 1;
+            margin: 0 5px;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        #game-board {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 500px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+            border-radius: 50%;
+            background-color: #34495e;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(0, 0, 0, 0.5);
+            margin: 20px 0;
+        }
+
+        .gem {
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.1s;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3), inset 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .gem:active {
+            transform: scale(0.95);
+        }
+
+        .gem:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.5), transparent 40%);
+            pointer-events: none;
+        }
+
+        #red {
+            background-color: #e74c3c;
+            grid-column: 1;
+            grid-row: 1;
+            border-top-left-radius: 100%;
+        }
+
+        #green {
+            background-color: #2ecc71;
+            grid-column: 2;
+            grid-row: 1;
+            border-top-right-radius: 100%;
+        }
+
+        #blue {
+            background-color: #3498db;
+            grid-column: 1;
+            grid-row: 2;
+            border-bottom-left-radius: 100%;
+        }
+
+        #yellow {
+            background-color: #f1c40f;
+            grid-column: 2;
+            grid-row: 2;
+            border-bottom-right-radius: 100%;
+        }
+
+        .gem.active {
+            filter: brightness(1.75);
+        }
+
+        #center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 35%;
+            height: 35%;
+            background-color: #2c3e50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            z-index: 5;
+            overflow: hidden;
+        }
+
+        #start-button {
+            width: 80%;
+            height: 80%;
+            border-radius: 50%;
+            background-color: #27ae60;
+            border: none;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            box-shadow: 0 4px 0 #1e8449;
+        }
+
+        #start-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #1e8449;
+        }
+
+        #game-message {
+            width: 90%;
+            padding: 10px 15px;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            text-align: center;
+            margin: 15px 0;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        #controls {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .control-label {
+            min-width: 100px;
+            margin-right: 10px;
+        }
+
+        .slider-container {
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        input[type="range"] {
+            flex-grow: 1;
+            height: 10px;
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            background: #34495e;
+            outline: none;
+            border-radius: 5px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #3498db;
+            cursor: pointer;
+        }
+
+        .slider-value {
+            min-width: 60px;
+            text-align: center;
+            margin-left: 10px;
+            background-color: rgba(0, 0, 0, 0.3);
+            padding: 2px 5px;
+            border-radius: 5px;
+        }
+
+        #character-container {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            z-index: 10;
+        }
+
+        #quiz-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        #quiz-content {
+            background-color: #2c3e50;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        #quiz-question {
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        #quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-option {
+            background-color: #34495e;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            text-align: left;
+        }
+
+        .quiz-option:hover {
+            background-color: #2980b9;
+        }
+
+        .quiz-option.selected {
+            background-color: #2980b9;
+        }
+
+        .quiz-option.correct {
+            background-color: #27ae60;
+        }
+
+        .quiz-option.incorrect {
+            background-color: #e74c3c;
+        }
+
+        #submit-answer {
+            background-color: #2ecc71;
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        #submit-answer:hover {
+            background-color: #27ae60;
+        }
+
+        #quiz-message {
+            min-height: 30px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        #game-over-screen, #welcome-screen, #level-complete-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .screen-content {
+            background-color: #2c3e50;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .screen-title {
+            font-size: 2rem;
+            color: #ffdb58;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        .screen-message {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            line-height: 1.4;
+        }
+
+        .btn {
+            background-color: #2ecc71;
+            border: none;
+            color: white;
+            padding: 12px 24px;
+            font-size: 1.1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.1s;
+            margin: 10px;
+            box-shadow: 0 4px 0 #27ae60;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 0 0 #27ae60;
+        }
+
+        .btn.red {
+            background-color: #e74c3c;
+            box-shadow: 0 4px 0 #c0392b;
+        }
+
+        .btn.blue {
+            background-color: #3498db;
+            box-shadow: 0 4px 0 #2980b9;
+        }
+
+        .character {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        #info-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 40px;
+            height: 40px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        #info-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        #info-content {
+            background-color: #2c3e50;
+            padding: 20px;
+            border-radius: 15px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            text-align: left;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        #info-content h2 {
+            text-align: center;
+            color: #ffdb58;
+            margin-bottom: 15px;
+        }
+
+        #info-content p {
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        #info-content h3 {
+            color: #3498db;
+            margin: 15px 0 5px 0;
+        }
+
+        #info-content ul {
+            padding-left: 20px;
+            margin-bottom: 10px;
+        }
+
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        /* Particle effects */
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            .stat-box {
+                padding: 3px 5px;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+            }
+
+            .stat-value {
+                font-size: 1rem;
+            }
+
+            #game-board {
+                gap: 10px;
+                padding: 10px;
+            }
+
+            #start-button {
+                font-size: 0.8rem;
+            }
+
+            #controls {
+                padding: 5px;
+            }
+
+            .control-label {
+                min-width: 80px;
+                font-size: 0.9rem;
+            }
+
+            .slider-value {
+                min-width: 50px;
+                font-size: 0.9rem;
+            }
+
+            #quiz-question {
+                font-size: 1.1rem;
+            }
+
+            .screen-title {
+                font-size: 1.8rem;
+            }
+
+            .screen-message {
+                font-size: 1rem;
+            }
+
+            .btn {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+        }
+
+        /* For very small screens */
+        @media (max-width: 360px) {
+            h1 {
+                font-size: 1.3rem;
+            }
+
+            #controls {
+                margin-top: 5px;
+            }
+
+            .control-row {
+                margin-bottom: 5px;
+            }
+
+            .control-label {
+                min-width: 70px;
+                font-size: 0.8rem;
+            }
+
+            #character-container {
+                width: 120px;
+                height: 120px;
+            }
+        }
+
+        /* For landscape mode on mobile */
+        @media (max-height: 500px) and (orientation: landscape) {
+            #game-container {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 5px;
+            }
+
+            #header {
+                width: 100%;
+                order: 1;
+                margin-bottom: 5px;
+                padding: 5px;
+            }
+
+            #stats {
+                width: 95%;
+                margin-bottom: 5px;
+                order: 2;
+            }
+
+            #game-board {
+                width: 60%;
+                max-width: 300px;
+                margin: 5px;
+                order: 3;
+            }
+
+            #controls {
+                width: 35%;
+                order: 4;
+                margin: 5px;
+            }
+
+            #game-message {
+                width: 95%;
+                min-height: 30px;
+                margin: 5px 0;
+                padding: 5px 10px;
+                order: 5;
+            }
+
+            #character-container {
+                width: 100px;
+                height: 100px;
+                bottom: 5px;
+                right: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="header">
+            <h1>Simon Says Pattern Explorer</h1>
+        </div>
+
+        <div id="stats">
+            <div class="stat-box">
+                <div class="stat-label">SCORE</div>
+                <div id="score" class="stat-value">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">LEVEL</div>
+                <div id="level" class="stat-value">1</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">BEST</div>
+                <div id="high-score" class="stat-value">0</div>
+            </div>
+        </div>
+
+        <div id="game-board">
+            <div id="red" class="gem"></div>
+            <div id="green" class="gem"></div>
+            <div id="blue" class="gem"></div>
+            <div id="yellow" class="gem"></div>
+            <div id="center-circle">
+                <button id="start-button">START</button>
+            </div>
+        </div>
+
+        <div id="game-message">
+            Welcome to Pattern Explorer! Press START to begin your adventure.
+        </div>
+
+        <div id="controls">
+            <div class="control-row">
+                <div class="control-label">Speed:</div>
+                <div class="slider-container">
+                    <input type="range" id="speed-slider" min="200" max="1000" value="600" step="100">
+                    <div id="speed-value" class="slider-value">Medium</div>
+                </div>
+            </div>
+            <div class="control-row">
+                <div class="control-label">Difficulty:</div>
+                <div class="slider-container">
+                    <input type="range" id="difficulty-slider" min="1" max="3" value="1" step="1">
+                    <div id="difficulty-value" class="slider-value">Easy</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="character-container">
+            <div class="character" id="professor-character"></div>
+        </div>
+
+        <div id="info-button">i</div>
+    </div>
+
+    <!-- Welcome Screen -->
+    <div id="welcome-screen">
+        <div class="screen-content">
+            <h2 class="screen-title">Welcome to Pattern Explorer!</h2>
+            <p class="screen-message">
+                Hi there, young genius! I'm Professor Pattern, and I'm going to help you learn about sequences and patterns through this fun game!
+                <br><br>
+                Watch the colored gems light up, and then repeat the pattern by tapping them in the same order. As you progress, the patterns will get longer and more complex.
+                <br><br>
+                Are you ready to train your brain and become a pattern master?
+            </p>
+            <button id="start-game-btn" class="btn">Let's Begin!</button>
+        </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="game-over-screen">
+        <div class="screen-content">
+            <h2 class="screen-title">Game Over!</h2>
+            <p id="game-over-message" class="screen-message">
+                Oh no! You missed the pattern. But that's okay - learning patterns takes practice!
+            </p>
+            <p>Your score: <span id="final-score">0</span></p>
+            <div>
+                <button id="play-again-btn" class="btn">Play Again</button>
+                <button id="back-to-menu-btn" class="btn blue">Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Level Complete Screen -->
+    <div id="level-complete-screen">
+        <div class="screen-content">
+            <h2 class="screen-title">Level Complete!</h2>
+            <p id="level-complete-message" class="screen-message">
+                Amazing job! You've mastered this level's patterns.
+            </p>
+            <div>
+                <button id="next-level-btn" class="btn">Next Level</button>
+                <button id="take-quiz-btn" class="btn blue">Take Quiz</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Modal -->
+    <div id="quiz-modal">
+        <div id="quiz-content">
+            <h2>Pattern Quiz</h2>
+            <div id="quiz-question"></div>
+            <div id="quiz-options"></div>
+            <button id="submit-answer">Submit Answer</button>
+            <div id="quiz-message"></div>
+        </div>
+    </div>
+
+    <!-- Info Modal -->
+    <div id="info-modal">
+        <div id="info-content">
+            <div class="close-button">&times;</div>
+            <h2>What Are Patterns?</h2>
+            <p>Patterns are things that repeat in a logical way. They can be found everywhere around us!</p>
+            
+            <h3>Types of Patterns:</h3>
+            <ul>
+                <li><strong>Repeating Patterns:</strong> When items repeat exactly the same way, like red-blue-red-blue-red-blue.</li>
+                <li><strong>Growing Patterns:</strong> When the pattern changes in a predictable way, like getting bigger: 2, 4, 6, 8...</li>
+                <li><strong>Shrinking Patterns:</strong> When the pattern gets smaller: 10, 8, 6, 4...</li>
+                <li><strong>Color Patterns:</strong> Patterns based on colors, like the rainbow!</li>
+                <li><strong>Shape Patterns:</strong> Patterns of different shapes, like circle-square-triangle-circle-square-triangle.</li>
+            </ul>
+            
+            <h3>Why Patterns Are Important:</h3>
+            <p>Patterns help us:</p>
+            <ul>
+                <li>Predict what comes next</li>
+                <li>Understand math better</li>
+                <li>Remember things more easily</li>
+                <li>Solve problems</li>
+                <li>Recognize relationships</li>
+            </ul>
+            
+            <h3>Patterns in Nature:</h3>
+            <p>Nature is full of amazing patterns!</p>
+            <ul>
+                <li>The spiral pattern in seashells</li>
+                <li>The hexagon shapes in beehives</li>
+                <li>The symmetry in butterfly wings</li>
+                <li>The branching in trees</li>
+                <li>The spots and stripes on animals</li>
+            </ul>
+            
+            <h3>Pattern Game Tips:</h3>
+            <ul>
+                <li>Try saying the pattern out loud as you see it (like "red, blue, green...")</li>
+                <li>Look for mini-patterns within longer patterns</li>
+                <li>Start with slow speeds until you get better</li>
+                <li>Sometimes patterns have a rule - try to figure it out!</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Audio Context for sound generation
+        let audioContext;
+        
+        // Game elements
+        const gameBoard = document.getElementById('game-board');
+        const gems = {
+            red: document.getElementById('red'),
+            green: document.getElementById('green'),
+            blue: document.getElementById('blue'),
+            yellow: document.getElementById('yellow')
+        };
+        const startButton = document.getElementById('start-button');
+        const gameMessage = document.getElementById('game-message');
+        
+        // Stats display
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const highScoreDisplay = document.getElementById('high-score');
+        
+        // Controls
+        const speedSlider = document.getElementById('speed-slider');
+        const speedValue = document.getElementById('speed-value');
+        const difficultySlider = document.getElementById('difficulty-slider');
+        const difficultyValue = document.getElementById('difficulty-value');
+        
+        // Screens
+        const welcomeScreen = document.getElementById('welcome-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const levelCompleteScreen = document.getElementById('level-complete-screen');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const gameOverMessage = document.getElementById('game-over-message');
+        const levelCompleteMessage = document.getElementById('level-complete-message');
+        
+        // Buttons
+        const startGameBtn = document.getElementById('start-game-btn');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const backToMenuBtn = document.getElementById('back-to-menu-btn');
+        const nextLevelBtn = document.getElementById('next-level-btn');
+        const takeQuizBtn = document.getElementById('take-quiz-btn');
+        
+        // Quiz elements
+        const quizModal = document.getElementById('quiz-modal');
+        const quizQuestion = document.getElementById('quiz-question');
+        const quizOptions = document.getElementById('quiz-options');
+        const submitAnswerBtn = document.getElementById('submit-answer');
+        const quizMessage = document.getElementById('quiz-message');
+        
+        // Info modal
+        const infoButton = document.getElementById('info-button');
+        const infoModal = document.getElementById('info-modal');
+        const closeInfoButton = document.querySelector('#info-modal .close-button');
+
+        // Character elements
+        const professorCharacter = document.getElementById('professor-character');
+        
+        // Game state
+        const gameState = {
+            sequence: [],
+            playerSequence: [],
+            isPlaying: false,
+            waitingForInput: false,
+            level: 1,
+            score: 0,
+            highScore: 0,
+            sequenceLength: 3,
+            speed: 600, // Default speed (ms)
+            difficulty: 1, // Default difficulty
+            roundsInLevel: 0,
+            maxRoundsPerLevel: 3,
+            quiz: {
+                current: null,
+                selectedAnswer: null
+            }
+        };
+        
+        // Define colors and their names for easier reference
+        const colors = {
+            red: { id: 'red', displayName: 'Red', rgb: '#e74c3c' },
+            green: { id: 'green', displayName: 'Green', rgb: '#2ecc71' },
+            blue: { id: 'blue', displayName: 'Blue', rgb: '#3498db' },
+            yellow: { id: 'yellow', displayName: 'Yellow', rgb: '#f1c40f' }
+        };
+        
+        // Quiz questions
+        const quizQuestions = [
+            {
+                question: "What is a pattern?",
+                options: [
+                    "Things that are arranged randomly",
+                    "Things that repeat in a predictable way",
+                    "Things that are all the same color",
+                    "Things that never match"
+                ],
+                correctAnswer: "Things that repeat in a predictable way",
+                explanation: "A pattern is something that repeats in a predictable way. When you can guess what comes next, you've found the pattern!"
+            },
+            {
+                question: "Which of these is a pattern?",
+                options: [
+                    "Red, Blue, Green, Yellow, Purple, Orange",
+                    "Apple, Banana, Car, Elephant, Fish",
+                    "Triangle, Circle, Triangle, Circle, Triangle",
+                    "1, 5, 2, 9, 7, 3"
+                ],
+                correctAnswer: "Triangle, Circle, Triangle, Circle, Triangle",
+                explanation: "Triangle, Circle, Triangle, Circle, Triangle is a pattern because it repeats in a predictable way: Triangle, Circle, Triangle, Circle..."
+            },
+            {
+                question: "What comes next in this pattern? 2, 4, 6, 8, __",
+                options: [
+                    "9",
+                    "10",
+                    "12",
+                    "16"
+                ],
+                correctAnswer: "10",
+                explanation: "The pattern is adding 2 each time. 2 + 2 = 4, 4 + 2 = 6, 6 + 2 = 8, so 8 + 2 = 10."
+            },
+            {
+                question: "Where can we find patterns in everyday life?",
+                options: [
+                    "Only in math books",
+                    "Nowhere, patterns are not real",
+                    "Only in art class",
+                    "Everywhere - in nature, music, buildings, and more"
+                ],
+                correctAnswer: "Everywhere - in nature, music, buildings, and more",
+                explanation: "Patterns are all around us! They're in the petals of flowers, the beat of music, the design of buildings, and even in the way we schedule our day."
+            },
+            {
+                question: "What pattern is this? Red, Blue, Yellow, Red, Blue, Yellow, Red",
+                options: [
+                    "Growing pattern",
+                    "Shrinking pattern",
+                    "Repeating pattern",
+                    "Random pattern"
+                ],
+                correctAnswer: "Repeating pattern",
+                explanation: "This is a repeating pattern because the same colors repeat in the same order: Red, Blue, Yellow, Red, Blue, Yellow..."
+            },
+            {
+                question: "What's the pattern? 10, 8, 6, 4, __",
+                options: [
+                    "0",
+                    "2",
+                    "3",
+                    "1"
+                ],
+                correctAnswer: "2",
+                explanation: "The pattern is counting down by 2 each time. 10 - 2 = 8, 8 - 2 = 6, 6 - 2 = 4, so 4 - 2 = 2."
+            },
+            {
+                question: "Why are patterns important in math?",
+                options: [
+                    "They're not important in math",
+                    "They help us memorize formulas only",
+                    "They help us predict what comes next and solve problems",
+                    "They make numbers look prettier"
+                ],
+                correctAnswer: "They help us predict what comes next and solve problems",
+                explanation: "Patterns in math help us understand relationships between numbers, predict what comes next, and develop strategies for solving problems."
+            },
+            {
+                question: "If you see this pattern: Circle, Square, Triangle, Circle, Square, what comes next?",
+                options: [
+                    "Circle",
+                    "Square",
+                    "Triangle",
+                    "Rectangle"
+                ],
+                correctAnswer: "Triangle",
+                explanation: "The pattern is Circle, Square, Triangle, so after Circle, Square, we need Triangle to continue the pattern."
+            },
+            {
+                question: "What's a growing pattern?",
+                options: [
+                    "When shapes get physically bigger",
+                    "When numbers or shapes follow a rule that makes them increase",
+                    "When plants grow taller",
+                    "When you repeat the same thing over and over"
+                ],
+                correctAnswer: "When numbers or shapes follow a rule that makes them increase",
+                explanation: "A growing pattern follows a rule that makes each new term bigger than the one before, like 2, 4, 6, 8... (adding 2 each time)."
+            },
+            {
+                question: "What does it mean to 'extend' a pattern?",
+                options: [
+                    "To make the pattern stretch out physically",
+                    "To find patterns hidden in pictures",
+                    "To continue the pattern by adding what comes next",
+                    "To make the pattern more complex"
+                ],
+                correctAnswer: "To continue the pattern by adding what comes next",
+                explanation: "Extending a pattern means continuing it by figuring out what comes next based on the pattern rule, and then adding those new elements."
+            }
+        ];
+        
+        // Character messages
+        const characterMessages = {
+            welcome: [
+                "Hi there! I'm Professor Pattern. Ready to explore some amazing patterns?",
+                "Welcome to Pattern Explorer! Let's train your brain to recognize patterns!",
+                "Patterns are everywhere around us! Let's play and learn about them!"
+            ],
+            levelStart: [
+                "Level ${level} begins! Watch the pattern carefully!",
+                "Level ${level} - get ready to remember longer patterns!",
+                "New level, new challenge! Let's see if you can master level ${level}!"
+            ],
+            correct: [
+                "Excellent job! You got the pattern right!",
+                "Amazing pattern memory! Keep it up!",
+                "Great work! Your pattern skills are impressive!"
+            ],
+            incorrect: [
+                "Oops! That wasn't quite right. Let's try again!",
+                "Almost! Patterns can be tricky. Let's keep practicing!",
+                "Don't worry! Pattern recognition takes practice. Try again!"
+            ],
+            levelComplete: [
+                "Wow! You've mastered level ${level}! You're a pattern genius!",
+                "Level ${level} complete! Your pattern skills are growing stronger!",
+                "Incredible! You've completed level ${level}! Your brain is getting so good at patterns!"
+            ],
+            gameOver: [
+                "Good try! Remember, the best pattern experts practice every day.",
+                "Nice effort! Every time you play, your pattern memory gets stronger!",
+                "Keep practicing! Soon you'll be spotting patterns everywhere!"
+            ],
+            quiz: [
+                "Time for a quick quiz! Let's see what you've learned about patterns!",
+                "Quiz time! Show me how much you know about patterns!",
+                "Let's test your pattern knowledge with a fun quiz!"
+            ],
+            quizCorrect: [
+                "That's right! You really understand patterns!",
+                "Perfect answer! You're becoming a pattern expert!",
+                "Correct! Your pattern knowledge is impressive!"
+            ],
+            quizIncorrect: [
+                "Not quite. The right answer is: ${answer}. Let's learn from this!",
+                "Good try! The correct answer is: ${answer}. Keep learning!",
+                "Almost! The answer we're looking for is: ${answer}. You'll get it next time!"
+            ]
+        };
+        
+        // Initialize the audio context when the user interacts
+        function initAudio() {
+            if (!audioContext) {
+                // Create audio context
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+        }
+        
+        // Generate sound for a specific color
+        function playSound(color) {
+            if (!audioContext) return;
+            
+            let frequency;
+            switch (color) {
+                case 'red':
+                    frequency = 261.63; // C4
+                    break;
+                case 'green':
+                    frequency = 329.63; // E4
+                    break;
+                case 'blue':
+                    frequency = 392.00; // G4
+                    break;
+                case 'yellow':
+                    frequency = 523.25; // C5
+                    break;
+                default:
+                    frequency = 440; // A4
+            }
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+        
+        // Play success sound
+        function playSuccessSound() {
+            if (!audioContext) return;
+            
+            const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+            
+            notes.forEach((frequency, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.1);
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + index * 0.1 + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + index * 0.1 + 0.3);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start(audioContext.currentTime + index * 0.1);
+                oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+            });
+        }
+        
+        // Play error sound
+        function playErrorSound() {
+            if (!audioContext) return;
+            
+            const frequencies = [330, 260];
+            
+            frequencies.forEach((frequency, index) => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.2);
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.2);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + index * 0.2 + 0.05);
+                gainNode.gain.linearRampToValueAtTime(0.01, audioContext.currentTime + index * 0.2 + 0.3);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start(audioContext.currentTime + index * 0.2);
+                oscillator.stop(audioContext.currentTime + index * 0.2 + 0.3);
+            });
+        }
+        
+        // Play celebratory sound
+        function playCelebrationSound() {
+            if (!audioContext) return;
+            
+            // Major scale ascending and chord
+            const notes = [
+                { freq: 261.63, time: 0 },    // C4
+                { freq: 293.66, time: 0.1 },  // D4
+                { freq: 329.63, time: 0.2 },  // E4
+                { freq: 349.23, time: 0.3 },  // F4
+                { freq: 392.00, time: 0.4 },  // G4
+                { freq: 440.00, time: 0.5 },  // A4
+                { freq: 493.88, time: 0.6 },  // B4
+                { freq: 523.25, time: 0.7 },  // C5
+                // Final chord
+                { freq: 261.63, time: 0.9 },  // C4
+                { freq: 329.63, time: 0.9 },  // E4
+                { freq: 392.00, time: 0.9 },  // G4
+                { freq: 523.25, time: 0.9 }   // C5
+            ];
+            
+            notes.forEach(note => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + note.time + 0.05);
+                
+                // Longer sustain for final chord
+                if (note.time === 0.9) {
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + note.time + 0.8);
+                    oscillator.start(audioContext.currentTime + note.time);
+                    oscillator.stop(audioContext.currentTime + note.time + 0.8);
+                } else {
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + note.time + 0.2);
+                    oscillator.start(audioContext.currentTime + note.time);
+                    oscillator.stop(audioContext.currentTime + note.time + 0.2);
+                }
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+            });
+        }
+        
+        // Play button sound
+        function playButtonSound() {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.2);
+        }
+        
+        // Flash a gem
+        function flashGem(color) {
+            const gem = gems[color];
+            gem.classList.add('active');
+            playSound(color);
+            
+            setTimeout(() => {
+                gem.classList.remove('active');
+            }, gameState.speed / 2);
+        }
+        
+        // Play the entire sequence
+        function playSequence() {
+            gameState.waitingForInput = false;
+            gameMessage.textContent = "Watch the pattern...";
+            
+            let i = 0;
+            const intervalId = setInterval(() => {
+                if (i < gameState.sequence.length) {
+                    flashGem(gameState.sequence[i]);
+                    i++;
+                } else {
+                    clearInterval(intervalId);
+                    setTimeout(() => {
+                        gameState.waitingForInput = true;
+                        gameState.playerSequence = [];
+                        gameMessage.textContent = "Now repeat the pattern!";
+                    }, gameState.speed / 2);
+                }
+            }, gameState.speed);
+        }
+        
+        // Add a random color to the sequence
+        function addToSequence() {
+            const colorKeys = Object.keys(colors);
+            let count = 1;
+            
+            // Add multiple colors based on difficulty
+            if (gameState.difficulty >= 2) {
+                count = Math.min(gameState.difficulty, 3);
+            }
+            
+            for (let i = 0; i < count; i++) {
+                const randomColor = colorKeys[Math.floor(Math.random() * colorKeys.length)];
+                gameState.sequence.push(randomColor);
+            }
+        }
+        
+        // Handle gem click
+        function handleGemClick(color) {
+            if (!gameState.waitingForInput) return;
+            
+            flashGem(color);
+            gameState.playerSequence.push(color);
+            
+            // Check if the latest input matches the sequence
+            const index = gameState.playerSequence.length - 1;
+            if (gameState.playerSequence[index] !== gameState.sequence[index]) {
+                // Wrong input
+                gameState.waitingForInput = false;
+                playErrorSound();
+                showCharacterMessage('incorrect');
+                
+                setTimeout(() => {
+                    showGameOverScreen();
+                }, 1000);
+                return;
+            }
+            
+            // Check if the player completed the sequence
+            if (gameState.playerSequence.length === gameState.sequence.length) {
+                gameState.waitingForInput = false;
+                playSuccessSound();
+                gameState.score++;
+                scoreDisplay.textContent = gameState.score;
+                
+                if (gameState.score > gameState.highScore) {
+                    gameState.highScore = gameState.score;
+                    highScoreDisplay.textContent = gameState.highScore;
+                }
+                
+                gameState.roundsInLevel++;
+                
+                // Check if level is complete
+                if (gameState.roundsInLevel >= gameState.maxRoundsPerLevel) {
+                    showCharacterMessage('levelComplete');
+                    createParticleEffect();
+                    setTimeout(() => {
+                        showLevelCompleteScreen();
+                    }, 1000);
+                } else {
+                    showCharacterMessage('correct');
+                    setTimeout(() => {
+                        addToSequence();
+                        playSequence();
+                    }, 1000);
+                }
+            }
+        }
+        
+        // Start a new game
+        function startGame() {
+            initAudio();
+            
+            // Reset game state
+            gameState.sequence = [];
+            gameState.playerSequence = [];
+            gameState.isPlaying = true;
+            gameState.waitingForInput = false;
+            gameState.score = 0;
+            gameState.roundsInLevel = 0;
+            
+            // Update UI
+            scoreDisplay.textContent = gameState.score;
+            levelDisplay.textContent = gameState.level;
+            
+            // Set the sequence length based on level
+            gameState.sequenceLength = 2 + gameState.level;
+            
+            // Generate initial sequence
+            for (let i = 0; i < gameState.sequenceLength; i++) {
+                addToSequence();
+            }
+            
+            // Show level start message
+            showCharacterMessage('levelStart');
+            
+            // Start the game after a short delay
+            setTimeout(() => {
+                playSequence();
+            }, 1500);
+        }
+        
+        // Show game over screen
+        function showGameOverScreen() {
+            finalScoreDisplay.textContent = gameState.score;
+            
+            // Set message based on score
+            let message;
+            if (gameState.score < 3) {
+                message = "Good try! With more practice, you'll get even better at recognizing patterns.";
+            } else if (gameState.score < 10) {
+                message = "Nice job! Your pattern recognition skills are developing well.";
+            } else {
+                message = "Incredible! You have amazing pattern memory. You're a natural pattern explorer!";
+            }
+            
+            gameOverMessage.textContent = message;
+            gameOverScreen.style.display = 'flex';
+            
+            // Show character message
+            showCharacterMessage('gameOver');
+        }
+        
+        // Show level complete screen
+        function showLevelCompleteScreen() {
+            const message = `You've completed level ${gameState.level}! Your pattern recognition skills are growing stronger.`;
+            levelCompleteMessage.textContent = message;
+            levelCompleteScreen.style.display = 'flex';
+            playCelebrationSound();
+        }
+        
+        // Go to next level
+        function goToNextLevel() {
+            gameState.level++;
+            gameState.roundsInLevel = 0;
+            levelDisplay.textContent = gameState.level;
+            levelCompleteScreen.style.display = 'none';
+            
+            // Set new sequence length based on level
+            gameState.sequenceLength = 2 + gameState.level;
+            
+            // Update difficulty if needed
+            if (gameState.level >= 3 && gameState.difficulty === 1) {
+                gameState.difficulty = 2;
+                difficultySlider.value = 2;
+                updateDifficultyDisplay();
+            } else if (gameState.level >= 5 && gameState.difficulty === 2) {
+                gameState.difficulty = 3;
+                difficultySlider.value = 3;
+                updateDifficultyDisplay();
+            }
+            
+            // Start the new level
+            startGame();
+        }
+        
+        // Show quiz
+        function showQuiz() {
+            // Select a random quiz question
+            const randomIndex = Math.floor(Math.random() * quizQuestions.length);
+            gameState.quiz.current = quizQuestions[randomIndex];
+            
+            // Set quiz content
+            quizQuestion.textContent = gameState.quiz.current.question;
+            quizOptions.innerHTML = '';
+            gameState.quiz.current.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.setAttribute('data-index', index);
+                optionElement.addEventListener('click', () => selectQuizOption(optionElement));
+                quizOptions.appendChild(optionElement);
+            });
+            
+            // Reset quiz state
+            gameState.quiz.selectedAnswer = null;
+            quizMessage.textContent = '';
+            quizMessage.style.color = 'white';
+            
+            // Show quiz modal
+            quizModal.style.display = 'flex';
+            levelCompleteScreen.style.display = 'none';
+            
+            // Show character message
+            showCharacterMessage('quiz');
+        }
+        
+        // Select a quiz option
+        function selectQuizOption(optionElement) {
+            // Clear previous selections
+            const options = quizOptions.querySelectorAll('.quiz-option');
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select the clicked option
+            optionElement.classList.add('selected');
+            gameState.quiz.selectedAnswer = optionElement.textContent;
+        }
+        
+        // Check quiz answer
+        function checkQuizAnswer() {
+            if (!gameState.quiz.selectedAnswer) {
+                quizMessage.textContent = "Please select an answer first!";
+                quizMessage.style.color = 'yellow';
+                return;
+            }
+            
+            const options = quizOptions.querySelectorAll('.quiz-option');
+            const correctAnswer = gameState.quiz.current.correctAnswer;
+            
+            if (gameState.quiz.selectedAnswer === correctAnswer) {
+                // Correct answer
+                quizMessage.textContent = gameState.quiz.current.explanation;
+                quizMessage.style.color = '#2ecc71';
+                
+                options.forEach(option => {
+                    if (option.textContent === correctAnswer) {
+                        option.classList.add('correct');
+                    }
+                });
+                
+                playSuccessSound();
+                gameState.score++; // Bonus point for correct quiz answer
+                scoreDisplay.textContent = gameState.score;
+                
+                if (gameState.score > gameState.highScore) {
+                    gameState.highScore = gameState.score;
+                    highScoreDisplay.textContent = gameState.highScore;
+                }
+                
+                // Show character message
+                showCharacterMessage('quizCorrect');
+                
+                // Close quiz after delay
+                setTimeout(() => {
+                    quizModal.style.display = 'none';
+                    goToNextLevel();
+                }, 4000);
+                
+            } else {
+                // Incorrect answer
+                quizMessage.textContent = gameState.quiz.current.explanation;
+                quizMessage.style.color = '#e74c3c';
+                
+                options.forEach(option => {
+                    if (option.textContent === correctAnswer) {
+                        option.classList.add('correct');
+                    } else if (option.textContent === gameState.quiz.selectedAnswer) {
+                        option.classList.add('incorrect');
+                    }
+                });
+                
+                playErrorSound();
+                
+                // Show character message
+                const message = characterMessages.quizIncorrect[Math.floor(Math.random() * characterMessages.quizIncorrect.length)];
+                showMessage(message.replace('${answer}', correctAnswer));
+                
+                // Close quiz after delay
+                setTimeout(() => {
+                    quizModal.style.display = 'none';
+                    goToNextLevel();
+                }, 4000);
+            }
+            
+            // Disable submit button
+            submitAnswerBtn.disabled = true;
+        }
+        
+        // Update speed display
+        function updateSpeedDisplay() {
+            const speed = parseInt(speedSlider.value);
+            gameState.speed = speed;
+            
+            let speedText;
+            if (speed <= 300) {
+                speedText = "Fast";
+            } else if (speed <= 600) {
+                speedText = "Medium";
+            } else {
+                speedText = "Slow";
+            }
+            
+            speedValue.textContent = speedText;
+        }
+        
+        // Update difficulty display
+        function updateDifficultyDisplay() {
+            const difficulty = parseInt(difficultySlider.value);
+            gameState.difficulty = difficulty;
+            
+            let difficultyText;
+            switch (difficulty) {
+                case 1:
+                    difficultyText = "Easy";
+                    break;
+                case 2:
+                    difficultyText = "Medium";
+                    break;
+                case 3:
+                    difficultyText = "Hard";
+                    break;
+                default:
+                    difficultyText = "Easy";
+            }
+            
+            difficultyValue.textContent = difficultyText;
+        }
+        
+        // Show character message
+        function showCharacterMessage(type) {
+            let messages = characterMessages[type];
+            let message = messages[Math.floor(Math.random() * messages.length)];
+            
+            // Replace dynamic values
+            message = message.replace('${level}', gameState.level);
+            
+            showMessage(message);
+            renderCharacter(message);
+        }
+        
+        // Show message
+        function showMessage(message) {
+            gameMessage.textContent = message;
+        }
+        
+        // Render character
+        function renderCharacter(message) {
+            // Draw professor character using SVG or Canvas - for simplicity, we'll use an emoji here
+            professorCharacter.innerHTML = `
+                <svg viewBox="0 0 150 150" width="100%" height="100%">
+                    <!-- Head -->
+                    <circle cx="75" cy="50" r="30" fill="#FFD700" />
+                    
+                    <!-- Eyes -->
+                    <circle cx="62" cy="45" r="5" fill="white" />
+                    <circle cx="88" cy="45" r="5" fill="white" />
+                    <circle cx="62" cy="45" r="2.5" fill="black" />
+                    <circle cx="88" cy="45" r="2.5" fill="black" />
+                    
+                    <!-- Glasses -->
+                    <circle cx="62" cy="45" r="8" stroke="black" stroke-width="1.5" fill="none" />
+                    <circle cx="88" cy="45" r="8" stroke="black" stroke-width="1.5" fill="none" />
+                    <line x1="70" y1="45" x2="80" y2="45" stroke="black" stroke-width="1.5" />
+                    
+                    <!-- Smile -->
+                    <path d="M60,60 Q75,70 90,60" stroke="black" stroke-width="2" fill="none" />
+                    
+                    <!-- Beard -->
+                    <path d="M60,65 Q75,80 90,65 Q75,70 60,65" fill="#A0522D" />
+                    
+                    <!-- Hair -->
+                    <path d="M45,40 Q75,20 105,40 Q75,30 45,40" fill="#A0522D" />
+                    
+                    <!-- Body -->
+                    <ellipse cx="75" cy="110" rx="40" ry="35" fill="#1E88E5" />
+                    
+                    <!-- Arms -->
+                    <line x1="45" y1="100" x2="25" y2="85" stroke="#FFD700" stroke-width="10" stroke-linecap="round" />
+                    <line x1="105" y1="100" x2="125" y2="85" stroke="#FFD700" stroke-width="10" stroke-linecap="round" />
+                    
+                    <!-- Speech bubble -->
+                    <path d="M130,40 Q150,40 150,60 L150,90 Q150,110 130,110 L100,110 L90,125 L80,110 L50,110 Q30,110 30,90 L30,60 Q30,40 50,40 Z" fill="white" stroke="#333" stroke-width="2" />
+                    
+                    <!-- Message text (limit to ~30 chars) -->
+                    <text x="90" y="70" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="black">Watch the pattern...</text>
+                    <text x="90" y="85" text-anchor="middle" font-size="10" font-family="Arial, sans-serif" fill="black">You can do it!</text>
+                </svg>
+            `;
+        }
+        
+        // Create particle effect for celebrations
+        function createParticleEffect() {
+            const particleCount = 50;
+            const colors = ['#e74c3c', '#2ecc71', '#3498db', '#f1c40f', '#9b59b6'];
+            
+            // Clear any existing particles
+            const existingParticles = document.querySelectorAll('.particle');
+            existingParticles.forEach(particle => {
+                particle.remove();
+            });
+            
+            // Create new particles
+            for (let i = 0; i < particleCount; i++) {
+                createParticle(colors[Math.floor(Math.random() * colors.length)]);
+            }
+        }
+        
+        // Create a single particle
+        function createParticle(color) {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            document.body.appendChild(particle);
+            
+            // Set size and appearance
+            const size = Math.random() * 12 + 5;
+            particle.style.backgroundColor = color;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            // Set initial position (center of screen)
+            const startX = window.innerWidth / 2;
+            const startY = window.innerHeight / 2;
+            
+            // Set random direction and speed
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 10 + 5;
+            const velocityX = Math.cos(angle) * speed;
+            const velocityY = Math.sin(angle) * speed;
+            
+            let posX = startX;
+            let posY = startY;
+            let opacity = 1;
+            let scale = 1;
+            
+            // Animate the particle
+            function updateParticle() {
+                posX += velocityX;
+                posY += velocityY;
+                opacity -= 0.01;
+                scale -= 0.01;
+                
+                if (opacity <= 0) {
+                    particle.remove();
+                    return;
+                }
+                
+                particle.style.left = `${posX}px`;
+                particle.style.top = `${posY}px`;
+                particle.style.opacity = opacity;
+                particle.style.transform = `scale(${scale})`;
+                
+                requestAnimationFrame(updateParticle);
+            }
+            
+            requestAnimationFrame(updateParticle);
+        }
+        
+        // Event listeners
+        function setupEventListeners() {
+            // Gem click events
+            Object.keys(gems).forEach(color => {
+                gems[color].addEventListener('click', () => {
+                    initAudio();
+                    handleGemClick(color);
+                });
+                
+                // Touch events for mobile
+                gems[color].addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    initAudio();
+                    handleGemClick(color);
+                });
+            });
+            
+            // Start button
+            startButton.addEventListener('click', () => {
+                initAudio();
+                playButtonSound();
+                welcomeScreen.style.display = 'flex';
+            });
+            
+            // Welcome screen button
+            startGameBtn.addEventListener('click', () => {
+                initAudio();
+                playButtonSound();
+                welcomeScreen.style.display = 'none';
+                startGame();
+            });
+            
+            // Game over screen buttons
+            playAgainBtn.addEventListener('click', () => {
+                initAudio();
+                playButtonSound();
+                gameOverScreen.style.display = 'none';
+                startGame();
+            });
+            
+            backToMenuBtn.addEventListener('click', () => {
+                initAudio();
+                playButtonSound();
+                gameOverScreen.style.display = 'none';
+                welcomeScreen.style.display = 'flex';
+            });
+            
+            // Level complete screen buttons
+            nextLevelBtn.addEventListener('click', () => {
+                initAudio();
+                playButtonSound();
+                levelCompleteScreen.style.display = 'none';
+                goToNextLevel();
+            });
+            
+            takeQuizBtn.addEventListener('click', () => {
+                initAudio();
+                playButtonSound();
+                showQuiz();
+            });
+            
+            // Quiz submit button
+            submitAnswerBtn.addEventListener('click', () => {
+                initAudio();
+                playButtonSound();
+                checkQuizAnswer();
+            });
+            
+            // Control sliders
+            speedSlider.addEventListener('input', () => {
+                updateSpeedDisplay();
+            });
+            
+            difficultySlider.addEventListener('input', () => {
+                updateDifficultyDisplay();
+            });
+            
+            // Info button
+            infoButton.addEventListener('click', () => {
+                initAudio();
+                playButtonSound();
+                infoModal.style.display = 'flex';
+            });
+            
+            closeInfoButton.addEventListener('click', () => {
+                initAudio();
+                playButtonSound();
+                infoModal.style.display = 'none';
+            });
+            
+            // Close info modal when clicking outside
+            infoModal.addEventListener('click', (e) => {
+                if (e.target === infoModal) {
+                    infoModal.style.display = 'none';
+                }
+            });
+        }
+        
+        // Initialize the game
+        function init() {
+            // Set initial display values
+            updateSpeedDisplay();
+            updateDifficultyDisplay();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Show welcome screen on first load
+            setTimeout(() => {
+                welcomeScreen.style.display = 'flex';
+            }, 500);
+            
+            // Render initial character
+            renderCharacter("Welcome to Pattern Explorer!");
+        }
+        
+        // Start the game
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

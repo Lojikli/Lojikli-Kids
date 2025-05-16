@@ -1,0 +1,4529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genetics Explorer: Adventure Learning Game</title>
+    <style>
+        /* Game Styling */
+        * {
+            box-sizing: border-box;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            overflow-x: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            min-height: 800px;
+        }
+        
+        /* Header */
+        .game-header {
+            background: linear-gradient(135deg, #42b0ff, #4b0082);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .game-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        
+        .game-header p {
+            margin: 10px 0 0;
+            font-size: 1.2em;
+        }
+        
+        /* Screens */
+        .screen {
+            position: relative;
+            width: 100%;
+            min-height: 600px;
+            padding: 20px;
+            background-color: #ffffff;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .visible {
+            display: block;
+        }
+        
+        /* Buttons */
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #42b0ff, #4b0082);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Characters */
+        .character {
+            position: relative;
+            display: inline-block;
+            margin: 20px;
+        }
+        
+        .character-bubble {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            border: 3px solid #4b0082;
+            border-radius: 20px;
+            padding: 10px 15px;
+            min-width: 200px;
+            max-width: 300px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+        
+        .character-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: #4b0082 transparent transparent;
+        }
+        
+        /* Start Screen */
+        #startScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            min-height: 600px;
+        }
+        
+        .start-buttons {
+            margin-top: 30px;
+        }
+        
+        .character-select {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        .character-option {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .character-option:hover {
+            transform: scale(1.1);
+            background-color: rgba(75, 0, 130, 0.1);
+        }
+        
+        .character-option.selected {
+            background-color: rgba(75, 0, 130, 0.2);
+            transform: scale(1.1);
+        }
+        
+        /* Game Screen */
+        #gameScreen {
+            display: flex;
+            flex-direction: column;
+            padding-top: 80px;
+            min-height: 800px;
+        }
+        
+        .game-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .learning-path {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .path-segment {
+            width: 50px;
+            height: 20px;
+            background-color: #ddd;
+            margin: 0 5px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .path-segment.completed {
+            background-color: #4CAF50;
+        }
+        
+        .path-segment.current {
+            background-color: #FF9A00;
+            transform: scale(1.2);
+        }
+        
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .trait-selector {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .trait-dropdown {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            border: 2px solid #4b0082;
+        }
+        
+        .punnett-square {
+            display: grid;
+            grid-template-columns: 80px repeat(2, 100px);
+            grid-template-rows: 80px repeat(2, 100px);
+            gap: 5px;
+            margin: 20px 0;
+        }
+        
+        .punnett-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            background-color: #e6f7ff;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .punnett-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(66, 176, 255, 0.7);
+        }
+        
+        .punnett-label {
+            background-color: #4b0082;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .info-display {
+            margin: 20px;
+            padding: 15px;
+            background-color: rgba(75, 0, 130, 0.1);
+            border-radius: 10px;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .hint-button {
+            background: linear-gradient(135deg, #FF9A00, #FF6D00);
+        }
+        
+        .hint-text {
+            background-color: #FFF9C4;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #FF9A00;
+            margin: 20px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Quiz Screen */
+        #quizScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 80px;
+            min-height: 800px;
+        }
+        
+        .quiz-title {
+            font-size: 2em;
+            color: #4b0082;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .quiz-question {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 700px;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .quiz-option {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px 20px;
+            background-color: #e6f7ff;
+            border-radius: 10px;
+            font-size: 1.2em;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quiz-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            background-color: #d1efff;
+        }
+        
+        .quiz-option.selected {
+            background-color: #42b0ff;
+            color: white;
+        }
+        
+        .quiz-option.correct {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .quiz-option.incorrect {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .quiz-actions {
+            margin: 20px 0;
+        }
+        
+        /* Reward Screen */
+        #rewardScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-top: 100px;
+        }
+        
+        .reward-title {
+            font-size: 2.5em;
+            color: #4b0082;
+            margin-bottom: 20px;
+        }
+        
+        .reward-text {
+            font-size: 1.5em;
+            color: #4b0082;
+            margin-bottom: 40px;
+        }
+        
+        .reward-animation {
+            width: 400px;
+            height: 300px;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        /* Settings Screen */
+        #settingsScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 80px;
+        }
+        
+        .settings-title {
+            font-size: 2em;
+            color: #4b0082;
+            margin-bottom: 30px;
+        }
+        
+        .settings-controls {
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .settings-control {
+            margin: 20px 0;
+        }
+        
+        .settings-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #4b0082;
+        }
+        
+        .settings-slider {
+            width: 100%;
+            height: 20px;
+        }
+        
+        .settings-select {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            border: 2px solid #4b0082;
+        }
+        
+        /* Animations */
+        .star {
+            position: absolute;
+            z-index: 100;
+        }
+        
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 100;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .game-header h1 {
+                font-size: 2em;
+            }
+            
+            .punnett-square {
+                grid-template-columns: 60px repeat(2, 80px);
+                grid-template-rows: 60px repeat(2, 80px);
+            }
+            
+            .punnett-cell {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Game Header -->
+        <div class="game-header">
+            <h1>Genetics Explorer</h1>
+            <p>Learn about traits, genes, and inheritance!</p>
+        </div>
+        
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen visible">
+            <h2>Welcome to Genetics Explorer!</h2>
+            <p>Join Gene the Scientist and Helix the DNA Sprite on an adventure to learn about genetics!</p>
+            
+            <div class="character-select">
+                <div class="character-option" data-character="gene" onclick="selectCharacter('gene')">
+                    <canvas id="geneCanvas" width="150" height="150"></canvas>
+                    <p>Gene the Scientist</p>
+                </div>
+                <div class="character-option" data-character="helix" onclick="selectCharacter('helix')">
+                    <canvas id="helixCanvas" width="150" height="150"></canvas>
+                    <p>Helix the DNA Sprite</p>
+                </div>
+            </div>
+            
+            <div class="start-buttons">
+                <button class="button" id="startButton">Start Adventure</button>
+                <button class="button" id="settingsButton">Settings</button>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen hidden">
+            <div class="game-controls">
+                <button class="button" id="menuButton">Menu</button>
+                <div class="learning-path" id="learningPath"></div>
+                <button class="button" id="quizButton">Quiz Challenge!</button>
+            </div>
+            
+            <div class="character">
+                <canvas id="gameGeneCanvas" width="150" height="150"></canvas>
+                <div id="geneBubble" class="character-bubble">Welcome to Genetics Explorer!</div>
+            </div>
+            
+            <div class="game-area">
+                <div class="trait-selector">
+                    <h3>Select a Genetic Trait to Explore:</h3>
+                    <select id="traitSelector" class="trait-dropdown">
+                        <option value="curlyHair">Curly Hair</option>
+                        <option value="earLobes">Attached Ear Lobes</option>
+                        <option value="dimples">Dimples</option>
+                        <option value="freckles">Freckles</option>
+                        <option value="eyeColor">Blue Eyes</option>
+                        <option value="tongueRoll">Tongue Rolling</option>
+                    </select>
+                </div>
+                
+                <div class="punnett-square" id="punnettSquare">
+                    <!-- Will be filled by JavaScript -->
+                </div>
+                
+                <div class="info-display" id="infoDisplay">
+                    <h3>What is a Punnett Square?</h3>
+                    <p>A Punnett Square helps us understand how traits are passed from parents to children!</p>
+                </div>
+                
+                <button class="button hint-button" id="hintButton">Show Hint</button>
+                <div class="hint-text" id="hintText">
+                    Genes come in pairs! Capital letters (like 'C') show dominant traits that win, and lowercase letters (like 'c') show recessive traits that only show up when there are two of them!
+                </div>
+            </div>
+            
+            <div class="character">
+                <canvas id="gameHelixCanvas" width="150" height="150"></canvas>
+                <div id="helixBubble" class="character-bubble">I'm made of DNA - the code for all your traits!</div>
+            </div>
+        </div>
+        
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="screen hidden">
+            <div class="character">
+                <canvas id="quizProfessorCanvas" width="150" height="150"></canvas>
+                <div id="quizProfessorBubble" class="character-bubble">Let's test your knowledge!</div>
+            </div>
+            
+            <div class="quiz-title">Genetics Quiz Challenge</div>
+            
+            <div class="quiz-question" id="quizQuestion">
+                What happens when a "C" (curly hair) gene and a "c" (straight hair) gene are together?
+            </div>
+            
+            <div class="quiz-options" id="quizOptions">
+                <!-- Will be filled by JavaScript -->
+            </div>
+            
+            <div class="quiz-actions">
+                <button class="button" id="submitButton">Submit Answer</button>
+                <button class="button" id="backButton">Back to Game</button>
+            </div>
+        </div>
+        
+        <!-- Reward Screen -->
+        <div id="rewardScreen" class="screen hidden">
+            <div class="reward-title">Congratulations!</div>
+            <div class="reward-text" id="rewardText">You're a Genetics Expert!</div>
+            
+            <div class="reward-animation" id="rewardAnimation"></div>
+            
+            <button class="button" id="continueButton">Continue Explorer</button>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen hidden">
+            <div class="settings-title">Game Settings</div>
+            
+            <div class="settings-controls">
+                <div class="settings-control">
+                    <label class="settings-label">Sound Volume:</label>
+                    <input type="range" min="0" max="1" step="0.1" value="0.5" class="settings-slider" id="soundSlider">
+                </div>
+                
+                <div class="settings-control">
+                    <label class="settings-label">Animation Speed:</label>
+                    <input type="range" min="0.5" max="2" step="0.1" value="1" class="settings-slider" id="animationSlider">
+                </div>
+                
+                <div class="settings-control">
+                    <label class="settings-label">Difficulty Level:</label>
+                    <select class="settings-select" id="difficultySelect">
+                        <option value="easy">Easy - Focus on Basic Traits</option>
+                        <option value="medium" selected>Medium - Multiple Traits & Combinations</option>
+                        <option value="hard">Hard - Complex Genetic Patterns</option>
+                    </select>
+                </div>
+                
+                <div class="settings-control">
+                    <label class="settings-label">Learning Mode:</label>
+                    <select class="settings-select" id="learningModeSelect">
+                        <option value="guided" selected>Guided - Step by Step</option>
+                        <option value="explore">Explore - Learn at Your Own Pace</option>
+                        <option value="challenge">Challenge - Test Your Skills</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="button" id="saveButton">Save Settings</button>
+            <button class="button" id="backToMenuButton">Back to Menu</button>
+        </div>
+    </div>
+    
+    <script>
+        // Wait for the DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("DOM fully loaded");
+            
+            // Game elements
+            const elements = {
+                screens: {
+                    startScreen: document.getElementById('startScreen'),
+                    gameScreen: document.getElementById('gameScreen'),
+                    quizScreen: document.getElementById('quizScreen'),
+                    rewardScreen: document.getElementById('rewardScreen'),
+                    settingsScreen: document.getElementById('settingsScreen')
+                },
+                characters: {
+                    geneCanvas: document.getElementById('geneCanvas'),
+                    helixCanvas: document.getElementById('helixCanvas'),
+                    gameGeneCanvas: document.getElementById('gameGeneCanvas'),
+                    gameHelixCanvas: document.getElementById('gameHelixCanvas'),
+                    geneBubble: document.getElementById('geneBubble'),
+                    helixBubble: document.getElementById('helixBubble'),
+                    quizProfessorCanvas: document.getElementById('quizProfessorCanvas'),
+                    quizProfessorBubble: document.getElementById('quizProfessorBubble')
+                },
+                displays: {
+                    punnettSquare: document.getElementById('punnettSquare'),
+                    infoDisplay: document.getElementById('infoDisplay'),
+                    traitSelector: document.getElementById('traitSelector'),
+                    hintText: document.getElementById('hintText'),
+                    learningPath: document.getElementById('learningPath'),
+                    quizQuestion: document.getElementById('quizQuestion'),
+                    quizOptions: document.getElementById('quizOptions'),
+                    rewardText: document.getElementById('rewardText'),
+                    rewardAnimation: document.getElementById('rewardAnimation')
+                },
+                settings: {
+                    soundSlider: document.getElementById('soundSlider'),
+                    animationSlider: document.getElementById('animationSlider'),
+                    difficultySelect: document.getElementById('difficultySelect'),
+                    learningModeSelect: document.getElementById('learningModeSelect')
+                },
+                buttons: {
+                    startButton: document.getElementById('startButton'),
+                    settingsButton: document.getElementById('settingsButton'),
+                    menuButton: document.getElementById('menuButton'),
+                    quizButton: document.getElementById('quizButton'),
+                    hintButton: document.getElementById('hintButton'),
+                    submitButton: document.getElementById('submitButton'),
+                    backButton: document.getElementById('backButton'),
+                    continueButton: document.getElementById('continueButton'),
+                    saveButton: document.getElementById('saveButton'),
+                    backToMenuButton: document.getElementById('backToMenuButton')
+                }
+            };
+            
+            // Game state
+            const gameState = {
+                selectedCharacter: 'gene',
+                currentLevel: 1,
+                maxLevel: 5,
+                score: 0,
+                progress: 0,
+                settings: {
+                    soundVolume: 0.5,
+                    animationSpeed: 1,
+                    difficulty: 'medium',
+                    learningMode: 'guided'
+                },
+                traits: {
+                    curlyHair: {
+                        name: 'Curly Hair',
+                        dominantSymbol: 'C',
+                        recessiveSymbol: 'c',
+                        description: 'Curly hair (C) is dominant over straight hair (c). This means that if you have at least one "C" gene, your hair will be curly!'
+                    },
+                    earLobes: {
+                        name: 'Attached Ear Lobes',
+                        dominantSymbol: 'E',
+                        recessiveSymbol: 'e',
+                        description: 'Free ear lobes (E) are dominant over attached ear lobes (e). You need two "e" genes to have attached ear lobes.'
+                    },
+                    dimples: {
+                        name: 'Dimples',
+                        dominantSymbol: 'D',
+                        recessiveSymbol: 'd',
+                        description: 'Having dimples (D) is dominant over not having dimples (d). If you have at least one "D" gene, you will have cute dimples when you smile!'
+                    },
+                    freckles: {
+                        name: 'Freckles',
+                        dominantSymbol: 'F',
+                        recessiveSymbol: 'f',
+                        description: 'Having freckles (F) is dominant over not having freckles (f). You need two "f" genes to not have freckles.'
+                    },
+                    eyeColor: {
+                        name: 'Blue Eyes',
+                        dominantSymbol: 'B',
+                        recessiveSymbol: 'b',
+                        description: 'Brown eyes (B) are dominant over blue eyes (b). You need two "b" genes to have blue eyes!'
+                    },
+                    tongueRoll: {
+                        name: 'Tongue Rolling',
+                        dominantSymbol: 'T',
+                        recessiveSymbol: 't',
+                        description: 'Being able to roll your tongue (T) is dominant over not being able to roll it (t). If you have at least one "T" gene, you can do this trick!'
+                    }
+                },
+                currentQuiz: {
+                    question: '',
+                    options: [],
+                    correctAnswer: '',
+                    userAnswer: ''
+                },
+                animations: {
+                    stars: [],
+                    bubbles: [],
+                    timers: []
+                }
+            };
+            
+            // Audio context for sound effects
+            let audioContext;
+            
+            // Initialize the game
+            function initGame() {
+                console.log("Initializing game...");
+                
+                // Try to initialize audio context
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.log('Web Audio API is not supported in this browser');
+                }
+                
+                // Draw characters
+                drawCharacter(elements.characters.geneCanvas, 'gene');
+                drawCharacter(elements.characters.helixCanvas, 'helix');
+                drawCharacter(elements.characters.gameGeneCanvas, 'gene');
+                drawCharacter(elements.characters.gameHelixCanvas, 'helix');
+                drawCharacter(elements.characters.quizProfessorCanvas, 'professor');
+                
+                // Create learning path
+                createLearningPath();
+                
+                // Initialize Punnett Square
+                updatePunnettSquare();
+                
+                // Set initial settings values from game state
+                elements.settings.soundSlider.value = gameState.settings.soundVolume;
+                elements.settings.animationSlider.value = gameState.settings.animationSpeed;
+                elements.settings.difficultySelect.value = gameState.settings.difficulty;
+                elements.settings.learningModeSelect.value = gameState.settings.learningMode;
+                
+                // Set up button click handlers
+                setupButtonHandlers();
+                
+                // Add event listener for trait selector
+                elements.displays.traitSelector.addEventListener('change', updatePunnettSquare);
+                
+                console.log("Game initialization complete!");
+            }
+            
+            // Setup button handlers
+            function setupButtonHandlers() {
+                console.log("Setting up button handlers...");
+                
+                // Start screen buttons
+                elements.buttons.startButton.addEventListener('click', function() {
+                    console.log("Start button clicked");
+                    startGame();
+                });
+                
+                elements.buttons.settingsButton.addEventListener('click', function() {
+                    console.log("Settings button clicked");
+                    showScreen('settingsScreen');
+                });
+                
+                // Game screen buttons
+                elements.buttons.menuButton.addEventListener('click', function() {
+                    showScreen('startScreen');
+                });
+                
+                elements.buttons.quizButton.addEventListener('click', function() {
+                    startQuiz();
+                });
+                
+                elements.buttons.hintButton.addEventListener('click', function() {
+                    toggleHint();
+                });
+                
+                // Quiz screen buttons
+                elements.buttons.submitButton.addEventListener('click', function() {
+                    checkQuizAnswer();
+                });
+                
+                elements.buttons.backButton.addEventListener('click', function() {
+                    showScreen('gameScreen');
+                });
+                
+                // Reward screen buttons
+                elements.buttons.continueButton.addEventListener('click', function() {
+                    continueGame();
+                });
+                
+                // Settings screen buttons
+                elements.buttons.saveButton.addEventListener('click', function() {
+                    saveSettings();
+                });
+                
+                elements.buttons.backToMenuButton.addEventListener('click', function() {
+                    showScreen('startScreen');
+                });
+                
+                // Add sound effect to all buttons
+                document.querySelectorAll('.button').forEach(button => {
+                    button.addEventListener('mousedown', playButtonSound);
+                });
+                
+                console.log("Button handlers set up successfully");
+            }
+            
+            // Show a specific screen
+            function showScreen(screenName) {
+                console.log("Showing screen:", screenName);
+                
+                // Hide all screens
+                Object.keys(elements.screens).forEach(key => {
+                    elements.screens[key].classList.remove('visible');
+                    elements.screens[key].classList.add('hidden');
+                });
+                
+                // Show the requested screen
+                elements.screens[screenName].classList.remove('hidden');
+                elements.screens[screenName].classList.add('visible');
+                
+                // Play sound
+                playSelectSound();
+                
+                // Special actions for specific screens
+                if (screenName === 'gameScreen') {
+                    updateLearningPath();
+                    showMessage(elements.characters.geneBubble, "Let's learn about genetic traits!");
+                    setTimeout(() => {
+                        showMessage(elements.characters.helixBubble, "You can explore different traits using the dropdown menu!");
+                    }, 2000);
+                } else if (screenName === 'quizScreen') {
+                    generateQuizQuestion();
+                }
+            }
+            
+            // Start the game
+            function startGame() {
+                console.log("Starting game...");
+                
+                // Play sound
+                playSelectSound();
+                
+                // Show game screen
+                showScreen('gameScreen');
+                
+                // Reset game state
+                gameState.currentLevel = 1;
+                gameState.score = 0;
+                gameState.progress = 0;
+                
+                // Load the first level
+                loadLevel(gameState.currentLevel);
+            }
+            
+            // Load a specific level
+            function loadLevel(level) {
+                console.log("Loading level:", level);
+                
+                // Set current level
+                gameState.currentLevel = level;
+                
+                // Update learning path
+                updateLearningPath();
+                
+                // Show level intro message
+                let message = '';
+                switch (level) {
+                    case 1:
+                        message = "Level 1: Let's start with the basics of genes!";
+                        break;
+                    case 2:
+                        message = "Level 2: Great job! Now let's see how traits are passed down!";
+                        break;
+                    case 3:
+                        message = "Level 3: Fantastic! Now we'll explore more complex trait combinations!";
+                        break;
+                    case 4:
+                        message = "Level 4: Amazing! Let's dive into multiple trait inheritance!";
+                        break;
+                    case 5:
+                        message = "Level 5: Final level! Let's master genetic patterns!";
+                        break;
+                }
+                
+                // Show message from characters
+                showMessage(elements.characters.geneBubble, message);
+                setTimeout(() => {
+                    let helixMessage = '';
+                    switch (level) {
+                        case 1:
+                            helixMessage = "Genes come in pairs - one from mom and one from dad!";
+                            break;
+                        case 2:
+                            helixMessage = "Different combinations of genes create different traits!";
+                            break;
+                        case 3:
+                            helixMessage = "Some genes are dominant and some are recessive!";
+                            break;
+                        case 4:
+                            helixMessage = "We can predict traits using Punnett Squares!";
+                            break;
+                        case 5:
+                            helixMessage = "Let's put all our knowledge together!";
+                            break;
+                    }
+                    showMessage(elements.characters.helixBubble, helixMessage);
+                }, 2000);
+                
+                // Update info display based on level
+                updateInfoDisplay(level);
+            }
+            
+            // Update info display based on level
+            function updateInfoDisplay(level) {
+                let title = '';
+                let content = '';
+                
+                switch (level) {
+                    case 1:
+                        title = "What are Genes?";
+                        content = "Genes are like special instructions that tell your body how to grow and what to look like! You get genes from both your mom and dad.";
+                        break;
+                    case 2:
+                        title = "What is a Punnett Square?";
+                        content = "A Punnett Square is like a magic box that helps us predict what traits a child might inherit from their parents!";
+                        break;
+                    case 3:
+                        title = "Dominant vs. Recessive Genes";
+                        content = "Some genes are 'bossy' (dominant) and some are 'shy' (recessive). Dominant genes (capital letters) show up even if there's just one. Recessive genes (lowercase letters) only show when there are two!";
+                        break;
+                    case 4:
+                        title = "Genetic Combinations";
+                        content = "Look at the Punnett Square. Each box shows a possible combination of genes a child could get from their parents!";
+                        break;
+                    case 5:
+                        title = "Genetic Probability";
+                        content = "With a Punnett Square, we can see the chances of getting different traits. It's like a special kind of prediction!";
+                        break;
+                }
+                
+                elements.displays.infoDisplay.innerHTML = `<h3>${title}</h3><p>${content}</p>`;
+            }
+            
+            // Select a character
+            function selectCharacter(character) {
+                console.log("Character selected:", character);
+                
+                // Update game state
+                gameState.selectedCharacter = character;
+                
+                // Update UI
+                const characterOptions = document.querySelectorAll('.character-option');
+                characterOptions.forEach(option => {
+                    if (option.getAttribute('data-character') === character) {
+                        option.classList.add('selected');
+                    } else {
+                        option.classList.remove('selected');
+                    }
+                });
+                
+                // Play sound
+                playSelectSound();
+            }
+            
+            // Draw character on canvas
+            function drawCharacter(canvas, character) {
+                if (!canvas) {
+                    console.error("Canvas element not found for character:", character);
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                if (character === 'gene') {
+                    // Draw Gene the Scientist
+                    // Head
+                    ctx.fillStyle = '#FFD54F';
+                    ctx.beginPath();
+                    ctx.arc(75, 45, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Lab coat
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.moveTo(45, 75);
+                    ctx.lineTo(105, 75);
+                    ctx.lineTo(115, 150);
+                    ctx.lineTo(35, 150);
+                    ctx.fill();
+                    
+                    // Shirt
+                    ctx.fillStyle = '#42A5F5';
+                    ctx.beginPath();
+                    ctx.moveTo(60, 75);
+                    ctx.lineTo(90, 75);
+                    ctx.lineTo(85, 120);
+                    ctx.lineTo(65, 120);
+                    ctx.fill();
+                    
+                    // Eyes
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 6, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#4b0082';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 3, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Glasses
+                    ctx.strokeStyle = '#795548';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 10, 0, Math.PI * 2);
+                    ctx.moveTo(85 + 10, 40);
+                    ctx.arc(85, 40, 10, 0, Math.PI * 2);
+                    ctx.moveTo(75, 40);
+                    ctx.lineTo(75, 40);
+                    ctx.stroke();
+                    
+                    // Bridge of glasses
+                    ctx.beginPath();
+                    ctx.moveTo(75, 40);
+                    ctx.lineTo(75, 40);
+                    ctx.stroke();
+                    
+                    // Smile
+                    ctx.beginPath();
+                    ctx.arc(75, 55, 10, 0, Math.PI);
+                    ctx.stroke();
+                    
+                    // Hair
+                    ctx.fillStyle = '#5D4037';
+                    ctx.beginPath();
+                    ctx.moveTo(45, 35);
+                    ctx.quadraticCurveTo(75, 5, 105, 35);
+                    ctx.lineTo(105, 45);
+                    ctx.lineTo(45, 45);
+                    ctx.fill();
+                    
+                    // Arms with beaker
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 10;
+                    ctx.beginPath();
+                    ctx.moveTo(45, 90);
+                    ctx.lineTo(30, 120);
+                    ctx.moveTo(105, 90);
+                    ctx.lineTo(120, 120);
+                    ctx.stroke();
+                    
+                    // Beaker
+                    ctx.fillStyle = '#81D4FA';
+                    ctx.beginPath();
+                    ctx.moveTo(120, 120);
+                    ctx.lineTo(110, 140);
+                    ctx.lineTo(130, 140);
+                    ctx.lineTo(120, 120);
+                    ctx.fill();
+                    
+                    ctx.strokeStyle = '#B3E5FC';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(115, 125);
+                    ctx.lineTo(125, 125);
+                    ctx.moveTo(113, 130);
+                    ctx.lineTo(127, 130);
+                    ctx.moveTo(111, 135);
+                    ctx.lineTo(129, 135);
+                    ctx.stroke();
+                } else if (character === 'helix') {
+                    // Draw Helix the DNA Sprite
+                    // Body (DNA helix shape)
+                    ctx.fillStyle = '#FF9A00';
+                    ctx.beginPath();
+                    ctx.ellipse(75, 90, 25, 45, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Head
+                    ctx.fillStyle = '#FFEB3B';
+                    ctx.beginPath();
+                    ctx.arc(75, 45, 25, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // DNA pattern on body
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 3;
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(60, 60 + i * 15);
+                        ctx.lineTo(90, 60 + i * 15);
+                        ctx.stroke();
+                    }
+                    
+                    // DNA vertical lines
+                    ctx.beginPath();
+                    ctx.moveTo(60, 60);
+                    ctx.bezierCurveTo(60, 80, 90, 100, 90, 120);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(90, 60);
+                    ctx.bezierCurveTo(90, 80, 60, 100, 60, 120);
+                    ctx.stroke();
+                    
+                    // Eyes
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 7, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#4b0082';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 4, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Smile
+                    ctx.strokeStyle = '#4b0082';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(75, 55, 10, 0, Math.PI);
+                    ctx.stroke();
+                    
+                    // Arms
+                    ctx.strokeStyle = '#FFEB3B';
+                    ctx.lineWidth = 5;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(50, 80);
+                    ctx.lineTo(35, 70);
+                    ctx.moveTo(100, 80);
+                    ctx.lineTo(115, 70);
+                    ctx.stroke();
+                    
+                    // Legs
+                    ctx.strokeStyle = '#FF9A00';
+                    ctx.lineWidth = 8;
+                    ctx.beginPath();
+                    ctx.moveTo(65, 130);
+                    ctx.lineTo(60, 150);
+                    ctx.moveTo(85, 130);
+                    ctx.lineTo(90, 150);
+                    ctx.stroke();
+                } else if (character === 'professor') {
+                    // Draw Professor character
+                    // Body
+                    ctx.fillStyle = '#1E88E5';
+                    ctx.beginPath();
+                    ctx.ellipse(75, 95, 30, 35, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Head
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(75, 45, 25, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Eyes
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 6, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#4b0082';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 3, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Glasses
+                    ctx.strokeStyle = '#795548';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 8, 0, Math.PI * 2);
+                    ctx.moveTo(93, 40);
+                    ctx.arc(85, 40, 8, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Bridge of glasses
+                    ctx.beginPath();
+                    ctx.moveTo(73, 40);
+                    ctx.lineTo(77, 40);
+                    ctx.stroke();
+                    
+                    // Smile
+                    ctx.beginPath();
+                    ctx.arc(75, 55, 12, 0, Math.PI);
+                    ctx.stroke();
+                    
+                    // Bow tie
+                    ctx.fillStyle = '#FF5252';
+                    ctx.beginPath();
+                    ctx.moveTo(75, 70);
+                    ctx.lineTo(65, 65);
+                    ctx.lineTo(65, 75);
+                    ctx.lineTo(75, 70);
+                    ctx.lineTo(85, 65);
+                    ctx.lineTo(85, 75);
+                    ctx.lineTo(75, 70);
+                    ctx.fill();
+                    
+                    // Academic cap
+                    ctx.fillStyle = '#4b0082';
+                    ctx.beginPath();
+                    ctx.moveTo(50, 30);
+                    ctx.lineTo(100, 30);
+                    ctx.lineTo(100, 25);
+                    ctx.lineTo(50, 25);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#4b0082';
+                    ctx.beginPath();
+                    ctx.moveTo(60, 25);
+                    ctx.lineTo(90, 25);
+                    ctx.lineTo(75, 10);
+                    ctx.fill();
+                    
+                    // Tassel
+                    ctx.strokeStyle = '#FFD700';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(90, 25);
+                    ctx.quadraticCurveTo(100, 30, 100, 40);
+                    ctx.stroke();
+                    
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(100, 42, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Arms
+                    ctx.strokeStyle = '#1E88E5';
+                    ctx.lineWidth = 8;
+                    ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    ctx.moveTo(50, 90);
+                    ctx.lineTo(30, 100);
+                    ctx.moveTo(100, 90);
+                    ctx.lineTo(120, 100);
+                    ctx.stroke();
+                    
+                    // Holding a book
+                    ctx.fillStyle = '#4CAF50';
+                    ctx.beginPath();
+                    ctx.rect(105, 90, 25, 20);
+                    ctx.fill();
+                    
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(110, 95);
+                    ctx.lineTo(125, 95);
+                    ctx.moveTo(110, 100);
+                    ctx.lineTo(125, 100);
+                    ctx.moveTo(110, 105);
+                    ctx.lineTo(125, 105);
+                    ctx.stroke();
+                }
+            }
+            
+            // Update the Punnett Square
+            function updatePunnettSquare() {
+                console.log("Updating Punnett Square");
+                
+                // Get selected trait
+                const traitKey = elements.displays.traitSelector.value;
+                const trait = gameState.traits[traitKey];
+                
+                // Clear previous Punnett Square
+                elements.displays.punnettSquare.innerHTML = '';
+                
+                // Create dominant and recessive symbols
+                const dom = trait.dominantSymbol;
+                const rec = trait.recessiveSymbol;
+                
+                // Create parent genotypes
+                const parent1 = [dom, rec]; // Heterozygous (Dd)
+                const parent2 = [dom, rec]; // Heterozygous (Dd)
+                
+                // Create empty grid
+                const grid = document.createElement('div');
+                grid.className = 'punnett-square';
+                grid.style.display = 'grid';
+                grid.style.gridTemplateColumns = '80px repeat(2, 100px)';
+                grid.style.gridTemplateRows = '80px repeat(2, 100px)';
+                grid.style.gap = '5px';
+                
+                // Add empty top-left cell
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'punnett-cell';
+                grid.appendChild(emptyCell);
+                
+                // Add parent 1 alleles (top)
+                for (let i = 0; i < parent1.length; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'punnett-cell punnett-label';
+                    cell.textContent = parent1[i];
+                    grid.appendChild(cell);
+                }
+                
+                // Add parent 2 alleles (left)
+                for (let i = 0; i < parent2.length; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'punnett-cell punnett-label';
+                    cell.textContent = parent2[i];
+                    grid.appendChild(cell);
+                    
+                    // Add offspring genotypes
+                    for (let j = 0; j < parent1.length; j++) {
+                        const offspringCell = document.createElement('div');
+                        offspringCell.className = 'punnett-cell';
+                        
+                        // Create genotype (one allele from each parent)
+                        const genotype = parent2[i] + parent1[j];
+                        offspringCell.textContent = genotype;
+                        
+                        // Color code based on phenotype
+                        if (genotype.includes(dom)) {
+                            // Dominant phenotype
+                            offspringCell.style.backgroundColor = '#BBDEFB';
+                        } else {
+                            // Recessive phenotype
+                            offspringCell.style.backgroundColor = '#FFE0B2';
+                        }
+                        
+                        grid.appendChild(offspringCell);
+                        
+                        // Add animation for education
+                        offspringCell.addEventListener('mouseover', function() {
+                            let message = '';
+                            if (genotype.includes(dom)) {
+                                message = `${genotype}: This child will have ${trait.name.toLowerCase()} because they have at least one dominant ${dom} gene!`;
+                            } else {
+                                message = `${genotype}: This child will NOT have ${trait.name.toLowerCase()} because they have two recessive ${rec} genes!`;
+                            }
+                            showMessage(gameState.selectedCharacter === 'gene' ? elements.characters.geneBubble : elements.characters.helixBubble, message);
+                            playTickSound();
+                        });
+                    }
+                }
+                
+                // Replace the current Punnett Square
+                elements.displays.punnettSquare.innerHTML = '';
+                elements.displays.punnettSquare.appendChild(grid);
+                
+                // Update info display with trait description
+                elements.displays.infoDisplay.innerHTML = `
+                    <h3>${trait.name}</h3>
+                    <p>${trait.description}</p>
+                    <p>On the Punnett Square, each box shows a possible combination of genes a child could inherit.</p>
+                `;
+                
+                // Show message from character
+                showMessage(gameState.selectedCharacter === 'gene' ? elements.characters.geneBubble : elements.characters.helixBubble, 
+                    `Let's explore ${trait.name.toLowerCase()}! The capital letter ${dom} means dominant and the lowercase letter ${rec} means recessive.`);
+            }
+            
+            // Start the quiz
+            function startQuiz() {
+                console.log("Starting quiz...");
+                
+                // Show quiz screen
+                showScreen('quizScreen');
+                
+                // Show welcome message
+                showMessage(elements.characters.quizProfessorBubble, "Welcome to the Genetics Quiz! Let's see what you've learned!");
+                
+                // Generate first question
+                generateQuizQuestion();
+            }
+            
+            // Generate a quiz question
+            function generateQuizQuestion() {
+                console.log("Generating quiz question");
+                
+                // Clear previous user answer
+                gameState.currentQuiz.userAnswer = '';
+                
+                // Get a random trait for the question
+                const traitKeys = Object.keys(gameState.traits);
+                const randomTraitKey = traitKeys[Math.floor(Math.random() * traitKeys.length)];
+                const trait = gameState.traits[randomTraitKey];
+                
+                // Generate a random question type
+                const questionTypes = [
+                    'dominant', 'recessive', 'combination', 'probability'
+                ];
+                
+                // Adjust available question types based on difficulty
+                let availableTypes = [];
+                if (gameState.settings.difficulty === 'easy') {
+                    availableTypes = ['dominant', 'recessive'];
+                } else if (gameState.settings.difficulty === 'medium') {
+                    availableTypes = ['dominant', 'recessive', 'combination'];
+                } else {
+                    availableTypes = questionTypes;
+                }
+                
+                const questionType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+                
+                // Create question based on type
+                let question = '';
+                let options = [];
+                let correctAnswer = '';
+                
+                const dom = trait.dominantSymbol;
+                const rec = trait.recessiveSymbol;
+                
+                switch (questionType) {
+                    case 'dominant':
+                        question = `What does the capital letter ${dom} mean for the trait ${trait.name.toLowerCase()}?`;
+                        options = [
+                            `It's the dominant form of the gene`,
+                            `It's the recessive form of the gene`,
+                            `It means the trait is not present`,
+                            `It's a neutral gene`
+                        ];
+                        correctAnswer = options[0];
+                        break;
+                        
+                    case 'recessive':
+                        question = `What happens when a child has two recessive genes (${rec}${rec}) for ${trait.name.toLowerCase()}?`;
+                        options = [
+                            `They will have the dominant trait`,
+                            `They will have the recessive trait`,
+                            `They will have a mix of both traits`,
+                            `The trait will be randomly determined`
+                        ];
+                        correctAnswer = options[1];
+                        break;
+                        
+                    case 'combination':
+                        question = `If one parent has ${dom}${dom} and the other has ${rec}${rec} for ${trait.name.toLowerCase()}, what will their children have?`;
+                        options = [
+                            `All ${dom}${dom} (all dominant)`,
+                            `All ${rec}${rec} (all recessive)`,
+                            `All ${dom}${rec} (all hybrid)`,
+                            `A mix of different combinations`
+                        ];
+                        correctAnswer = options[2];
+                        break;
+                        
+                    case 'probability':
+                        question = `If both parents have ${dom}${rec} for ${trait.name.toLowerCase()}, what is the chance a child will have the recessive trait?`;
+                        options = [
+                            `0% (no chance)`,
+                            `25% (1 in 4)`,
+                            `50% (1 in 2)`,
+                            `75% (3 in 4)`
+                        ];
+                        correctAnswer = options[1];
+                        break;
+                }
+                
+                // Shuffle options
+                options = shuffleArray(options);
+                
+                // Save current quiz data
+                gameState.currentQuiz.question = question;
+                gameState.currentQuiz.options = options;
+                gameState.currentQuiz.correctAnswer = correctAnswer;
+                
+                // Update quiz UI
+                elements.displays.quizQuestion.textContent = question;
+                
+                // Clear previous options
+                elements.displays.quizOptions.innerHTML = '';
+                
+                // Add new options
+                options.forEach(option => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'quiz-option';
+                    optionElement.textContent = option;
+                    optionElement.addEventListener('click', function() {
+                        selectQuizOption(this);
+                    });
+                    elements.displays.quizOptions.appendChild(optionElement);
+                });
+            }
+            
+            // Select a quiz option
+            function selectQuizOption(optionElement) {
+                console.log("Quiz option selected:", optionElement.textContent);
+                
+                // Clear any previous selections
+                const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+                options.forEach(option => {
+                    option.classList.remove('selected');
+                });
+                
+                // Select the clicked option
+                optionElement.classList.add('selected');
+                
+                // Store user's answer
+                gameState.currentQuiz.userAnswer = optionElement.textContent;
+            }
+            
+            // Check quiz answer
+            function checkQuizAnswer() {
+                console.log("Checking quiz answer");
+                
+                if (!gameState.currentQuiz.userAnswer) {
+                    // No answer selected
+                    showMessage(elements.characters.quizProfessorBubble, "Please select an answer first!");
+                    return;
+                }
+                
+                // Check if the answer is correct
+                if (gameState.currentQuiz.userAnswer === gameState.currentQuiz.correctAnswer) {
+                    // Correct answer
+                    playSuccessSound();
+                    createParticleEffect();
+                    
+                    // Show celebration message
+                    showMessage(elements.characters.quizProfessorBubble, "Excellent! That's correct!");
+                    
+                    // Increment score
+                    gameState.score++;
+                    
+                    // Proceed to next question or end quiz
+                    if (gameState.score >= 5) {
+                        // Quiz completed
+                        setTimeout(() => {
+                            completeQuiz();
+                        }, 2000);
+                    } else {
+                        // Next question
+                        setTimeout(() => {
+                            generateQuizQuestion();
+                        }, 2000);
+                    }
+                } else {
+                    // Incorrect answer
+                    playErrorSound();
+                    
+                    // Show hint message
+                    showMessage(elements.characters.quizProfessorBubble, `Not quite. The correct answer is ${gameState.currentQuiz.correctAnswer}.`);
+                    
+                    // Highlight correct answer
+                    const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+                    options.forEach(option => {
+                        if (option.textContent === gameState.currentQuiz.correctAnswer) {
+                            option.classList.add('correct');
+                        } else if (option.classList.contains('selected')) {
+                            option.classList.add('incorrect');
+                        }
+                    });
+                    
+                    // Next question after delay
+                    setTimeout(() => {
+                        generateQuizQuestion();
+                    }, 3000);
+                }
+            }
+            
+            // Complete the quiz
+            function completeQuiz() {
+                console.log("Quiz completed with score:", gameState.score);
+                
+                // Show reward screen
+                showScreen('rewardScreen');
+                
+                // Set reward text based on score
+                if (gameState.score >= 5) {
+                    elements.displays.rewardText.textContent = "Amazing! You're a Genetics Expert!";
+                } else if (gameState.score >= 3) {
+                    elements.displays.rewardText.textContent = "Great job! You're learning genetics really well!";
+                } else {
+                    elements.displays.rewardText.textContent = "Good effort! Keep exploring genetics to learn more!";
+                }
+                
+                // Create celebration animation
+                createRewardAnimation();
+            }
+            
+            // Continue game after quiz
+            function continueGame() {
+                console.log("Continuing game");
+                
+                // Reset game state for next session
+                gameState.currentLevel = 1;
+                gameState.score = 0;
+                gameState.progress = 0;
+                
+                // Load the first level
+                loadLevel(gameState.currentLevel);
+                
+                // Show the game screen
+                showScreen('gameScreen');
+            }
+            
+            // Toggle hint visibility
+            function toggleHint() {
+                console.log("Toggling hint");
+                
+                const hintText = elements.displays.hintText;
+                
+                if (hintText.style.opacity === '1') {
+                    hintText.style.opacity = '0';
+                } else {
+                    hintText.style.opacity = '1';
+                    
+                    // Auto-hide after 5 seconds
+                    setTimeout(() => {
+                        hintText.style.opacity = '0';
+                    }, 5000);
+                }
+            }
+            
+            // Show a character message
+            function showMessage(bubbleElement, message) {
+                console.log("Showing message:", message);
+                
+                // Set the message text
+                bubbleElement.textContent = message;
+                
+                // Show the bubble
+                bubbleElement.style.opacity = '1';
+                
+                // Auto-hide after delay based on message length
+                const delay = Math.max(3000, message.length * 50);
+                setTimeout(() => {
+                    bubbleElement.style.opacity = '0';
+                }, delay);
+            }
+            
+            // Create learning path
+            function createLearningPath() {
+                console.log("Creating learning path");
+                
+                const pathContainer = elements.displays.learningPath;
+                
+                // Clear any existing segments
+                pathContainer.innerHTML = '';
+                
+                // Create segments for each level
+                for (let i = 0; i < gameState.maxLevel; i++) {
+                    const segment = document.createElement('div');
+                    segment.className = 'path-segment';
+                    segment.setAttribute('data-level', i + 1);
+                    pathContainer.appendChild(segment);
+                }
+            }
+            
+            // Update learning path
+            function updateLearningPath() {
+                console.log("Updating learning path for level:", gameState.currentLevel);
+                
+                const segments = elements.displays.learningPath.querySelectorAll('.path-segment');
+                
+                segments.forEach((segment, index) => {
+                    const level = index + 1;
+                    
+                    if (level < gameState.currentLevel) {
+                        segment.className = 'path-segment completed';
+                    } else if (level === gameState.currentLevel) {
+                        segment.className = 'path-segment current';
+                    } else {
+                        segment.className = 'path-segment';
+                    }
+                });
+            }
+            
+            // Helper function to shuffle an array (Fisher-Yates algorithm)
+            function shuffleArray(array) {
+                const newArray = [...array]; // Create a copy to avoid modifying the original
+                for (let i = newArray.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+                }
+                return newArray;
+            }
+            
+            // Create celebration particle effect
+            function createParticleEffect() {
+                console.log("Creating particle effect");
+                
+                // Clear any existing particles
+                clearParticles();
+                
+                // Create stars or bubbles
+                const particleCount = 30;
+                const particleTypes = ['star', 'bubble'];
+                
+                for (let i = 0; i < particleCount; i++) {
+                    const particleType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                    createParticle(particleType);
+                }
+            }
+            
+            // Create a single particle
+            function createParticle(type) {
+                const container = document.getElementById('game-container');
+                
+                if (type === 'star') {
+                    // Create a star
+                    const star = document.createElement('div');
+                    star.className = 'star';
+                    
+                    // Random position
+                    const x = Math.random() * container.clientWidth;
+                    const y = Math.random() * container.clientHeight;
+                    
+                    // Random size
+                    const size = Math.random() * 30 + 10;
+                    
+                    // Star SVG
+                    star.innerHTML = `
+                        <svg width="${size}" height="${size}" viewBox="0 0 51 48">
+                            <path fill="#FFD700" d="m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z"/>
+                        </svg>
+                    `;
+                    
+                    star.style.left = `${x}px`;
+                    star.style.top = `${y}px`;
+                    container.appendChild(star);
+                    
+                    // Animation
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 5 + 2;
+                    const dx = Math.cos(angle) * speed;
+                    const dy = Math.sin(angle) * speed;
+                    
+                    let opacity = 1;
+                    let posX = x;
+                    let posY = y;
+                    
+                    const animation = setInterval(() => {
+                        opacity -= 0.01;
+                        posX += dx;
+                        posY += dy;
+                        
+                        star.style.opacity = opacity;
+                        star.style.left = `${posX}px`;
+                        star.style.top = `${posY}px`;
+                        
+                        if (opacity <= 0) {
+                            clearInterval(animation);
+                            star.remove();
+                        }
+                    }, 20);
+                    
+                    gameState.animations.stars.push(star);
+                    gameState.animations.timers.push(animation);
+                } else {
+                    // Create a bubble
+                    const bubble = document.createElement('div');
+                    bubble.className = 'bubble';
+                    
+                    // Random position
+                    const x = Math.random() * container.clientWidth;
+                    const y = container.clientHeight + 20;
+                    
+                    // Random size
+                    const size = Math.random() * 40 + 20;
+                    
+                    // Random color
+                    const colors = ['#FF9A00', '#4b0082', '#4CAF50', '#f44336', '#2196F3'];
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    
+                    bubble.style.width = `${size}px`;
+                    bubble.style.height = `${size}px`;
+                    bubble.style.backgroundColor = color;
+                    bubble.style.left = `${x}px`;
+                    bubble.style.top = `${y}px`;
+                    bubble.style.opacity = '0.7';
+                    container.appendChild(bubble);
+                    
+                    // Animation
+                    const speed = Math.random() * 3 + 1;
+                    let posY = y;
+                    
+                    const animation = setInterval(() => {
+                        posY -= speed;
+                        bubble.style.top = `${posY}px`;
+                        
+                        if (posY < -size) {
+                            clearInterval(animation);
+                            bubble.remove();
+                        }
+                    }, 20);
+                    
+                    gameState.animations.bubbles.push(bubble);
+                    gameState.animations.timers.push(animation);
+                }
+            }
+            
+            // Clear all particles
+            function clearParticles() {
+                // Clear all animation timers
+                gameState.animations.timers.forEach(timer => {
+                    clearInterval(timer);
+                });
+                
+                // Remove all stars and bubbles
+                gameState.animations.stars.forEach(star => {
+                    if (star.parentNode) {
+                        star.remove();
+                    }
+                });
+                
+                gameState.animations.bubbles.forEach(bubble => {
+                    if (bubble.parentNode) {
+                        bubble.remove();
+                    }
+                });
+                
+                // Reset arrays
+                gameState.animations.stars = [];
+                gameState.animations.bubbles = [];
+                gameState.animations.timers = [];
+            }
+            
+            // Create reward animation
+            function createRewardAnimation() {
+                console.log("Creating reward animation");
+                
+                const container = elements.displays.rewardAnimation;
+                
+                // Clear container
+                container.innerHTML = '';
+                
+                // Create canvas for celebration
+                const canvas = document.createElement('canvas');
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+                container.appendChild(canvas);
+                
+                const ctx = canvas.getContext('2d');
+                
+                // Characters
+                const professorImage = createCharacterImage('professor');
+                const characterImage = createCharacterImage(gameState.selectedCharacter);
+                
+                // Draw characters
+                ctx.drawImage(professorImage, 50, 50, 150, 150);
+                ctx.drawImage(characterImage, canvas.width - 200, 50, 150, 150);
+                
+                // Celebration text
+                ctx.font = '30px Arial, sans-serif';
+                ctx.fillStyle = '#4b0082';
+                ctx.textAlign = 'center';
+                ctx.fillText('Congratulations!', canvas.width / 2, 50);
+                
+                // Trophy
+                drawTrophy(ctx, canvas.width / 2, canvas.height / 2);
+                
+                // Start particle animation
+                createParticleEffect();
+                
+                // Play celebration sound
+                playCelebrationSound();
+            }
+            
+            // Create character image
+            function createCharacterImage(character) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 150;
+                canvas.height = 150;
+                const ctx = canvas.getContext('2d');
+                
+                if (character === 'gene') {
+                    // Draw Gene the Scientist (same as drawCharacter)
+                    // Head
+                    ctx.fillStyle = '#FFD54F';
+                    ctx.beginPath();
+                    ctx.arc(75, 45, 30, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Lab coat
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.beginPath();
+                    ctx.moveTo(45, 75);
+                    ctx.lineTo(105, 75);
+                    ctx.lineTo(115, 150);
+                    ctx.lineTo(35, 150);
+                    ctx.fill();
+                    
+                    // Shirt
+                    ctx.fillStyle = '#42A5F5';
+                    ctx.beginPath();
+                    ctx.moveTo(60, 75);
+                    ctx.lineTo(90, 75);
+                    ctx.lineTo(85, 120);
+                    ctx.lineTo(65, 120);
+                    ctx.fill();
+                    
+                    // Eyes
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 6, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#4b0082';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 3, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Glasses
+                    ctx.strokeStyle = '#795548';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 10, 0, Math.PI * 2);
+                    ctx.moveTo(85 + 10, 40);
+                    ctx.arc(85, 40, 10, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Smile
+                    ctx.beginPath();
+                    ctx.arc(75, 55, 10, 0, Math.PI);
+                    ctx.stroke();
+                    
+                    // Hair
+                    ctx.fillStyle = '#5D4037';
+                    ctx.beginPath();
+                    ctx.moveTo(45, 35);
+                    ctx.quadraticCurveTo(75, 5, 105, 35);
+                    ctx.lineTo(105, 45);
+                    ctx.lineTo(45, 45);
+                    ctx.fill();
+                } else if (character === 'helix') {
+                    // Draw Helix the DNA Sprite (same as drawCharacter)
+                    // Body (DNA helix shape)
+                    ctx.fillStyle = '#FF9A00';
+                    ctx.beginPath();
+                    ctx.ellipse(75, 90, 25, 45, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Head
+                    ctx.fillStyle = '#FFEB3B';
+                    ctx.beginPath();
+                    ctx.arc(75, 45, 25, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // DNA pattern on body
+                    ctx.strokeStyle = '#FFFFFF';
+                    ctx.lineWidth = 3;
+                    for (let i = 0; i < 5; i++) {
+                        ctx.beginPath();
+                        ctx.moveTo(60, 60 + i * 15);
+                        ctx.lineTo(90, 60 + i * 15);
+                        ctx.stroke();
+                    }
+                    
+                    // DNA vertical lines
+                    ctx.beginPath();
+                    ctx.moveTo(60, 60);
+                    ctx.bezierCurveTo(60, 80, 90, 100, 90, 120);
+                    ctx.stroke();
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(90, 60);
+                    ctx.bezierCurveTo(90, 80, 60, 100, 60, 120);
+                    ctx.stroke();
+                    
+                    // Eyes
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 7, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 7, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#4b0082';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 4, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Smile
+                    ctx.strokeStyle = '#4b0082';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(75, 55, 10, 0, Math.PI);
+                    ctx.stroke();
+                } else if (character === 'professor') {
+                    // Draw Professor character (same as drawCharacter)
+                    // Body
+                    ctx.fillStyle = '#1E88E5';
+                    ctx.beginPath();
+                    ctx.ellipse(75, 95, 30, 35, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Head
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(75, 45, 25, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Eyes
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 6, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#4b0082';
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 3, 0, Math.PI * 2);
+                    ctx.arc(85, 40, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    // Glasses
+                    ctx.strokeStyle = '#795548';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(65, 40, 8, 0, Math.PI * 2);
+                    ctx.moveTo(93, 40);
+                    ctx.arc(85, 40, 8, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Bow tie
+                    ctx.fillStyle = '#FF5252';
+                    ctx.beginPath();
+                    ctx.moveTo(75, 70);
+                    ctx.lineTo(65, 65);
+                    ctx.lineTo(65, 75);
+                    ctx.lineTo(75, 70);
+                    ctx.lineTo(85, 65);
+                    ctx.lineTo(85, 75);
+                    ctx.lineTo(75, 70);
+                    ctx.fill();
+                    
+                    // Academic cap
+                    ctx.fillStyle = '#4b0082';
+                    ctx.beginPath();
+                    ctx.moveTo(50, 30);
+                    ctx.lineTo(100, 30);
+                    ctx.lineTo(100, 25);
+                    ctx.lineTo(50, 25);
+                    ctx.fill();
+                    
+                    ctx.fillStyle = '#4b0082';
+                    ctx.beginPath();
+                    ctx.moveTo(60, 25);
+                    ctx.lineTo(90, 25);
+                    ctx.lineTo(75, 10);
+                    ctx.fill();
+                }
+                
+                return canvas;
+            }
+            
+            // Draw trophy
+            function drawTrophy(ctx, x, y) {
+                // Trophy base
+                ctx.fillStyle = '#FFD700';
+                
+                // Cup
+                ctx.beginPath();
+                ctx.moveTo(x - 30, y - 50);
+                ctx.lineTo(x + 30, y - 50);
+                ctx.quadraticCurveTo(x + 50, y - 50, x + 50, y - 30);
+                ctx.quadraticCurveTo(x + 50, y, x + 30, y);
+                ctx.quadraticCurveTo(x + 15, y + 10, x + 15, y + 30);
+                ctx.lineTo(x - 15, y + 30);
+                ctx.quadraticCurveTo(x - 15, y + 10, x - 30, y);
+                ctx.quadraticCurveTo(x - 50, y, x - 50, y - 30);
+                ctx.quadraticCurveTo(x - 50, y - 50, x - 30, y - 50);
+                ctx.fill();
+                
+                // Base
+                ctx.fillStyle = '#A67C00';
+                ctx.beginPath();
+                ctx.rect(x - 25, y + 30, 50, 10);
+                ctx.fill();
+                
+                ctx.fillStyle = '#8D6E00';
+                ctx.beginPath();
+                ctx.rect(x - 35, y + 40, 70, 10);
+                ctx.fill();
+                
+                // DNA symbol
+                ctx.strokeStyle = '#4b0082';
+                ctx.lineWidth = 3;
+                
+                // DNA double helix
+                ctx.beginPath();
+                ctx.moveTo(x - 10, y - 30);
+                ctx.bezierCurveTo(x - 10, y - 20, x + 10, y - 10, x + 10, y);
+                ctx.bezierCurveTo(x + 10, y + 10, x - 10, y + 20, x - 10, y + 30);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(x + 10, y - 30);
+                ctx.bezierCurveTo(x + 10, y - 20, x - 10, y - 10, x - 10, y);
+                ctx.bezierCurveTo(x - 10, y + 10, x + 10, y + 20, x + 10, y + 30);
+                ctx.stroke();
+                
+                // Base pairs
+                ctx.beginPath();
+                ctx.moveTo(x - 10, y - 25);
+                ctx.lineTo(x + 10, y - 25);
+                ctx.moveTo(x - 10, y - 15);
+                ctx.lineTo(x + 10, y - 15);
+                ctx.moveTo(x - 10, y - 5);
+                ctx.lineTo(x + 10, y - 5);
+                ctx.moveTo(x - 10, y + 5);
+                ctx.lineTo(x + 10, y + 5);
+                ctx.moveTo(x - 10, y + 15);
+                ctx.lineTo(x + 10, y + 15);
+                ctx.moveTo(x - 10, y + 25);
+                ctx.lineTo(x + 10, y + 25);
+                ctx.stroke();
+            }
+            
+            // Settings functions
+            function updateSoundVolume(value) {
+                gameState.settings.soundVolume = parseFloat(value);
+            }
+            
+            function updateAnimationSpeed(value) {
+                gameState.settings.animationSpeed = parseFloat(value);
+            }
+            
+            function updateDifficulty(value) {
+                gameState.settings.difficulty = value;
+            }
+            
+            function updateLearningMode(value) {
+                gameState.settings.learningMode = value;
+            }
+            
+            function saveSettings() {
+                console.log("Saving settings");
+                
+                // Get values from UI
+                gameState.settings.soundVolume = parseFloat(elements.settings.soundSlider.value);
+                gameState.settings.animationSpeed = parseFloat(elements.settings.animationSlider.value);
+                gameState.settings.difficulty = elements.settings.difficultySelect.value;
+                gameState.settings.learningMode = elements.settings.learningModeSelect.value;
+                
+                // Show confirmation message
+                showMessage(elements.characters.geneBubble, "Settings saved!");
+                
+                // Return to start screen
+                setTimeout(() => {
+                    showScreen('startScreen');
+                }, 1500);
+            }
+            
+            // Sound functions
+            function playButtonSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(gameState.settings.soundVolume, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                }
+            }
+            
+            function playTickSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                    
+                    gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                }
+            }
+            
+            function playSelectSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+                    
+                    gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.2);
+                }
+            }
+            
+            function playSuccessSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    
+                    notes.forEach((frequency, index) => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.1);
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                        gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.1 + 0.01);
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + index * 0.1 + 0.3);
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.start(audioContext.currentTime + index * 0.1);
+                        oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                    });
+                }
+            }
+            
+            function playErrorSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    const frequencies = [349.23, 329.63, 311.13]; // F4, E4, D#4/Eb4
+                    
+                    frequencies.forEach((frequency, index) => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.15);
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.15);
+                        gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.15 + 0.01);
+                        gainNode.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + index * 0.15 + 0.3);
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.start(audioContext.currentTime + index * 0.15);
+                        oscillator.stop(audioContext.currentTime + index * 0.15 + 0.3);
+                    });
+                }
+            }
+            
+            function playCelebrationSound() {
+                if (audioContext && gameState.settings.soundVolume > 0) {
+                    // Major scale ascending and then chord
+                    const notes = [
+                        { freq: 523.25, time: 0 },    // C5
+                        { freq: 587.33, time: 0.15 }, // D5
+                        { freq: 659.25, time: 0.3 },  // E5
+                        { freq: 698.46, time: 0.45 }, // F5
+                        { freq: 783.99, time: 0.6 },  // G5
+                        { freq: 880.00, time: 0.75 }, // A5
+                        { freq: 987.77, time: 0.9 },  // B5
+                        { freq: 1046.50, time: 1.05 }, // C6
+                        // Final chord
+                        { freq: 523.25, time: 1.3 }, // C5
+                        { freq: 659.25, time: 1.3 }, // E5
+                        { freq: 783.99, time: 1.3 }, // G5
+                        { freq: 1046.50, time: 1.3 }  // C6
+                    ];
+                    
+                    notes.forEach(note => {
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.type = 'sine';
+                        oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                        
+                        gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                        gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime + note.time + 0.01);
+                        
+                        // Longer sustain for the final chord
+                        if (note.time === 1.3) {
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 1.0);
+                            oscillator.start(audioContext.currentTime + note.time);
+                            oscillator.stop(audioContext.currentTime + note.time + 1.0);
+                        } else {
+                            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 0.2);
+                            oscillator.start(audioContext.currentTime + note.time);
+                            oscillator.stop(audioContext.currentTime + note.time + 0.2);
+                        }
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                    });
+                }
+            }
+            
+            // Initialize the game
+            initGame();
+        });
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genetics Explorer: Adventure Learning Game</title>
+    <style>
+        /* Game Styling */
+        * {
+            box-sizing: border-box;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            overflow-x: hidden;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+            min-height: 800px;
+        }
+        
+        /* Header */
+        .game-header {
+            background: linear-gradient(135deg, #42b0ff, #4b0082);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+        
+        .game-header h1 {
+            margin: 0;
+            font-size: 2.5em;
+        }
+        
+        .game-header p {
+            margin: 10px 0 0;
+            font-size: 1.2em;
+        }
+        
+        /* Screens */
+        .screen {
+            position: relative;
+            width: 100%;
+            min-height: 600px;
+            padding: 20px;
+            background-color: #ffffff;
+            transition: transform 0.5s ease, opacity 0.5s ease;
+            display: none;
+        }
+        
+        .hidden {
+            display: none;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .visible {
+            display: block;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        /* Buttons */
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #42b0ff, #4b0082);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+        
+        .button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Characters */
+        .character {
+            position: relative;
+            display: inline-block;
+            margin: 20px;
+        }
+        
+        .character-bubble {
+            position: absolute;
+            top: -80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            border: 3px solid #4b0082;
+            border-radius: 20px;
+            padding: 10px 15px;
+            min-width: 200px;
+            max-width: 300px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+        
+        .character-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 15px 15px 0;
+            border-style: solid;
+            border-color: #4b0082 transparent transparent;
+        }
+        
+        /* Start Screen */
+        #startScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            min-height: 600px;
+        }
+        
+        .start-buttons {
+            margin-top: 30px;
+        }
+        
+        .character-select {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        .character-option {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            padding: 10px;
+            border-radius: 10px;
+        }
+        
+        .character-option:hover {
+            transform: scale(1.1);
+            background-color: rgba(75, 0, 130, 0.1);
+        }
+        
+        .character-option.selected {
+            background-color: rgba(75, 0, 130, 0.2);
+            transform: scale(1.1);
+        }
+        
+        /* Game Screen */
+        #gameScreen {
+            display: flex;
+            flex-direction: column;
+            padding-top: 80px;
+            min-height: 800px;
+        }
+        
+        .game-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        
+        .learning-path {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .path-segment {
+            width: 50px;
+            height: 20px;
+            background-color: #ddd;
+            margin: 0 5px;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .path-segment.completed {
+            background-color: #4CAF50;
+        }
+        
+        .path-segment.current {
+            background-color: #FF9A00;
+            transform: scale(1.2);
+        }
+        
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .trait-selector {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .trait-dropdown {
+            padding: 10px 20px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            border: 2px solid #4b0082;
+        }
+        
+        .punnett-square {
+            display: grid;
+            grid-template-columns: 80px repeat(2, 100px);
+            grid-template-rows: 80px repeat(2, 100px);
+            gap: 5px;
+            margin: 20px 0;
+        }
+        
+        .punnett-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: bold;
+            background-color: #e6f7ff;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .punnett-cell:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 10px rgba(66, 176, 255, 0.7);
+        }
+        
+        .punnett-label {
+            background-color: #4b0082;
+            color: white;
+            font-size: 18px;
+        }
+        
+        .info-display {
+            margin: 20px;
+            padding: 15px;
+            background-color: rgba(75, 0, 130, 0.1);
+            border-radius: 10px;
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .hint-button {
+            background: linear-gradient(135deg, #FF9A00, #FF6D00);
+        }
+        
+        .hint-text {
+            background-color: #FFF9C4;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 5px solid #FF9A00;
+            margin: 20px 0;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Quiz Screen */
+        #quizScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 80px;
+            min-height: 800px;
+        }
+        
+        .quiz-title {
+            font-size: 2em;
+            color: #4b0082;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .quiz-question {
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 700px;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .quiz-option {
+            width: 100%;
+            max-width: 500px;
+            padding: 15px 20px;
+            background-color: #e6f7ff;
+            border-radius: 10px;
+            font-size: 1.2em;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .quiz-option:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            background-color: #d1efff;
+        }
+        
+        .quiz-option.selected {
+            background-color: #42b0ff;
+            color: white;
+        }
+        
+        .quiz-option.correct {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .quiz-option.incorrect {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .quiz-actions {
+            margin: 20px 0;
+        }
+        
+        /* Reward Screen */
+        #rewardScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-top: 100px;
+        }
+        
+        .reward-title {
+            font-size: 2.5em;
+            color: #4b0082;
+            margin-bottom: 20px;
+        }
+        
+        .reward-text {
+            font-size: 1.5em;
+            color: #4b0082;
+            margin-bottom: 40px;
+        }
+        
+        .reward-animation {
+            width: 400px;
+            height: 300px;
+            margin-bottom: 40px;
+            position: relative;
+        }
+        
+        /* Settings Screen */
+        #settingsScreen {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 80px;
+        }
+        
+        .settings-title {
+            font-size: 2em;
+            color: #4b0082;
+            margin-bottom: 30px;
+        }
+        
+        .settings-controls {
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .settings-control {
+            margin: 20px 0;
+        }
+        
+        .settings-label {
+            display: block;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #4b0082;
+        }
+        
+        .settings-slider {
+            width: 100%;
+            height: 20px;
+        }
+        
+        .settings-select {
+            width: 100%;
+            padding: 10px;
+            font-size: 1.2em;
+            border-radius: 10px;
+            border: 2px solid #4b0082;
+        }
+        
+        /* Animations */
+        .star {
+            position: absolute;
+            z-index: 100;
+        }
+        
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            z-index: 100;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .game-header h1 {
+                font-size: 2em;
+            }
+            
+            .punnett-square {
+                grid-template-columns: 60px repeat(2, 80px);
+                grid-template-rows: 60px repeat(2, 80px);
+            }
+            
+            .punnett-cell {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Game Header -->
+        <div class="game-header">
+            <h1>Genetics Explorer</h1>
+            <p>Learn about traits, genes, and inheritance!</p>
+        </div>
+        
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen visible">
+            <h2>Welcome to Genetics Explorer!</h2>
+            <p>Join Gene the Scientist and Helix the DNA Sprite on an adventure to learn about genetics!</p>
+            
+            <div class="character-select">
+                <div class="character-option" data-character="gene" onclick="selectCharacter('gene')">
+                    <canvas id="geneCanvas" width="150" height="150"></canvas>
+                    <p>Gene the Scientist</p>
+                </div>
+                <div class="character-option" data-character="helix" onclick="selectCharacter('helix')">
+                    <canvas id="helixCanvas" width="150" height="150"></canvas>
+                    <p>Helix the DNA Sprite</p>
+                </div>
+            </div>
+            
+            <div class="start-buttons">
+                <button class="button" onclick="startGame()">Start Adventure</button>
+                <button class="button" onclick="showScreen('settingsScreen')">Settings</button>
+            </div>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen hidden">
+            <div class="game-controls">
+                <button class="button" onclick="showScreen('startScreen')">Menu</button>
+                <div class="learning-path" id="learningPath"></div>
+                <button class="button" onclick="startQuiz()">Quiz Challenge!</button>
+            </div>
+            
+            <div class="character">
+                <canvas id="gameGeneCanvas" width="150" height="150"></canvas>
+                <div id="geneBubble" class="character-bubble">Welcome to Genetics Explorer!</div>
+            </div>
+            
+            <div class="game-area">
+                <div class="trait-selector">
+                    <h3>Select a Genetic Trait to Explore:</h3>
+                    <select id="traitSelector" class="trait-dropdown" onchange="updatePunnettSquare()">
+                        <option value="curlyHair">Curly Hair</option>
+                        <option value="earLobes">Attached Ear Lobes</option>
+                        <option value="dimples">Dimples</option>
+                        <option value="freckles">Freckles</option>
+                        <option value="eyeColor">Blue Eyes</option>
+                        <option value="tongueRoll">Tongue Rolling</option>
+                    </select>
+                </div>
+                
+                <div class="punnett-square" id="punnettSquare">
+                    <!-- Will be filled by JavaScript -->
+                </div>
+                
+                <div class="info-display" id="infoDisplay">
+                    <h3>What is a Punnett Square?</h3>
+                    <p>A Punnett Square helps us understand how traits are passed from parents to children!</p>
+                </div>
+                
+                <button class="button hint-button" onclick="toggleHint()">Show Hint</button>
+                <div class="hint-text" id="hintText">
+                    Genes come in pairs! Capital letters (like 'C') show dominant traits that win, and lowercase letters (like 'c') show recessive traits that only show up when there are two of them!
+                </div>
+            </div>
+            
+            <div class="character">
+                <canvas id="gameHelixCanvas" width="150" height="150"></canvas>
+                <div id="helixBubble" class="character-bubble">I'm made of DNA - the code for all your traits!</div>
+            </div>
+        </div>
+        
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="screen hidden">
+            <div class="character">
+                <canvas id="quizProfessorCanvas" width="150" height="150"></canvas>
+                <div id="quizProfessorBubble" class="character-bubble">Let's test your knowledge!</div>
+            </div>
+            
+            <div class="quiz-title">Genetics Quiz Challenge</div>
+            
+            <div class="quiz-question" id="quizQuestion">
+                What happens when a "C" (curly hair) gene and a "c" (straight hair) gene are together?
+            </div>
+            
+            <div class="quiz-options" id="quizOptions">
+                <!-- Will be filled by JavaScript -->
+            </div>
+            
+            <div class="quiz-actions">
+                <button class="button" onclick="checkQuizAnswer()">Submit Answer</button>
+                <button class="button" onclick="showScreen('gameScreen')">Back to Game</button>
+            </div>
+        </div>
+        
+        <!-- Reward Screen -->
+        <div id="rewardScreen" class="screen hidden">
+            <div class="reward-title">Congratulations!</div>
+            <div class="reward-text" id="rewardText">You're a Genetics Expert!</div>
+            
+            <div class="reward-animation" id="rewardAnimation"></div>
+            
+            <button class="button" onclick="continueGame()">Continue Explorer</button>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen hidden">
+            <div class="settings-title">Game Settings</div>
+            
+            <div class="settings-controls">
+                <div class="settings-control">
+                    <label class="settings-label">Sound Volume:</label>
+                    <input type="range" min="0" max="1" step="0.1" value="0.5" class="settings-slider" id="soundSlider" oninput="updateSoundVolume(this.value)">
+                </div>
+                
+                <div class="settings-control">
+                    <label class="settings-label">Animation Speed:</label>
+                    <input type="range" min="0.5" max="2" step="0.1" value="1" class="settings-slider" id="animationSlider" oninput="updateAnimationSpeed(this.value)">
+                </div>
+                
+                <div class="settings-control">
+                    <label class="settings-label">Difficulty Level:</label>
+                    <select class="settings-select" id="difficultySelect" onchange="updateDifficulty(this.value)">
+                        <option value="easy">Easy - Focus on Basic Traits</option>
+                        <option value="medium" selected>Medium - Multiple Traits & Combinations</option>
+                        <option value="hard">Hard - Complex Genetic Patterns</option>
+                    </select>
+                </div>
+                
+                <div class="settings-control">
+                    <label class="settings-label">Learning Mode:</label>
+                    <select class="settings-select" id="learningModeSelect" onchange="updateLearningMode(this.value)">
+                        <option value="guided" selected>Guided - Step by Step</option>
+                        <option value="explore">Explore - Learn at Your Own Pace</option>
+                        <option value="challenge">Challenge - Test Your Skills</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button class="button" onclick="saveSettings()">Save Settings</button>
+            <button class="button" onclick="showScreen('startScreen')">Back to Menu</button>
+        </div>
+    </div>
+    
+    <script>
+        // Game elements
+        let elements = {};
+        
+        // Wait for the DOM to be fully loaded before initializing elements
+        document.addEventListener('DOMContentLoaded', function() {
+            elements = {
+                screens: {
+                    startScreen: document.getElementById('startScreen'),
+                    gameScreen: document.getElementById('gameScreen'),
+                    quizScreen: document.getElementById('quizScreen'),
+                    rewardScreen: document.getElementById('rewardScreen'),
+                    settingsScreen: document.getElementById('settingsScreen')
+                },
+                characters: {
+                    geneCanvas: document.getElementById('geneCanvas'),
+                    helixCanvas: document.getElementById('helixCanvas'),
+                    gameGeneCanvas: document.getElementById('gameGeneCanvas'),
+                    gameHelixCanvas: document.getElementById('gameHelixCanvas'),
+                    geneBubble: document.getElementById('geneBubble'),
+                    helixBubble: document.getElementById('helixBubble'),
+                    quizProfessorCanvas: document.getElementById('quizProfessorCanvas'),
+                    quizProfessorBubble: document.getElementById('quizProfessorBubble')
+                },
+                displays: {
+                    punnettSquare: document.getElementById('punnettSquare'),
+                    infoDisplay: document.getElementById('infoDisplay'),
+                    traitSelector: document.getElementById('traitSelector'),
+                    hintText: document.getElementById('hintText'),
+                    learningPath: document.getElementById('learningPath'),
+                    quizQuestion: document.getElementById('quizQuestion'),
+                    quizOptions: document.getElementById('quizOptions'),
+                    rewardText: document.getElementById('rewardText'),
+                    rewardAnimation: document.getElementById('rewardAnimation')
+                },
+                settings: {
+                    soundSlider: document.getElementById('soundSlider'),
+                    animationSlider: document.getElementById('animationSlider'),
+                    difficultySelect: document.getElementById('difficultySelect'),
+                    learningModeSelect: document.getElementById('learningModeSelect')
+                }
+            };
+            
+            // Now that elements are initialized, call initGame
+            initGame();
+        });
+        
+        // Game state
+        const gameState = {
+            selectedCharacter: 'gene',
+            currentLevel: 1,
+            maxLevel: 5,
+            score: 0,
+            progress: 0,
+            settings: {
+                soundVolume: 0.5,
+                animationSpeed: 1,
+                difficulty: 'medium',
+                learningMode: 'guided'
+            },
+            traits: {
+                curlyHair: {
+                    name: 'Curly Hair',
+                    dominantSymbol: 'C',
+                    recessiveSymbol: 'c',
+                    description: 'Curly hair (C) is dominant over straight hair (c). This means that if you have at least one "C" gene, your hair will be curly!'
+                },
+                earLobes: {
+                    name: 'Attached Ear Lobes',
+                    dominantSymbol: 'E',
+                    recessiveSymbol: 'e',
+                    description: 'Free ear lobes (E) are dominant over attached ear lobes (e). You need two "e" genes to have attached ear lobes.'
+                },
+                dimples: {
+                    name: 'Dimples',
+                    dominantSymbol: 'D',
+                    recessiveSymbol: 'd',
+                    description: 'Having dimples (D) is dominant over not having dimples (d). If you have at least one "D" gene, you will have cute dimples when you smile!'
+                },
+                freckles: {
+                    name: 'Freckles',
+                    dominantSymbol: 'F',
+                    recessiveSymbol: 'f',
+                    description: 'Having freckles (F) is dominant over not having freckles (f). You need two "f" genes to not have freckles.'
+                },
+                eyeColor: {
+                    name: 'Blue Eyes',
+                    dominantSymbol: 'B',
+                    recessiveSymbol: 'b',
+                    description: 'Brown eyes (B) are dominant over blue eyes (b). You need two "b" genes to have blue eyes!'
+                },
+                tongueRoll: {
+                    name: 'Tongue Rolling',
+                    dominantSymbol: 'T',
+                    recessiveSymbol: 't',
+                    description: 'Being able to roll your tongue (T) is dominant over not being able to roll it (t). If you have at least one "T" gene, you can do this trick!'
+                }
+            },
+            currentQuiz: {
+                question: '',
+                options: [],
+                correctAnswer: '',
+                userAnswer: ''
+            },
+            animations: {
+                stars: [],
+                bubbles: [],
+                timers: []
+            }
+        };
+        
+        // Audio context for sound effects
+        let audioContext;
+        
+        // Initialize the game
+        function initGame() {
+            console.log("Initializing game...");
+            
+            // Try to initialize audio context
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Web Audio API is not supported in this browser');
+            }
+            
+            // Draw characters
+            drawCharacter(elements.characters.geneCanvas, 'gene');
+            drawCharacter(elements.characters.helixCanvas, 'helix');
+            drawCharacter(elements.characters.gameGeneCanvas, 'gene');
+            drawCharacter(elements.characters.gameHelixCanvas, 'helix');
+            drawCharacter(elements.characters.quizProfessorCanvas, 'professor');
+            
+            // Create learning path
+            createLearningPath();
+            
+            // Initialize Punnett Square
+            updatePunnettSquare();
+            
+            // Set initial settings values from game state
+            elements.settings.soundSlider.value = gameState.settings.soundVolume;
+            elements.settings.animationSlider.value = gameState.settings.animationSpeed;
+            elements.settings.difficultySelect.value = gameState.settings.difficulty;
+            elements.settings.learningModeSelect.value = gameState.settings.learningMode;
+            
+            // Add event listeners for button sound effects
+            const buttons = document.querySelectorAll('.button');
+            buttons.forEach(button => {
+                button.addEventListener('mousedown', playButtonSound);
+            });
+            
+            console.log("Game initialization complete!");
+        }
+        
+        // Show a specific screen
+        function showScreen(screenName) {
+            // Hide all screens
+            Object.keys(elements.screens).forEach(key => {
+                elements.screens[key].classList.remove('visible');
+                elements.screens[key].classList.add('hidden');
+            });
+            
+            // Show the requested screen
+            elements.screens[screenName].classList.remove('hidden');
+            elements.screens[screenName].classList.add('visible');
+            
+            // Play sound
+            playSelectSound();
+            
+            // Special actions for specific screens
+            if (screenName === 'gameScreen') {
+                updateLearningPath();
+                showMessage(elements.characters.geneBubble, "Let's learn about genetic traits!");
+                setTimeout(() => {
+                    showMessage(elements.characters.helixBubble, "You can explore different traits using the dropdown menu!");
+                }, 2000);
+            } else if (screenName === 'quizScreen') {
+                generateQuizQuestion();
+            }
+        }
+        
+        // Start the game
+        function startGame() {
+            // Play sound
+            playSelectSound();
+            
+            // Show game screen
+            showScreen('gameScreen');
+            
+            // Reset game state
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.progress = 0;
+            
+            // Load the first level
+            loadLevel(gameState.currentLevel);
+        }
+        
+        // Load a specific level
+        function loadLevel(level) {
+            // Set current level
+            gameState.currentLevel = level;
+            
+            // Update learning path
+            updateLearningPath();
+            
+            // Show level intro message
+            let message = '';
+            switch (level) {
+                case 1:
+                    message = "Level 1: Let's start with the basics of genes!";
+                    break;
+                case 2:
+                    message = "Level 2: Great job! Now let's see how traits are passed down!";
+                    break;
+                case 3:
+                    message = "Level 3: Fantastic! Now we'll explore more complex trait combinations!";
+                    break;
+                case 4:
+                    message = "Level 4: Amazing! Let's dive into multiple trait inheritance!";
+                    break;
+                case 5:
+                    message = "Level 5: Final level! Let's master genetic patterns!";
+                    break;
+            }
+            
+            // Show message from characters
+            showMessage(elements.characters.geneBubble, message);
+            setTimeout(() => {
+                let helixMessage = '';
+                switch (level) {
+                    case 1:
+                        helixMessage = "Genes come in pairs - one from mom and one from dad!";
+                        break;
+                    case 2:
+                        helixMessage = "Different combinations of genes create different traits!";
+                        break;
+                    case 3:
+                        helixMessage = "Some genes are dominant and some are recessive!";
+                        break;
+                    case 4:
+                        helixMessage = "We can predict traits using Punnett Squares!";
+                        break;
+                    case 5:
+                        helixMessage = "Let's put all our knowledge together!";
+                        break;
+                }
+                showMessage(elements.characters.helixBubble, helixMessage);
+            }, 2000);
+            
+            // Update info display based on level
+            updateInfoDisplay(level);
+        }
+        
+        // Update info display based on level
+        function updateInfoDisplay(level) {
+            let title = '';
+            let content = '';
+            
+            switch (level) {
+                case 1:
+                    title = "What are Genes?";
+                    content = "Genes are like special instructions that tell your body how to grow and what to look like! You get genes from both your mom and dad.";
+                    break;
+                case 2:
+                    title = "What is a Punnett Square?";
+                    content = "A Punnett Square is like a magic box that helps us predict what traits a child might inherit from their parents!";
+                    break;
+                case 3:
+                    title = "Dominant vs. Recessive Genes";
+                    content = "Some genes are 'bossy' (dominant) and some are 'shy' (recessive). Dominant genes (capital letters) show up even if there's just one. Recessive genes (lowercase letters) only show when there are two!";
+                    break;
+                case 4:
+                    title = "Genetic Combinations";
+                    content = "Look at the Punnett Square. Each box shows a possible combination of genes a child could get from their parents!";
+                    break;
+                case 5:
+                    title = "Genetic Probability";
+                    content = "With a Punnett Square, we can see the chances of getting different traits. It's like a special kind of prediction!";
+                    break;
+            }
+            
+            elements.displays.infoDisplay.innerHTML = `<h3>${title}</h3><p>${content}</p>`;
+        }
+        
+        // Select a character
+        function selectCharacter(character) {
+            // Update game state
+            gameState.selectedCharacter = character;
+            
+            // Update UI
+            const characterOptions = document.querySelectorAll('.character-option');
+            characterOptions.forEach(option => {
+                if (option.getAttribute('data-character') === character) {
+                    option.classList.add('selected');
+                } else {
+                    option.classList.remove('selected');
+                }
+            });
+            
+            // Play sound
+            playSelectSound();
+        }
+        
+        // Draw character on canvas
+        function drawCharacter(canvas, character) {
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            if (character === 'gene') {
+                // Draw Gene the Scientist
+                // Head
+                ctx.fillStyle = '#FFD54F';
+                ctx.beginPath();
+                ctx.arc(75, 45, 30, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Lab coat
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.moveTo(45, 75);
+                ctx.lineTo(105, 75);
+                ctx.lineTo(115, 150);
+                ctx.lineTo(35, 150);
+                ctx.fill();
+                
+                // Shirt
+                ctx.fillStyle = '#42A5F5';
+                ctx.beginPath();
+                ctx.moveTo(60, 75);
+                ctx.lineTo(90, 75);
+                ctx.lineTo(85, 120);
+                ctx.lineTo(65, 120);
+                ctx.fill();
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(65, 40, 6, 0, Math.PI * 2);
+                ctx.arc(85, 40, 6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#4b0082';
+                ctx.beginPath();
+                ctx.arc(65, 40, 3, 0, Math.PI * 2);
+                ctx.arc(85, 40, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glasses
+                ctx.strokeStyle = '#795548';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(65, 40, 10, 0, Math.PI * 2);
+                ctx.moveTo(85 + 10, 40);
+                ctx.arc(85, 40, 10, 0, Math.PI * 2);
+                ctx.moveTo(75, 40);
+                ctx.lineTo(75, 40);
+                ctx.stroke();
+                
+                // Bridge of glasses
+                ctx.beginPath();
+                ctx.moveTo(75, 40);
+                ctx.lineTo(75, 40);
+                ctx.stroke();
+                
+                // Smile
+                ctx.beginPath();
+                ctx.arc(75, 55, 10, 0, Math.PI);
+                ctx.stroke();
+                
+                // Hair
+                ctx.fillStyle = '#5D4037';
+                ctx.beginPath();
+                ctx.moveTo(45, 35);
+                ctx.quadraticCurveTo(75, 5, 105, 35);
+                ctx.lineTo(105, 45);
+                ctx.lineTo(45, 45);
+                ctx.fill();
+                
+                // Arms with beaker
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 10;
+                ctx.beginPath();
+                ctx.moveTo(45, 90);
+                ctx.lineTo(30, 120);
+                ctx.moveTo(105, 90);
+                ctx.lineTo(120, 120);
+                ctx.stroke();
+                
+                // Beaker
+                ctx.fillStyle = '#81D4FA';
+                ctx.beginPath();
+                ctx.moveTo(120, 120);
+                ctx.lineTo(110, 140);
+                ctx.lineTo(130, 140);
+                ctx.lineTo(120, 120);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#B3E5FC';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(115, 125);
+                ctx.lineTo(125, 125);
+                ctx.moveTo(113, 130);
+                ctx.lineTo(127, 130);
+                ctx.moveTo(111, 135);
+                ctx.lineTo(129, 135);
+                ctx.stroke();
+            } else if (character === 'helix') {
+                // Draw Helix the DNA Sprite
+                // Body (DNA helix shape)
+                ctx.fillStyle = '#FF9A00';
+                ctx.beginPath();
+                ctx.ellipse(75, 90, 25, 45, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Head
+                ctx.fillStyle = '#FFEB3B';
+                ctx.beginPath();
+                ctx.arc(75, 45, 25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // DNA pattern on body
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(60, 60 + i * 15);
+                    ctx.lineTo(90, 60 + i * 15);
+                    ctx.stroke();
+                }
+                
+                // DNA vertical lines
+                ctx.beginPath();
+                ctx.moveTo(60, 60);
+                ctx.bezierCurveTo(60, 80, 90, 100, 90, 120);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(90, 60);
+                ctx.bezierCurveTo(90, 80, 60, 100, 60, 120);
+                ctx.stroke();
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(65, 40, 7, 0, Math.PI * 2);
+                ctx.arc(85, 40, 7, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#4b0082';
+                ctx.beginPath();
+                ctx.arc(65, 40, 4, 0, Math.PI * 2);
+                ctx.arc(85, 40, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Smile
+                ctx.strokeStyle = '#4b0082';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(75, 55, 10, 0, Math.PI);
+                ctx.stroke();
+                
+                // Arms
+                ctx.strokeStyle = '#FFEB3B';
+                ctx.lineWidth = 5;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(50, 80);
+                ctx.lineTo(35, 70);
+                ctx.moveTo(100, 80);
+                ctx.lineTo(115, 70);
+                ctx.stroke();
+                
+                // Legs
+                ctx.strokeStyle = '#FF9A00';
+                ctx.lineWidth = 8;
+                ctx.beginPath();
+                ctx.moveTo(65, 130);
+                ctx.lineTo(60, 150);
+                ctx.moveTo(85, 130);
+                ctx.lineTo(90, 150);
+                ctx.stroke();
+            } else if (character === 'professor') {
+                // Draw Professor character
+                // Body
+                ctx.fillStyle = '#1E88E5';
+                ctx.beginPath();
+                ctx.ellipse(75, 95, 30, 35, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Head
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(75, 45, 25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(65, 40, 6, 0, Math.PI * 2);
+                ctx.arc(85, 40, 6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#4b0082';
+                ctx.beginPath();
+                ctx.arc(65, 40, 3, 0, Math.PI * 2);
+                ctx.arc(85, 40, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glasses
+                ctx.strokeStyle = '#795548';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(65, 40, 8, 0, Math.PI * 2);
+                ctx.moveTo(93, 40);
+                ctx.arc(85, 40, 8, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Bridge of glasses
+                ctx.beginPath();
+                ctx.moveTo(73, 40);
+                ctx.lineTo(77, 40);
+                ctx.stroke();
+                
+                // Smile
+                ctx.beginPath();
+                ctx.arc(75, 55, 12, 0, Math.PI);
+                ctx.stroke();
+                
+                // Bow tie
+                ctx.fillStyle = '#FF5252';
+                ctx.beginPath();
+                ctx.moveTo(75, 70);
+                ctx.lineTo(65, 65);
+                ctx.lineTo(65, 75);
+                ctx.lineTo(75, 70);
+                ctx.lineTo(85, 65);
+                ctx.lineTo(85, 75);
+                ctx.lineTo(75, 70);
+                ctx.fill();
+                
+                // Academic cap
+                ctx.fillStyle = '#4b0082';
+                ctx.beginPath();
+                ctx.moveTo(50, 30);
+                ctx.lineTo(100, 30);
+                ctx.lineTo(100, 25);
+                ctx.lineTo(50, 25);
+                ctx.fill();
+                
+                ctx.fillStyle = '#4b0082';
+                ctx.beginPath();
+                ctx.moveTo(60, 25);
+                ctx.lineTo(90, 25);
+                ctx.lineTo(75, 10);
+                ctx.fill();
+                
+                // Tassel
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(90, 25);
+                ctx.quadraticCurveTo(100, 30, 100, 40);
+                ctx.stroke();
+                
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(100, 42, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Arms
+                ctx.strokeStyle = '#1E88E5';
+                ctx.lineWidth = 8;
+                ctx.lineCap = 'round';
+                ctx.beginPath();
+                ctx.moveTo(50, 90);
+                ctx.lineTo(30, 100);
+                ctx.moveTo(100, 90);
+                ctx.lineTo(120, 100);
+                ctx.stroke();
+                
+                // Holding a book
+                ctx.fillStyle = '#4CAF50';
+                ctx.beginPath();
+                ctx.rect(105, 90, 25, 20);
+                ctx.fill();
+                
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(110, 95);
+                ctx.lineTo(125, 95);
+                ctx.moveTo(110, 100);
+                ctx.lineTo(125, 100);
+                ctx.moveTo(110, 105);
+                ctx.lineTo(125, 105);
+                ctx.stroke();
+            }
+        }
+        
+        // Update the Punnett Square
+        function updatePunnettSquare() {
+            // Get selected trait
+            const traitKey = elements.displays.traitSelector.value;
+            const trait = gameState.traits[traitKey];
+            
+            // Clear previous Punnett Square
+            elements.displays.punnettSquare.innerHTML = '';
+            
+            // Create dominant and recessive symbols
+            const dom = trait.dominantSymbol;
+            const rec = trait.recessiveSymbol;
+            
+            // Create parent genotypes
+            const parent1 = [dom, rec]; // Heterozygous (Dd)
+            const parent2 = [dom, rec]; // Heterozygous (Dd)
+            
+            // Create empty grid
+            const grid = document.createElement('div');
+            grid.className = 'punnett-square';
+            grid.style.display = 'grid';
+            grid.style.gridTemplateColumns = '80px repeat(2, 100px)';
+            grid.style.gridTemplateRows = '80px repeat(2, 100px)';
+            grid.style.gap = '5px';
+            
+            // Add empty top-left cell
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'punnett-cell';
+            grid.appendChild(emptyCell);
+            
+            // Add parent 1 alleles (top)
+            for (let i = 0; i < parent1.length; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'punnett-cell punnett-label';
+                cell.textContent = parent1[i];
+                grid.appendChild(cell);
+            }
+            
+            // Add parent 2 alleles (left)
+            for (let i = 0; i < parent2.length; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'punnett-cell punnett-label';
+                cell.textContent = parent2[i];
+                grid.appendChild(cell);
+                
+                // Add offspring genotypes
+                for (let j = 0; j < parent1.length; j++) {
+                    const offspringCell = document.createElement('div');
+                    offspringCell.className = 'punnett-cell';
+                    
+                    // Create genotype (one allele from each parent)
+                    const genotype = parent2[i] + parent1[j];
+                    offspringCell.textContent = genotype;
+                    
+                    // Color code based on phenotype
+                    if (genotype.includes(dom)) {
+                        // Dominant phenotype
+                        offspringCell.style.backgroundColor = '#BBDEFB';
+                    } else {
+                        // Recessive phenotype
+                        offspringCell.style.backgroundColor = '#FFE0B2';
+                    }
+                    
+                    grid.appendChild(offspringCell);
+                    
+                    // Add animation for education
+                    offspringCell.addEventListener('mouseover', function() {
+                        let message = '';
+                        if (genotype.includes(dom)) {
+                            message = `${genotype}: This child will have ${trait.name.toLowerCase()} because they have at least one dominant ${dom} gene!`;
+                        } else {
+                            message = `${genotype}: This child will NOT have ${trait.name.toLowerCase()} because they have two recessive ${rec} genes!`;
+                        }
+                        showMessage(gameState.selectedCharacter === 'gene' ? elements.characters.geneBubble : elements.characters.helixBubble, message);
+                        playTickSound();
+                    });
+                }
+            }
+            
+            // Replace the current Punnett Square
+            elements.displays.punnettSquare.innerHTML = '';
+            elements.displays.punnettSquare.appendChild(grid);
+            
+            // Update info display with trait description
+            elements.displays.infoDisplay.innerHTML = `
+                <h3>${trait.name}</h3>
+                <p>${trait.description}</p>
+                <p>On the Punnett Square, each box shows a possible combination of genes a child could inherit.</p>
+            `;
+            
+            // Show message from character
+            showMessage(gameState.selectedCharacter === 'gene' ? elements.characters.geneBubble : elements.characters.helixBubble, 
+                `Let's explore ${trait.name.toLowerCase()}! The capital letter ${dom} means dominant and the lowercase letter ${rec} means recessive.`);
+        }
+        
+        // Start the quiz
+        function startQuiz() {
+            // Show quiz screen
+            showScreen('quizScreen');
+            
+            // Show welcome message
+            showMessage(elements.characters.quizProfessorBubble, "Welcome to the Genetics Quiz! Let's see what you've learned!");
+            
+            // Generate first question
+            generateQuizQuestion();
+        }
+        
+        // Generate a quiz question
+        function generateQuizQuestion() {
+            // Clear previous user answer
+            gameState.currentQuiz.userAnswer = '';
+            
+            // Get a random trait for the question
+            const traitKeys = Object.keys(gameState.traits);
+            const randomTraitKey = traitKeys[Math.floor(Math.random() * traitKeys.length)];
+            const trait = gameState.traits[randomTraitKey];
+            
+            // Generate a random question type
+            const questionTypes = [
+                'dominant', 'recessive', 'combination', 'probability'
+            ];
+            
+            // Adjust available question types based on difficulty
+            let availableTypes = [];
+            if (gameState.settings.difficulty === 'easy') {
+                availableTypes = ['dominant', 'recessive'];
+            } else if (gameState.settings.difficulty === 'medium') {
+                availableTypes = ['dominant', 'recessive', 'combination'];
+            } else {
+                availableTypes = questionTypes;
+            }
+            
+            const questionType = availableTypes[Math.floor(Math.random() * availableTypes.length)];
+            
+            // Create question based on type
+            let question = '';
+            let options = [];
+            let correctAnswer = '';
+            
+            const dom = trait.dominantSymbol;
+            const rec = trait.recessiveSymbol;
+            
+            switch (questionType) {
+                case 'dominant':
+                    question = `What does the capital letter ${dom} mean for the trait ${trait.name.toLowerCase()}?`;
+                    options = [
+                        `It's the dominant form of the gene`,
+                        `It's the recessive form of the gene`,
+                        `It means the trait is not present`,
+                        `It's a neutral gene`
+                    ];
+                    correctAnswer = options[0];
+                    break;
+                    
+                case 'recessive':
+                    question = `What happens when a child has two recessive genes (${rec}${rec}) for ${trait.name.toLowerCase()}?`;
+                    options = [
+                        `They will have the dominant trait`,
+                        `They will have the recessive trait`,
+                        `They will have a mix of both traits`,
+                        `The trait will be randomly determined`
+                    ];
+                    correctAnswer = options[1];
+                    break;
+                    
+                case 'combination':
+                    question = `If one parent has ${dom}${dom} and the other has ${rec}${rec} for ${trait.name.toLowerCase()}, what will their children have?`;
+                    options = [
+                        `All ${dom}${dom} (all dominant)`,
+                        `All ${rec}${rec} (all recessive)`,
+                        `All ${dom}${rec} (all hybrid)`,
+                        `A mix of different combinations`
+                    ];
+                    correctAnswer = options[2];
+                    break;
+                    
+                case 'probability':
+                    question = `If both parents have ${dom}${rec} for ${trait.name.toLowerCase()}, what is the chance a child will have the recessive trait?`;
+                    options = [
+                        `0% (no chance)`,
+                        `25% (1 in 4)`,
+                        `50% (1 in 2)`,
+                        `75% (3 in 4)`
+                    ];
+                    correctAnswer = options[1];
+                    break;
+            }
+            
+            // Shuffle options
+            options = shuffleArray(options);
+            
+            // Save current quiz data
+            gameState.currentQuiz.question = question;
+            gameState.currentQuiz.options = options;
+            gameState.currentQuiz.correctAnswer = correctAnswer;
+            
+            // Update quiz UI
+            elements.displays.quizQuestion.textContent = question;
+            
+            // Clear previous options
+            elements.displays.quizOptions.innerHTML = '';
+            
+            // Add new options
+            options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', function() {
+                    selectQuizOption(this);
+                });
+                elements.displays.quizOptions.appendChild(optionElement);
+            });
+        }
+        
+        // Select a quiz option
+        function selectQuizOption(optionElement) {
+            // Clear any previous selections
+            const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select the clicked option
+            optionElement.classList.add('selected');
+            
+            // Store user's answer
+            gameState.currentQuiz.userAnswer = optionElement.textContent;
+        }
+        
+        // Check quiz answer
+        function checkQuizAnswer() {
+            if (!gameState.currentQuiz.userAnswer) {
+                // No answer selected
+                showMessage(elements.characters.quizProfessorBubble, "Please select an answer first!");
+                return;
+            }
+            
+            // Check if the answer is correct
+            if (gameState.currentQuiz.userAnswer === gameState.currentQuiz.correctAnswer) {
+                // Correct answer
+                playSuccessSound();
+                createParticleEffect();
+                
+                // Show celebration message
+                showMessage(elements.characters.quizProfessorBubble, "Excellent! That's correct!");
+                
+                // Increment score
+                gameState.score++;
+                
+                // Proceed to next question or end quiz
+                if (gameState.score >= 5) {
+                    // Quiz completed
+                    setTimeout(() => {
+                        completeQuiz();
+                    }, 2000);
+                } else {
+                    // Next question
+                    setTimeout(() => {
+                        generateQuizQuestion();
+                    }, 2000);
+                }
+            } else {
+                // Incorrect answer
+                playErrorSound();
+                
+                // Show hint message
+                showMessage(elements.characters.quizProfessorBubble, `Not quite. The correct answer is ${gameState.currentQuiz.correctAnswer}.`);
+                
+                // Highlight correct answer
+                const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+                options.forEach(option => {
+                    if (option.textContent === gameState.currentQuiz.correctAnswer) {
+                        option.classList.add('correct');
+                    } else if (option.classList.contains('selected')) {
+                        option.classList.add('incorrect');
+                    }
+                });
+                
+                // Next question after delay
+                setTimeout(() => {
+                    generateQuizQuestion();
+                }, 3000);
+            }
+        }
+        
+        // Complete the quiz
+        function completeQuiz() {
+            // Show reward screen
+            showScreen('rewardScreen');
+            
+            // Set reward text based on score
+            if (gameState.score >= 5) {
+                elements.displays.rewardText.textContent = "Amazing! You're a Genetics Expert!";
+            } else if (gameState.score >= 3) {
+                elements.displays.rewardText.textContent = "Great job! You're learning genetics really well!";
+            } else {
+                elements.displays.rewardText.textContent = "Good effort! Keep exploring genetics to learn more!";
+            }
+            
+            // Create celebration animation
+            createRewardAnimation();
+        }
+        
+        // Continue game after quiz
+        function continueGame() {
+            // Reset game state for next session
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.progress = 0;
+            
+            // Load the first level
+            loadLevel(gameState.currentLevel);
+            
+            // Show the game screen
+            showScreen('gameScreen');
+        }
+        
+        // Toggle hint visibility
+        function toggleHint() {
+            const hintText = elements.displays.hintText;
+            
+            if (hintText.style.opacity === '1') {
+                hintText.style.opacity = '0';
+            } else {
+                hintText.style.opacity = '1';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    hintText.style.opacity = '0';
+                }, 5000);
+            }
+        }
+        
+        // Show a character message
+        function showMessage(bubbleElement, message) {
+            // Set the message text
+            bubbleElement.textContent = message;
+            
+            // Show the bubble
+            bubbleElement.style.opacity = '1';
+            
+            // Auto-hide after delay based on message length
+            const delay = Math.max(3000, message.length * 50);
+            setTimeout(() => {
+                bubbleElement.style.opacity = '0';
+            }, delay);
+        }
+        
+        // Create learning path
+        function createLearningPath() {
+            const pathContainer = elements.displays.learningPath;
+            
+            // Clear any existing segments
+            pathContainer.innerHTML = '';
+            
+            // Create segments for each level
+            for (let i = 0; i < gameState.maxLevel; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'path-segment';
+                segment.setAttribute('data-level', i + 1);
+                pathContainer.appendChild(segment);
+            }
+        }
+        
+        // Update learning path
+        function updateLearningPath() {
+            const segments = elements.displays.learningPath.querySelectorAll('.path-segment');
+            
+            segments.forEach((segment, index) => {
+                const level = index + 1;
+                
+                if (level < gameState.currentLevel) {
+                    segment.className = 'path-segment completed';
+                } else if (level === gameState.currentLevel) {
+                    segment.className = 'path-segment current';
+                } else {
+                    segment.className = 'path-segment';
+                }
+            });
+        }
+        
+        // Helper function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            const newArray = [...array]; // Create a copy to avoid modifying the original
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+        
+        // Create celebration particle effect
+        function createParticleEffect() {
+            // Clear any existing particles
+            clearParticles();
+            
+            // Create stars or bubbles
+            const particleCount = 30;
+            const particleTypes = ['star', 'bubble'];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particleType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                createParticle(particleType);
+            }
+        }
+        
+        // Create a single particle
+        function createParticle(type) {
+            const container = document.getElementById('game-container');
+            
+            if (type === 'star') {
+                // Create a star
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                
+                // Random size
+                const size = Math.random() * 30 + 10;
+                
+                // Star SVG
+                star.innerHTML = `
+                    <svg width="${size}" height="${size}" viewBox="0 0 51 48">
+                        <path fill="#FFD700" d="m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z"/>
+                    </svg>
+                `;
+                
+                star.style.left = `${x}px`;
+                star.style.top = `${y}px`;
+                container.appendChild(star);
+                
+                // Animation
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                const dx = Math.cos(angle) * speed;
+                const dy = Math.sin(angle) * speed;
+                
+                let opacity = 1;
+                let posX = x;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    opacity -= 0.01;
+                    posX += dx;
+                    posY += dy;
+                    
+                    star.style.opacity = opacity;
+                    star.style.left = `${posX}px`;
+                    star.style.top = `${posY}px`;
+                    
+                    if (opacity <= 0) {
+                        clearInterval(animation);
+                        star.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.stars.push(star);
+                gameState.animations.timers.push(animation);
+            } else {
+                // Create a bubble
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = window.innerHeight + 20;
+                
+                // Random size
+                const size = Math.random() * 40 + 20;
+                
+                // Random color
+                const colors = ['#FF9A00', '#4b0082', '#4CAF50', '#f44336', '#2196F3'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.backgroundColor = color;
+                bubble.style.left = `${x}px`;
+                bubble.style.top = `${y}px`;
+                bubble.style.opacity = '0.7';
+                container.appendChild(bubble);
+                
+                // Animation
+                const speed = Math.random() * 3 + 1;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    posY -= speed;
+                    bubble.style.top = `${posY}px`;
+                    
+                    if (posY < -size) {
+                        clearInterval(animation);
+                        bubble.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.bubbles.push(bubble);
+                gameState.animations.timers.push(animation);
+            }
+        }
+        
+        // Clear all particles
+        function clearParticles() {
+            // Clear all animation timers
+            gameState.animations.timers.forEach(timer => {
+                clearInterval(timer);
+            });
+            
+            // Remove all stars and bubbles
+            gameState.animations.stars.forEach(star => {
+                if (star.parentNode) {
+                    star.remove();
+                }
+            });
+            
+            gameState.animations.bubbles.forEach(bubble => {
+                if (bubble.parentNode) {
+                    bubble.remove();
+                }
+            });
+            
+            // Reset arrays
+            gameState.animations.stars = [];
+            gameState.animations.bubbles = [];
+            gameState.animations.timers = [];
+        }
+        
+        // Create reward animation
+        function createRewardAnimation() {
+            const container = elements.displays.rewardAnimation;
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create canvas for celebration
+            const canvas = document.createElement('canvas');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            container.appendChild(canvas);
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Characters
+            const professorImage = createCharacterImage('professor');
+            const characterImage = createCharacterImage(gameState.selectedCharacter);
+            
+            // Draw characters
+            ctx.drawImage(professorImage, 50, 50, 150, 150);
+            ctx.drawImage(characterImage, canvas.width - 200, 50, 150, 150);
+            
+            // Celebration text
+            ctx.font = '30px Arial, sans-serif';
+            ctx.fillStyle = '#4b0082';
+            ctx.textAlign = 'center';
+            ctx.fillText('Congratulations!', canvas.width / 2, 50);
+            
+            // Trophy
+            drawTrophy(ctx, canvas.width / 2, canvas.height / 2);
+            
+            // Start particle animation
+            createParticleEffect();
+            
+            // Play celebration sound
+            playCelebrationSound();
+        }
+        
+        // Create character image
+        function createCharacterImage(character) {
+            const canvas = document.createElement('canvas');
+            canvas.width = 150;
+            canvas.height = 150;
+            const ctx = canvas.getContext('2d');
+            
+            if (character === 'gene') {
+                // Draw Gene the Scientist
+                // Head
+                ctx.fillStyle = '#FFD54F';
+                ctx.beginPath();
+                ctx.arc(75, 45, 30, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Lab coat
+                ctx.fillStyle = '#FFFFFF';
+                ctx.beginPath();
+                ctx.moveTo(45, 75);
+                ctx.lineTo(105, 75);
+                ctx.lineTo(115, 150);
+                ctx.lineTo(35, 150);
+                ctx.fill();
+                
+                // Shirt
+                ctx.fillStyle = '#42A5F5';
+                ctx.beginPath();
+                ctx.moveTo(60, 75);
+                ctx.lineTo(90, 75);
+                ctx.lineTo(85, 120);
+                ctx.lineTo(65, 120);
+                ctx.fill();
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(65, 40, 6, 0, Math.PI * 2);
+                ctx.arc(85, 40, 6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#4b0082';
+                ctx.beginPath();
+                ctx.arc(65, 40, 3, 0, Math.PI * 2);
+                ctx.arc(85, 40, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glasses
+                ctx.strokeStyle = '#795548';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(65, 40, 10, 0, Math.PI * 2);
+                ctx.moveTo(85 + 10, 40);
+                ctx.arc(85, 40, 10, 0, Math.PI * 2);
+                ctx.moveTo(75, 40);
+                ctx.lineTo(75, 40);
+                ctx.stroke();
+                
+                // Smile
+                ctx.beginPath();
+                ctx.arc(75, 55, 10, 0, Math.PI);
+                ctx.stroke();
+                
+                // Hair
+                ctx.fillStyle = '#5D4037';
+                ctx.beginPath();
+                ctx.moveTo(45, 35);
+                ctx.quadraticCurveTo(75, 5, 105, 35);
+                ctx.lineTo(105, 45);
+                ctx.lineTo(45, 45);
+                ctx.fill();
+            } else if (character === 'helix') {
+                // Draw Helix the DNA Sprite
+                // Body (DNA helix shape)
+                ctx.fillStyle = '#FF9A00';
+                ctx.beginPath();
+                ctx.ellipse(75, 90, 25, 45, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Head
+                ctx.fillStyle = '#FFEB3B';
+                ctx.beginPath();
+                ctx.arc(75, 45, 25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // DNA pattern on body
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 3;
+                for (let i = 0; i < 5; i++) {
+                    ctx.beginPath();
+                    ctx.moveTo(60, 60 + i * 15);
+                    ctx.lineTo(90, 60 + i * 15);
+                    ctx.stroke();
+                }
+                
+                // DNA vertical lines
+                ctx.beginPath();
+                ctx.moveTo(60, 60);
+                ctx.bezierCurveTo(60, 80, 90, 100, 90, 120);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(90, 60);
+                ctx.bezierCurveTo(90, 80, 60, 100, 60, 120);
+                ctx.stroke();
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(65, 40, 7, 0, Math.PI * 2);
+                ctx.arc(85, 40, 7, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#4b0082';
+                ctx.beginPath();
+                ctx.arc(65, 40, 4, 0, Math.PI * 2);
+                ctx.arc(85, 40, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Smile
+                ctx.strokeStyle = '#4b0082';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(75, 55, 10, 0, Math.PI);
+                ctx.stroke();
+            } else if (character === 'professor') {
+                // Draw Professor character
+                // Body
+                ctx.fillStyle = '#1E88E5';
+                ctx.beginPath();
+                ctx.ellipse(75, 95, 30, 35, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Head
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(75, 45, 25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(65, 40, 6, 0, Math.PI * 2);
+                ctx.arc(85, 40, 6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#4b0082';
+                ctx.beginPath();
+                ctx.arc(65, 40, 3, 0, Math.PI * 2);
+                ctx.arc(85, 40, 3, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glasses
+                ctx.strokeStyle = '#795548';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(65, 40, 8, 0, Math.PI * 2);
+                ctx.moveTo(93, 40);
+                ctx.arc(85, 40, 8, 0, Math.PI * 2);
+                ctx.stroke();
+                
+                // Bow tie
+                ctx.fillStyle = '#FF5252';
+                ctx.beginPath();
+                ctx.moveTo(75, 70);
+                ctx.lineTo(65, 65);
+                ctx.lineTo(65, 75);
+                ctx.lineTo(75, 70);
+                ctx.lineTo(85, 65);
+                ctx.lineTo(85, 75);
+                ctx.lineTo(75, 70);
+                ctx.fill();
+                
+                // Academic cap
+                ctx.fillStyle = '#4b0082';
+                ctx.beginPath();
+                ctx.moveTo(50, 30);
+                ctx.lineTo(100, 30);
+                ctx.lineTo(100, 25);
+                ctx.lineTo(50, 25);
+                ctx.fill();
+                
+                ctx.fillStyle = '#4b0082';
+                ctx.beginPath();
+                ctx.moveTo(60, 25);
+                ctx.lineTo(90, 25);
+                ctx.lineTo(75, 10);
+                ctx.fill();
+            }
+            
+            return canvas;
+        }
+        
+        // Draw trophy
+        function drawTrophy(ctx, x, y) {
+            // Trophy base
+            ctx.fillStyle = '#FFD700';
+            
+            // Cup
+            ctx.beginPath();
+            ctx.moveTo(x - 30, y - 50);
+            ctx.lineTo(x + 30, y - 50);
+            ctx.quadraticCurveTo(x + 50, y - 50, x + 50, y - 30);
+            ctx.quadraticCurveTo(x + 50, y, x + 30, y);
+            ctx.quadraticCurveTo(x + 15, y + 10, x + 15, y + 30);
+            ctx.lineTo(x - 15, y + 30);
+            ctx.quadraticCurveTo(x - 15, y + 10, x - 30, y);
+            ctx.quadraticCurveTo(x - 50, y, x - 50, y - 30);
+            ctx.quadraticCurveTo(x - 50, y - 50, x - 30, y - 50);
+            ctx.fill();
+            
+            // Base
+            ctx.fillStyle = '#A67C00';
+            ctx.beginPath();
+            ctx.rect(x - 25, y + 30, 50, 10);
+            ctx.fill();
+            
+            ctx.fillStyle = '#8D6E00';
+            ctx.beginPath();
+            ctx.rect(x - 35, y + 40, 70, 10);
+            ctx.fill();
+            
+            // DNA symbol
+            ctx.strokeStyle = '#4b0082';
+            ctx.lineWidth = 3;
+            
+            // DNA double helix
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y - 30);
+            ctx.bezierCurveTo(x - 10, y - 20, x + 10, y - 10, x + 10, y);
+            ctx.bezierCurveTo(x + 10, y + 10, x - 10, y + 20, x - 10, y + 30);
+            ctx.stroke();
+            
+            ctx.beginPath();
+            ctx.moveTo(x + 10, y - 30);
+            ctx.bezierCurveTo(x + 10, y - 20, x - 10, y - 10, x - 10, y);
+            ctx.bezierCurveTo(x - 10, y + 10, x + 10, y + 20, x + 10, y + 30);
+            ctx.stroke();
+            
+            // Base pairs
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y - 25);
+            ctx.lineTo(x + 10, y - 25);
+            ctx.moveTo(x - 10, y - 15);
+            ctx.lineTo(x + 10, y - 15);
+            ctx.moveTo(x - 10, y - 5);
+            ctx.lineTo(x + 10, y - 5);
+            ctx.moveTo(x - 10, y + 5);
+            ctx.lineTo(x + 10, y + 5);
+            ctx.moveTo(x - 10, y + 15);
+            ctx.lineTo(x + 10, y + 15);
+            ctx.moveTo(x - 10, y + 25);
+            ctx.lineTo(x + 10, y + 25);
+            ctx.stroke();
+        }
+        
+        // Settings functions
+        function updateSoundVolume(value) {
+            gameState.settings.soundVolume = parseFloat(value);
+        }
+        
+        function updateAnimationSpeed(value) {
+            gameState.settings.animationSpeed = parseFloat(value);
+        }
+        
+        function updateDifficulty(value) {
+            gameState.settings.difficulty = value;
+        }
+        
+        function updateLearningMode(value) {
+            gameState.settings.learningMode = value;
+        }
+        
+        function saveSettings() {
+            // Show confirmation message
+            showMessage(elements.characters.geneBubble, "Settings saved!");
+            
+            // Return to start screen
+            setTimeout(() => {
+                showScreen('startScreen');
+            }, 1500);
+        }
+        
+        // Sound functions
+        function playButtonSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+        
+        function playTickSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }
+        }
+        
+        function playSelectSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+            }
+        }
+        
+        function playSuccessSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                
+                notes.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.1);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.1 + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + index * 0.1 + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.1);
+                    oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                });
+            }
+        }
+        
+        function playErrorSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const frequencies = [349.23, 329.63, 311.13]; // F4, E4, D#4/Eb4
+                
+                frequencies.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.15);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.15);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.15 + 0.01);
+                    gainNode.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + index * 0.15 + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.15);
+                    oscillator.stop(audioContext.currentTime + index * 0.15 + 0.3);
+                });
+            }
+        }
+        
+        function playCelebrationSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                // Major scale ascending and then chord
+                const notes = [
+                    { freq: 523.25, time: 0 },    // C5
+                    { freq: 587.33, time: 0.15 }, // D5
+                    { freq: 659.25, time: 0.3 },  // E5
+                    { freq: 698.46, time: 0.45 }, // F5
+                    { freq: 783.99, time: 0.6 },  // G5
+                    { freq: 880.00, time: 0.75 }, // A5
+                    { freq: 987.77, time: 0.9 },  // B5
+                    { freq: 1046.50, time: 1.05 }, // C6
+                    // Final chord
+                    { freq: 523.25, time: 1.3 }, // C5
+                    { freq: 659.25, time: 1.3 }, // E5
+                    { freq: 783.99, time: 1.3 }, // G5
+                    { freq: 1046.50, time: 1.3 }  // C6
+                ];
+                
+                notes.forEach(note => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime + note.time + 0.01);
+                    
+                    // Longer sustain for the final chord
+                    if (note.time === 1.3) {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 1.0);
+                        oscillator.start(audioContext.currentTime + note.time);
+                        oscillator.stop(audioContext.currentTime + note.time + 1.0);
+                    } else {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 0.2);
+                        oscillator.start(audioContext.currentTime + note.time);
+                        oscillator.stop(audioContext.currentTime + note.time + 0.2);
+                    }
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                });
+            }
+        }
+        
+        // Initialize the game when the window loads
+        window.addEventListener('load', initGame);
+        
+        // Call initGame immediately as well to ensure it runs
+        initGame();
+    </script>
+</body>
+</html>

@@ -1,0 +1,2403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pattern Explorer: Adventure Learning Game</title>
+    <style>
+        /* Base Styles */
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #e9f5ff;
+            overflow: hidden;
+            color: #333;
+        }
+        
+        /* Main Container */
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        /* Game Screens */
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease-in-out;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .screen.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        /* Buttons */
+        .button {
+            background-color: #4b0082;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 24px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.1s ease, background-color 0.3s ease;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+            box-shadow: 0 5px 0 #310054;
+            outline: none;
+        }
+        
+        .button:hover {
+            background-color: #6a00b7;
+            transform: translateY(-3px);
+        }
+        
+        .button:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #310054;
+        }
+        
+        /* Welcome Screen */
+        #welcome-screen {
+            background: linear-gradient(45deg, #c4e0ff, #e9f5ff);
+        }
+        
+        #welcome-title {
+            font-size: 60px;
+            color: #4b0082;
+            margin-bottom: 20px;
+            text-shadow: 3px 3px 0 rgba(0,0,0,0.1);
+        }
+        
+        #welcome-subtitle {
+            font-size: 28px;
+            color: #333;
+            margin-bottom: 40px;
+        }
+        
+        /* Character Design */
+        .character {
+            position: absolute;
+            transition: transform 0.3s ease;
+        }
+        
+        #professor {
+            bottom: 20px;
+            left: 50px;
+        }
+        
+        #pattern-pal {
+            bottom: 20px;
+            right: 50px;
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px;
+            min-width: 200px;
+            max-width: 300px;
+            font-size: 18px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent transparent;
+        }
+        
+        #professor-bubble {
+            bottom: 200px;
+            left: 100px;
+        }
+        
+        #pattern-pal-bubble {
+            bottom: 200px;
+            right: 100px;
+        }
+        
+        /* Game Screen */
+        #game-screen {
+            padding-top: 60px;
+        }
+        
+        #game-level {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #4b0082;
+        }
+        
+        #pattern-display {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 150px;
+            margin-bottom: 20px;
+        }
+        
+        .pattern-item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 70px;
+            height: 70px;
+            margin: 0 10px;
+            font-size: 32px;
+            border-radius: 10px;
+            background-color: white;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        
+        .pattern-item.highlight {
+            transform: scale(1.1);
+            background-color: #ffe459;
+        }
+        
+        .pattern-item.question-mark {
+            font-size: 40px;
+            color: #4b0082;
+            background-color: #ffe459;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        #answer-options {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .answer-option {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 80px;
+            height: 80px;
+            margin: 10px;
+            font-size: 36px;
+            border-radius: 10px;
+            background-color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease;
+        }
+        
+        .answer-option:hover {
+            transform: scale(1.05);
+            background-color: #f5f5f5;
+        }
+        
+        .answer-option.selected {
+            background-color: #c4e0ff;
+            border: 3px solid #4b0082;
+        }
+        
+        .answer-option.correct {
+            background-color: #9aff9a;
+        }
+        
+        .answer-option.incorrect {
+            background-color: #ff9a9a;
+        }
+        
+        #hint-button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+        
+        #hint-text {
+            font-size: 20px;
+            color: #4b0082;
+            margin-top: 10px;
+            min-height: 50px;
+            padding: 10px;
+            text-align: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Learning Path */
+        #learning-path-container {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            padding: 0 10px;
+        }
+        
+        #learning-path {
+            display: flex;
+            justify-content: space-between;
+            width: 80%;
+            max-width: 600px;
+            height: 20px;
+            position: relative;
+            margin-bottom: 10px;
+        }
+        
+        .path-segment {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #e0e0e0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 16px;
+            color: #333;
+            z-index: 2;
+            transition: background-color 0.3s ease;
+        }
+        
+        .path-segment:before {
+            content: attr(data-level);
+        }
+        
+        .path-segment.completed {
+            background-color: #9aff9a;
+        }
+        
+        .path-segment.current {
+            background-color: #ffe459;
+            transform: scale(1.2);
+        }
+        
+        /* Control Panel */
+        #controls-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            z-index: 10;
+        }
+        
+        #controls-panel button {
+            background-color: rgba(75, 0, 130, 0.8);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            margin-left: 10px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.3s ease;
+        }
+        
+        #controls-panel button:hover {
+            background-color: rgba(106, 0, 183, 0.8);
+        }
+        
+        /* Settings Modal */
+        #settings-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        #settings-modal.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        #settings-content {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 80%;
+            max-width: 500px;
+            max-height: 80%;
+            overflow-y: auto;
+        }
+        
+        #settings-title {
+            font-size: 28px;
+            color: #4b0082;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .settings-section {
+            margin-bottom: 20px;
+        }
+        
+        .settings-section h3 {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #4b0082;
+        }
+        
+        .settings-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .settings-option label {
+            font-size: 18px;
+        }
+        
+        .settings-option select, .settings-option input {
+            font-size: 18px;
+            padding: 5px 10px;
+            border-radius: 5px;
+            border: 2px solid #c4e0ff;
+        }
+        
+        .settings-option input[type="range"] {
+            width: 60%;
+        }
+        
+        /* Quiz Screen */
+        #quiz-screen {
+            padding-top: 60px;
+        }
+        
+        #quiz-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #4b0082;
+        }
+        
+        #quiz-question {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 80%;
+        }
+        
+        #quiz-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80%;
+            max-width: 500px;
+        }
+        
+        .quiz-option {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 10px;
+            font-size: 20px;
+            text-align: center;
+            background-color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: background-color 0.2s ease;
+        }
+        
+        .quiz-option:hover {
+            background-color: #f5f5f5;
+        }
+        
+        .quiz-option.selected {
+            background-color: #c4e0ff;
+            border: 2px solid #4b0082;
+        }
+        
+        .quiz-option.correct {
+            background-color: #9aff9a;
+        }
+        
+        .quiz-option.incorrect {
+            background-color: #ff9a9a;
+        }
+        
+        /* Reward Screen */
+        #reward-screen {
+            padding-top: 60px;
+        }
+        
+        #reward-title {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #4b0082;
+            text-align: center;
+        }
+        
+        #reward-text {
+            font-size: 28px;
+            margin-bottom: 30px;
+            text-align: center;
+            max-width: 80%;
+        }
+        
+        #reward-animation {
+            width: 400px;
+            height: 300px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        
+        /* Particles */
+        .star, .bubble {
+            position: absolute;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        /* Settings Screen */
+        #parameter-screen {
+            padding-top: 60px;
+        }
+        
+        #parameter-title {
+            font-size: 32px;
+            margin-bottom: 20px;
+            color: #4b0082;
+        }
+        
+        .parameter-section {
+            width: 80%;
+            max-width: 600px;
+            background-color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .parameter-section h3 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #4b0082;
+        }
+        
+        .parameter-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .parameter-option label {
+            font-size: 18px;
+            width: 60%;
+        }
+        
+        .parameter-option select, .parameter-option input {
+            font-size: 18px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 2px solid #c4e0ff;
+            width: 35%;
+        }
+        
+        /* Advanced Controls */
+        #advanced-controls {
+            width: 80%;
+            max-width: 600px;
+            margin-top: 20px;
+        }
+        
+        #advanced-controls-title {
+            font-size: 20px;
+            color: #4b0082;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        #formula-display {
+            font-size: 24px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Visual Effects */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .floating {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        /* Loading animation */
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(75, 0, 130, 0.3);
+            border-radius: 50%;
+            border-top-color: #4b0082;
+            animation: spin 1s ease-in-out infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            width: 80%;
+            max-width: 400px;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #4b0082;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        /* Character animations */
+        @keyframes jump {
+            0% { transform: translateY(0) scaleY(1); }
+            40% { transform: translateY(-30px) scaleY(1.1); }
+            60% { transform: translateY(-30px) scaleY(0.9); }
+            100% { transform: translateY(0) scaleY(1); }
+        }
+        
+        .jump {
+            animation: jump 0.6s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Welcome Screen -->
+        <div id="welcome-screen" class="screen visible">
+            <h1 id="welcome-title">Pattern Explorer</h1>
+            <h2 id="welcome-subtitle">An Adventure in Number Patterns!</h2>
+            <button id="start-button" class="button">Start Adventure</button>
+            <button id="settings-button" class="button">Settings</button>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <h2 id="game-level">Level 1: Simple Addition</h2>
+            <div id="pattern-display"></div>
+            <div id="answer-options"></div>
+            <button id="check-answer-button" class="button">Check Answer</button>
+            <button id="hint-button" class="button">Hint</button>
+            <p id="hint-text"></p>
+        </div>
+        
+        <!-- Quiz Screen -->
+        <div id="quiz-screen" class="screen">
+            <h2 id="quiz-title">Pattern Quiz</h2>
+            <p id="quiz-question"></p>
+            <div id="quiz-options"></div>
+            <button id="check-quiz-button" class="button">Check Answer</button>
+        </div>
+        
+        <!-- Reward Screen -->
+        <div id="reward-screen" class="screen">
+            <h2 id="reward-title">Congratulations!</h2>
+            <p id="reward-text"></p>
+            <div id="reward-animation"></div>
+            <button id="continue-button" class="button">Continue Adventure</button>
+        </div>
+        
+        <!-- Parameter Settings Screen -->
+        <div id="parameter-screen" class="screen">
+            <h2 id="parameter-title">Pattern Settings</h2>
+            
+            <div class="parameter-section">
+                <h3>Pattern Complexity</h3>
+                <div class="parameter-option">
+                    <label for="pattern-type">Pattern Type:</label>
+                    <select id="pattern-type">
+                        <option value="addition">Addition</option>
+                        <option value="subtraction">Subtraction</option>
+                        <option value="multiplication">Multiplication</option>
+                        <option value="geometric">Geometric (× and ÷)</option>
+                        <option value="fibonacci">Fibonacci Sequence</option>
+                        <option value="square">Square Numbers</option>
+                        <option value="triangular">Triangular Numbers</option>
+                    </select>
+                </div>
+                <div class="parameter-option">
+                    <label for="pattern-length">Pattern Length:</label>
+                    <input type="range" id="pattern-length" min="3" max="8" value="5">
+                    <span id="pattern-length-value">5</span>
+                </div>
+                <div class="parameter-option">
+                    <label for="pattern-difficulty">Difficulty Level:</label>
+                    <select id="pattern-difficulty">
+                        <option value="easy">Easy (1-10)</option>
+                        <option value="medium">Medium (1-20)</option>
+                        <option value="hard">Hard (1-50)</option>
+                        <option value="expert">Expert (1-100)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="parameter-section">
+                <h3>Visual Settings</h3>
+                <div class="parameter-option">
+                    <label for="color-theme">Color Theme:</label>
+                    <select id="color-theme">
+                        <option value="default">Purple Adventure</option>
+                        <option value="ocean">Ocean Blue</option>
+                        <option value="forest">Forest Green</option>
+                        <option value="sunset">Sunset Orange</option>
+                    </select>
+                </div>
+                <div class="parameter-option">
+                    <label for="animation-speed">Animation Speed:</label>
+                    <input type="range" id="animation-speed" min="0.5" max="2" step="0.1" value="1">
+                    <span id="animation-speed-value">1x</span>
+                </div>
+            </div>
+            
+            <div id="advanced-controls">
+                <h3 id="advanced-controls-title">Pattern Formula</h3>
+                <div id="formula-display">n + 2</div>
+            </div>
+            
+            <button id="apply-parameters-button" class="button">Apply Settings</button>
+            <button id="back-from-parameters-button" class="button">Back to Game</button>
+        </div>
+        
+        <!-- Settings Modal -->
+        <div id="settings-modal">
+            <div id="settings-content">
+                <h2 id="settings-title">Game Settings</h2>
+                <div class="settings-section">
+                    <h3>Audio</h3>
+                    <div class="settings-option">
+                        <label for="sound-volume">Sound Effects Volume:</label>
+                        <input type="range" id="sound-volume" min="0" max="1" step="0.1" value="0.7">
+                    </div>
+                    <div class="settings-option">
+                        <label for="music-volume">Background Music Volume:</label>
+                        <input type="range" id="music-volume" min="0" max="1" step="0.1" value="0.5">
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Game</h3>
+                    <div class="settings-option">
+                        <label for="game-speed">Game Speed:</label>
+                        <select id="game-speed">
+                            <option value="slow">Slow</option>
+                            <option value="normal" selected>Normal</option>
+                            <option value="fast">Fast</option>
+                        </select>
+                    </div>
+                    <div class="settings-option">
+                        <label for="show-hints">Show Hints:</label>
+                        <select id="show-hints">
+                            <option value="always">Always</option>
+                            <option value="when-needed" selected>When Needed</option>
+                            <option value="never">Never</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="close-settings-button" class="button">Close Settings</button>
+            </div>
+        </div>
+        
+        <!-- Characters -->
+        <div id="professor" class="character">
+            <!-- Professor Character (drawn with SVG) -->
+        </div>
+        <div id="pattern-pal" class="character">
+            <!-- Pattern Pal Character (drawn with SVG) -->
+        </div>
+        
+        <!-- Character Speech Bubbles -->
+        <div id="professor-bubble" class="speech-bubble"></div>
+        <div id="pattern-pal-bubble" class="speech-bubble"></div>
+        
+        <!-- Controls Panel -->
+        <div id="controls-panel">
+            <button id="parameters-button" title="Parameter Settings">⚙️</button>
+            <button id="sound-toggle-button" title="Toggle Sound">🔊</button>
+            <button id="help-button" title="Help">❓</button>
+        </div>
+        
+        <!-- Learning Path -->
+        <div id="learning-path-container">
+            <div id="learning-path"></div>
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        let audioContext;
+        
+        // Game State
+        const gameState = {
+            currentLevel: 1,
+            maxLevel: 5,
+            score: 0,
+            progress: 0,
+            settings: {
+                soundVolume: 0.7,
+                musicVolume: 0.5,
+                gameSpeed: 'normal',
+                showHints: 'when-needed'
+            },
+            pattern: {
+                type: 'addition',
+                length: 5,
+                difficulty: 'easy',
+                values: [],
+                answer: null,
+                userAnswer: null
+            },
+            currentQuiz: {
+                question: "",
+                options: [],
+                correctAnswer: "",
+                userAnswer: ""
+            },
+            animations: {
+                stars: [],
+                bubbles: [],
+                timers: []
+            }
+        };
+        
+        // DOM Elements
+        const elements = {
+            screens: {
+                welcomeScreen: document.getElementById('welcome-screen'),
+                gameScreen: document.getElementById('game-screen'),
+                quizScreen: document.getElementById('quiz-screen'),
+                rewardScreen: document.getElementById('reward-screen'),
+                parameterScreen: document.getElementById('parameter-screen'),
+                settingsModal: document.getElementById('settings-modal')
+            },
+            buttons: {
+                startButton: document.getElementById('start-button'),
+                settingsButton: document.getElementById('settings-button'),
+                checkAnswerButton: document.getElementById('check-answer-button'),
+                hintButton: document.getElementById('hint-button'),
+                checkQuizButton: document.getElementById('check-quiz-button'),
+                continueButton: document.getElementById('continue-button'),
+                parametersButton: document.getElementById('parameters-button'),
+                soundToggleButton: document.getElementById('sound-toggle-button'),
+                helpButton: document.getElementById('help-button'),
+                applyParametersButton: document.getElementById('apply-parameters-button'),
+                backFromParametersButton: document.getElementById('back-from-parameters-button'),
+                closeSettingsButton: document.getElementById('close-settings-button')
+            },
+            displays: {
+                gameLevel: document.getElementById('game-level'),
+                patternDisplay: document.getElementById('pattern-display'),
+                answerOptions: document.getElementById('answer-options'),
+                hintText: document.getElementById('hint-text'),
+                quizQuestion: document.getElementById('quiz-question'),
+                quizOptions: document.getElementById('quiz-options'),
+                rewardText: document.getElementById('reward-text'),
+                rewardAnimation: document.getElementById('reward-animation'),
+                learningPath: document.getElementById('learning-path'),
+                formulaDisplay: document.getElementById('formula-display'),
+                patternLengthValue: document.getElementById('pattern-length-value'),
+                animationSpeedValue: document.getElementById('animation-speed-value')
+            },
+            characters: {
+                professor: document.getElementById('professor'),
+                patternPal: document.getElementById('pattern-pal'),
+                professorBubble: document.getElementById('professor-bubble'),
+                patternPalBubble: document.getElementById('pattern-pal-bubble')
+            },
+            inputs: {
+                patternType: document.getElementById('pattern-type'),
+                patternLength: document.getElementById('pattern-length'),
+                patternDifficulty: document.getElementById('pattern-difficulty'),
+                colorTheme: document.getElementById('color-theme'),
+                animationSpeed: document.getElementById('animation-speed'),
+                soundVolume: document.getElementById('sound-volume'),
+                musicVolume: document.getElementById('music-volume'),
+                gameSpeed: document.getElementById('game-speed'),
+                showHints: document.getElementById('show-hints')
+            }
+        };
+        
+        // Initialize the game
+        function initGame() {
+            // Initialize audio context (needed for sound generation)
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn('Web Audio API not supported in this browser');
+            }
+            
+            // Draw characters
+            drawCharacters();
+            
+            // Create learning path
+            createLearningPath();
+            updateLearningPath();
+            
+            // Initialize input values
+            updateSettingsFromInputs();
+            
+            // Add event listeners
+            addEventListeners();
+            
+            // Show welcome message
+            setTimeout(() => {
+                showMessage(elements.characters.professorBubble, "Welcome to Pattern Explorer! I'm Professor P, and I'll help you discover amazing number patterns!");
+                
+                setTimeout(() => {
+                    showMessage(elements.characters.patternPalBubble, "Hi there! I'm Pattern Pal! We're going to have so much fun exploring patterns together!");
+                }, 3000);
+            }, 1000);
+        }
+        
+        // Draw characters using SVG
+        function drawCharacters() {
+            // Professor Character
+            elements.characters.professor.innerHTML = `
+                <svg width="150" height="200" viewBox="0 0 150 200">
+                    <!-- Body -->
+                    <ellipse cx="75" cy="135" rx="30" ry="35" fill="#1E88E5"/>
+                    
+                    <!-- Head -->
+                    <circle cx="75" cy="70" r="30" fill="#FFD700"/>
+                    
+                    <!-- Eyes -->
+                    <circle cx="65" cy="65" r="6" fill="white"/>
+                    <circle cx="85" cy="65" r="6" fill="white"/>
+                    <circle cx="65" cy="65" r="3" fill="black"/>
+                    <circle cx="85" cy="65" r="3" fill="black"/>
+                    
+                    <!-- Glasses -->
+                    <circle cx="65" cy="65" r="9" fill="none" stroke="black" stroke-width="2"/>
+                    <circle cx="85" cy="65" r="9" fill="none" stroke="black" stroke-width="2"/>
+                    <line x1="74" y1="65" x2="76" y2="65" stroke="black" stroke-width="2"/>
+                    
+                    <!-- Smile -->
+                    <path d="M60,80 Q75,95 90,80" fill="none" stroke="black" stroke-width="2"/>
+                    
+                    <!-- Beard -->
+                    <path d="M60,85 Q75,100 90,85 Q75,90 60,85" fill="#A0522D"/>
+                    
+                    <!-- Hair -->
+                    <path d="M45,60 Q75,30 105,60 Q75,45 45,60" fill="#A0522D"/>
+                    
+                    <!-- Arms -->
+                    <line x1="50" y1="125" x2="30" y2="110" stroke="#FFD700" stroke-width="8" stroke-linecap="round"/>
+                    <line x1="100" y1="125" x2="120" y2="110" stroke="#FFD700" stroke-width="8" stroke-linecap="round"/>
+                    
+                    <!-- Legs -->
+                    <line x1="65" y1="170" x2="60" y2="190" stroke="#1E88E5" stroke-width="10" stroke-linecap="round"/>
+                    <line x1="85" y1="170" x2="90" y2="190" stroke="#1E88E5" stroke-width="10" stroke-linecap="round"/>
+                </svg>
+            `;
+            
+            // Pattern Pal Character
+            elements.characters.patternPal.innerHTML = `
+                <svg width="150" height="200" viewBox="0 0 150 200">
+                    <!-- Body -->
+                    <ellipse cx="75" cy="135" rx="25" ry="30" fill="#FF6D00"/>
+                    
+                    <!-- Head -->
+                    <circle cx="75" cy="70" r="30" fill="#FFEB3B"/>
+                    
+                    <!-- Eyes -->
+                    <circle cx="65" cy="65" r="6" fill="white"/>
+                    <circle cx="85" cy="65" r="6" fill="white"/>
+                    <circle cx="65" cy="65" r="3" fill="black"/>
+                    <circle cx="85" cy="65" r="3" fill="black"/>
+                    
+                    <!-- Smile -->
+                    <path d="M60,80 Q75,95 90,80" fill="none" stroke="black" stroke-width="2"/>
+                    
+                    <!-- Arms -->
+                    <line x1="50" y1="125" x2="30" y2="140" stroke="#FFEB3B" stroke-width="8" stroke-linecap="round"/>
+                    <line x1="100" y1="125" x2="120" y2="140" stroke="#FFEB3B" stroke-width="8" stroke-linecap="round"/>
+                    
+                    <!-- Legs -->
+                    <line x1="65" y1="165" x2="60" y2="185" stroke="#FF6D00" stroke-width="10" stroke-linecap="round"/>
+                    <line x1="85" y1="165" x2="90" y2="185" stroke="#FF6D00" stroke-width="10" stroke-linecap="round"/>
+                    
+                    <!-- Pattern Symbol -->
+                    <text x="75" y="70" font-size="18" text-anchor="middle" fill="#000">123</text>
+                </svg>
+            `;
+            
+            // Add floating animation
+            elements.characters.professor.classList.add('floating');
+            elements.characters.patternPal.classList.add('floating');
+        }
+        
+        // Add event listeners to buttons and inputs
+        function addEventListeners() {
+            // Button Event Listeners
+            elements.buttons.startButton.addEventListener('click', () => {
+                playButtonSound();
+                loadLevel(gameState.currentLevel);
+                showScreen('gameScreen');
+            });
+            
+            elements.buttons.settingsButton.addEventListener('click', () => {
+                playButtonSound();
+                elements.screens.settingsModal.classList.add('visible');
+            });
+            
+            elements.buttons.closeSettingsButton.addEventListener('click', () => {
+                playButtonSound();
+                elements.screens.settingsModal.classList.remove('visible');
+                updateSettingsFromInputs();
+            });
+            
+            elements.buttons.checkAnswerButton.addEventListener('click', () => {
+                playButtonSound();
+                checkAnswer();
+            });
+            
+            elements.buttons.hintButton.addEventListener('click', () => {
+                playButtonSound();
+                toggleHint();
+            });
+            
+            elements.buttons.checkQuizButton.addEventListener('click', () => {
+                playButtonSound();
+                checkQuizAnswer();
+            });
+            
+            elements.buttons.continueButton.addEventListener('click', () => {
+                playButtonSound();
+                continueGame();
+            });
+            
+            elements.buttons.parametersButton.addEventListener('click', () => {
+                playButtonSound();
+                showScreen('parameterScreen');
+                
+                // Update formula display based on current pattern type
+                updateFormulaDisplay();
+            });
+            
+            elements.buttons.soundToggleButton.addEventListener('click', () => {
+                playButtonSound();
+                
+                // Toggle sound
+                if (gameState.settings.soundVolume > 0) {
+                    gameState.settings.soundVolume = 0;
+                    gameState.settings.musicVolume = 0;
+                    elements.buttons.soundToggleButton.textContent = '🔇';
+                } else {
+                    gameState.settings.soundVolume = 0.7;
+                    gameState.settings.musicVolume = 0.5;
+                    elements.buttons.soundToggleButton.textContent = '🔊';
+                }
+                
+                // Update input values
+                elements.inputs.soundVolume.value = gameState.settings.soundVolume;
+                elements.inputs.musicVolume.value = gameState.settings.musicVolume;
+            });
+            
+            elements.buttons.helpButton.addEventListener('click', () => {
+                playButtonSound();
+                
+                // Show help message
+                showMessage(elements.characters.professorBubble, "Need help? Try looking for patterns in the numbers. Each number follows a rule!");
+                
+                setTimeout(() => {
+                    showMessage(elements.characters.patternPalBubble, "You can also click the 'Hint' button for a clue about the pattern!");
+                }, 3000);
+            });
+            
+            elements.buttons.applyParametersButton.addEventListener('click', () => {
+                playButtonSound();
+                
+                // Update pattern settings
+                gameState.pattern.type = elements.inputs.patternType.value;
+                gameState.pattern.length = parseInt(elements.inputs.patternLength.value);
+                gameState.pattern.difficulty = elements.inputs.patternDifficulty.value;
+                
+                // Apply color theme
+                applyColorTheme(elements.inputs.colorTheme.value);
+                
+                // Update animation speed
+                document.documentElement.style.setProperty('--animation-speed', elements.inputs.animationSpeed.value);
+                
+                // Generate new pattern with updated settings
+                generatePattern();
+                
+                // Show game screen
+                showScreen('gameScreen');
+                
+                // Show confirmation message
+                showMessage(elements.characters.professorBubble, "Settings applied! Let's see if you can solve this new pattern!");
+            });
+            
+            elements.buttons.backFromParametersButton.addEventListener('click', () => {
+                playButtonSound();
+                showScreen('gameScreen');
+            });
+            
+            // Input Event Listeners
+            elements.inputs.patternLength.addEventListener('input', () => {
+                elements.displays.patternLengthValue.textContent = elements.inputs.patternLength.value;
+            });
+            
+            elements.inputs.animationSpeed.addEventListener('input', () => {
+                elements.displays.animationSpeedValue.textContent = `${elements.inputs.animationSpeed.value}x`;
+            });
+            
+            elements.inputs.patternType.addEventListener('change', updateFormulaDisplay);
+            
+            // Add click event for answer options
+            elements.displays.answerOptions.addEventListener('click', (e) => {
+                if (e.target.classList.contains('answer-option')) {
+                    playSelectSound();
+                    
+                    // Clear previous selections
+                    const options = elements.displays.answerOptions.querySelectorAll('.answer-option');
+                    options.forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    
+                    // Select the clicked option
+                    e.target.classList.add('selected');
+                    
+                    // Store user's answer
+                    gameState.pattern.userAnswer = parseInt(e.target.textContent);
+                }
+            });
+        }
+        
+        // Update settings from input values
+        function updateSettingsFromInputs() {
+            gameState.settings.soundVolume = parseFloat(elements.inputs.soundVolume.value);
+            gameState.settings.musicVolume = parseFloat(elements.inputs.musicVolume.value);
+            gameState.settings.gameSpeed = elements.inputs.gameSpeed.value;
+            gameState.settings.showHints = elements.inputs.showHints.value;
+        }
+        
+        // Update formula display based on pattern type
+        function updateFormulaDisplay() {
+            const patternType = elements.inputs.patternType.value;
+            let formula = '';
+            
+            switch (patternType) {
+                case 'addition':
+                    formula = 'n + 2';
+                    break;
+                case 'subtraction':
+                    formula = 'n - 1';
+                    break;
+                case 'multiplication':
+                    formula = '2 × n';
+                    break;
+                case 'geometric':
+                    formula = 'n × 2 or n ÷ 2';
+                    break;
+                case 'fibonacci':
+                    formula = 'F(n) = F(n-1) + F(n-2)';
+                    break;
+                case 'square':
+                    formula = 'n²';
+                    break;
+                case 'triangular':
+                    formula = 'n × (n+1) ÷ 2';
+                    break;
+                default:
+                    formula = 'n + 2';
+            }
+            
+            elements.displays.formulaDisplay.textContent = formula;
+        }
+        
+        // Apply color theme
+        function applyColorTheme(theme) {
+            let primaryColor, secondaryColor, accentColor, backgroundColor;
+            
+            switch (theme) {
+                case 'ocean':
+                    primaryColor = '#0277BD';
+                    secondaryColor = '#4FC3F7';
+                    accentColor = '#00BCD4';
+                    backgroundColor = '#E1F5FE';
+                    break;
+                case 'forest':
+                    primaryColor = '#2E7D32';
+                    secondaryColor = '#81C784';
+                    accentColor = '#4CAF50';
+                    backgroundColor = '#E8F5E9';
+                    break;
+                case 'sunset':
+                    primaryColor = '#E64A19';
+                    secondaryColor = '#FFAB91';
+                    accentColor = '#FF5722';
+                    backgroundColor = '#FBE9E7';
+                    break;
+                default: // Purple Adventure
+                    primaryColor = '#4b0082';
+                    secondaryColor = '#9c27b0';
+                    accentColor = '#6a00b7';
+                    backgroundColor = '#e9f5ff';
+            }
+            
+            // Apply theme colors to CSS variables
+            document.documentElement.style.setProperty('--primary-color', primaryColor);
+            document.documentElement.style.setProperty('--secondary-color', secondaryColor);
+            document.documentElement.style.setProperty('--accent-color', accentColor);
+            document.documentElement.style.setProperty('--background-color', backgroundColor);
+            
+            // Update button colors
+            document.querySelectorAll('.button').forEach(button => {
+                button.style.backgroundColor = primaryColor;
+                button.style.boxShadow = `0 5px 0 ${accentColor}`;
+            });
+            
+            // Update background
+            document.body.style.backgroundColor = backgroundColor;
+            elements.screens.welcomeScreen.style.background = `linear-gradient(45deg, ${secondaryColor}, ${backgroundColor})`;
+        }
+        
+        // Load a level
+        function loadLevel(level) {
+            // Set current level
+            gameState.currentLevel = level;
+            
+            // Update level display
+            updateLevelDisplay();
+            
+            // Generate pattern
+            generatePattern();
+            
+            // Update learning path
+            updateLearningPath();
+            
+            // Show level introduction message
+            showLevelIntroduction(level);
+        }
+        
+        // Update level display
+        function updateLevelDisplay() {
+            let levelTitle = "";
+            
+            switch (gameState.currentLevel) {
+                case 1:
+                    levelTitle = "Level 1: Simple Addition";
+                    break;
+                case 2:
+                    levelTitle = "Level 2: Growing Patterns";
+                    break;
+                case 3:
+                    levelTitle = "Level 3: Multiplication Magic";
+                    break;
+                case 4:
+                    levelTitle = "Level 4: Mixed Operations";
+                    break;
+                case 5:
+                    levelTitle = "Level 5: Special Sequences";
+                    break;
+                default:
+                    levelTitle = `Level ${gameState.currentLevel}`;
+            }
+            
+            elements.displays.gameLevel.textContent = levelTitle;
+        }
+        
+        // Show level introduction
+        function showLevelIntroduction(level) {
+            let message = "";
+            
+            switch (level) {
+                case 1:
+                    message = "Let's start with simple patterns! Look at the numbers and find what comes next.";
+                    break;
+                case 2:
+                    message = "These patterns grow faster. Can you figure out the rule?";
+                    break;
+                case 3:
+                    message = "Now let's explore patterns with multiplication! Each number has a special relationship with the one before it.";
+                    break;
+                case 4:
+                    message = "These patterns use different operations. Look carefully to spot the pattern!";
+                    break;
+                case 5:
+                    message = "You've reached the special sequences level! These are famous patterns that mathematicians love.";
+                    break;
+                default:
+                    message = `Welcome to Level ${level}! Can you discover the pattern?`;
+            }
+            
+            showMessage(elements.characters.professorBubble, message);
+            
+            setTimeout(() => {
+                let palMessage = "";
+                
+                switch (level) {
+                    case 1:
+                        palMessage = "Try adding or subtracting to find the pattern!";
+                        break;
+                    case 2:
+                        palMessage = "Look how much the numbers change each time!";
+                        break;
+                    case 3:
+                        palMessage = "Remember to check if the numbers are being multiplied or divided!";
+                        break;
+                    case 4:
+                        palMessage = "Sometimes the pattern alternates between different rules!";
+                        break;
+                    case 5:
+                        palMessage = "These are patterns that appear in nature and art!";
+                        break;
+                    default:
+                        palMessage = "I know you can figure this out!";
+                }
+                
+                showMessage(elements.characters.patternPalBubble, palMessage);
+            }, 3000);
+        }
+        
+        // Generate a pattern based on current level and settings
+        function generatePattern() {
+            const patternType = gameState.pattern.type;
+            const length = gameState.pattern.length;
+            const difficulty = gameState.pattern.difficulty;
+            
+            // Determine number range based on difficulty
+            let maxNumber;
+            switch (difficulty) {
+                case 'easy':
+                    maxNumber = 10;
+                    break;
+                case 'medium':
+                    maxNumber = 20;
+                    break;
+                case 'hard':
+                    maxNumber = 50;
+                    break;
+                case 'expert':
+                    maxNumber = 100;
+                    break;
+                default:
+                    maxNumber = 10;
+            }
+            
+            // Generate pattern values based on type
+            let values = [];
+            let rule = '';
+            
+            switch (patternType) {
+                case 'addition':
+                    // Addition pattern: each number increases by a constant
+                    const addValue = Math.floor(Math.random() * 5) + 1;
+                    const startNumber = Math.floor(Math.random() * 10) + 1;
+                    
+                    values.push(startNumber);
+                    for (let i = 1; i < length; i++) {
+                        values.push(values[i - 1] + addValue);
+                    }
+                    
+                    rule = `Add ${addValue} to each number`;
+                    break;
+                    
+                case 'subtraction':
+                    // Subtraction pattern: each number decreases by a constant
+                    const subtractValue = Math.floor(Math.random() * 3) + 1;
+                    const startValue = Math.floor(Math.random() * 20) + (subtractValue * length);
+                    
+                    values.push(startValue);
+                    for (let i = 1; i < length; i++) {
+                        values.push(values[i - 1] - subtractValue);
+                    }
+                    
+                    rule = `Subtract ${subtractValue} from each number`;
+                    break;
+                    
+                case 'multiplication':
+                    // Multiplication pattern: each number is multiplied by a constant
+                    const multiplyValue = Math.floor(Math.random() * 3) + 2;
+                    const startVal = Math.floor(Math.random() * 5) + 1;
+                    
+                    values.push(startVal);
+                    for (let i = 1; i < length; i++) {
+                        values.push(values[i - 1] * multiplyValue);
+                        
+                        // If the value exceeds maxNumber, restart with a smaller number
+                        if (values[i] > maxNumber) {
+                            values = [Math.floor(Math.random() * 3) + 1];
+                            i = 0;
+                        }
+                    }
+                    
+                    rule = `Multiply each number by ${multiplyValue}`;
+                    break;
+                    
+                case 'geometric':
+                    // Geometric pattern: alternating multiplication and division
+                    const geoFactor = 2;
+                    const startGeoVal = Math.floor(Math.random() * 5) + 2;
+                    
+                    values.push(startGeoVal);
+                    for (let i = 1; i < length; i++) {
+                        if (i % 2 === 1) {
+                            values.push(values[i - 1] * geoFactor);
+                        } else {
+                            values.push(values[i - 1] / geoFactor);
+                        }
+                    }
+                    
+                    rule = `Alternate: multiply by ${geoFactor}, then divide by ${geoFactor}`;
+                    break;
+                    
+                case 'fibonacci':
+                    // Fibonacci sequence: each number is the sum of the two preceding ones
+                    values = [1, 1];
+                    for (let i = 2; i < length; i++) {
+                        values.push(values[i - 1] + values[i - 2]);
+                        
+                        // If the value exceeds maxNumber, restart
+                        if (values[i] > maxNumber) {
+                            values = [1, 1];
+                            i = 2;
+                        }
+                    }
+                    
+                    rule = "Each number is the sum of the two previous numbers";
+                    break;
+                    
+                case 'square':
+                    // Square numbers: 1, 4, 9, 16, 25, ...
+                    for (let i = 1; i <= length; i++) {
+                        values.push(i * i);
+                        
+                        // If the value exceeds maxNumber, restart
+                        if (i * i > maxNumber) {
+                            values = [];
+                            for (let j = 1; j <= length; j++) {
+                                values.push(j);
+                            }
+                            rule = "Add 1 to each number";
+                            break;
+                        }
+                    }
+                    
+                    if (values[0] === 1 && values[1] === 4) {
+                        rule = "Square each position number (1², 2², 3², ...)";
+                    }
+                    break;
+                    
+                case 'triangular':
+                    // Triangular numbers: 1, 3, 6, 10, 15, ...
+                    for (let i = 1; i <= length; i++) {
+                        values.push((i * (i + 1)) / 2);
+                        
+                        // If the value exceeds maxNumber, restart with addition
+                        if ((i * (i + 1)) / 2 > maxNumber) {
+                            const addValue = Math.floor(Math.random() * 3) + 1;
+                            const startNumber = Math.floor(Math.random() * 5) + 1;
+                            
+                            values = [startNumber];
+                            for (let j = 1; j < length; j++) {
+                                values.push(values[j - 1] + addValue);
+                            }
+                            
+                            rule = `Add ${addValue} to each number`;
+                            break;
+                        }
+                    }
+                    
+                    if (values[0] === 1 && values[1] === 3) {
+                        rule = "Triangular numbers: sum of first n integers";
+                    }
+                    break;
+                    
+                default:
+                    // Default to addition pattern
+                    const defaultAddValue = Math.floor(Math.random() * 5) + 1;
+                    const defaultStartNumber = Math.floor(Math.random() * 10) + 1;
+                    
+                    values.push(defaultStartNumber);
+                    for (let i = 1; i < length; i++) {
+                        values.push(values[i - 1] + defaultAddValue);
+                    }
+                    
+                    rule = `Add ${defaultAddValue} to each number`;
+            }
+            
+            // Set the pattern in the game state
+            gameState.pattern.values = values.slice(0, length - 1);
+            gameState.pattern.answer = values[length - 1];
+            gameState.pattern.rule = rule;
+            
+            // Display the pattern
+            displayPattern();
+            
+            // Generate answer options
+            generateAnswerOptions();
+        }
+        
+        // Display the pattern on the screen
+        function displayPattern() {
+            const patternDisplay = elements.displays.patternDisplay;
+            patternDisplay.innerHTML = '';
+            
+            // Create elements for each value in the pattern
+            gameState.pattern.values.forEach((value, index) => {
+                const item = document.createElement('div');
+                item.className = 'pattern-item';
+                item.textContent = value;
+                item.dataset.index = index;
+                patternDisplay.appendChild(item);
+                
+                // Add comma between items (except the last one)
+                if (index < gameState.pattern.values.length - 1) {
+                    const comma = document.createElement('div');
+                    comma.textContent = ',';
+                    comma.style.margin = '0 5px';
+                    comma.style.fontSize = '24px';
+                    patternDisplay.appendChild(comma);
+                }
+            });
+            
+            // Add question mark for the missing value
+            const questionMark = document.createElement('div');
+            questionMark.className = 'pattern-item question-mark';
+            questionMark.textContent = '?';
+            
+            // Add comma before question mark
+            const comma = document.createElement('div');
+            comma.textContent = ',';
+            comma.style.margin = '0 5px';
+            comma.style.fontSize = '24px';
+            patternDisplay.appendChild(comma);
+            
+            patternDisplay.appendChild(questionMark);
+        }
+        
+        // Generate answer options
+        function generateAnswerOptions() {
+            const answerOptions = elements.displays.answerOptions;
+            answerOptions.innerHTML = '';
+            
+            // Create array with correct answer and distractors
+            const correctAnswer = gameState.pattern.answer;
+            const options = [correctAnswer];
+            
+            // Generate 3 distractors
+            while (options.length < 4) {
+                // Distractor type determines how wrong answers are generated
+                const distractorType = Math.floor(Math.random() * 3);
+                let distractor;
+                
+                switch (distractorType) {
+                    case 0:
+                        // Off by a small amount
+                        distractor = correctAnswer + (Math.floor(Math.random() * 5) + 1) * (Math.random() < 0.5 ? 1 : -1);
+                        break;
+                    case 1:
+                        // Use a wrong operation (e.g., addition instead of multiplication)
+                        const lastValue = gameState.pattern.values[gameState.pattern.values.length - 1];
+                        const difference = lastValue - gameState.pattern.values[gameState.pattern.values.length - 2];
+                        distractor = lastValue + difference;
+                        if (distractor === correctAnswer) {
+                            distractor += (Math.floor(Math.random() * 3) + 1);
+                        }
+                        break;
+                    case 2:
+                        // Random number within range
+                        const range = gameState.pattern.difficulty === 'easy' ? 10 : 
+                                      gameState.pattern.difficulty === 'medium' ? 20 :
+                                      gameState.pattern.difficulty === 'hard' ? 30 : 50;
+                        distractor = Math.floor(Math.random() * range) + 1;
+                        break;
+                }
+                
+                // Only add if it's not already in the options
+                if (!options.includes(distractor) && distractor > 0) {
+                    options.push(distractor);
+                }
+            }
+            
+            // Shuffle options
+            shuffleArray(options);
+            
+            // Create elements for each option
+            options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'answer-option';
+                optionElement.textContent = option;
+                answerOptions.appendChild(optionElement);
+            });
+        }
+        
+        // Check the user's answer
+        function checkAnswer() {
+            if (!gameState.pattern.userAnswer) {
+                // No answer selected
+                showMessage(elements.characters.professorBubble, "Please select an answer first!");
+                return;
+            }
+            
+            // Check if the answer is correct
+            if (gameState.pattern.userAnswer === gameState.pattern.answer) {
+                // Correct answer
+                playSuccessSound();
+                createParticleEffect();
+                
+                // Get selected option element
+                const selectedOption = document.querySelector('.answer-option.selected');
+                if (selectedOption) {
+                    selectedOption.classList.add('correct');
+                }
+                
+                // Show celebration message
+                showMessage(elements.characters.professorBubble, "Excellent! That's correct!");
+                
+                // Highlight pattern with animation
+                highlightPattern();
+                
+                // Show rule explanation
+                setTimeout(() => {
+                    showMessage(elements.characters.patternPalBubble, `The rule is: ${gameState.pattern.rule}`);
+                    
+                    // Increment progress
+                    gameState.progress++;
+                    
+                    // Move to quiz after 3 correct patterns
+                    if (gameState.progress >= 3) {
+                        setTimeout(() => {
+                            generateQuizQuestion();
+                            showScreen('quizScreen');
+                        }, 3000);
+                    } else {
+                        // Generate new pattern after delay
+                        setTimeout(() => {
+                            generatePattern();
+                        }, 3000);
+                    }
+                }, 2000);
+            } else {
+                // Incorrect answer
+                playErrorSound();
+                
+                // Show hint message
+                showMessage(elements.characters.professorBubble, "Not quite right. Try again! Look carefully at how the numbers change.");
+                
+                // Get selected option element
+                const selectedOption = document.querySelector('.answer-option.selected');
+                if (selectedOption) {
+                    selectedOption.classList.add('incorrect');
+                    
+                    // Remove selected and incorrect classes after delay
+                    setTimeout(() => {
+                        selectedOption.classList.remove('selected', 'incorrect');
+                        gameState.pattern.userAnswer = null;
+                    }, 1500);
+                }
+            }
+        }
+        
+        // Highlight pattern with animation
+        function highlightPattern() {
+            const patternItems = elements.displays.patternDisplay.querySelectorAll('.pattern-item:not(.question-mark)');
+            
+            // Animate each item
+            patternItems.forEach((item, index) => {
+                setTimeout(() => {
+                    item.classList.add('highlight');
+                    
+                    // Play tick sound
+                    playTickSound();
+                    
+                    // Remove highlight after delay
+                    setTimeout(() => {
+                        item.classList.remove('highlight');
+                    }, 500);
+                }, index * 300);
+            });
+            
+            // Highlight question mark last and replace with answer
+            const questionMark = elements.displays.patternDisplay.querySelector('.question-mark');
+            setTimeout(() => {
+                questionMark.classList.add('highlight');
+                playTickSound();
+                
+                // Replace question mark with correct answer
+                setTimeout(() => {
+                    questionMark.textContent = gameState.pattern.answer;
+                    questionMark.classList.remove('question-mark');
+                }, 500);
+            }, patternItems.length * 300);
+        }
+        
+        // Generate a quiz question
+        function generateQuizQuestion() {
+            const patternType = gameState.pattern.type;
+            let question, options, correctAnswer;
+            
+            switch (patternType) {
+                case 'addition':
+                    question = "Which of these describes an addition pattern?";
+                    options = [
+                        "Each number is the sum of the previous number plus a constant value",
+                        "Each number is the previous number multiplied by a constant value",
+                        "Each number is the previous number minus a constant value",
+                        "Each number is double the previous number"
+                    ];
+                    correctAnswer = "Each number is the sum of the previous number plus a constant value";
+                    break;
+                    
+                case 'subtraction':
+                    question = "What happens in a subtraction pattern?";
+                    options = [
+                        "Numbers get smaller by the same amount each time",
+                        "Numbers get larger by the same amount each time",
+                        "Numbers alternate between adding and subtracting",
+                        "Each number is half of the previous number"
+                    ];
+                    correctAnswer = "Numbers get smaller by the same amount each time";
+                    break;
+                    
+                case 'multiplication':
+                    question = "What makes a multiplication pattern special?";
+                    options = [
+                        "Each number is multiplied by the same value to get the next number",
+                        "Each number is added to itself to get the next number",
+                        "The pattern grows faster than addition patterns",
+                        "Both A and C are correct"
+                    ];
+                    correctAnswer = "Both A and C are correct";
+                    break;
+                    
+                case 'geometric':
+                    question = "What happens in a geometric sequence?";
+                    options = [
+                        "Numbers change by the same amount each time",
+                        "Numbers are multiplied or divided by the same value each time",
+                        "Numbers increase by one each time",
+                        "Numbers decrease by one each time"
+                    ];
+                    correctAnswer = "Numbers are multiplied or divided by the same value each time";
+                    break;
+                    
+                case 'fibonacci':
+                    question = "How are numbers created in the Fibonacci sequence?";
+                    options = [
+                        "Each number is the sum of all previous numbers",
+                        "Each number is the sum of the two numbers before it",
+                        "Each number is double the previous number",
+                        "Each number is the previous number plus 1"
+                    ];
+                    correctAnswer = "Each number is the sum of the two numbers before it";
+                    break;
+                    
+                case 'square':
+                    question = "What is special about square numbers?";
+                    options = [
+                        "They are the result of multiplying a number by itself",
+                        "They are always even numbers",
+                        "They increase by the same amount each time",
+                        "They are always divisible by 3"
+                    ];
+                    correctAnswer = "They are the result of multiplying a number by itself";
+                    break;
+                    
+                case 'triangular':
+                    question = "What are triangular numbers?";
+                    options = [
+                        "Numbers that have exactly three factors",
+                        "Numbers that are the sum of three consecutive integers",
+                        "Numbers that can form a triangle of dots (1, 3, 6, 10, ...)",
+                        "Numbers that are all multiples of 3"
+                    ];
+                    correctAnswer = "Numbers that can form a triangle of dots (1, 3, 6, 10, ...)";
+                    break;
+                    
+                default:
+                    question = "What is a number pattern?";
+                    options = [
+                        "A list of random numbers",
+                        "Numbers that follow a specific rule or sequence",
+                        "Only even or odd numbers",
+                        "Numbers that are all the same"
+                    ];
+                    correctAnswer = "Numbers that follow a specific rule or sequence";
+            }
+            
+            // Set quiz in game state
+            gameState.currentQuiz.question = question;
+            gameState.currentQuiz.options = options;
+            gameState.currentQuiz.correctAnswer = correctAnswer;
+            gameState.currentQuiz.userAnswer = "";
+            
+            // Display quiz
+            displayQuiz();
+        }
+        
+        // Display quiz on screen
+        function displayQuiz() {
+            // Set question
+            elements.displays.quizQuestion.textContent = gameState.currentQuiz.question;
+            
+            // Clear options
+            elements.displays.quizOptions.innerHTML = '';
+            
+            // Create option elements
+            gameState.currentQuiz.options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', function() {
+                    selectQuizOption(this);
+                });
+                elements.displays.quizOptions.appendChild(optionElement);
+            });
+        }
+        
+        // Select a quiz option
+        function selectQuizOption(optionElement) {
+            // Clear any previous selections
+            const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select the clicked option
+            optionElement.classList.add('selected');
+            
+            // Store user's answer
+            gameState.currentQuiz.userAnswer = optionElement.textContent;
+        }
+        
+        // Check quiz answer
+        function checkQuizAnswer() {
+            if (!gameState.currentQuiz.userAnswer) {
+                // No answer selected
+                showMessage(elements.characters.quizProfessorBubble, "Please select an answer first!");
+                return;
+            }
+            
+            // Check if the answer is correct
+            if (gameState.currentQuiz.userAnswer === gameState.currentQuiz.correctAnswer) {
+                // Correct answer
+                playSuccessSound();
+                createParticleEffect();
+                
+                // Show celebration message
+                showMessage(elements.characters.professorBubble, "Excellent! That's correct!");
+                
+                // Increment score
+                gameState.score++;
+                
+                // Proceed to next question or end quiz
+                if (gameState.score >= 5) {
+                    // Quiz completed
+                    setTimeout(() => {
+                        completeQuiz();
+                    }, 2000);
+                } else {
+                    // Next question
+                    setTimeout(() => {
+                        generateQuizQuestion();
+                    }, 2000);
+                }
+            } else {
+                // Incorrect answer
+                playErrorSound();
+                
+                // Show hint message
+                showMessage(elements.characters.professorBubble, `Not quite. The correct answer is: ${gameState.currentQuiz.correctAnswer}.`);
+                
+                // Highlight correct answer
+                const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+                options.forEach(option => {
+                    if (option.textContent === gameState.currentQuiz.correctAnswer) {
+                        option.classList.add('correct');
+                    } else if (option.classList.contains('selected')) {
+                        option.classList.add('incorrect');
+                    }
+                });
+                
+                // Next question after delay
+                setTimeout(() => {
+                    generateQuizQuestion();
+                }, 3000);
+            }
+        }
+        
+        // Complete the quiz
+        function completeQuiz() {
+            // Show reward screen
+            showScreen('rewardScreen');
+            
+            // Set reward text based on score
+            if (gameState.score >= 5) {
+                elements.displays.rewardText.textContent = "Amazing! You're a Pattern Master!";
+            } else if (gameState.score >= 3) {
+                elements.displays.rewardText.textContent = "Great job! You're getting really good with patterns!";
+            } else {
+                elements.displays.rewardText.textContent = "Good effort! Keep practicing to master patterns!";
+            }
+            
+            // Create celebration animation
+            createRewardAnimation();
+        }
+        
+        // Continue game after quiz
+        function continueGame() {
+            // Move to next level
+            if (gameState.currentLevel < gameState.maxLevel) {
+                gameState.currentLevel++;
+            } else {
+                // Reset to level 1 if all levels completed
+                gameState.currentLevel = 1;
+            }
+            
+            // Reset game state for next session
+            gameState.score = 0;
+            gameState.progress = 0;
+            
+            // Load the next level
+            loadLevel(gameState.currentLevel);
+            
+            // Show the game screen
+            showScreen('gameScreen');
+        }
+        
+        // Show a screen
+        function showScreen(screenName) {
+            // Hide all screens
+            Object.values(elements.screens).forEach(screen => {
+                screen.classList.remove('visible');
+            });
+            
+            // Show the requested screen
+            elements.screens[screenName].classList.add('visible');
+        }
+        
+        // Toggle hint visibility
+        function toggleHint() {
+            const hintText = elements.displays.hintText;
+            
+            if (hintText.style.opacity === '1') {
+                hintText.style.opacity = '0';
+            } else {
+                hintText.style.opacity = '1';
+                
+                // Set hint based on pattern type
+                let hint = '';
+                switch (gameState.pattern.type) {
+                    case 'addition':
+                        hint = "Look for a number that's being added each time.";
+                        break;
+                    case 'subtraction':
+                        hint = "Look for a number that's being subtracted each time.";
+                        break;
+                    case 'multiplication':
+                        hint = "Try multiplying the numbers by a constant value.";
+                        break;
+                    case 'geometric':
+                        hint = "The pattern might be alternating between multiplication and division.";
+                        break;
+                    case 'fibonacci':
+                        hint = "Each number might be the sum of the two previous numbers.";
+                        break;
+                    case 'square':
+                        hint = "Think about square numbers: 1, 4, 9, 16, 25, ...";
+                        break;
+                    case 'triangular':
+                        hint = "These could be triangular numbers that form triangular shapes.";
+                        break;
+                    default:
+                        hint = "Look carefully at how the numbers change from one to the next.";
+                }
+                
+                hintText.textContent = hint;
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    hintText.style.opacity = '0';
+                }, 5000);
+            }
+        }
+        
+        // Show a character message
+        function showMessage(bubbleElement, message) {
+            // Set the message text
+            bubbleElement.textContent = message;
+            
+            // Show the bubble
+            bubbleElement.style.opacity = '1';
+            
+            // Auto-hide after delay based on message length
+            const delay = Math.max(3000, message.length * 50);
+            setTimeout(() => {
+                bubbleElement.style.opacity = '0';
+            }, delay);
+        }
+        
+        // Create learning path
+        function createLearningPath() {
+            const pathContainer = elements.displays.learningPath;
+            
+            // Clear any existing segments
+            pathContainer.innerHTML = '';
+            
+            // Create segments for each level
+            for (let i = 0; i < gameState.maxLevel; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'path-segment';
+                segment.setAttribute('data-level', i + 1);
+                pathContainer.appendChild(segment);
+            }
+        }
+        
+        // Update learning path
+        function updateLearningPath() {
+            const segments = elements.displays.learningPath.querySelectorAll('.path-segment');
+            
+            segments.forEach((segment, index) => {
+                const level = index + 1;
+                
+                if (level < gameState.currentLevel) {
+                    segment.className = 'path-segment completed';
+                } else if (level === gameState.currentLevel) {
+                    segment.className = 'path-segment current';
+                } else {
+                    segment.className = 'path-segment';
+                }
+            });
+        }
+        
+        // Helper function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Create celebration particle effect
+        function createParticleEffect() {
+            // Clear any existing particles
+            clearParticles();
+            
+            // Create stars or bubbles
+            const particleCount = 30;
+            const particleTypes = ['star', 'bubble'];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particleType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                createParticle(particleType);
+            }
+        }
+        
+        // Create a single particle
+        function createParticle(type) {
+            const container = document.getElementById('game-container');
+            
+            if (type === 'star') {
+                // Create a star
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                
+                // Random size
+                const size = Math.random() * 30 + 10;
+                
+                // Star SVG
+                star.innerHTML = `
+                    <svg width="${size}" height="${size}" viewBox="0 0 51 48">
+                        <path fill="#FFD700" d="m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z"/>
+                    </svg>
+                `;
+                
+                star.style.left = `${x}px`;
+                star.style.top = `${y}px`;
+                container.appendChild(star);
+                
+                // Animation
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                const dx = Math.cos(angle) * speed;
+                const dy = Math.sin(angle) * speed;
+                
+                let opacity = 1;
+                let posX = x;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    opacity -= 0.01;
+                    posX += dx;
+                    posY += dy;
+                    
+                    star.style.opacity = opacity;
+                    star.style.left = `${posX}px`;
+                    star.style.top = `${posY}px`;
+                    
+                    if (opacity <= 0) {
+                        clearInterval(animation);
+                        star.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.stars.push(star);
+                gameState.animations.timers.push(animation);
+            } else {
+                // Create a bubble
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = window.innerHeight + 20;
+                
+                // Random size
+                const size = Math.random() * 40 + 20;
+                
+                // Random color
+                const colors = ['#FF9A00', '#4b0082', '#4CAF50', '#f44336', '#2196F3'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.backgroundColor = color;
+                bubble.style.left = `${x}px`;
+                bubble.style.top = `${y}px`;
+                bubble.style.opacity = '0.7';
+                container.appendChild(bubble);
+                
+                // Animation
+                const speed = Math.random() * 3 + 1;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    posY -= speed;
+                    bubble.style.top = `${posY}px`;
+                    
+                    if (posY < -size) {
+                        clearInterval(animation);
+                        bubble.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.bubbles.push(bubble);
+                gameState.animations.timers.push(animation);
+            }
+        }
+        
+        // Clear all particles
+        function clearParticles() {
+            // Clear all animation timers
+            gameState.animations.timers.forEach(timer => {
+                clearInterval(timer);
+            });
+            
+            // Remove all stars and bubbles
+            gameState.animations.stars.forEach(star => {
+                if (star.parentNode) {
+                    star.remove();
+                }
+            });
+            
+            gameState.animations.bubbles.forEach(bubble => {
+                if (bubble.parentNode) {
+                    bubble.remove();
+                }
+            });
+            
+            // Reset arrays
+            gameState.animations.stars = [];
+            gameState.animations.bubbles = [];
+            gameState.animations.timers = [];
+        }
+        
+        // Create reward animation
+        function createRewardAnimation() {
+            const container = elements.displays.rewardAnimation;
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create canvas for celebration
+            const canvas = document.createElement('canvas');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            container.appendChild(canvas);
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Draw celebration
+            // Trophy
+            drawTrophy(ctx, canvas.width / 2, canvas.height / 2);
+            
+            // Start particle animation
+            createParticleEffect();
+            
+            // Play celebration sound
+            playCelebrationSound();
+            
+            // Make characters jump
+            elements.characters.professor.classList.add('jump');
+            setTimeout(() => {
+                elements.characters.patternPal.classList.add('jump');
+            }, 300);
+            
+            // Remove jump class after animation
+            setTimeout(() => {
+                elements.characters.professor.classList.remove('jump');
+                elements.characters.patternPal.classList.remove('jump');
+            }, 1000);
+        }
+        
+        // Draw trophy
+        function drawTrophy(ctx, x, y) {
+            // Trophy base
+            ctx.fillStyle = '#FFD700';
+            
+            // Cup
+            ctx.beginPath();
+            ctx.moveTo(x - 30, y - 50);
+            ctx.lineTo(x + 30, y - 50);
+            ctx.quadraticCurveTo(x + 50, y - 50, x + 50, y - 30);
+            ctx.quadraticCurveTo(x + 50, y, x + 30, y);
+            ctx.quadraticCurveTo(x + 15, y + 10, x + 15, y + 30);
+            ctx.lineTo(x - 15, y + 30);
+            ctx.quadraticCurveTo(x - 15, y + 10, x - 30, y);
+            ctx.quadraticCurveTo(x - 50, y, x - 50, y - 30);
+            ctx.quadraticCurveTo(x - 50, y - 50, x - 30, y - 50);
+            ctx.fill();
+            
+            // Base
+            ctx.fillStyle = '#A67C00';
+            ctx.beginPath();
+            ctx.rect(x - 25, y + 30, 50, 10);
+            ctx.fill();
+            
+            ctx.fillStyle = '#8D6E00';
+            ctx.beginPath();
+            ctx.rect(x - 35, y + 40, 70, 10);
+            ctx.fill();
+            
+            // Pattern symbol
+            ctx.strokeStyle = '#4b0082';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x - 20, y - 20);
+            ctx.lineTo(x - 10, y - 20);
+            ctx.moveTo(x, y - 20);
+            ctx.lineTo(x + 10, y - 20);
+            ctx.moveTo(x + 20, y - 20);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#4b0082';
+            ctx.font = '20px "Comic Sans MS", cursive';
+            ctx.textAlign = 'center';
+            ctx.fillText('1, 2, 3...', x, y);
+        }
+        
+        // Sound functions
+        function playButtonSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+        
+        function playTickSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }
+        }
+        
+        function playSelectSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+            }
+        }
+        
+        function playSuccessSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                
+                notes.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.1);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.1 + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + index * 0.1 + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.1);
+                    oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                });
+            }
+        }
+        
+        function playErrorSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const frequencies = [349.23, 329.63, 311.13]; // F4, E4, D#4/Eb4
+                
+                frequencies.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.15);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.15);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.15 + 0.01);
+                    gainNode.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + index * 0.15 + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.15);
+                    oscillator.stop(audioContext.currentTime + index * 0.15 + 0.3);
+                });
+            }
+        }
+        
+        function playCelebrationSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                // Major scale ascending and then chord
+                const notes = [
+                    { freq: 523.25, time: 0 },    // C5
+                    { freq: 587.33, time: 0.15 }, // D5
+                    { freq: 659.25, time: 0.3 },  // E5
+                    { freq: 698.46, time: 0.45 }, // F5
+                    { freq: 783.99, time: 0.6 },  // G5
+                    { freq: 880.00, time: 0.75 }, // A5
+                    { freq: 987.77, time: 0.9 },  // B5
+                    { freq: 1046.50, time: 1.05 }, // C6
+                    // Final chord
+                    { freq: 523.25, time: 1.3 }, // C5
+                    { freq: 659.25, time: 1.3 }, // E5
+                    { freq: 783.99, time: 1.3 }, // G5
+                    { freq: 1046.50, time: 1.3 }  // C6
+                ];
+                
+                notes.forEach(note => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime + note.time + 0.01);
+                    
+                    // Longer sustain for the final chord
+                    if (note.time === 1.3) {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 1.0);
+                        oscillator.start(audioContext.currentTime + note.time);
+                        oscillator.stop(audioContext.currentTime + note.time + 1.0);
+                    } else {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 0.2);
+                        oscillator.start(audioContext.currentTime + note.time);
+                        oscillator.stop(audioContext.currentTime + note.time + 0.2);
+                    }
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                });
+            }
+        }
+        
+        // Initialize the game when the window loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

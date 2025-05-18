@@ -193,14 +193,116 @@
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
         }
 
-        .character-option.selected {
+        .difficulty-select {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .difficulty-option {
+            padding: 10px 20px;
+            margin: 0 10px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .difficulty-option.selected {
             background: rgba(255, 255, 255, 0.6);
             transform: scale(1.1);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
-        .character-option:hover {
-            transform: scale(1.05);
+        .toggle-container {
+            display: flex;
+            justify-content: center;
+        }
+
+        .toggle-checkbox {
+            height: 0;
+            width: 0;
+            visibility: hidden;
+        }
+
+        .toggle-label {
+            cursor: pointer;
+            width: 60px;
+            height: 30px;
+            background: rgba(255, 255, 255, 0.3);
+            display: block;
+            border-radius: 30px;
+            position: relative;
+        }
+
+        .toggle-label:after {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .toggle-checkbox:checked + .toggle-label {
+            background: #4CD964;
+        }
+
+        .toggle-checkbox:checked + .toggle-label:after {
+            left: calc(100% - 5px);
+            transform: translateX(-100%);
+        }
+
+        .game-controls {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+
+        .control-button {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            user-select: none;
+            -webkit-user-select: none;
+            pointer-events: auto;
+        }
+
+        .control-button:active {
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0.95);
+        }
+
+        .jump-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 2em;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.5s, transform 0.5s;
+            pointer-events: none;
+            z-index: 20;
         }
 
         #score-display {
@@ -245,6 +347,12 @@
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
             transform-style: preserve-3d;
             transition: opacity 0.3s;
+            cursor: pointer;
+        }
+
+        .tile:hover {
+            filter: brightness(1.2);
+            transform: translate3d(0, 0, 0) scale(1.05) rotateX(30deg) !important;
         }
 
         .tile.note {
@@ -632,10 +740,25 @@
                 </div>
 
                 <div class="setting-group">
+                    <label class="setting-label">Difficulty</label>
+                    <div class="difficulty-select">
+                        <div class="difficulty-option selected" data-difficulty="easy">
+                            Easy
+                        </div>
+                        <div class="difficulty-option" data-difficulty="medium">
+                            Medium
+                        </div>
+                        <div class="difficulty-option" data-difficulty="hard">
+                            Hard
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setting-group">
                     <label class="setting-label">Game Speed</label>
                     <div class="slider-container">
-                        <span class="slider-value" id="speed-value">5</span>
-                        <input type="range" min="1" max="10" value="5" class="slider" id="speed-slider">
+                        <span class="slider-value" id="speed-value">3</span>
+                        <input type="range" min="1" max="10" value="3" class="slider" id="speed-slider">
                         <span class="slider-value">/10</span>
                     </div>
                 </div>
@@ -643,9 +766,17 @@
                 <div class="setting-group">
                     <label class="setting-label">Tile Frequency</label>
                     <div class="slider-container">
-                        <span class="slider-value" id="frequency-value">5</span>
-                        <input type="range" min="1" max="10" value="5" class="slider" id="frequency-slider">
+                        <span class="slider-value" id="frequency-value">7</span>
+                        <input type="range" min="1" max="10" value="7" class="slider" id="frequency-slider">
                         <span class="slider-value">/10</span>
+                    </div>
+                </div>
+                
+                <div class="setting-group">
+                    <label class="setting-label">Show On-Screen Controls</label>
+                    <div class="toggle-container">
+                        <input type="checkbox" id="controls-toggle" class="toggle-checkbox" checked>
+                        <label for="controls-toggle" class="toggle-label"></label>
                     </div>
                 </div>
 
@@ -699,16 +830,27 @@
                 <h2>How to Play Melody Hop</h2>
                 <p>Melody Hop is a music-based jumping game where you hop from tile to tile collecting musical notes!</p>
                 
-                <p>Use the <strong>left</strong> and <strong>right</strong> arrow keys to move your character:</p>
+                <p><strong style="font-size: 1.2em; color: #4a00e0;">TAP or CLICK directly on tiles to jump to them!</strong></p>
+                
+                <div style="display: flex; justify-content: center; margin: 20px 0;">
+                    <img style="width: 200px; height: 150px;" src="/api/placeholder/200/150" alt="Tap tiles illustration" />
+                </div>
+                
+                <p>You can also use the <strong>left</strong> and <strong>right</strong> arrow keys or on-screen buttons to position yourself:</p>
                 <div class="controls-illustration">
                     <div class="control-key">←</div>
                     <div class="control-key">→</div>
                 </div>
                 
-                <p>Jump on tiles to stay in the game and collect musical notes to earn points!</p>
-                <p>The more notes you collect in a row, the higher your combo multiplier!</p>
-                <p>Watch out for special power-up tiles that give you special abilities!</p>
-                <p>Complete music quizzes to earn bonus points and learn about music concepts!</p>
+                <p><strong>Tips:</strong></p>
+                <ul style="text-align: left; margin-left: 30px;">
+                    <li>Tap on tiles to jump to them</li>
+                    <li>Collect musical notes to earn more points</li> 
+                    <li>Build combos by collecting notes in a row</li>
+                    <li>Look for special power-up tiles</li>
+                    <li>Complete music quizzes for bonus points</li>
+                    <li>Choose the 'Easy' difficulty setting when first starting out</li>
+                </ul>
                 
                 <p>How far can you go? Good luck!</p>
                 
@@ -733,6 +875,13 @@
         <div class="progress-container">
             <div class="progress-bar"></div>
         </div>
+
+        <div class="game-controls">
+            <div class="control-button left-button">←</div>
+            <div class="control-button right-button">→</div>
+        </div>
+        
+        <div class="jump-indicator">TAP TILES TO JUMP!</div>
 
         <div id="player">
             <div class="character-face happy">
@@ -768,15 +917,21 @@
             score: 0,
             highScore: 0,
             level: 1,
-            speed: 5,
-            tileFrequency: 5,
+            speed: 3,
+            tileFrequency: 7,
             musicVolume: 0.5,
             sfxVolume: 0.7,
             playerColor: '#FF6B6B',
+            difficulty: 'easy',
+            showControls: true,
             playerPosition: {
                 x: 0,
                 y: 0
             },
+            targetPosition: null,
+            isMovingToTarget: false,
+            jumpProgress: 0,
+            jumpDuration: 0.5, // in seconds
             tiles: [],
             lastTileTime: 0,
             currentTile: null,
@@ -806,7 +961,10 @@
             effectTimers: [],
             introPlayed: false,
             tutorialShown: localStorage.getItem('tutorialShown') === 'true',
-            fallingNotes: []
+            fallingNotes: [],
+            touchStartX: 0,
+            touchStartY: 0,
+            lastJumpTime: 0
         };
 
         // Audio context
@@ -1366,6 +1524,37 @@
             document.addEventListener('keydown', handleKeyDown);
             document.addEventListener('keyup', handleKeyUp);
             
+            // Add event listeners for touch controls
+            document.addEventListener('touchstart', handleTouchStart);
+            document.addEventListener('touchmove', handleTouchMove);
+            document.addEventListener('touchend', handleTouchEnd);
+            
+            // Add event listeners for on-screen controls
+            document.querySelector('.left-button').addEventListener('pointerdown', () => { gameState.leftPressed = true; });
+            document.querySelector('.left-button').addEventListener('pointerup', () => { gameState.leftPressed = false; });
+            document.querySelector('.left-button').addEventListener('pointerout', () => { gameState.leftPressed = false; });
+            
+            document.querySelector('.right-button').addEventListener('pointerdown', () => { gameState.rightPressed = true; });
+            document.querySelector('.right-button').addEventListener('pointerup', () => { gameState.rightPressed = false; });
+            document.querySelector('.right-button').addEventListener('pointerout', () => { gameState.rightPressed = false; });
+            
+            document.querySelector('.jump-button').addEventListener('pointerdown', handleJumpButtonPress);
+            
+            // Add event listener for toggle controls
+            document.getElementById('controls-toggle').addEventListener('change', toggleControlsVisibility);
+            
+            // Add event listeners for difficulty selection
+            document.querySelectorAll('.difficulty-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    document.querySelectorAll('.difficulty-option').forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    gameState.difficulty = option.dataset.difficulty;
+                    applyDifficultySettings();
+                    saveSettings();
+                    playButtonSound();
+                });
+            });
+            
             // Add event listeners for quiz
             elements.quizButton.addEventListener('click', checkQuizAnswer);
             elements.quizOptions.addEventListener('click', selectQuizOption);
@@ -1440,6 +1629,9 @@
             // Reset player position
             resetPlayerPosition();
             
+            // Create initial platform tiles to give the player a good start
+            createStartingPlatform();
+            
             // Start background music
             if (audioContext) {
                 // Resume audio context if suspended
@@ -1456,6 +1648,63 @@
             
             // Start game loop
             gameLoop();
+        }
+        
+        // Create starting platform with tiles
+        function createStartingPlatform() {
+            // Create a starter tile right under the player
+            const centerTile = createManualTile(gameState.gameWidth / 2, gameState.gameHeight * 0.85);
+            
+            // Create a few tiles ahead in a reasonable pattern
+            createManualTile(gameState.gameWidth / 2 - 150, gameState.gameHeight * 0.6);
+            createManualTile(gameState.gameWidth / 2 + 120, gameState.gameHeight * 0.35);
+            createManualTile(gameState.gameWidth / 2 - 100, gameState.gameHeight * 0.1);
+            
+            // Set the starting tile as current
+            gameState.currentTile = centerTile;
+            
+            // Add a delay before spawning more tiles to give the player time
+            gameState.lastTileTime = Date.now() + 1000;
+        }
+        
+        // Create a tile at a specific position
+        function createManualTile(x, y, type = 'normal') {
+            // Create tile element
+            const tileElement = document.createElement('div');
+            tileElement.className = 'tile';
+            
+            if (type === 'note') {
+                tileElement.classList.add('note');
+                // Add note icon
+                const iconElement = document.createElement('div');
+                iconElement.className = 'note-icon';
+                const noteIcon = gameState.noteIcons[Math.floor(Math.random() * gameState.noteIcons.length)];
+                iconElement.textContent = noteIcon;
+                tileElement.appendChild(iconElement);
+            } else if (type === 'power') {
+                tileElement.classList.add('power');
+            }
+            
+            // Position the tile
+            tileElement.style.transform = `translate3d(${x}px, ${y}px, 0) rotateX(30deg)`;
+            
+            // Add tile to game container
+            elements.gameContainer.appendChild(tileElement);
+            
+            // Store tile data
+            const tile = {
+                element: tileElement,
+                x: x,
+                y: y,
+                width: 120,
+                height: 40,
+                type: type,
+                note: '',
+                collected: false
+            };
+            
+            gameState.tiles.push(tile);
+            return tile;
         }
 
         // Game loop
@@ -1526,9 +1775,26 @@
         // Create a new tile
         function createTile() {
             // Calculate a random x position
-            const minX = 100;
-            const maxX = gameState.gameWidth - 100;
-            const x = Math.random() * (maxX - minX) + minX;
+            // Keep tiles closer to center for easier gameplay in early levels
+            const centerWeight = Math.max(0, 5 - gameState.level) / 5; // Decreases as level increases
+            const minX = 100 + centerWeight * 100;
+            const maxX = gameState.gameWidth - 100 - centerWeight * 100;
+            
+            // Position tiles more intelligently based on current player position
+            let x;
+            if (gameState.tiles.length === 0) {
+                // First tile - place directly under player
+                x = gameState.playerPosition.x;
+            } else {
+                // Subsequent tiles - place within reasonable jumping distance
+                const lastTileX = gameState.tiles[gameState.tiles.length - 1].x;
+                const direction = Math.random() > 0.5 ? 1 : -1;
+                const jumpDistance = 150 + Math.random() * 100;
+                x = lastTileX + (direction * jumpDistance);
+                
+                // Keep tile within bounds
+                x = Math.max(minX, Math.min(maxX, x));
+            }
             
             // Create tile element
             const tileElement = document.createElement('div');
@@ -1624,19 +1890,59 @@
 
         // Move player
         function movePlayer(dt) {
-            const moveSpeed = 500; // Pixels per second
-            
-            if (gameState.leftPressed) {
-                gameState.playerPosition.x = Math.max(30, gameState.playerPosition.x - moveSpeed * dt);
+            // Manual left/right movement (only when not jumping to a target)
+            if (!gameState.isMovingToTarget) {
+                const moveSpeed = 500; // Pixels per second
+                
+                if (gameState.leftPressed) {
+                    gameState.playerPosition.x = Math.max(30, gameState.playerPosition.x - moveSpeed * dt);
+                }
+                
+                if (gameState.rightPressed) {
+                    gameState.playerPosition.x = Math.min(gameState.gameWidth - 30, gameState.playerPosition.x + moveSpeed * dt);
+                }
+                
+                // Apply gravity if not on a tile
+                if (!gameState.currentTile) {
+                    // Gravity adjusted by difficulty
+                    let gravity = 400;
+                    if (gameState.difficulty === 'easy') gravity = 300;
+                    if (gameState.difficulty === 'hard') gravity = 600;
+                    
+                    gameState.playerPosition.y += gravity * dt;
+                }
             }
-            
-            if (gameState.rightPressed) {
-                gameState.playerPosition.x = Math.min(gameState.gameWidth - 30, gameState.playerPosition.x + moveSpeed * dt);
-            }
-            
-            // Gravity if player is not on a tile
-            if (!gameState.currentTile) {
-                gameState.playerPosition.y += 600 * dt; // Gravity
+            // Animated movement to target tile
+            else if (gameState.targetPosition) {
+                // Update jump progress
+                gameState.jumpProgress += dt / gameState.jumpDuration;
+                
+                if (gameState.jumpProgress >= 1) {
+                    // Jump completed
+                    gameState.playerPosition.x = gameState.targetPosition.x;
+                    gameState.playerPosition.y = gameState.targetPosition.y;
+                    gameState.isMovingToTarget = false;
+                    gameState.targetPosition = null;
+                    gameState.jumpProgress = 0;
+                } else {
+                    // Calculate position along jump arc
+                    const startX = gameState.jumpStartPosition.x;
+                    const startY = gameState.jumpStartPosition.y;
+                    const targetX = gameState.targetPosition.x;
+                    const targetY = gameState.targetPosition.y;
+                    
+                    // Use easing function for smooth movement
+                    const t = gameState.jumpProgress;
+                    const easedT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // Ease in-out quad
+                    
+                    // Linear interpolation for x position
+                    gameState.playerPosition.x = startX + (targetX - startX) * easedT;
+                    
+                    // Parabolic arc for y position (jumping)
+                    const arcHeight = Math.min(150, Math.abs(targetY - startY) * 0.5);
+                    const arcY = Math.sin(easedT * Math.PI) * arcHeight;
+                    gameState.playerPosition.y = startY + (targetY - startY) * easedT - arcY;
+                }
             }
             
             // Update player position in DOM
@@ -1645,6 +1951,9 @@
 
         // Check collisions between player and tiles
         function checkCollisions() {
+            // Skip collision check if actively jumping to a target
+            if (gameState.isMovingToTarget) return;
+            
             // Reset current tile
             let wasOnTile = gameState.currentTile !== null;
             gameState.currentTile = null;
@@ -1656,10 +1965,9 @@
                 const tileLeft = tile.x - tile.width / 2;
                 const tileRight = tile.x + tile.width / 2;
                 
-                // Check if player is above tile and falling onto it
-                if (playerBottom >= tileTop && playerBottom <= tileTop + 20 && 
-                    playerX >= tileLeft && playerX <= tileRight && 
-                    gameState.playerPosition.y > gameState.playerPosition.previousY) {
+                // More forgiving collision detection - increased vertical collision range
+                if (playerBottom >= tileTop - 5 && playerBottom <= tileTop + 25 && 
+                    playerX >= tileLeft && playerX <= tileRight) {
                     
                     // Land on tile
                     gameState.playerPosition.y = tileTop - 30;
@@ -1949,8 +2257,19 @@
 
         // Check if game should end
         function checkGameOver() {
-            if (gameState.playerPosition.y > gameState.gameHeight + 100) {
+            // Only end the game if player falls far below the screen
+            if (gameState.playerPosition.y > gameState.gameHeight + 200) {
                 endGame();
+            }
+            
+            // Add a safety net for new players on their first game
+            if (!localStorage.getItem('melodyHopPlayed') && gameState.playerPosition.y > gameState.gameHeight) {
+                // Create a safety platform
+                createManualTile(gameState.playerPosition.x, gameState.gameHeight + 50, 'power');
+                // Mark as played
+                localStorage.setItem('melodyHopPlayed', 'true');
+                // Show message
+                showMelodyMessage("Lucky catch! I'll help you this time!");
             }
         }
 
@@ -2429,6 +2748,169 @@
                 gameState.rightPressed = false;
             }
         }
+        
+        // Handle touch controls
+        function handleTouchStart(e) {
+            if (e.touches.length === 0) return;
+            
+            const touch = e.touches[0];
+            gameState.touchStartX = touch.clientX;
+            gameState.touchStartY = touch.clientY;
+            
+            // Detect if touch is on left or right side of screen for movement
+            if (touch.clientX < gameState.gameWidth / 3) {
+                gameState.leftPressed = true;
+            } else if (touch.clientX > gameState.gameWidth * 2 / 3) {
+                gameState.rightPressed = true;
+            }
+        }
+        
+        function handleTouchMove(e) {
+            if (e.touches.length === 0) return;
+            
+            const touch = e.touches[0];
+            const deltaX = touch.clientX - gameState.touchStartX;
+            
+            // If significant horizontal swipe detected
+            if (Math.abs(deltaX) > 30) {
+                gameState.leftPressed = deltaX < 0;
+                gameState.rightPressed = deltaX > 0;
+            }
+        }
+        
+        function handleTouchEnd() {
+            gameState.leftPressed = false;
+            gameState.rightPressed = false;
+        }
+        
+        // Handle tile click/tap for jumping
+        function handleTileClick(e) {
+            // Skip if game is not playing or is paused
+            if (!gameState.isPlaying || gameState.isPaused) return;
+            
+            // Skip if already jumping to a target
+            if (gameState.isMovingToTarget) return;
+            
+            // Check if click/tap is on a tile
+            const clickX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : null);
+            const clickY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : null);
+            
+            if (!clickX || !clickY) return;
+            
+            // Find the closest visible tile
+            let closestTile = null;
+            let closestDistance = Infinity;
+            
+            for (const tile of gameState.tiles) {
+                // Skip tiles that are behind the player
+                if (tile.y > gameState.playerPosition.y + 100) continue;
+                
+                // Calculate distance to tile
+                const dx = tile.x - clickX;
+                const dy = tile.y - clickY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Check if this is the closest tile so far
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestTile = tile;
+                }
+            }
+            
+            // Only jump if a tile was clicked and it's within reasonable range
+            if (closestTile && closestDistance < 100) {
+                jumpToTile(closestTile);
+            }
+        }
+        
+        // Jump to a specific tile
+        function jumpToTile(tile) {
+            // Can only jump from a current tile or when already in the air
+            if (!gameState.currentTile && !gameState.isMovingToTarget) return;
+            
+            // Store starting position
+            gameState.jumpStartPosition = {
+                x: gameState.playerPosition.x,
+                y: gameState.playerPosition.y
+            };
+            
+            // Set target position (center top of tile)
+            gameState.targetPosition = {
+                x: tile.x,
+                y: tile.y - 30 // Offset for player height
+            };
+            
+            // Start jump
+            gameState.isMovingToTarget = true;
+            gameState.jumpProgress = 0;
+            
+            // Adjust jump duration based on distance
+            const dx = gameState.targetPosition.x - gameState.jumpStartPosition.x;
+            const dy = gameState.targetPosition.y - gameState.jumpStartPosition.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Base duration on distance (faster for short jumps, slower for long jumps)
+            gameState.jumpDuration = 0.3 + (distance / 1000);
+            
+            // Play jump sound
+            playJumpSound();
+            
+            // Visual feedback
+            showJumpIndicator();
+            elements.player.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                elements.player.style.transform = 'scale(1)';
+            }, 150);
+        }
+        
+        // Show jump indicator
+        function showJumpIndicator() {
+            const indicator = document.querySelector('.jump-indicator');
+            indicator.style.opacity = '1';
+            indicator.style.transform = 'translate(-50%, -150%)';
+            
+            setTimeout(() => {
+                indicator.style.opacity = '0';
+                indicator.style.transform = 'translate(-50%, -50%)';
+            }, 800);
+        }
+        
+        // Toggle controls visibility
+        function toggleControlsVisibility() {
+            gameState.showControls = document.getElementById('controls-toggle').checked;
+            document.querySelector('.game-controls').style.opacity = gameState.showControls ? '1' : '0';
+            saveSettings();
+        }
+        
+        // Apply settings based on difficulty
+        function applyDifficultySettings() {
+            switch (gameState.difficulty) {
+                case 'easy':
+                    elements.sliders.speed.value = 2;
+                    elements.sliders.frequency.value = 8;
+                    elements.values.speed.textContent = 2;
+                    elements.values.frequency.textContent = 8;
+                    gameState.speed = 2;
+                    gameState.tileFrequency = 8;
+                    break;
+                case 'medium':
+                    elements.sliders.speed.value = 5;
+                    elements.sliders.frequency.value = 5;
+                    elements.values.speed.textContent = 5;
+                    elements.values.frequency.textContent = 5;
+                    gameState.speed = 5;
+                    gameState.tileFrequency = 5;
+                    break;
+                case 'hard':
+                    elements.sliders.speed.value = 8;
+                    elements.sliders.frequency.value = 3;
+                    elements.values.speed.textContent = 8;
+                    elements.values.frequency.textContent = 3;
+                    gameState.speed = 8;
+                    gameState.tileFrequency = 3;
+                    break;
+            }
+        }
 
         // Update music volume
         function updateMusicVolume() {
@@ -2482,7 +2964,9 @@
                 sfxVolume: gameState.sfxVolume,
                 speed: gameState.speed,
                 tileFrequency: gameState.tileFrequency,
-                playerColor: gameState.playerColor
+                playerColor: gameState.playerColor,
+                difficulty: gameState.difficulty,
+                showControls: gameState.showControls
             };
             
             localStorage.setItem('melodyHopSettings', JSON.stringify(settings));
@@ -2491,16 +2975,18 @@
         // Get tile speed
         function getTileSpeed() {
             // Base speed adjusted by game speed setting and level
-            return 200 + (gameState.speed * 20) + ((gameState.level - 1) * 15);
+            // Significantly reduced base speed to make the game more playable
+            return 100 + (gameState.speed * 15) + ((gameState.level - 1) * 10);
         }
 
         // Get tile delay
         function getTileDelay() {
             // Base delay adjusted by tile frequency setting
-            const baseDelay = 2000 - (gameState.tileFrequency * 150);
+            // Increased base delay for more time between tiles
+            const baseDelay = 2500 - (gameState.tileFrequency * 120);
             
             // Adjust for level (tiles come more frequently in higher levels)
-            return Math.max(500, baseDelay - ((gameState.level - 1) * 100));
+            return Math.max(800, baseDelay - ((gameState.level - 1) * 80));
         }
 
         // Handle window resize

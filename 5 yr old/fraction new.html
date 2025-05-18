@@ -1,0 +1,2233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fraction Explorer: Adventure Learning Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: #333;
+            overflow: hidden;
+            height: 100vh;
+        }
+        
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 1200px;
+            max-height: 800px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+            padding: 20px;
+        }
+        
+        .screen.visible {
+            opacity: 1;
+            pointer-events: all;
+            z-index: 10;
+        }
+        
+        .title {
+            font-size: 42px;
+            font-weight: bold;
+            color: #4b0082;
+            text-align: center;
+            margin-bottom: 20px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .subtitle {
+            font-size: 24px;
+            color: #555;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .button {
+            background: linear-gradient(to right, #FF9A00, #FF5F6D);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 30px;
+            font-size: 20px;
+            cursor: pointer;
+            margin: 10px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 4px 10px rgba(255, 90, 90, 0.3);
+        }
+        
+        .button:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 6px 15px rgba(255, 90, 90, 0.4);
+        }
+        
+        .button:active {
+            transform: translateY(1px);
+        }
+        
+        .button.secondary {
+            background: linear-gradient(to right, #4b0082, #800080);
+        }
+        
+        .button.small {
+            font-size: 16px;
+            padding: 8px 20px;
+        }
+        
+        .character {
+            position: absolute;
+            bottom: 20px;
+            width: 150px;
+            height: 200px;
+            transition: transform 0.5s ease;
+        }
+        
+        .character.professor {
+            left: 5%;
+        }
+        
+        .character.frac {
+            right: 5%;
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            padding: 15px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            max-width: 250px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 100;
+            font-size: 18px;
+        }
+        
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            border-width: 10px 10px 0;
+            border-style: solid;
+            border-color: white transparent;
+            transform: translateX(-50%);
+        }
+        
+        .professor-bubble {
+            left: 160px;
+            bottom: 180px;
+        }
+        
+        .frac-bubble {
+            right: 160px;
+            bottom: 180px;
+        }
+        
+        .level-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .fraction-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0 20px;
+            position: relative;
+        }
+        
+        .fraction-numerator, .fraction-denominator {
+            font-size: 60px;
+            font-weight: bold;
+            color: #4b0082;
+        }
+        
+        .fraction-line {
+            width: 60px;
+            height: 5px;
+            background-color: #4b0082;
+            margin: 5px 0;
+        }
+        
+        .progress-container {
+            width: 80%;
+            height: 20px;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            margin: 20px auto;
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(to right, #4CAF50, #8BC34A);
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+        
+        .visual-container {
+            width: 300px;
+            height: 300px;
+            margin: 20px auto;
+            position: relative;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .fraction-part {
+            box-sizing: border-box;
+            border: 2px solid #fff;
+            transition: background-color 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .fraction-part.selected {
+            background-color: #FF5F6D;
+        }
+        
+        .learning-path {
+            width: 80%;
+            height: 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px auto;
+            position: relative;
+        }
+        
+        .learning-path:before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background-color: #ddd;
+            transform: translateY(-50%);
+            z-index: 1;
+        }
+        
+        .path-segment {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #ddd;
+            z-index: 2;
+            position: relative;
+            transition: background-color 0.3s ease;
+        }
+        
+        .path-segment.completed {
+            background-color: #4CAF50;
+        }
+        
+        .path-segment.current {
+            background-color: #FF9A00;
+            transform: scale(1.2);
+        }
+        
+        .quiz-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            text-align: center;
+        }
+        
+        .quiz-question {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            color: #4b0082;
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .quiz-option {
+            padding: 15px 25px;
+            background-color: #f1f1f1;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 20px;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+        }
+        
+        .quiz-option:hover {
+            transform: translateY(-3px);
+            background-color: #e0e0e0;
+        }
+        
+        .quiz-option.selected {
+            background-color: #4b0082;
+            color: white;
+        }
+        
+        .quiz-option.correct {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .quiz-option.incorrect {
+            background-color: #f44336;
+            color: white;
+        }
+        
+        .settings-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+        }
+        
+        .settings-option {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .settings-label {
+            font-size: 18px;
+            color: #333;
+        }
+        
+        .settings-input {
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            font-size: 16px;
+        }
+        
+        .range-slider {
+            width: 200px;
+        }
+        
+        .hint-container {
+            position: relative;
+            width: 80%;
+            margin: 20px auto;
+        }
+        
+        .hint-button {
+            position: absolute;
+            right: 0;
+            top: -40px;
+            background-color: #FF9A00;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .hint-text {
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            border-left: 4px solid #FF9A00;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .reward-container {
+            text-align: center;
+        }
+        
+        .reward-text {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4b0082;
+            margin-bottom: 20px;
+        }
+        
+        .reward-animation {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            position: relative;
+        }
+        
+        .star {
+            position: absolute;
+            pointer-events: none;
+        }
+        
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        
+        .character-container {
+            width: 100%;
+            position: absolute;
+            bottom: 0;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 50px;
+        }
+        
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 32px;
+            }
+            
+            .subtitle {
+                font-size: 18px;
+            }
+            
+            .button {
+                font-size: 18px;
+            }
+            
+            .fraction-numerator, .fraction-denominator {
+                font-size: 40px;
+            }
+            
+            .character {
+                width: 100px;
+                height: 150px;
+            }
+            
+            .visual-container {
+                width: 250px;
+                height: 250px;
+            }
+        }
+        
+        /* Animations */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .animate-bounce {
+            animation: bounce 2s infinite;
+        }
+        
+        .animate-float {
+            animation: float 3s infinite;
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Welcome Screen -->
+        <div id="welcomeScreen" class="screen visible">
+            <h1 class="title animate-pulse">Fraction Explorer</h1>
+            <h2 class="subtitle">Adventure Learning Game</h2>
+            <button id="startButton" class="button">Start Adventure</button>
+            <button id="settingsButton" class="button secondary">Settings</button>
+            
+            <!-- Characters -->
+            <div class="character-container">
+                <div id="professorCharacter" class="character professor animate-float"></div>
+                <div id="fracCharacter" class="character frac animate-float"></div>
+            </div>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settingsScreen" class="screen">
+            <h1 class="title">Game Settings</h1>
+            
+            <div class="settings-container">
+                <div class="settings-option">
+                    <label class="settings-label">Maximum Denominator:</label>
+                    <input type="range" id="maxDenominator" class="range-slider settings-input" min="2" max="12" value="6">
+                    <span id="maxDenominatorValue">6</span>
+                </div>
+                
+                <div class="settings-option">
+                    <label class="settings-label">Game Difficulty:</label>
+                    <select id="gameDifficulty" class="settings-input">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </div>
+                
+                <div class="settings-option">
+                    <label class="settings-label">Sound Volume:</label>
+                    <input type="range" id="soundVolume" class="range-slider settings-input" min="0" max="100" value="70">
+                    <span id="soundVolumeValue">70%</span>
+                </div>
+                
+                <div class="settings-option">
+                    <label class="settings-label">Show Hints:</label>
+                    <select id="showHints" class="settings-input">
+                        <option value="always">Always</option>
+                        <option value="when-needed" selected>When Needed</option>
+                        <option value="never">Never</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button id="saveSettingsButton" class="button">Save Settings</button>
+            <button id="backButton" class="button secondary">Back</button>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+            <div class="learning-path" id="learningPath"></div>
+            
+            <div class="progress-container">
+                <div id="progressBar" class="progress-bar"></div>
+            </div>
+            
+            <div class="level-container">
+                <button id="prevButton" class="button small">←</button>
+                
+                <div class="fraction-display">
+                    <div id="fractionNumerator" class="fraction-numerator">1</div>
+                    <div class="fraction-line"></div>
+                    <div id="fractionDenominator" class="fraction-denominator">2</div>
+                </div>
+                
+                <button id="nextButton" class="button small">→</button>
+            </div>
+            
+            <div id="visualContainer" class="visual-container"></div>
+            
+            <div class="hint-container">
+                <button id="hintButton" class="hint-button">?</button>
+                <div id="hintText" class="hint-text">Select the parts to represent the fraction!</div>
+            </div>
+            
+            <div class="button-container">
+                <button id="checkButton" class="button">Check Answer</button>
+                <button id="quizButton" class="button secondary">Take Quiz</button>
+            </div>
+            
+            <div class="character professor" id="professorGame"></div>
+            <div id="professorBubble" class="speech-bubble professor-bubble"></div>
+            
+            <div class="character frac" id="fracGame"></div>
+            <div id="fracBubble" class="speech-bubble frac-bubble"></div>
+        </div>
+        
+        <!-- Quiz Screen -->
+        <div id="quizScreen" class="screen">
+            <h1 class="title">Fraction Quiz</h1>
+            
+            <div class="quiz-container">
+                <div id="quizQuestion" class="quiz-question">What fraction is represented below?</div>
+                
+                <div id="quizVisual" class="visual-container"></div>
+                
+                <div id="quizOptions" class="quiz-options"></div>
+                
+                <button id="submitQuizButton" class="button">Submit Answer</button>
+                <button id="returnGameButton" class="button secondary small">Return to Game</button>
+            </div>
+            
+            <div class="character professor" id="quizProfessor"></div>
+            <div id="quizProfessorBubble" class="speech-bubble professor-bubble"></div>
+        </div>
+        
+        <!-- Reward Screen -->
+        <div id="rewardScreen" class="screen">
+            <h1 class="title">Congratulations!</h1>
+            
+            <div id="rewardText" class="reward-text">You're a Fraction Master!</div>
+            
+            <div id="rewardAnimation" class="reward-animation"></div>
+            
+            <button id="continueButton" class="button">Continue Learning</button>
+        </div>
+    </div>
+    
+    <script>
+        // Initialize game elements and state
+        const elements = {
+            screens: {
+                welcomeScreen: document.getElementById('welcomeScreen'),
+                settingsScreen: document.getElementById('settingsScreen'),
+                gameScreen: document.getElementById('gameScreen'),
+                quizScreen: document.getElementById('quizScreen'),
+                rewardScreen: document.getElementById('rewardScreen')
+            },
+            buttons: {
+                startButton: document.getElementById('startButton'),
+                settingsButton: document.getElementById('settingsButton'),
+                saveSettingsButton: document.getElementById('saveSettingsButton'),
+                backButton: document.getElementById('backButton'),
+                prevButton: document.getElementById('prevButton'),
+                nextButton: document.getElementById('nextButton'),
+                checkButton: document.getElementById('checkButton'),
+                quizButton: document.getElementById('quizButton'),
+                hintButton: document.getElementById('hintButton'),
+                submitQuizButton: document.getElementById('submitQuizButton'),
+                returnGameButton: document.getElementById('returnGameButton'),
+                continueButton: document.getElementById('continueButton')
+            },
+            settings: {
+                maxDenominator: document.getElementById('maxDenominator'),
+                maxDenominatorValue: document.getElementById('maxDenominatorValue'),
+                gameDifficulty: document.getElementById('gameDifficulty'),
+                soundVolume: document.getElementById('soundVolume'),
+                soundVolumeValue: document.getElementById('soundVolumeValue'),
+                showHints: document.getElementById('showHints')
+            },
+            displays: {
+                fractionNumerator: document.getElementById('fractionNumerator'),
+                fractionDenominator: document.getElementById('fractionDenominator'),
+                visualContainer: document.getElementById('visualContainer'),
+                progressBar: document.getElementById('progressBar'),
+                learningPath: document.getElementById('learningPath'),
+                hintText: document.getElementById('hintText'),
+                quizQuestion: document.getElementById('quizQuestion'),
+                quizVisual: document.getElementById('quizVisual'),
+                quizOptions: document.getElementById('quizOptions'),
+                rewardText: document.getElementById('rewardText'),
+                rewardAnimation: document.getElementById('rewardAnimation')
+            },
+            characters: {
+                professorWelcome: document.getElementById('professorCharacter'),
+                fracWelcome: document.getElementById('fracCharacter'),
+                professorGame: document.getElementById('professorGame'),
+                fracGame: document.getElementById('fracGame'),
+                professorBubble: document.getElementById('professorBubble'),
+                fracBubble: document.getElementById('fracBubble'),
+                quizProfessor: document.getElementById('quizProfessor'),
+                quizProfessorBubble: document.getElementById('quizProfessorBubble')
+            }
+        };
+        
+        // Game state
+        const gameState = {
+            currentLevel: 1,
+            maxLevel: 5,
+            score: 0,
+            progress: 0,
+            settings: {
+                maxDenominator: 6,
+                difficulty: 'medium',
+                soundVolume: 0.7,
+                showHints: 'when-needed'
+            },
+            currentFraction: {
+                numerator: 1,
+                denominator: 2
+            },
+            selectedParts: [],
+            currentQuiz: {
+                question: '',
+                options: [],
+                correctAnswer: '',
+                userAnswer: ''
+            },
+            animations: {
+                stars: [],
+                bubbles: [],
+                timers: []
+            }
+        };
+        
+        // Web Audio Context
+        let audioContext;
+        
+        // Initialize game
+        function initGame() {
+            createCharacters();
+            setupEventListeners();
+            updateSettingsDisplay();
+            
+            // Initialize Web Audio API
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn('Web Audio API not supported in this browser');
+            }
+            
+            // Show welcome message
+            setTimeout(() => {
+                showMessage(elements.characters.professorBubble, "Welcome to Fraction Explorer! I'm Professor Fig!");
+                
+                setTimeout(() => {
+                    showMessage(elements.characters.fracBubble, "And I'm Frac! We'll help you learn all about fractions!");
+                }, 3000);
+            }, 1000);
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Welcome screen buttons
+            elements.buttons.startButton.addEventListener('click', () => {
+                playButtonSound();
+                loadLevel(gameState.currentLevel);
+                showScreen('gameScreen');
+            });
+            
+            elements.buttons.settingsButton.addEventListener('click', () => {
+                playButtonSound();
+                showScreen('settingsScreen');
+            });
+            
+            // Settings screen
+            elements.settings.maxDenominator.addEventListener('input', () => {
+                const value = elements.settings.maxDenominator.value;
+                elements.settings.maxDenominatorValue.textContent = value;
+                playTickSound();
+            });
+            
+            elements.settings.soundVolume.addEventListener('input', () => {
+                const value = elements.settings.soundVolume.value;
+                elements.settings.soundVolumeValue.textContent = value + '%';
+                playTickSound();
+            });
+            
+            elements.buttons.saveSettingsButton.addEventListener('click', () => {
+                playButtonSound();
+                saveSettings();
+                showScreen('welcomeScreen');
+            });
+            
+            elements.buttons.backButton.addEventListener('click', () => {
+                playButtonSound();
+                showScreen('welcomeScreen');
+            });
+            
+            // Game screen
+            elements.buttons.prevButton.addEventListener('click', () => {
+                playButtonSound();
+                if (gameState.currentLevel > 1) {
+                    gameState.currentLevel--;
+                    loadLevel(gameState.currentLevel);
+                }
+            });
+            
+            elements.buttons.nextButton.addEventListener('click', () => {
+                playButtonSound();
+                if (gameState.currentLevel < gameState.maxLevel) {
+                    gameState.currentLevel++;
+                    loadLevel(gameState.currentLevel);
+                }
+            });
+            
+            elements.buttons.checkButton.addEventListener('click', () => {
+                playSelectSound();
+                checkAnswer();
+            });
+            
+            elements.buttons.quizButton.addEventListener('click', () => {
+                playButtonSound();
+                startQuiz();
+            });
+            
+            elements.buttons.hintButton.addEventListener('click', () => {
+                playButtonSound();
+                toggleHint();
+            });
+            
+            // Quiz screen
+            elements.buttons.submitQuizButton.addEventListener('click', () => {
+                playButtonSound();
+                checkQuizAnswer();
+            });
+            
+            elements.buttons.returnGameButton.addEventListener('click', () => {
+                playButtonSound();
+                showScreen('gameScreen');
+            });
+            
+            // Reward screen
+            elements.buttons.continueButton.addEventListener('click', () => {
+                playButtonSound();
+                continueGame();
+            });
+        }
+        
+        // Create character SVGs
+        function createCharacters() {
+            // Professor character
+            createProfessor(elements.characters.professorWelcome);
+            createProfessor(elements.characters.professorGame);
+            createProfessor(elements.characters.quizProfessor);
+            
+            // Frac character
+            createFrac(elements.characters.fracWelcome);
+            createFrac(elements.characters.fracGame);
+        }
+        
+        // Create Professor character
+        function createProfessor(element) {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 150 200");
+            
+            // Body
+            const body = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+            body.setAttribute("cx", "75");
+            body.setAttribute("cy", "130");
+            body.setAttribute("rx", "30");
+            body.setAttribute("ry", "35");
+            body.setAttribute("fill", "#1E88E5");
+            svg.appendChild(body);
+            
+            // Head
+            const head = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            head.setAttribute("cx", "75");
+            head.setAttribute("cy", "70");
+            head.setAttribute("r", "25");
+            head.setAttribute("fill", "#FFD700");
+            svg.appendChild(head);
+            
+            // Eyes
+            const leftEye = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            leftEye.setAttribute("cx", "65");
+            leftEye.setAttribute("cy", "65");
+            leftEye.setAttribute("r", "5");
+            leftEye.setAttribute("fill", "white");
+            svg.appendChild(leftEye);
+            
+            const rightEye = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            rightEye.setAttribute("cx", "85");
+            rightEye.setAttribute("cy", "65");
+            rightEye.setAttribute("r", "5");
+            rightEye.setAttribute("fill", "white");
+            svg.appendChild(rightEye);
+            
+            // Pupils
+            const leftPupil = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            leftPupil.setAttribute("cx", "65");
+            leftPupil.setAttribute("cy", "65");
+            leftPupil.setAttribute("r", "2.5");
+            leftPupil.setAttribute("fill", "black");
+            svg.appendChild(leftPupil);
+            
+            const rightPupil = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            rightPupil.setAttribute("cx", "85");
+            rightPupil.setAttribute("cy", "65");
+            rightPupil.setAttribute("r", "2.5");
+            rightPupil.setAttribute("fill", "black");
+            svg.appendChild(rightPupil);
+            
+            // Glasses
+            const leftGlass = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            leftGlass.setAttribute("cx", "65");
+            leftGlass.setAttribute("cy", "65");
+            leftGlass.setAttribute("r", "8");
+            leftGlass.setAttribute("fill", "none");
+            leftGlass.setAttribute("stroke", "black");
+            leftGlass.setAttribute("stroke-width", "1.5");
+            svg.appendChild(leftGlass);
+            
+            const rightGlass = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            rightGlass.setAttribute("cx", "85");
+            rightGlass.setAttribute("cy", "65");
+            rightGlass.setAttribute("r", "8");
+            rightGlass.setAttribute("fill", "none");
+            rightGlass.setAttribute("stroke", "black");
+            rightGlass.setAttribute("stroke-width", "1.5");
+            svg.appendChild(rightGlass);
+            
+            const glassBridge = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            glassBridge.setAttribute("x1", "73");
+            glassBridge.setAttribute("y1", "65");
+            glassBridge.setAttribute("x2", "77");
+            glassBridge.setAttribute("y2", "65");
+            glassBridge.setAttribute("stroke", "black");
+            glassBridge.setAttribute("stroke-width", "1.5");
+            svg.appendChild(glassBridge);
+            
+            // Smile
+            const smile = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            smile.setAttribute("d", "M 65 80 Q 75 90 85 80");
+            smile.setAttribute("fill", "none");
+            smile.setAttribute("stroke", "black");
+            smile.setAttribute("stroke-width", "1.5");
+            svg.appendChild(smile);
+            
+            // Beard
+            const beard = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            beard.setAttribute("d", "M 65 85 Q 75 100 85 85 Q 75 90 65 85");
+            beard.setAttribute("fill", "#A0522D");
+            svg.appendChild(beard);
+            
+            // Hair
+            const hair = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            hair.setAttribute("d", "M 55 60 Q 75 40 95 60 Q 75 50 55 60");
+            hair.setAttribute("fill", "#A0522D");
+            svg.appendChild(hair);
+            
+            // Arms
+            const leftArm = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            leftArm.setAttribute("x1", "55");
+            leftArm.setAttribute("y1", "120");
+            leftArm.setAttribute("x2", "40");
+            leftArm.setAttribute("y2", "110");
+            leftArm.setAttribute("stroke", "#FFD700");
+            leftArm.setAttribute("stroke-width", "5");
+            leftArm.setAttribute("stroke-linecap", "round");
+            svg.appendChild(leftArm);
+            
+            const rightArm = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            rightArm.setAttribute("x1", "95");
+            rightArm.setAttribute("y1", "120");
+            rightArm.setAttribute("x2", "110");
+            rightArm.setAttribute("y2", "110");
+            rightArm.setAttribute("stroke", "#FFD700");
+            rightArm.setAttribute("stroke-width", "5");
+            rightArm.setAttribute("stroke-linecap", "round");
+            svg.appendChild(rightArm);
+            
+            // Legs
+            const leftLeg = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            leftLeg.setAttribute("x1", "65");
+            leftLeg.setAttribute("y1", "165");
+            leftLeg.setAttribute("x2", "60");
+            leftLeg.setAttribute("y2", "185");
+            leftLeg.setAttribute("stroke", "#1E88E5");
+            leftLeg.setAttribute("stroke-width", "8");
+            leftLeg.setAttribute("stroke-linecap", "round");
+            svg.appendChild(leftLeg);
+            
+            const rightLeg = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            rightLeg.setAttribute("x1", "85");
+            rightLeg.setAttribute("y1", "165");
+            rightLeg.setAttribute("x2", "90");
+            rightLeg.setAttribute("y2", "185");
+            rightLeg.setAttribute("stroke", "#1E88E5");
+            rightLeg.setAttribute("stroke-width", "8");
+            rightLeg.setAttribute("stroke-linecap", "round");
+            svg.appendChild(rightLeg);
+            
+            // Add to element
+            element.innerHTML = '';
+            element.appendChild(svg);
+        }
+        
+        // Create Frac character
+        function createFrac(element) {
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", "0 0 150 200");
+            
+            // Body
+            const body = document.createElementNS("http://www.w3.org/2000/svg", "ellipse");
+            body.setAttribute("cx", "75");
+            body.setAttribute("cy", "130");
+            body.setAttribute("rx", "30");
+            body.setAttribute("ry", "35");
+            body.setAttribute("fill", "#FF6D00");
+            svg.appendChild(body);
+            
+            // Head
+            const head = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            head.setAttribute("cx", "75");
+            head.setAttribute("cy", "70");
+            head.setAttribute("r", "25");
+            head.setAttribute("fill", "#FFEB3B");
+            svg.appendChild(head);
+            
+            // Eyes
+            const leftEye = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            leftEye.setAttribute("cx", "65");
+            leftEye.setAttribute("cy", "65");
+            leftEye.setAttribute("r", "5");
+            leftEye.setAttribute("fill", "white");
+            svg.appendChild(leftEye);
+            
+            const rightEye = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            rightEye.setAttribute("cx", "85");
+            rightEye.setAttribute("cy", "65");
+            rightEye.setAttribute("r", "5");
+            rightEye.setAttribute("fill", "white");
+            svg.appendChild(rightEye);
+            
+            // Pupils
+            const leftPupil = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            leftPupil.setAttribute("cx", "65");
+            leftPupil.setAttribute("cy", "65");
+            leftPupil.setAttribute("r", "2.5");
+            leftPupil.setAttribute("fill", "black");
+            svg.appendChild(leftPupil);
+            
+            const rightPupil = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            rightPupil.setAttribute("cx", "85");
+            rightPupil.setAttribute("cy", "65");
+            rightPupil.setAttribute("r", "2.5");
+            rightPupil.setAttribute("fill", "black");
+            svg.appendChild(rightPupil);
+            
+            // Smile
+            const smile = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            smile.setAttribute("d", "M 65 80 Q 75 90 85 80");
+            smile.setAttribute("fill", "none");
+            smile.setAttribute("stroke", "black");
+            smile.setAttribute("stroke-width", "1.5");
+            svg.appendChild(smile);
+            
+            // Arms
+            const leftArm = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            leftArm.setAttribute("x1", "55");
+            leftArm.setAttribute("y1", "120");
+            leftArm.setAttribute("x2", "40");
+            leftArm.setAttribute("y2", "130");
+            leftArm.setAttribute("stroke", "#FFEB3B");
+            leftArm.setAttribute("stroke-width", "5");
+            leftArm.setAttribute("stroke-linecap", "round");
+            svg.appendChild(leftArm);
+            
+            const rightArm = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            rightArm.setAttribute("x1", "95");
+            rightArm.setAttribute("y1", "120");
+            rightArm.setAttribute("x2", "110");
+            rightArm.setAttribute("y2", "130");
+            rightArm.setAttribute("stroke", "#FFEB3B");
+            rightArm.setAttribute("stroke-width", "5");
+            rightArm.setAttribute("stroke-linecap", "round");
+            svg.appendChild(rightArm);
+            
+            // Legs
+            const leftLeg = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            leftLeg.setAttribute("x1", "65");
+            leftLeg.setAttribute("y1", "165");
+            leftLeg.setAttribute("x2", "60");
+            leftLeg.setAttribute("y2", "185");
+            leftLeg.setAttribute("stroke", "#FF6D00");
+            leftLeg.setAttribute("stroke-width", "8");
+            leftLeg.setAttribute("stroke-linecap", "round");
+            svg.appendChild(leftLeg);
+            
+            const rightLeg = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            rightLeg.setAttribute("x1", "85");
+            rightLeg.setAttribute("y1", "165");
+            rightLeg.setAttribute("x2", "90");
+            rightLeg.setAttribute("y2", "185");
+            rightLeg.setAttribute("stroke", "#FF6D00");
+            rightLeg.setAttribute("stroke-width", "8");
+            rightLeg.setAttribute("stroke-linecap", "round");
+            svg.appendChild(rightLeg);
+            
+            // Fraction symbol
+            const fractionLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            fractionLine.setAttribute("x1", "65");
+            fractionLine.setAttribute("y1", "50");
+            fractionLine.setAttribute("x2", "85");
+            fractionLine.setAttribute("y2", "50");
+            fractionLine.setAttribute("stroke", "black");
+            fractionLine.setAttribute("stroke-width", "2");
+            svg.appendChild(fractionLine);
+            
+            // Numerator
+            const numerator = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            numerator.setAttribute("x", "75");
+            numerator.setAttribute("y", "45");
+            numerator.setAttribute("text-anchor", "middle");
+            numerator.setAttribute("font-family", "Arial");
+            numerator.setAttribute("font-size", "12");
+            numerator.textContent = "1";
+            svg.appendChild(numerator);
+            
+            // Denominator
+            const denominator = document.createElementNS("http://www.w3.org/2000/svg", "text");
+            denominator.setAttribute("x", "75");
+            denominator.setAttribute("y", "60");
+            denominator.setAttribute("text-anchor", "middle");
+            denominator.setAttribute("font-family", "Arial");
+            denominator.setAttribute("font-size", "12");
+            denominator.textContent = "2";
+            svg.appendChild(denominator);
+            
+            // Add to element
+            element.innerHTML = '';
+            element.appendChild(svg);
+        }
+        
+        // Update settings display
+        function updateSettingsDisplay() {
+            elements.settings.maxDenominator.value = gameState.settings.maxDenominator;
+            elements.settings.maxDenominatorValue.textContent = gameState.settings.maxDenominator;
+            
+            elements.settings.gameDifficulty.value = gameState.settings.difficulty;
+            
+            elements.settings.soundVolume.value = gameState.settings.soundVolume * 100;
+            elements.settings.soundVolumeValue.textContent = Math.round(gameState.settings.soundVolume * 100) + '%';
+            
+            elements.settings.showHints.value = gameState.settings.showHints;
+        }
+        
+        // Save settings
+        function saveSettings() {
+            gameState.settings.maxDenominator = parseInt(elements.settings.maxDenominator.value);
+            gameState.settings.difficulty = elements.settings.gameDifficulty.value;
+            gameState.settings.soundVolume = parseInt(elements.settings.soundVolume.value) / 100;
+            gameState.settings.showHints = elements.settings.showHints.value;
+            
+            // Update game based on new settings
+            gameState.maxLevel = gameState.settings.maxDenominator;
+            createLearningPath();
+        }
+        
+        // Load a level
+        function loadLevel(level) {
+            // Update current level
+            gameState.currentLevel = level;
+            
+            // Set fraction based on level
+            gameState.currentFraction.numerator = 1;
+            gameState.currentFraction.denominator = level;
+            
+            // Update display
+            updateFractionDisplay();
+            createVisualRepresentation();
+            updateLearningPath();
+            
+            // Show level message
+            const messages = [
+                "Let's explore fractions! Click on the parts to show the fraction.",
+                "Great! Now we're learning about thirds. Can you show me 1/3?",
+                "Excellent progress! Now onto fourths. Try to select 1/4.",
+                "You're doing great! Let's try fifths now. Can you show 1/5?",
+                "Impressive! Now we're at sixths. Show me 1/6."
+            ];
+            
+            const message = messages[Math.min(level - 1, messages.length - 1)];
+            showMessage(elements.characters.professorBubble, message);
+        }
+        
+        // Update fraction display
+        function updateFractionDisplay() {
+            elements.displays.fractionNumerator.textContent = gameState.currentFraction.numerator;
+            elements.displays.fractionDenominator.textContent = gameState.currentFraction.denominator;
+        }
+        
+        // Create visual representation
+        function createVisualRepresentation() {
+            const container = elements.displays.visualContainer;
+            container.innerHTML = '';
+            
+            // Reset selected parts
+            gameState.selectedParts = [];
+            
+            // Determine visualization type based on denominator
+            // For denominators up to 4, use a circle
+            // For denominators over 4, use a grid
+            
+            if (gameState.currentFraction.denominator <= 4) {
+                // Circle representation
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute("width", "100%");
+                svg.setAttribute("height", "100%");
+                svg.setAttribute("viewBox", "0 0 200 200");
+                
+                const centerX = 100;
+                const centerY = 100;
+                const radius = 80;
+                
+                // Draw circle segments
+                const segmentAngle = 360 / gameState.currentFraction.denominator;
+                
+                for (let i = 0; i < gameState.currentFraction.denominator; i++) {
+                    const startAngle = i * segmentAngle;
+                    const endAngle = (i + 1) * segmentAngle;
+                    
+                    // Convert to radians
+                    const startRad = startAngle * Math.PI / 180;
+                    const endRad = endAngle * Math.PI / 180;
+                    
+                    // Calculate points
+                    const x1 = centerX + radius * Math.cos(startRad);
+                    const y1 = centerY + radius * Math.sin(startRad);
+                    const x2 = centerX + radius * Math.cos(endRad);
+                    const y2 = centerY + radius * Math.sin(endRad);
+                    
+                    // Create segment path
+                    const segment = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    
+                    // Arc flag is 0 for segments less than 180 degrees, 1 for greater
+                    const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+                    
+                    const d = `M ${centerX},${centerY} L ${x1},${y1} A ${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2} Z`;
+                    segment.setAttribute("d", d);
+                    segment.setAttribute("fill", "#f1f1f1");
+                    segment.setAttribute("stroke", "#4b0082");
+                    segment.setAttribute("stroke-width", "2");
+                    segment.setAttribute("data-index", i);
+                    
+                    // Add click event
+                    segment.addEventListener("click", function() {
+                        toggleFractionPart(this);
+                    });
+                    
+                    svg.appendChild(segment);
+                }
+                
+                container.appendChild(svg);
+            } else {
+                // Grid representation
+                const totalParts = gameState.currentFraction.denominator;
+                let rows, cols;
+                
+                // Calculate rows and columns for grid
+                if (totalParts <= 6) {
+                    rows = 2;
+                    cols = 3;
+                } else if (totalParts <= 8) {
+                    rows = 2;
+                    cols = 4;
+                } else if (totalParts <= 9) {
+                    rows = 3;
+                    cols = 3;
+                } else if (totalParts <= 12) {
+                    rows = 3;
+                    cols = 4;
+                } else {
+                    rows = 4;
+                    cols = 4;
+                }
+                
+                // Calculate sizes
+                const width = container.offsetWidth;
+                const height = container.offsetHeight;
+                const cellWidth = width / cols;
+                const cellHeight = height / rows;
+                
+                // Create grid cells
+                for (let i = 0; i < totalParts; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'fraction-part';
+                    cell.style.width = `${cellWidth}px`;
+                    cell.style.height = `${cellHeight}px`;
+                    cell.style.backgroundColor = '#f1f1f1';
+                    cell.dataset.index = i;
+                    
+                    // Add click event
+                    cell.addEventListener('click', function() {
+                        toggleFractionPart(this);
+                    });
+                    
+                    container.appendChild(cell);
+                }
+            }
+        }
+        
+        // Toggle fraction part selection
+        function toggleFractionPart(element) {
+            playSelectSound();
+            
+            const index = element.dataset.index;
+            
+            // Find the index in selected parts
+            const selectedIndex = gameState.selectedParts.indexOf(index);
+            
+            if (selectedIndex === -1) {
+                // Add to selected parts
+                gameState.selectedParts.push(index);
+                element.classList.add('selected');
+                if (element.tagName.toLowerCase() === 'path') {
+                    element.setAttribute('fill', '#FF5F6D');
+                } else {
+                    element.style.backgroundColor = '#FF5F6D';
+                }
+            } else {
+                // Remove from selected parts
+                gameState.selectedParts.splice(selectedIndex, 1);
+                element.classList.remove('selected');
+                if (element.tagName.toLowerCase() === 'path') {
+                    element.setAttribute('fill', '#f1f1f1');
+                } else {
+                    element.style.backgroundColor = '#f1f1f1';
+                }
+            }
+        }
+        
+        // Check answer
+        function checkAnswer() {
+            const selectedCount = gameState.selectedParts.length;
+            const targetNumerator = gameState.currentFraction.numerator;
+            
+            if (selectedCount === targetNumerator) {
+                // Correct answer
+                playSuccessSound();
+                createParticleEffect();
+                
+                // Update progress
+                gameState.progress += 1;
+                elements.displays.progressBar.style.width = `${(gameState.progress / 10) * 100}%`;
+                
+                // Show success message
+                showMessage(elements.characters.professorBubble, "Great job! You correctly represented the fraction!");
+                
+                // Check if progress is enough to take quiz
+                if (gameState.progress >= 5) {
+                    setTimeout(() => {
+                        showMessage(elements.characters.fracBubble, "You're ready for a quiz! Click the Quiz button to test your knowledge!");
+                    }, 3000);
+                }
+            } else {
+                // Incorrect answer
+                playErrorSound();
+                
+                // Show hint message
+                const message = selectedCount > targetNumerator 
+                    ? `You selected too many parts. Try selecting exactly ${targetNumerator} part${targetNumerator > 1 ? 's' : ''}.`
+                    : `You need to select more parts. Try selecting exactly ${targetNumerator} part${targetNumerator > 1 ? 's' : ''}.`;
+                
+                showMessage(elements.characters.fracBubble, message);
+            }
+        }
+        
+        // Start quiz
+        function startQuiz() {
+            // Reset quiz state
+            gameState.currentQuiz.userAnswer = '';
+            
+            // Generate a quiz question
+            generateQuizQuestion();
+            
+            // Show quiz screen
+            showScreen('quizScreen');
+        }
+        
+        // Generate quiz question
+        function generateQuizQuestion() {
+            // Determine question type (multiple types for variety)
+            const questionTypes = [
+                'identify-fraction',
+                'equivalent-fraction',
+                'compare-fractions'
+            ];
+            
+            const questionType = questionTypes[Math.floor(Math.random() * questionTypes.length)];
+            
+            switch (questionType) {
+                case 'identify-fraction':
+                    generateIdentifyFractionQuestion();
+                    break;
+                case 'equivalent-fraction':
+                    generateEquivalentFractionQuestion();
+                    break;
+                case 'compare-fractions':
+                    generateCompareFractionsQuestion();
+                    break;
+            }
+        }
+        
+        // Generate "identify the fraction" question
+        function generateIdentifyFractionQuestion() {
+            // Choose a random denominator (max based on settings)
+            const denominator = Math.floor(Math.random() * (gameState.settings.maxDenominator - 2)) + 2;
+            
+            // Choose a random numerator (less than denominator)
+            const numerator = Math.floor(Math.random() * (denominator - 1)) + 1;
+            
+            // Set question and correct answer
+            gameState.currentQuiz.question = "What fraction is represented below?";
+            gameState.currentQuiz.correctAnswer = `${numerator}/${denominator}`;
+            
+            // Create visual representation
+            createQuizVisual(numerator, denominator);
+            
+            // Generate options
+            const options = [
+                `${numerator}/${denominator}`, // Correct answer
+                `${denominator}/${numerator}`, // Inverted (common mistake)
+                `${numerator + 1}/${denominator}`, // Numerator + 1
+                `${numerator}/${denominator + 1}` // Denominator + 1
+            ];
+            
+            // Shuffle options
+            gameState.currentQuiz.options = shuffleArray(options);
+            
+            // Create option elements
+            createQuizOptions();
+            
+            // Show question
+            elements.displays.quizQuestion.textContent = gameState.currentQuiz.question;
+        }
+        
+        // Generate "equivalent fraction" question
+        function generateEquivalentFractionQuestion() {
+            // Choose a simple fraction
+            const denominator = Math.floor(Math.random() * 3) + 2; // 2, 3, or 4
+            const numerator = Math.floor(Math.random() * (denominator - 1)) + 1;
+            
+            // Calculate equivalent fraction (multiply by 2)
+            const equivalentDenominator = denominator * 2;
+            const equivalentNumerator = numerator * 2;
+            
+            // Set question and correct answer
+            gameState.currentQuiz.question = `Which fraction is equivalent to ${numerator}/${denominator}?`;
+            gameState.currentQuiz.correctAnswer = `${equivalentNumerator}/${equivalentDenominator}`;
+            
+            // Generate options
+            const options = [
+                `${equivalentNumerator}/${equivalentDenominator}`, // Correct answer
+                `${numerator}/${equivalentDenominator}`, // Wrong - only denominator * 2
+                `${equivalentNumerator}/${denominator}`, // Wrong - only numerator * 2
+                `${denominator}/${numerator}` // Wrong - inverted
+            ];
+            
+            // Shuffle options
+            gameState.currentQuiz.options = shuffleArray(options);
+            
+            // Create option elements
+            createQuizOptions();
+            
+            // Show question
+            elements.displays.quizQuestion.textContent = gameState.currentQuiz.question;
+            
+            // No visual for this question
+            elements.displays.quizVisual.style.display = 'none';
+        }
+        
+        // Generate "compare fractions" question
+        function generateCompareFractionsQuestion() {
+            // Generate two fractions
+            let fraction1Denominator, fraction1Numerator, fraction2Denominator, fraction2Numerator;
+            let relation; // "greater", "less", or "equal"
+            
+            // Decide the relationship
+            const relationChoice = Math.floor(Math.random() * 3);
+            
+            if (relationChoice === 0) {
+                // First fraction is greater
+                fraction1Denominator = Math.floor(Math.random() * 4) + 2; // 2-5
+                fraction2Denominator = fraction1Denominator;
+                fraction1Numerator = Math.floor(Math.random() * (fraction1Denominator - 1)) + 2; // 2 to denominator
+                fraction2Numerator = fraction1Numerator - 1; // Smaller numerator
+                relation = "greater than";
+            } else if (relationChoice === 1) {
+                // First fraction is less
+                fraction1Denominator = Math.floor(Math.random() * 4) + 2; // 2-5
+                fraction2Denominator = fraction1Denominator;
+                fraction1Numerator = Math.floor(Math.random() * (fraction1Denominator - 1)) + 1; // 1 to denominator-1
+                fraction2Numerator = fraction1Numerator + 1; // Larger numerator
+                relation = "less than";
+            } else {
+                // Fractions are equal
+                fraction1Denominator = Math.floor(Math.random() * 3) + 2; // 2-4
+                fraction1Numerator = Math.floor(Math.random() * (fraction1Denominator - 1)) + 1;
+                // Create equivalent fraction
+                const multiplier = 2;
+                fraction2Denominator = fraction1Denominator * multiplier;
+                fraction2Numerator = fraction1Numerator * multiplier;
+                relation = "equal to";
+            }
+            
+            // Set question
+            gameState.currentQuiz.question = `Is ${fraction1Numerator}/${fraction1Denominator} greater than, less than, or equal to ${fraction2Numerator}/${fraction2Denominator}?`;
+            gameState.currentQuiz.correctAnswer = relation;
+            
+            // Generate options
+            const options = ["greater than", "less than", "equal to"];
+            
+            // Shuffle options
+            gameState.currentQuiz.options = options;
+            
+            // Create option elements
+            createQuizOptions();
+            
+            // Show question
+            elements.displays.quizQuestion.textContent = gameState.currentQuiz.question;
+            
+            // No visual for this question
+            elements.displays.quizVisual.style.display = 'none';
+        }
+        
+        // Create quiz visual representation
+        function createQuizVisual(numerator, denominator) {
+            const container = elements.displays.quizVisual;
+            container.innerHTML = '';
+            container.style.display = 'flex';
+            
+            // Create visual similar to game screen
+            if (denominator <= 4) {
+                // Circle representation
+                const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+                svg.setAttribute("width", "100%");
+                svg.setAttribute("height", "100%");
+                svg.setAttribute("viewBox", "0 0 200 200");
+                
+                const centerX = 100;
+                const centerY = 100;
+                const radius = 80;
+                
+                // Draw circle segments
+                const segmentAngle = 360 / denominator;
+                
+                for (let i = 0; i < denominator; i++) {
+                    const startAngle = i * segmentAngle;
+                    const endAngle = (i + 1) * segmentAngle;
+                    
+                    // Convert to radians
+                    const startRad = startAngle * Math.PI / 180;
+                    const endRad = endAngle * Math.PI / 180;
+                    
+                    // Calculate points
+                    const x1 = centerX + radius * Math.cos(startRad);
+                    const y1 = centerY + radius * Math.sin(startRad);
+                    const x2 = centerX + radius * Math.cos(endRad);
+                    const y2 = centerY + radius * Math.sin(endRad);
+                    
+                    // Create segment path
+                    const segment = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    
+                    // Arc flag is 0 for segments less than 180 degrees, 1 for greater
+                    const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+                    
+                    const d = `M ${centerX},${centerY} L ${x1},${y1} A ${radius},${radius} 0 ${largeArcFlag} 1 ${x2},${y2} Z`;
+                    segment.setAttribute("d", d);
+                    
+                    // Color based on whether it's selected (part of the fraction)
+                    if (i < numerator) {
+                        segment.setAttribute("fill", "#FF5F6D");
+                    } else {
+                        segment.setAttribute("fill", "#f1f1f1");
+                    }
+                    
+                    segment.setAttribute("stroke", "#4b0082");
+                    segment.setAttribute("stroke-width", "2");
+                    
+                    svg.appendChild(segment);
+                }
+                
+                container.appendChild(svg);
+            } else {
+                // Grid representation
+                const totalParts = denominator;
+                let rows, cols;
+                
+                // Calculate rows and columns for grid
+                if (totalParts <= 6) {
+                    rows = 2;
+                    cols = 3;
+                } else if (totalParts <= 8) {
+                    rows = 2;
+                    cols = 4;
+                } else if (totalParts <= 9) {
+                    rows = 3;
+                    cols = 3;
+                } else if (totalParts <= 12) {
+                    rows = 3;
+                    cols = 4;
+                } else {
+                    rows = 4;
+                    cols = 4;
+                }
+                
+                // Calculate sizes
+                const width = container.offsetWidth;
+                const height = container.offsetHeight;
+                const cellWidth = width / cols;
+                const cellHeight = height / rows;
+                
+                // Create grid cells
+                for (let i = 0; i < totalParts; i++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'fraction-part';
+                    cell.style.width = `${cellWidth}px`;
+                    cell.style.height = `${cellHeight}px`;
+                    
+                    // Color based on whether it's selected (part of the fraction)
+                    if (i < numerator) {
+                        cell.style.backgroundColor = '#FF5F6D';
+                    } else {
+                        cell.style.backgroundColor = '#f1f1f1';
+                    }
+                    
+                    container.appendChild(cell);
+                }
+            }
+        }
+        
+        // Create quiz options
+        function createQuizOptions() {
+            const optionsContainer = elements.displays.quizOptions;
+            optionsContainer.innerHTML = '';
+            
+            gameState.currentQuiz.options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', function() {
+                    selectQuizOption(this);
+                });
+                optionsContainer.appendChild(optionElement);
+            });
+        }
+        
+        // Select a quiz option
+        function selectQuizOption(optionElement) {
+            // Clear any previous selections
+            const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+            options.forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select the clicked option
+            optionElement.classList.add('selected');
+            
+            // Store user's answer
+            gameState.currentQuiz.userAnswer = optionElement.textContent;
+        }
+        
+        // Check quiz answer
+        function checkQuizAnswer() {
+            if (!gameState.currentQuiz.userAnswer) {
+                // No answer selected
+                showMessage(elements.characters.quizProfessorBubble, "Please select an answer first!");
+                return;
+            }
+            
+            // Check if the answer is correct
+            if (gameState.currentQuiz.userAnswer === gameState.currentQuiz.correctAnswer) {
+                // Correct answer
+                playSuccessSound();
+                createParticleEffect();
+                
+                // Show celebration message
+                showMessage(elements.characters.quizProfessorBubble, "Excellent! That's correct!");
+                
+                // Increment score
+                gameState.score++;
+                
+                // Proceed to next question or end quiz
+                if (gameState.score >= 5) {
+                    // Quiz completed
+                    setTimeout(() => {
+                        completeQuiz();
+                    }, 2000);
+                } else {
+                    // Next question
+                    setTimeout(() => {
+                        generateQuizQuestion();
+                    }, 2000);
+                }
+            } else {
+                // Incorrect answer
+                playErrorSound();
+                
+                // Show hint message
+                showMessage(elements.characters.quizProfessorBubble, `Not quite. The correct answer is ${gameState.currentQuiz.correctAnswer}.`);
+                
+                // Highlight correct answer
+                const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+                options.forEach(option => {
+                    if (option.textContent === gameState.currentQuiz.correctAnswer) {
+                        option.classList.add('correct');
+                    } else if (option.classList.contains('selected')) {
+                        option.classList.add('incorrect');
+                    }
+                });
+                
+                // Next question after delay
+                setTimeout(() => {
+                    generateQuizQuestion();
+                }, 3000);
+            }
+        }
+        
+        // Complete the quiz
+        function completeQuiz() {
+            // Show reward screen
+            showScreen('rewardScreen');
+            
+            // Set reward text based on score
+            if (gameState.score >= 5) {
+                elements.displays.rewardText.textContent = "Amazing! You're a Fraction Master!";
+            } else if (gameState.score >= 3) {
+                elements.displays.rewardText.textContent = "Great job! You're getting really good with fractions!";
+            } else {
+                elements.displays.rewardText.textContent = "Good effort! Keep practicing to master fractions!";
+            }
+            
+            // Create celebration animation
+            createRewardAnimation();
+        }
+        
+        // Continue game after quiz
+        function continueGame() {
+            // Reset game state for next session
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.progress = 0;
+            
+            // Load the first level
+            loadLevel(gameState.currentLevel);
+            
+            // Show the game screen
+            showScreen('gameScreen');
+        }
+        
+        // Show a screen
+        function showScreen(screenName) {
+            // Hide all screens
+            Object.values(elements.screens).forEach(screen => {
+                screen.classList.remove('visible');
+                screen.classList.add('hidden');
+            });
+            
+            // Show the requested screen
+            elements.screens[screenName].classList.remove('hidden');
+            elements.screens[screenName].classList.add('visible');
+        }
+        
+        // Toggle hint visibility
+        function toggleHint() {
+            const hintText = elements.displays.hintText;
+            
+            if (hintText.style.opacity === '1') {
+                hintText.style.opacity = '0';
+            } else {
+                hintText.style.opacity = '1';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    hintText.style.opacity = '0';
+                }, 5000);
+            }
+        }
+        
+        // Show a character message
+        function showMessage(bubbleElement, message) {
+            // Set the message text
+            bubbleElement.textContent = message;
+            
+            // Show the bubble
+            bubbleElement.style.opacity = '1';
+            
+            // Auto-hide after delay based on message length
+            const delay = Math.max(3000, message.length * 50);
+            setTimeout(() => {
+                bubbleElement.style.opacity = '0';
+            }, delay);
+        }
+        
+        // Create learning path
+        function createLearningPath() {
+            const pathContainer = elements.displays.learningPath;
+            
+            // Clear any existing segments
+            pathContainer.innerHTML = '';
+            
+            // Create segments for each level
+            for (let i = 0; i < gameState.maxLevel; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'path-segment';
+                segment.setAttribute('data-level', i + 1);
+                pathContainer.appendChild(segment);
+            }
+        }
+        
+        // Update learning path
+        function updateLearningPath() {
+            const segments = elements.displays.learningPath.querySelectorAll('.path-segment');
+            
+            segments.forEach((segment, index) => {
+                const level = index + 1;
+                
+                if (level < gameState.currentLevel) {
+                    segment.className = 'path-segment completed';
+                } else if (level === gameState.currentLevel) {
+                    segment.className = 'path-segment current';
+                } else {
+                    segment.className = 'path-segment';
+                }
+            });
+        }
+        
+        // Helper function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Create celebration particle effect
+        function createParticleEffect() {
+            // Clear any existing particles
+            clearParticles();
+            
+            // Create stars or bubbles
+            const particleCount = 30;
+            const particleTypes = ['star', 'bubble'];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particleType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                createParticle(particleType);
+            }
+        }
+        
+        // Create a single particle
+        function createParticle(type) {
+            const container = document.getElementById('game-container');
+            
+            if (type === 'star') {
+                // Create a star
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                
+                // Random size
+                const size = Math.random() * 30 + 10;
+                
+                // Star SVG
+                star.innerHTML = `
+                    <svg width="${size}" height="${size}" viewBox="0 0 51 48">
+                        <path fill="#FFD700" d="m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z"/>
+                    </svg>
+                `;
+                
+                star.style.left = `${x}px`;
+                star.style.top = `${y}px`;
+                container.appendChild(star);
+                
+                // Animation
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                const dx = Math.cos(angle) * speed;
+                const dy = Math.sin(angle) * speed;
+                
+                let opacity = 1;
+                let posX = x;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    opacity -= 0.01;
+                    posX += dx;
+                    posY += dy;
+                    
+                    star.style.opacity = opacity;
+                    star.style.left = `${posX}px`;
+                    star.style.top = `${posY}px`;
+                    
+                    if (opacity <= 0) {
+                        clearInterval(animation);
+                        star.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.stars.push(star);
+                gameState.animations.timers.push(animation);
+            } else {
+                // Create a bubble
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = window.innerHeight + 20;
+                
+                // Random size
+                const size = Math.random() * 40 + 20;
+                
+                // Random color
+                const colors = ['#FF9A00', '#4b0082', '#4CAF50', '#f44336', '#2196F3'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.backgroundColor = color;
+                bubble.style.left = `${x}px`;
+                bubble.style.top = `${y}px`;
+                bubble.style.opacity = '0.7';
+                container.appendChild(bubble);
+                
+                // Animation
+                const speed = Math.random() * 3 + 1;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    posY -= speed;
+                    bubble.style.top = `${posY}px`;
+                    
+                    if (posY < -size) {
+                        clearInterval(animation);
+                        bubble.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.bubbles.push(bubble);
+                gameState.animations.timers.push(animation);
+            }
+        }
+        
+        // Clear all particles
+        function clearParticles() {
+            // Clear all animation timers
+            gameState.animations.timers.forEach(timer => {
+                clearInterval(timer);
+            });
+            
+            // Remove all stars and bubbles
+            gameState.animations.stars.forEach(star => {
+                if (star.parentNode) {
+                    star.remove();
+                }
+            });
+            
+            gameState.animations.bubbles.forEach(bubble => {
+                if (bubble.parentNode) {
+                    bubble.remove();
+                }
+            });
+            
+            // Reset arrays
+            gameState.animations.stars = [];
+            gameState.animations.bubbles = [];
+            gameState.animations.timers = [];
+        }
+        
+        // Create reward animation
+        function createRewardAnimation() {
+            const container = elements.displays.rewardAnimation;
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create canvas for celebration
+            const canvas = document.createElement('canvas');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            container.appendChild(canvas);
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Draw trophy
+            drawTrophy(ctx, canvas.width / 2, canvas.height / 2);
+            
+            // Start particle animation
+            createParticleEffect();
+            
+            // Play celebration sound
+            playCelebrationSound();
+        }
+        
+        // Draw trophy
+        function drawTrophy(ctx, x, y) {
+            // Trophy base
+            ctx.fillStyle = '#FFD700';
+            
+            // Cup
+            ctx.beginPath();
+            ctx.moveTo(x - 30, y - 50);
+            ctx.lineTo(x + 30, y - 50);
+            ctx.quadraticCurveTo(x + 50, y - 50, x + 50, y - 30);
+            ctx.quadraticCurveTo(x + 50, y, x + 30, y);
+            ctx.quadraticCurveTo(x + 15, y + 10, x + 15, y + 30);
+            ctx.lineTo(x - 15, y + 30);
+            ctx.quadraticCurveTo(x - 15, y + 10, x - 30, y);
+            ctx.quadraticCurveTo(x - 50, y, x - 50, y - 30);
+            ctx.quadraticCurveTo(x - 50, y - 50, x - 30, y - 50);
+            ctx.fill();
+            
+            // Base
+            ctx.fillStyle = '#A67C00';
+            ctx.beginPath();
+            ctx.rect(x - 25, y + 30, 50, 10);
+            ctx.fill();
+            
+            ctx.fillStyle = '#8D6E00';
+            ctx.beginPath();
+            ctx.rect(x - 35, y + 40, 70, 10);
+            ctx.fill();
+            
+            // Fraction symbol
+            ctx.strokeStyle = '#4b0082';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x - 15, y - 20);
+            ctx.lineTo(x + 15, y - 20);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#4b0082';
+            ctx.font = '20px Nunito, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('1', x, y - 25);
+            ctx.fillText('2', x, y - 5);
+            
+            // Stars around trophy
+            const starCount = 5;
+            const radius = 70;
+            
+            for (let i = 0; i < starCount; i++) {
+                const angle = (i / starCount) * Math.PI * 2;
+                const starX = x + Math.cos(angle) * radius;
+                const starY = y + Math.sin(angle) * radius;
+                
+                ctx.fillStyle = '#FFD700';
+                drawStar(ctx, starX, starY, 5, 10, 5);
+            }
+            
+            // Add text
+            ctx.fillStyle = '#4b0082';
+            ctx.font = '16px Nunito, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Fraction Master', x, y + 70);
+        }
+        
+        // Draw a star
+        function drawStar(ctx, cx, cy, spikes, outerRadius, innerRadius) {
+            let rot = Math.PI / 2 * 3;
+            let x = cx;
+            let y = cy;
+            let step = Math.PI / spikes;
+            
+            ctx.beginPath();
+            ctx.moveTo(cx, cy - outerRadius);
+            
+            for (let i = 0; i < spikes; i++) {
+                x = cx + Math.cos(rot) * outerRadius;
+                y = cy + Math.sin(rot) * outerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+                
+                x = cx + Math.cos(rot) * innerRadius;
+                y = cy + Math.sin(rot) * innerRadius;
+                ctx.lineTo(x, y);
+                rot += step;
+            }
+            
+            ctx.lineTo(cx, cy - outerRadius);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        // Sound functions
+        function playButtonSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+        
+        function playTickSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }
+        }
+        
+        function playSelectSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+            }
+        }
+        
+        function playSuccessSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                
+                notes.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.1);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.1 + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + index * 0.1 + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.1);
+                    oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                });
+            }
+        }
+        
+        function playErrorSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const frequencies = [349.23, 329.63, 311.13]; // F4, E4, D#4/Eb4
+                
+                frequencies.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.15);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.15);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.5, audioContext.currentTime + index * 0.15 + 0.01);
+                    gainNode.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + index * 0.15 + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.15);
+                    oscillator.stop(audioContext.currentTime + index * 0.15 + 0.3);
+                });
+            }
+        }
+        
+        function playCelebrationSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                // Major scale ascending and then chord
+                const notes = [
+                    { freq: 523.25, time: 0 },    // C5
+                    { freq: 587.33, time: 0.15 }, // D5
+                    { freq: 659.25, time: 0.3 },  // E5
+                    { freq: 698.46, time: 0.45 }, // F5
+                    { freq: 783.99, time: 0.6 },  // G5
+                    { freq: 880.00, time: 0.75 }, // A5
+                    { freq: 987.77, time: 0.9 },  // B5
+                    { freq: 1046.50, time: 1.05 }, // C6
+                    // Final chord
+                    { freq: 523.25, time: 1.3 }, // C5
+                    { freq: 659.25, time: 1.3 }, // E5
+                    { freq: 783.99, time: 1.3 }, // G5
+                    { freq: 1046.50, time: 1.3 }  // C6
+                ];
+                
+                notes.forEach(note => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume * 0.3, audioContext.currentTime + note.time + 0.01);
+                    
+                    // Longer sustain for the final chord
+                    if (note.time === 1.3) {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 1.0);
+                        oscillator.start(audioContext.currentTime + note.time);
+                        oscillator.stop(audioContext.currentTime + note.time + 1.0);
+                    } else {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 0.2);
+                        oscillator.start(audioContext.currentTime + note.time);
+                        oscillator.stop(audioContext.currentTime + note.time + 0.2);
+                    }
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                });
+            }
+        }
+        
+        // Add emojis to game
+        function addEmojis() {
+            // Welcome screen emojis
+            const title = document.querySelector('#welcomeScreen .title');
+            title.innerHTML = "Fraction Explorer ✨🧩";
+            
+            // Add emoji to buttons
+            elements.buttons.startButton.innerHTML = "Start Adventure 🚀";
+            elements.buttons.settingsButton.innerHTML = "Settings ⚙️";
+            elements.buttons.saveSettingsButton.innerHTML = "Save Settings ✅";
+            elements.buttons.backButton.innerHTML = "Back 🔙";
+            elements.buttons.checkButton.innerHTML = "Check Answer 🔍";
+            elements.buttons.quizButton.innerHTML = "Take Quiz 📝";
+            elements.buttons.submitQuizButton.innerHTML = "Submit Answer ✅";
+            elements.buttons.continueButton.innerHTML = "Continue Learning 🚀";
+        }
+        
+        // Initialize the game when the window loads
+        window.addEventListener('load', () => {
+            initGame();
+            createLearningPath();
+            addEmojis();
+        });
+    </script>
+</body>
+</html>

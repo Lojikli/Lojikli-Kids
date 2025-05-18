@@ -1,0 +1,2520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shape Area Adventure</title>
+    <style>
+        :root {
+            --primary-color: #4b0082;
+            --secondary-color: #FF9A00;
+            --accent-color: #4CAF50;
+            --bg-color: #f8f9fa;
+            --text-color: #333;
+            --success-color: #28a745;
+            --error-color: #dc3545;
+            --info-color: #17a2b8;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial Rounded MT Bold', 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--text-color);
+            overflow-x: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #game-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .screen {
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .screen.visible {
+            display: flex;
+        }
+        
+        .title {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .button {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            outline: none;
+        }
+        
+        .button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            background-color: #FF8800;
+        }
+        
+        .button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .button.primary {
+            background-color: var(--primary-color);
+        }
+        
+        .button.primary:hover {
+            background-color: #3a0066;
+        }
+        
+        .button.success {
+            background-color: var(--success-color);
+        }
+        
+        .button.success:hover {
+            background-color: #218838;
+        }
+        
+        .button-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        /* Game Settings */
+        .settings-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        
+        .setting-group {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 10px;
+            width: 280px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .setting-title {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+            text-align: center;
+        }
+        
+        .slider-container {
+            margin: 15px 0;
+        }
+        
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .slider {
+            width: 100%;
+            -webkit-appearance: none;
+            height: 8px;
+            border-radius: 4px;
+            background: #ddd;
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            cursor: pointer;
+        }
+        
+        .checkbox-container {
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+        }
+        
+        .checkbox-container input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+        }
+        
+        /* Game Canvas */
+        #game-canvas {
+            width: 100%;
+            height: 300px;
+            background-color: white;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Characters */
+        .character-container {
+            position: absolute;
+            bottom: 20px;
+            width: 150px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .professor-container {
+            left: 50px;
+        }
+        
+        .helper-container {
+            right: 50px;
+        }
+        
+        .character {
+            width: 120px;
+            height: 150px;
+            position: relative;
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            top: -80px;
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px;
+            width: 200px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            z-index: 10;
+        }
+        
+        .professor-container .speech-bubble {
+            left: 0;
+        }
+        
+        .helper-container .speech-bubble {
+            right: 0;
+        }
+        
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            transform: rotate(45deg);
+            box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: -1;
+        }
+        
+        .professor-container .speech-bubble:after {
+            left: 30px;
+        }
+        
+        .helper-container .speech-bubble:after {
+            right: 30px;
+        }
+        
+        /* Quiz Section */
+        .quiz-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quiz-question {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--primary-color);
+        }
+        
+        .quiz-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 20px 0;
+            width: 100%;
+        }
+        
+        .quiz-option {
+            background-color: white;
+            border: 2px solid var(--primary-color);
+            border-radius: 15px;
+            padding: 15px 25px;
+            margin: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+            min-width: 120px;
+            text-align: center;
+        }
+        
+        .quiz-option:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .quiz-option.selected {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .quiz-option.correct {
+            background-color: var(--success-color);
+            color: white;
+            border-color: var(--success-color);
+        }
+        
+        .quiz-option.incorrect {
+            background-color: var(--error-color);
+            color: white;
+            border-color: var(--error-color);
+        }
+        
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            margin: 20px 0;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background-color: #f0f0f0;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 10px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+        
+        /* Hint Section */
+        .hint-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .hint-text {
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Learning Path */
+        .learning-path {
+            display: flex;
+            justify-content: space-between;
+            margin: 30px 0;
+            width: 100%;
+            height: 30px;
+            position: relative;
+        }
+        
+        .path-segment {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #f0f0f0;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .path-segment:before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            top: 50%;
+            transform: translateY(-50%);
+            left: -50%;
+            z-index: 1;
+        }
+        
+        .path-segment:first-child:before {
+            display: none;
+        }
+        
+        .path-segment.completed {
+            background-color: var(--success-color);
+        }
+        
+        .path-segment.completed:before {
+            background-color: var(--success-color);
+        }
+        
+        .path-segment.current {
+            background-color: var(--secondary-color);
+            transform: scale(1.2);
+            box-shadow: 0 0 10px rgba(255, 154, 0, 0.5);
+        }
+        
+        /* Particles */
+        .star, .bubble {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1000;
+        }
+        
+        /* Shape Display */
+        .shape-display {
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            margin: 20px auto;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Reward Screen */
+        .reward-text {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            text-align: center;
+            margin: 20px 0;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .reward-animation {
+            width: 100%;
+            height: 300px;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+            }
+            
+            .character-container {
+                width: 100px;
+                height: 150px;
+            }
+            
+            .character {
+                width: 80px;
+                height: 100px;
+            }
+            
+            .professor-container {
+                left: 20px;
+            }
+            
+            .helper-container {
+                right: 20px;
+            }
+            
+            .speech-bubble {
+                width: 150px;
+                padding: 10px;
+                font-size: 0.9rem;
+            }
+            
+            .button {
+                padding: 10px 20px;
+                font-size: 1rem;
+            }
+            
+            .quiz-question {
+                font-size: 1.2rem;
+            }
+            
+            .quiz-option {
+                padding: 10px 20px;
+                font-size: 1rem;
+                min-width: 100px;
+            }
+            
+            .reward-text {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        .slide-in {
+            animation: slideIn 0.5s ease-in-out;
+        }
+        
+        /* Settings Drawer */
+        .settings-drawer {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            height: 100%;
+            background: white;
+            box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+            transition: right 0.3s ease;
+            z-index: 1000;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .settings-drawer.open {
+            right: 0;
+        }
+        
+        .settings-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1001;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        
+        /* Sound Effects Button */
+        .sound-toggle {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            z-index: 1001;
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Help Button */
+        .help-button {
+            position: fixed;
+            top: 140px;
+            right: 20px;
+            z-index: 1001;
+            background: var(--info-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.visible {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-title {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-color);
+        }
+        
+        /* Help Content */
+        .help-content {
+            line-height: 1.6;
+        }
+        
+        .help-section {
+            margin-bottom: 20px;
+        }
+        
+        .help-title {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+        
+        .help-text {
+            margin-bottom: 15px;
+        }
+        
+        /* Advanced Settings */
+        .advanced-settings {
+            margin-top: 30px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Start Screen -->
+        <div id="startScreen" class="screen visible">
+            <h1 class="title">Shape Area Adventure 🎮</h1>
+            <div class="button-container">
+                <button id="startButton" class="button primary">Start Game 🚀</button>
+                <button id="settingsButton" class="button">Settings ⚙️</button>
+                <button id="helpStartButton" class="button">How to Play ❓</button>
+            </div>
+            <div class="professor-container character-container">
+                <div id="professorBubbleStart" class="speech-bubble">
+                    Welcome to Shape Area Adventure! I'm Professor Geo! 🧠
+                </div>
+                <div id="professor" class="character"></div>
+            </div>
+            <div class="helper-container character-container">
+                <div id="helperBubbleStart" class="speech-bubble">
+                    I'm Poly! Let's explore the amazing world of shapes together! 📐
+                </div>
+                <div id="helper" class="character"></div>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="gameScreen" class="screen">
+            <h2 class="title">Area of Shapes 📏</h2>
+            
+            <div class="progress-container">
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+            </div>
+            
+            <div id="shapeDisplay" class="shape-display"></div>
+            
+            <div class="quiz-container">
+                <div id="quizQuestion" class="quiz-question">What is the area of this shape?</div>
+                <div id="quizOptions" class="quiz-options">
+                    <!-- Options will be added dynamically -->
+                </div>
+            </div>
+            
+            <div class="button-container">
+                <button id="checkAnswerButton" class="button primary">Check Answer ✅</button>
+                <button id="hintButton" class="button">Show Hint 💡</button>
+                <button id="backButton" class="button">Back to Menu 🏠</button>
+            </div>
+            
+            <div class="hint-container">
+                <div id="hintText" class="hint-text"></div>
+            </div>
+            
+            <div class="professor-container character-container">
+                <div id="professorBubble" class="speech-bubble"></div>
+                <div class="character"></div>
+            </div>
+            <div class="helper-container character-container">
+                <div id="helperBubble" class="speech-bubble"></div>
+                <div class="character"></div>
+            </div>
+        </div>
+
+        <!-- Reward Screen -->
+        <div id="rewardScreen" class="screen">
+            <h2 class="title">Congratulations! 🎉</h2>
+            <div id="rewardText" class="reward-text">You're a Shape Master!</div>
+            <div id="rewardAnimation" class="reward-animation"></div>
+            <div class="button-container">
+                <button id="continueButton" class="button primary">Continue Learning 🚀</button>
+                <button id="menuButton" class="button">Back to Menu 🏠</button>
+            </div>
+        </div>
+
+        <!-- Learning Path -->
+        <div id="learningPath" class="learning-path">
+            <!-- Path segments will be added dynamically -->
+        </div>
+    </div>
+
+    <!-- Settings Drawer -->
+    <button id="settingsToggle" class="settings-toggle">⚙️</button>
+    <div id="settingsDrawer" class="settings-drawer">
+        <button id="closeSettings" class="close-button">×</button>
+        <h2 class="setting-title">Game Settings</h2>
+        
+        <div class="settings-container">
+            <div class="setting-group">
+                <h3 class="setting-title">Difficulty</h3>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Easy</span>
+                        <span id="difficultyValue">Medium</span>
+                        <span>Hard</span>
+                    </div>
+                    <input type="range" id="difficultySlider" class="slider" min="1" max="3" value="2">
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <h3 class="setting-title">Sound Effects</h3>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Off</span>
+                        <span id="soundValue">50%</span>
+                        <span>Max</span>
+                    </div>
+                    <input type="range" id="soundSlider" class="slider" min="0" max="100" value="50">
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <h3 class="setting-title">Animation Speed</h3>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>Slow</span>
+                        <span id="animationValue">Normal</span>
+                        <span>Fast</span>
+                    </div>
+                    <input type="range" id="animationSlider" class="slider" min="1" max="3" value="2">
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <h3 class="setting-title">Features</h3>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="hintToggle" checked>
+                    <label for="hintToggle">Enable Hints</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="animationToggle" checked>
+                    <label for="animationToggle">Enable Animations</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="formulaToggle" checked>
+                    <label for="formulaToggle">Show Formulas</label>
+                </div>
+            </div>
+        </div>
+        
+        <div class="advanced-settings">
+            <h3 class="setting-title">Advanced Settings</h3>
+            <div class="setting-group">
+                <h3 class="setting-title">Shape Types</h3>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="rectangleToggle" checked>
+                    <label for="rectangleToggle">Rectangles</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="squareToggle" checked>
+                    <label for="squareToggle">Squares</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="triangleToggle" checked>
+                    <label for="triangleToggle">Triangles</label>
+                </div>
+                <div class="checkbox-container">
+                    <input type="checkbox" id="circleToggle" checked>
+                    <label for="circleToggle">Circles</label>
+                </div>
+            </div>
+            
+            <div class="setting-group">
+                <h3 class="setting-title">Number Range</h3>
+                <div class="slider-container">
+                    <div class="slider-label">
+                        <span>1-5</span>
+                        <span id="numberRangeValue">1-10</span>
+                        <span>1-20</span>
+                    </div>
+                    <input type="range" id="numberRangeSlider" class="slider" min="1" max="3" value="2">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sound Toggle Button -->
+    <button id="soundToggle" class="sound-toggle">🔊</button>
+
+    <!-- Help Button -->
+    <button id="helpButton" class="help-button">❓</button>
+
+    <!-- Help Modal -->
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <button id="closeHelpModal" class="modal-close">×</button>
+            <h2 class="modal-title">How to Play Shape Area Adventure</h2>
+            <div class="help-content">
+                <div class="help-section">
+                    <h3 class="help-title">What is Area? 📏</h3>
+                    <p class="help-text">Area is the amount of space inside a shape. It's measured in square units, like square centimeters (cm²) or square inches (in²).</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3 class="help-title">How to Calculate Area 🧮</h3>
+                    <p class="help-text"><strong>Rectangle:</strong> Area = Width × Height</p>
+                    <p class="help-text"><strong>Square:</strong> Area = Side × Side (or Side²)</p>
+                    <p class="help-text"><strong>Triangle:</strong> Area = ½ × Base × Height</p>
+                    <p class="help-text"><strong>Circle:</strong> Area = π × Radius × Radius (or πr²)</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3 class="help-title">Game Instructions 🎮</h3>
+                    <p class="help-text">1. Look at the shape displayed on the screen</p>
+                    <p class="help-text">2. Calculate the area using the correct formula</p>
+                    <p class="help-text">3. Select your answer from the options provided</p>
+                    <p class="help-text">4. Click "Check Answer" to see if you're right</p>
+                    <p class="help-text">5. If you need help, click "Show Hint"</p>
+                </div>
+                
+                <div class="help-section">
+                    <h3 class="help-title">Tips for Success 💡</h3>
+                    <p class="help-text">• Pay attention to the units of each measurement</p>
+                    <p class="help-text">• Practice the formulas for each shape type</p>
+                    <p class="help-text">• Try to understand why each formula works</p>
+                    <p class="help-text">• Don't be afraid to use the hints if you get stuck!</p>
+                </div>
+            </div>
+            <div class="button-container">
+                <button id="gotItButton" class="button primary">Got It! 👍</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game Variables
+        const gameState = {
+            currentLevel: 1,
+            maxLevel: 5,
+            score: 0,
+            progress: 0,
+            settings: {
+                difficulty: 2, // 1: Easy, 2: Medium, 3: Hard
+                soundVolume: 50, // 0-100
+                animationSpeed: 2, // 1: Slow, 2: Normal, 3: Fast
+                hintsEnabled: true,
+                animationsEnabled: true,
+                formulasEnabled: true,
+                shapeTypes: {
+                    rectangle: true,
+                    square: true,
+                    triangle: true,
+                    circle: true
+                },
+                numberRange: 2 // 1: 1-5, 2: 1-10, 3: 1-20
+            },
+            currentQuiz: {
+                shape: '',
+                correctAnswer: null,
+                userAnswer: null,
+                dimensions: []
+            },
+            animations: {
+                stars: [],
+                bubbles: [],
+                timers: []
+            }
+        };
+
+        // Audio Context for Sound Effects
+        let audioContext;
+
+        // DOM Elements
+        const elements = {
+            screens: {
+                startScreen: document.getElementById('startScreen'),
+                gameScreen: document.getElementById('gameScreen'),
+                rewardScreen: document.getElementById('rewardScreen')
+            },
+            buttons: {
+                startButton: document.getElementById('startButton'),
+                settingsButton: document.getElementById('settingsButton'),
+                helpStartButton: document.getElementById('helpStartButton'),
+                checkAnswerButton: document.getElementById('checkAnswerButton'),
+                hintButton: document.getElementById('hintButton'),
+                backButton: document.getElementById('backButton'),
+                continueButton: document.getElementById('continueButton'),
+                menuButton: document.getElementById('menuButton'),
+                settingsToggle: document.getElementById('settingsToggle'),
+                closeSettings: document.getElementById('closeSettings'),
+                soundToggle: document.getElementById('soundToggle'),
+                helpButton: document.getElementById('helpButton'),
+                closeHelpModal: document.getElementById('closeHelpModal'),
+                gotItButton: document.getElementById('gotItButton')
+            },
+            settings: {
+                difficultySlider: document.getElementById('difficultySlider'),
+                difficultyValue: document.getElementById('difficultyValue'),
+                soundSlider: document.getElementById('soundSlider'),
+                soundValue: document.getElementById('soundValue'),
+                animationSlider: document.getElementById('animationSlider'),
+                animationValue: document.getElementById('animationValue'),
+                hintToggle: document.getElementById('hintToggle'),
+                animationToggle: document.getElementById('animationToggle'),
+                formulaToggle: document.getElementById('formulaToggle'),
+                rectangleToggle: document.getElementById('rectangleToggle'),
+                squareToggle: document.getElementById('squareToggle'),
+                triangleToggle: document.getElementById('triangleToggle'),
+                circleToggle: document.getElementById('circleToggle'),
+                numberRangeSlider: document.getElementById('numberRangeSlider'),
+                numberRangeValue: document.getElementById('numberRangeValue'),
+                settingsDrawer: document.getElementById('settingsDrawer')
+            },
+            displays: {
+                progressFill: document.getElementById('progressFill'),
+                shapeDisplay: document.getElementById('shapeDisplay'),
+                quizQuestion: document.getElementById('quizQuestion'),
+                quizOptions: document.getElementById('quizOptions'),
+                hintText: document.getElementById('hintText'),
+                rewardText: document.getElementById('rewardText'),
+                rewardAnimation: document.getElementById('rewardAnimation'),
+                learningPath: document.getElementById('learningPath')
+            },
+            characters: {
+                professorBubble: document.getElementById('professorBubble'),
+                helperBubble: document.getElementById('helperBubble'),
+                professorBubbleStart: document.getElementById('professorBubbleStart'),
+                helperBubbleStart: document.getElementById('helperBubbleStart')
+            },
+            modal: {
+                helpModal: document.getElementById('helpModal')
+            }
+        };
+
+        // Initialize the game
+        function initGame() {
+            // Initialize Audio Context
+            try {
+                // Modern browsers
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Web Audio API is not supported in this browser');
+                audioContext = null;
+            }
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Create the learning path
+            createLearningPath();
+            
+            // Draw the characters
+            drawCharacters();
+            
+            // Show welcome messages
+            setTimeout(() => {
+                elements.characters.professorBubbleStart.style.opacity = '1';
+                playSelectSound();
+            }, 500);
+            
+            setTimeout(() => {
+                elements.characters.helperBubbleStart.style.opacity = '1';
+                playSelectSound();
+            }, 1500);
+            
+            // Update settings display
+            updateSettingsDisplay();
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Start Screen Buttons
+            elements.buttons.startButton.addEventListener('click', () => {
+                playButtonSound();
+                startGame();
+            });
+            
+            elements.buttons.settingsButton.addEventListener('click', () => {
+                playButtonSound();
+                toggleSettingsDrawer();
+            });
+            
+            elements.buttons.helpStartButton.addEventListener('click', () => {
+                playButtonSound();
+                showHelpModal();
+            });
+            
+            // Game Screen Buttons
+            elements.buttons.checkAnswerButton.addEventListener('click', () => {
+                playButtonSound();
+                checkQuizAnswer();
+            });
+            
+            elements.buttons.hintButton.addEventListener('click', () => {
+                playButtonSound();
+                toggleHint();
+            });
+            
+            elements.buttons.backButton.addEventListener('click', () => {
+                playButtonSound();
+                goToScreen('startScreen');
+            });
+            
+            // Reward Screen Buttons
+            elements.buttons.continueButton.addEventListener('click', () => {
+                playButtonSound();
+                continueGame();
+            });
+            
+            elements.buttons.menuButton.addEventListener('click', () => {
+                playButtonSound();
+                goToScreen('startScreen');
+            });
+            
+            // Settings Drawer
+            elements.buttons.settingsToggle.addEventListener('click', () => {
+                playButtonSound();
+                toggleSettingsDrawer();
+            });
+            
+            elements.buttons.closeSettings.addEventListener('click', () => {
+                playButtonSound();
+                toggleSettingsDrawer();
+            });
+            
+            // Sound Toggle
+            elements.buttons.soundToggle.addEventListener('click', () => {
+                playButtonSound();
+                toggleSound();
+            });
+            
+            // Help Button & Modal
+            elements.buttons.helpButton.addEventListener('click', () => {
+                playButtonSound();
+                showHelpModal();
+            });
+            
+            elements.buttons.closeHelpModal.addEventListener('click', () => {
+                playButtonSound();
+                hideHelpModal();
+            });
+            
+            elements.buttons.gotItButton.addEventListener('click', () => {
+                playButtonSound();
+                hideHelpModal();
+            });
+            
+            // Settings Sliders
+            elements.settings.difficultySlider.addEventListener('input', () => {
+                playTickSound();
+                gameState.settings.difficulty = parseInt(elements.settings.difficultySlider.value);
+                updateSettingsDisplay();
+            });
+            
+            elements.settings.soundSlider.addEventListener('input', () => {
+                playTickSound();
+                gameState.settings.soundVolume = parseInt(elements.settings.soundSlider.value);
+                updateSettingsDisplay();
+            });
+            
+            elements.settings.animationSlider.addEventListener('input', () => {
+                playTickSound();
+                gameState.settings.animationSpeed = parseInt(elements.settings.animationSlider.value);
+                updateSettingsDisplay();
+            });
+            
+            elements.settings.numberRangeSlider.addEventListener('input', () => {
+                playTickSound();
+                gameState.settings.numberRange = parseInt(elements.settings.numberRangeSlider.value);
+                updateSettingsDisplay();
+            });
+            
+            // Settings Toggles
+            elements.settings.hintToggle.addEventListener('change', () => {
+                playSelectSound();
+                gameState.settings.hintsEnabled = elements.settings.hintToggle.checked;
+            });
+            
+            elements.settings.animationToggle.addEventListener('change', () => {
+                playSelectSound();
+                gameState.settings.animationsEnabled = elements.settings.animationToggle.checked;
+            });
+            
+            elements.settings.formulaToggle.addEventListener('change', () => {
+                playSelectSound();
+                gameState.settings.formulasEnabled = elements.settings.formulaToggle.checked;
+            });
+            
+            elements.settings.rectangleToggle.addEventListener('change', () => {
+                playSelectSound();
+                gameState.settings.shapeTypes.rectangle = elements.settings.rectangleToggle.checked;
+                // Ensure at least one shape type is enabled
+                ensureShapeTypesEnabled();
+            });
+            
+            elements.settings.squareToggle.addEventListener('change', () => {
+                playSelectSound();
+                gameState.settings.shapeTypes.square = elements.settings.squareToggle.checked;
+                ensureShapeTypesEnabled();
+            });
+            
+            elements.settings.triangleToggle.addEventListener('change', () => {
+                playSelectSound();
+                gameState.settings.shapeTypes.triangle = elements.settings.triangleToggle.checked;
+                ensureShapeTypesEnabled();
+            });
+            
+            elements.settings.circleToggle.addEventListener('change', () => {
+                playSelectSound();
+                gameState.settings.shapeTypes.circle = elements.settings.circleToggle.checked;
+                ensureShapeTypesEnabled();
+            });
+        }
+
+        // Ensure at least one shape type is enabled
+        function ensureShapeTypesEnabled() {
+            const allDisabled = !Object.values(gameState.settings.shapeTypes).some(enabled => enabled);
+            
+            if (allDisabled) {
+                // Re-enable the most recently toggled shape type
+                const lastToggled = document.activeElement.id;
+                switch (lastToggled) {
+                    case 'rectangleToggle':
+                        elements.settings.rectangleToggle.checked = true;
+                        gameState.settings.shapeTypes.rectangle = true;
+                        break;
+                    case 'squareToggle':
+                        elements.settings.squareToggle.checked = true;
+                        gameState.settings.shapeTypes.square = true;
+                        break;
+                    case 'triangleToggle':
+                        elements.settings.triangleToggle.checked = true;
+                        gameState.settings.shapeTypes.triangle = true;
+                        break;
+                    case 'circleToggle':
+                        elements.settings.circleToggle.checked = true;
+                        gameState.settings.shapeTypes.circle = true;
+                        break;
+                    default:
+                        // Default fallback
+                        elements.settings.rectangleToggle.checked = true;
+                        gameState.settings.shapeTypes.rectangle = true;
+                }
+                
+                // Show a message to the user
+                showMessage(elements.characters.professorBubble, "You need at least one shape type enabled! 😊");
+            }
+        }
+
+        // Start the game
+        function startGame() {
+            // Reset game state
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.progress = 0;
+            
+            // Load the first level
+            loadLevel(gameState.currentLevel);
+            
+            // Show the game screen
+            goToScreen('gameScreen');
+            
+            // Show welcome message
+            showMessage(elements.characters.professorBubble, "Let's learn about the area of shapes! Ready? 🚀");
+            
+            // Show the first question
+            generateQuizQuestion();
+            
+            // Update the learning path
+            updateLearningPath();
+        }
+
+        // Load a level
+        function loadLevel(level) {
+            // Update current level
+            gameState.currentLevel = level;
+            
+            // Update progress based on level
+            gameState.progress = ((level - 1) / (gameState.maxLevel - 1)) * 100;
+            elements.displays.progressFill.style.width = `${gameState.progress}%`;
+            
+            // Update UI based on level
+            document.querySelectorAll('.level-indicator').forEach((indicator, index) => {
+                if (index < level - 1) {
+                    indicator.classList.add('completed');
+                } else if (index === level - 1) {
+                    indicator.classList.add('current');
+                } else {
+                    indicator.classList.remove('completed', 'current');
+                }
+            });
+        }
+
+        // Generate a quiz question
+        function generateQuizQuestion() {
+            // Clear user's answer
+            gameState.currentQuiz.userAnswer = null;
+            
+            // Get enabled shape types
+            const enabledShapes = Object.entries(gameState.settings.shapeTypes)
+                .filter(([_, enabled]) => enabled)
+                .map(([type]) => type.charAt(0).toUpperCase() + type.slice(1));
+            
+            // Select a random shape type from enabled types
+            const shape = enabledShapes[Math.floor(Math.random() * enabledShapes.length)];
+            
+            // Generate size based on number range setting
+            let maxSize;
+            switch (gameState.settings.numberRange) {
+                case 1: maxSize = 5; break;
+                case 2: maxSize = 10; break;
+                case 3: maxSize = 20; break;
+                default: maxSize = 10;
+            }
+            
+            // Generate dimensions based on shape type and difficulty
+            let area, dimensions;
+            const size = Math.floor(Math.random() * maxSize) + 1;
+            
+            if (shape === 'Rectangle') {
+                const width = size;
+                const height = Math.floor(Math.random() * maxSize) + 1;
+                area = width * height;
+                dimensions = [width, height];
+            } else if (shape === 'Square') {
+                area = size * size;
+                dimensions = [size];
+            } else if (shape === 'Triangle') {
+                const base = size;
+                const height = Math.floor(Math.random() * maxSize) + 1;
+                area = 0.5 * base * height;
+                dimensions = [base, height];
+            } else if (shape === 'Circle') {
+                const radius = size;
+                area = Math.PI * radius * radius;
+                // Round to 2 decimal places for circles
+                area = Math.round(area * 100) / 100;
+                dimensions = [radius];
+            }
+            
+            // Store quiz data
+            gameState.currentQuiz.shape = shape;
+            gameState.currentQuiz.correctAnswer = area;
+            gameState.currentQuiz.dimensions = dimensions;
+            
+            // Update question text
+            elements.displays.quizQuestion.textContent = `What is the area of this ${shape.toLowerCase()}?`;
+            
+            // Set hint text based on shape
+            let hintText = '';
+            if (shape === 'Rectangle') {
+                hintText = `Remember, the area of a rectangle is Width × Height. This rectangle has width ${dimensions[0]} and height ${dimensions[1]}.`;
+            } else if (shape === 'Square') {
+                hintText = `Remember, the area of a square is Side × Side (or Side²). This square has side length ${dimensions[0]}.`;
+            } else if (shape === 'Triangle') {
+                hintText = `Remember, the area of a triangle is ½ × Base × Height. This triangle has base ${dimensions[0]} and height ${dimensions[1]}.`;
+            } else if (shape === 'Circle') {
+                hintText = `Remember, the area of a circle is π × Radius × Radius (or πr²). This circle has radius ${dimensions[0]} and π is approximately 3.14.`;
+            }
+            elements.displays.hintText.textContent = hintText;
+            
+            // Draw the shape
+            drawShape(shape, dimensions);
+            
+            // Generate quiz options
+            generateQuizOptions(area);
+            
+            // Helper message
+            if (Math.random() < 0.5) {
+                let helperMessage = '';
+                if (shape === 'Rectangle') {
+                    helperMessage = `To find the area, multiply width ${dimensions[0]} by height ${dimensions[1]}! 📏`;
+                } else if (shape === 'Square') {
+                    helperMessage = `Square's area is side × side. Here, the side is ${dimensions[0]}! 🟦`;
+                } else if (shape === 'Triangle') {
+                    helperMessage = `Triangle area is half of base times height! Base: ${dimensions[0]}, Height: ${dimensions[1]}! 📐`;
+                } else if (shape === 'Circle') {
+                    helperMessage = `Circle area is π × radius². Radius is ${dimensions[0]} and π is about 3.14! ⭕`;
+                }
+                showMessage(elements.characters.helperBubble, helperMessage);
+            }
+        }
+
+        // Generate quiz options
+        function generateQuizOptions(correctAnswer) {
+            // Clear previous options
+            elements.displays.quizOptions.innerHTML = '';
+            
+            // Generate distractors
+            const distractors = generateDistractors(correctAnswer);
+            
+            // Combine with correct answer and shuffle
+            const options = [correctAnswer, ...distractors];
+            shuffleArray(options);
+            
+            // Create option elements
+            options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', function() {
+                    selectQuizOption(this);
+                });
+                elements.displays.quizOptions.appendChild(optionElement);
+            });
+        }
+
+        // Generate distractors for quiz options
+        function generateDistractors(correctAnswer) {
+            // Number of distractors based on difficulty
+            let numDistractors;
+            switch (gameState.settings.difficulty) {
+                case 1: numDistractors = 2; break; // Easy: 3 options total
+                case 2: numDistractors = 3; break; // Medium: 4 options total
+                case 3: numDistractors = 4; break; // Hard: 5 options total
+                default: numDistractors = 3;
+            }
+            
+            const distractors = new Set();
+            const isInteger = Number.isInteger(correctAnswer);
+            
+            // Generate distractors with decreasing variation based on difficulty
+            const variationFactor = 4 - gameState.settings.difficulty; // 3 for easy, 2 for medium, 1 for hard
+            
+            while (distractors.size < numDistractors) {
+                let distractor;
+                const variation = Math.random() * variationFactor;
+                
+                // 50% chance to add, 50% chance to subtract
+                if (Math.random() < 0.5) {
+                    distractor = correctAnswer + variation * correctAnswer;
+                } else {
+                    distractor = correctAnswer - variation * correctAnswer;
+                }
+                
+                // Ensure distractor is positive
+                distractor = Math.max(distractor, 0.1);
+                
+                // Format distractor appropriately
+                if (isInteger) {
+                    distractor = Math.round(distractor);
+                } else {
+                    distractor = Math.round(distractor * 100) / 100;
+                }
+                
+                // Add distractor if it's not the same as correct answer and not already in the set
+                if (distractor !== correctAnswer && !distractors.has(distractor)) {
+                    distractors.add(distractor);
+                }
+            }
+            
+            return Array.from(distractors);
+        }
+
+        // Select a quiz option
+        function selectQuizOption(optionElement) {
+            // Clear previous selections
+            document.querySelectorAll('.quiz-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            
+            // Select clicked option
+            optionElement.classList.add('selected');
+            
+            // Play select sound
+            playSelectSound();
+            
+            // Store user's answer
+            gameState.currentQuiz.userAnswer = parseFloat(optionElement.textContent);
+        }
+
+        // Check quiz answer
+        function checkQuizAnswer() {
+            if (gameState.currentQuiz.userAnswer === null) {
+                // No answer selected
+                showMessage(elements.characters.professorBubble, "Please select an answer first! 👆");
+                return;
+            }
+            
+            // Get selected option element
+            const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+            let selectedOption;
+            options.forEach(option => {
+                if (option.classList.contains('selected')) {
+                    selectedOption = option;
+                }
+            });
+            
+            // Check if answer is correct
+            const isCorrect = gameState.currentQuiz.userAnswer === gameState.currentQuiz.correctAnswer;
+            
+            if (isCorrect) {
+                // Correct answer
+                playSuccessSound();
+                if (gameState.settings.animationsEnabled) {
+                    createParticleEffect();
+                }
+                
+                // Show celebration message
+                showMessage(elements.characters.professorBubble, "Excellent! That's correct! 🎉");
+                
+                // Add correct class
+                selectedOption.classList.add('correct');
+                
+                // Increment score
+                gameState.score++;
+                
+                // Proceed to next question or level
+                setTimeout(() => {
+                    if (gameState.score >= gameState.currentLevel * 2) {
+                        // Level completed
+                        if (gameState.currentLevel >= gameState.maxLevel) {
+                            // Game completed
+                            setTimeout(() => {
+                                completeQuiz();
+                            }, 1000);
+                        } else {
+                            // Next level
+                            gameState.currentLevel++;
+                            loadLevel(gameState.currentLevel);
+                            updateLearningPath();
+                            generateQuizQuestion();
+                            
+                            // Show level up message
+                            showMessage(elements.characters.helperBubble, `Great job! You've reached level ${gameState.currentLevel}! 🚀`);
+                        }
+                    } else {
+                        // Next question in same level
+                        generateQuizQuestion();
+                    }
+                }, 1500);
+            } else {
+                // Incorrect answer
+                playErrorSound();
+                
+                // Show hint message
+                showMessage(elements.characters.professorBubble, `Not quite. The correct answer is ${gameState.currentQuiz.correctAnswer}. Let's try again! 💪`);
+                
+                // Add incorrect class to selected option
+                selectedOption.classList.add('incorrect');
+                
+                // Highlight correct answer
+                options.forEach(option => {
+                    if (parseFloat(option.textContent) === gameState.currentQuiz.correctAnswer) {
+                        option.classList.add('correct');
+                    }
+                });
+                
+                // Next question after delay
+                setTimeout(() => {
+                    generateQuizQuestion();
+                }, 2500);
+            }
+        }
+
+        // Complete the quiz
+        function completeQuiz() {
+            // Show reward screen
+            goToScreen('rewardScreen');
+            
+            // Set reward text based on score
+            const totalQuestions = gameState.maxLevel * 2;
+            const percentage = (gameState.score / totalQuestions) * 100;
+            
+            if (percentage >= 90) {
+                elements.displays.rewardText.textContent = "Amazing! You're a Shape Area Master! 🏆";
+            } else if (percentage >= 70) {
+                elements.displays.rewardText.textContent = "Great job! You're getting really good with shapes! 🥇";
+            } else if (percentage >= 50) {
+                elements.displays.rewardText.textContent = "Good effort! Keep practicing to master areas! 🌟";
+            } else {
+                elements.displays.rewardText.textContent = "Nice try! Let's keep learning about shapes! 👍";
+            }
+            
+            // Create celebration animation
+            createRewardAnimation();
+            
+            // Play celebration sound
+            playCelebrationSound();
+        }
+
+        // Continue game after quiz
+        function continueGame() {
+            // Reset game state for next session
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            gameState.progress = 0;
+            
+            // Load the first level
+            loadLevel(gameState.currentLevel);
+            
+            // Update learning path
+            updateLearningPath();
+            
+            // Generate new question
+            generateQuizQuestion();
+            
+            // Show the game screen
+            goToScreen('gameScreen');
+        }
+
+        // Toggle hint visibility
+        function toggleHint() {
+            const hintText = elements.displays.hintText;
+            
+            if (hintText.style.opacity === '1') {
+                hintText.style.opacity = '0';
+            } else {
+                hintText.style.opacity = '1';
+                
+                // Auto-hide after 7 seconds
+                setTimeout(() => {
+                    hintText.style.opacity = '0';
+                }, 7000);
+            }
+        }
+
+        // Show a message in a character speech bubble
+        function showMessage(bubbleElement, message) {
+            // Set the message text
+            bubbleElement.textContent = message;
+            
+            // Show the bubble
+            bubbleElement.style.opacity = '1';
+            
+            // Auto-hide after delay based on message length
+            const delay = Math.max(3000, message.length * 50);
+            setTimeout(() => {
+                bubbleElement.style.opacity = '0';
+            }, delay);
+        }
+
+        // Create learning path
+        function createLearningPath() {
+            const pathContainer = elements.displays.learningPath;
+            
+            // Clear any existing segments
+            pathContainer.innerHTML = '';
+            
+            // Create segments for each level
+            for (let i = 0; i < gameState.maxLevel; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'path-segment';
+                segment.setAttribute('data-level', i + 1);
+                pathContainer.appendChild(segment);
+            }
+        }
+
+        // Update learning path
+        function updateLearningPath() {
+            const segments = elements.displays.learningPath.querySelectorAll('.path-segment');
+            
+            segments.forEach((segment, index) => {
+                const level = index + 1;
+                
+                if (level < gameState.currentLevel) {
+                    segment.className = 'path-segment completed';
+                } else if (level === gameState.currentLevel) {
+                    segment.className = 'path-segment current';
+                } else {
+                    segment.className = 'path-segment';
+                }
+            });
+        }
+
+        // Draw characters
+        function drawCharacters() {
+            // Get all character elements
+            const professorElements = document.querySelectorAll('.professor-container .character');
+            const helperElements = document.querySelectorAll('.helper-container .character');
+            
+            // Draw professor character in all instances
+            professorElements.forEach(element => {
+                drawProfessor(element);
+            });
+            
+            // Draw helper character in all instances
+            helperElements.forEach(element => {
+                drawHelper(element);
+            });
+        }
+
+        // Draw professor character
+        function drawProfessor(element) {
+            element.innerHTML = `
+                <svg width="120" height="150" viewBox="0 0 120 150">
+                    <!-- Body -->
+                    <ellipse cx="60" cy="95" rx="30" ry="35" fill="#1E88E5" />
+                    
+                    <!-- Head -->
+                    <circle cx="60" cy="45" r="20" fill="#FFD700" />
+                    
+                    <!-- Eyes -->
+                    <circle cx="52" cy="40" r="4" fill="white" />
+                    <circle cx="68" cy="40" r="4" fill="white" />
+                    <circle cx="52" cy="40" r="2" fill="black" />
+                    <circle cx="68" cy="40" r="2" fill="black" />
+                    
+                    <!-- Glasses -->
+                    <circle cx="52" cy="40" r="6" fill="none" stroke="black" stroke-width="1.5" />
+                    <circle cx="68" cy="40" r="6" fill="none" stroke="black" stroke-width="1.5" />
+                    <line x1="58" y1="40" x2="62" y2="40" stroke="black" stroke-width="1.5" />
+                    
+                    <!-- Smile -->
+                    <path d="M50,50 Q60,60 70,50" fill="none" stroke="black" stroke-width="1.5" />
+                    
+                    <!-- Beard -->
+                    <path d="M50,55 Q60,70 70,55 Q60,60 50,55" fill="#A0522D" />
+                    
+                    <!-- Hair -->
+                    <path d="M40,35 Q60,15 80,35 Q60,25 40,35" fill="#A0522D" />
+                    
+                    <!-- Arms -->
+                    <line x1="40" y1="85" x2="25" y2="75" stroke="#FFD700" stroke-width="5" stroke-linecap="round" />
+                    <line x1="80" y1="85" x2="95" y2="75" stroke="#FFD700" stroke-width="5" stroke-linecap="round" />
+                    
+                    <!-- Legs -->
+                    <line x1="50" y1="130" x2="45" y2="145" stroke="#1E88E5" stroke-width="8" stroke-linecap="round" />
+                    <line x1="70" y1="130" x2="75" y2="145" stroke="#1E88E5" stroke-width="8" stroke-linecap="round" />
+                </svg>
+            `;
+        }
+
+        // Draw helper character
+        function drawHelper(element) {
+            element.innerHTML = `
+                <svg width="120" height="150" viewBox="0 0 120 150">
+                    <!-- Body -->
+                    <ellipse cx="60" cy="95" rx="25" ry="30" fill="#FF6D00" />
+                    
+                    <!-- Head -->
+                    <circle cx="60" cy="45" r="20" fill="#FFEB3B" />
+                    
+                    <!-- Eyes -->
+                    <circle cx="52" cy="40" r="4" fill="white" />
+                    <circle cx="68" cy="40" r="4" fill="white" />
+                    <circle cx="52" cy="40" r="2" fill="black" />
+                    <circle cx="68" cy="40" r="2" fill="black" />
+                    
+                    <!-- Smile -->
+                    <path d="M50,50 Q60,60 70,50" fill="none" stroke="black" stroke-width="1.5" />
+                    
+                    <!-- Arms -->
+                    <line x1="40" y1="85" x2="25" y2="95" stroke="#FFEB3B" stroke-width="5" stroke-linecap="round" />
+                    <line x1="80" y1="85" x2="95" y2="95" stroke="#FFEB3B" stroke-width="5" stroke-linecap="round" />
+                    
+                    <!-- Legs -->
+                    <line x1="50" y1="125" x2="45" y2="140" stroke="#FF6D00" stroke-width="8" stroke-linecap="round" />
+                    <line x1="70" y1="125" x2="75" y2="140" stroke="#FF6D00" stroke-width="8" stroke-linecap="round" />
+                    
+                    <!-- Shape symbols -->
+                    <rect x="48" y="30" width="7" height="7" fill="#E91E63" />
+                    <circle cx="70" cy="32" r="5" fill="#2196F3" />
+                    <polygon points="60,60 55,65 65,65" fill="#4CAF50" />
+                </svg>
+            `;
+        }
+
+        // Draw a shape
+        function drawShape(shape, dimensions) {
+            const canvas = elements.displays.shapeDisplay;
+            canvas.innerHTML = '';
+            
+            const svgWidth = 400;
+            const svgHeight = 300;
+            const unit = 30; // Size unit for shapes
+            
+            // Create SVG element
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            svg.setAttribute("width", "100%");
+            svg.setAttribute("height", "100%");
+            svg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+            
+            // Draw shape based on type
+            if (shape === 'Rectangle') {
+                const [width, height] = dimensions;
+                const rectWidth = width * unit;
+                const rectHeight = height * unit;
+                const startX = (svgWidth - rectWidth) / 2;
+                const startY = (svgHeight - rectHeight) / 2;
+                
+                // Draw rectangle
+                const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                rect.setAttribute("x", startX);
+                rect.setAttribute("y", startY);
+                rect.setAttribute("width", rectWidth);
+                rect.setAttribute("height", rectHeight);
+                rect.setAttribute("fill", "#90CAF9");
+                rect.setAttribute("stroke", "#1976D2");
+                rect.setAttribute("stroke-width", "2");
+                svg.appendChild(rect);
+                
+                // Draw grid if enabled
+                if (gameState.settings.formulasEnabled) {
+                    for (let x = 0; x < width; x++) {
+                        for (let y = 0; y < height; y++) {
+                            const gridRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                            gridRect.setAttribute("x", startX + x * unit);
+                            gridRect.setAttribute("y", startY + y * unit);
+                            gridRect.setAttribute("width", unit);
+                            gridRect.setAttribute("height", unit);
+                            gridRect.setAttribute("fill", "none");
+                            gridRect.setAttribute("stroke", "#64B5F6");
+                            gridRect.setAttribute("stroke-width", "0.5");
+                            svg.appendChild(gridRect);
+                        }
+                    }
+                }
+                
+                // Add dimension labels
+                const widthLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                widthLabel.setAttribute("x", startX + rectWidth / 2);
+                widthLabel.setAttribute("y", startY + rectHeight + 20);
+                widthLabel.setAttribute("text-anchor", "middle");
+                widthLabel.setAttribute("fill", "#1565C0");
+                widthLabel.setAttribute("font-size", "14");
+                widthLabel.textContent = `Width: ${width}`;
+                svg.appendChild(widthLabel);
+                
+                const heightLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                heightLabel.setAttribute("x", startX - 10);
+                heightLabel.setAttribute("y", startY + rectHeight / 2);
+                heightLabel.setAttribute("text-anchor", "middle");
+                heightLabel.setAttribute("transform", `rotate(270, ${startX - 10}, ${startY + rectHeight / 2})`);
+                heightLabel.setAttribute("fill", "#1565C0");
+                heightLabel.setAttribute("font-size", "14");
+                heightLabel.textContent = `Height: ${height}`;
+                svg.appendChild(heightLabel);
+                
+                // Add formula if enabled
+                if (gameState.settings.formulasEnabled) {
+                    const formula = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    formula.setAttribute("x", svgWidth / 2);
+                    formula.setAttribute("y", startY - 20);
+                    formula.setAttribute("text-anchor", "middle");
+                    formula.setAttribute("fill", "#1565C0");
+                    formula.setAttribute("font-size", "16");
+                    formula.setAttribute("font-weight", "bold");
+                    formula.textContent = `Area = Width × Height = ${width} × ${height} = ${width * height}`;
+                    svg.appendChild(formula);
+                }
+            } else if (shape === 'Square') {
+                const [side] = dimensions;
+                const squareSize = side * unit;
+                const startX = (svgWidth - squareSize) / 2;
+                const startY = (svgHeight - squareSize) / 2;
+                
+                // Draw square
+                const square = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                square.setAttribute("x", startX);
+                square.setAttribute("y", startY);
+                square.setAttribute("width", squareSize);
+                square.setAttribute("height", squareSize);
+                square.setAttribute("fill", "#81C784");
+                square.setAttribute("stroke", "#388E3C");
+                square.setAttribute("stroke-width", "2");
+                svg.appendChild(square);
+                
+                // Draw grid if enabled
+                if (gameState.settings.formulasEnabled) {
+                    for (let x = 0; x < side; x++) {
+                        for (let y = 0; y < side; y++) {
+                            const gridRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                            gridRect.setAttribute("x", startX + x * unit);
+                            gridRect.setAttribute("y", startY + y * unit);
+                            gridRect.setAttribute("width", unit);
+                            gridRect.setAttribute("height", unit);
+                            gridRect.setAttribute("fill", "none");
+                            gridRect.setAttribute("stroke", "#A5D6A7");
+                            gridRect.setAttribute("stroke-width", "0.5");
+                            svg.appendChild(gridRect);
+                        }
+                    }
+                }
+                
+                // Add dimension label
+                const sideLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                sideLabel.setAttribute("x", startX + squareSize / 2);
+                sideLabel.setAttribute("y", startY + squareSize + 20);
+                sideLabel.setAttribute("text-anchor", "middle");
+                sideLabel.setAttribute("fill", "#2E7D32");
+                sideLabel.setAttribute("font-size", "14");
+                sideLabel.textContent = `Side: ${side}`;
+                svg.appendChild(sideLabel);
+                
+                // Add formula if enabled
+                if (gameState.settings.formulasEnabled) {
+                    const formula = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    formula.setAttribute("x", svgWidth / 2);
+                    formula.setAttribute("y", startY - 20);
+                    formula.setAttribute("text-anchor", "middle");
+                    formula.setAttribute("fill", "#2E7D32");
+                    formula.setAttribute("font-size", "16");
+                    formula.setAttribute("font-weight", "bold");
+                    formula.textContent = `Area = Side × Side = ${side} × ${side} = ${side * side}`;
+                    svg.appendChild(formula);
+                }
+            } else if (shape === 'Triangle') {
+                const [base, height] = dimensions;
+                const triangleBase = base * unit;
+                const triangleHeight = height * unit;
+                const startX = (svgWidth - triangleBase) / 2;
+                const startY = (svgHeight - triangleHeight) / 2;
+                
+                // Draw triangle
+                const triangle = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                triangle.setAttribute("points", `
+                    ${startX},${startY + triangleHeight} 
+                    ${startX + triangleBase},${startY + triangleHeight} 
+                    ${startX + triangleBase / 2},${startY}
+                `);
+                triangle.setAttribute("fill", "#FFB74D");
+                triangle.setAttribute("stroke", "#E65100");
+                triangle.setAttribute("stroke-width", "2");
+                svg.appendChild(triangle);
+                
+                // Draw height line
+                const heightLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                heightLine.setAttribute("x1", startX + triangleBase / 2);
+                heightLine.setAttribute("y1", startY);
+                heightLine.setAttribute("x2", startX + triangleBase / 2);
+                heightLine.setAttribute("y2", startY + triangleHeight);
+                heightLine.setAttribute("stroke", "#E65100");
+                heightLine.setAttribute("stroke-width", "1");
+                heightLine.setAttribute("stroke-dasharray", "4,2");
+                svg.appendChild(heightLine);
+                
+                // Add dimension labels
+                const baseLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                baseLabel.setAttribute("x", startX + triangleBase / 2);
+                baseLabel.setAttribute("y", startY + triangleHeight + 20);
+                baseLabel.setAttribute("text-anchor", "middle");
+                baseLabel.setAttribute("fill", "#E65100");
+                baseLabel.setAttribute("font-size", "14");
+                baseLabel.textContent = `Base: ${base}`;
+                svg.appendChild(baseLabel);
+                
+                const heightLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                heightLabel.setAttribute("x", startX + triangleBase / 2 + 10);
+                heightLabel.setAttribute("y", startY + triangleHeight / 2);
+                heightLabel.setAttribute("text-anchor", "start");
+                heightLabel.setAttribute("fill", "#E65100");
+                heightLabel.setAttribute("font-size", "14");
+                heightLabel.textContent = `Height: ${height}`;
+                svg.appendChild(heightLabel);
+                
+                // Add formula if enabled
+                if (gameState.settings.formulasEnabled) {
+                    const formula = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    formula.setAttribute("x", svgWidth / 2);
+                    formula.setAttribute("y", startY - 20);
+                    formula.setAttribute("text-anchor", "middle");
+                    formula.setAttribute("fill", "#E65100");
+                    formula.setAttribute("font-size", "16");
+                    formula.setAttribute("font-weight", "bold");
+                    formula.textContent = `Area = ½ × Base × Height = ½ × ${base} × ${height} = ${0.5 * base * height}`;
+                    svg.appendChild(formula);
+                }
+            } else if (shape === 'Circle') {
+                const [radius] = dimensions;
+                const circleRadius = radius * unit;
+                const centerX = svgWidth / 2;
+                const centerY = svgHeight / 2;
+                
+                // Draw circle
+                const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                circle.setAttribute("cx", centerX);
+                circle.setAttribute("cy", centerY);
+                circle.setAttribute("r", circleRadius);
+                circle.setAttribute("fill", "#CE93D8");
+                circle.setAttribute("stroke", "#7B1FA2");
+                circle.setAttribute("stroke-width", "2");
+                svg.appendChild(circle);
+                
+                // Draw radius line
+                const radiusLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                radiusLine.setAttribute("x1", centerX);
+                radiusLine.setAttribute("y1", centerY);
+                radiusLine.setAttribute("x2", centerX + circleRadius);
+                radiusLine.setAttribute("y2", centerY);
+                radiusLine.setAttribute("stroke", "#7B1FA2");
+                radiusLine.setAttribute("stroke-width", "2");
+                radiusLine.setAttribute("marker-end", "url(#arrow)");
+                svg.appendChild(radiusLine);
+                
+                // Create arrow marker for radius line
+                const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+                svg.appendChild(defs);
+                
+                const marker = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+                marker.setAttribute("id", "arrow");
+                marker.setAttribute("viewBox", "0 0 10 10");
+                marker.setAttribute("refX", "5");
+                marker.setAttribute("refY", "5");
+                marker.setAttribute("markerWidth", "4");
+                marker.setAttribute("markerHeight", "4");
+                marker.setAttribute("orient", "auto-start-reverse");
+                defs.appendChild(marker);
+                
+                const arrowPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                arrowPath.setAttribute("d", "M 0 0 L 10 5 L 0 10 z");
+                arrowPath.setAttribute("fill", "#7B1FA2");
+                marker.appendChild(arrowPath);
+                
+                // Add radius label
+                const radiusLabel = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                radiusLabel.setAttribute("x", centerX + circleRadius / 2);
+                radiusLabel.setAttribute("y", centerY - 10);
+                radiusLabel.setAttribute("text-anchor", "middle");
+                radiusLabel.setAttribute("fill", "#7B1FA2");
+                radiusLabel.setAttribute("font-size", "14");
+                radiusLabel.textContent = `Radius: ${radius}`;
+                svg.appendChild(radiusLabel);
+                
+                // Add formula if enabled
+                if (gameState.settings.formulasEnabled) {
+                    const formula = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    formula.setAttribute("x", svgWidth / 2);
+                    formula.setAttribute("y", centerY - circleRadius - 20);
+                    formula.setAttribute("text-anchor", "middle");
+                    formula.setAttribute("fill", "#7B1FA2");
+                    formula.setAttribute("font-size", "16");
+                    formula.setAttribute("font-weight", "bold");
+                    const area = Math.round(Math.PI * radius * radius * 100) / 100;
+                    formula.textContent = `Area = π × Radius² = π × ${radius}² = ${area}`;
+                    svg.appendChild(formula);
+                }
+            }
+            
+            // Append SVG to container
+            canvas.appendChild(svg);
+        }
+
+        // Create celebration particle effect
+        function createParticleEffect() {
+            if (!gameState.settings.animationsEnabled) return;
+            
+            // Clear any existing particles
+            clearParticles();
+            
+            // Create stars or bubbles
+            const particleCount = 30;
+            const particleTypes = ['star', 'bubble'];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particleType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                createParticle(particleType);
+            }
+        }
+
+        // Create a single particle
+        function createParticle(type) {
+            const container = document.getElementById('game-container');
+            
+            if (type === 'star') {
+                // Create a star
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                
+                // Random size
+                const size = Math.random() * 30 + 10;
+                
+                // Star SVG
+                star.innerHTML = `
+                    <svg width="${size}" height="${size}" viewBox="0 0 51 48">
+                        <path fill="#FFD700" d="m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z"/>
+                    </svg>
+                `;
+                
+                star.style.left = `${x}px`;
+                star.style.top = `${y}px`;
+                container.appendChild(star);
+                
+                // Animation
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                const dx = Math.cos(angle) * speed;
+                const dy = Math.sin(angle) * speed;
+                
+                let opacity = 1;
+                let posX = x;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    opacity -= 0.01;
+                    posX += dx;
+                    posY += dy;
+                    
+                    star.style.opacity = opacity;
+                    star.style.left = `${posX}px`;
+                    star.style.top = `${posY}px`;
+                    
+                    if (opacity <= 0) {
+                        clearInterval(animation);
+                        star.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.stars.push(star);
+                gameState.animations.timers.push(animation);
+            } else {
+                // Create a bubble
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = window.innerHeight + 20;
+                
+                // Random size
+                const size = Math.random() * 40 + 20;
+                
+                // Random color
+                const colors = ['#FF9A00', '#4b0082', '#4CAF50', '#f44336', '#2196F3'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.backgroundColor = color;
+                bubble.style.left = `${x}px`;
+                bubble.style.top = `${y}px`;
+                bubble.style.opacity = '0.7';
+                bubble.style.borderRadius = '50%';
+                container.appendChild(bubble);
+                
+                // Animation
+                const speed = Math.random() * 3 + 1;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    posY -= speed;
+                    bubble.style.top = `${posY}px`;
+                    
+                    if (posY < -size) {
+                        clearInterval(animation);
+                        bubble.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.bubbles.push(bubble);
+                gameState.animations.timers.push(animation);
+            }
+        }
+
+        // Clear all particles
+        function clearParticles() {
+            // Clear all animation timers
+            gameState.animations.timers.forEach(timer => {
+                clearInterval(timer);
+            });
+            
+            // Remove all stars and bubbles
+            gameState.animations.stars.forEach(star => {
+                if (star.parentNode) {
+                    star.remove();
+                }
+            });
+            
+            gameState.animations.bubbles.forEach(bubble => {
+                if (bubble.parentNode) {
+                    bubble.remove();
+                }
+            });
+            
+            // Reset arrays
+            gameState.animations.stars = [];
+            gameState.animations.bubbles = [];
+            gameState.animations.timers = [];
+        }
+
+        // Create reward animation
+        function createRewardAnimation() {
+            const container = elements.displays.rewardAnimation;
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create canvas
+            const canvas = document.createElement('canvas');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            container.appendChild(canvas);
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Draw reward animation
+            drawTrophy(ctx, canvas.width / 2, canvas.height / 2);
+            
+            // Start particle animation
+            createParticleEffect();
+            
+            // Play celebration sound
+            playCelebrationSound();
+        }
+
+        // Draw trophy
+        function drawTrophy(ctx, x, y) {
+            // Trophy base
+            ctx.fillStyle = '#FFD700';
+            
+            // Cup
+            ctx.beginPath();
+            ctx.moveTo(x - 30, y - 50);
+            ctx.lineTo(x + 30, y - 50);
+            ctx.quadraticCurveTo(x + 50, y - 50, x + 50, y - 30);
+            ctx.quadraticCurveTo(x + 50, y, x + 30, y);
+            ctx.quadraticCurveTo(x + 15, y + 10, x + 15, y + 30);
+            ctx.lineTo(x - 15, y + 30);
+            ctx.quadraticCurveTo(x - 15, y + 10, x - 30, y);
+            ctx.quadraticCurveTo(x - 50, y, x - 50, y - 30);
+            ctx.quadraticCurveTo(x - 50, y - 50, x - 30, y - 50);
+            ctx.fill();
+            
+            // Base
+            ctx.fillStyle = '#A67C00';
+            ctx.beginPath();
+            ctx.rect(x - 25, y + 30, 50, 10);
+            ctx.fill();
+            
+            ctx.fillStyle = '#8D6E00';
+            ctx.beginPath();
+            ctx.rect(x - 35, y + 40, 70, 10);
+            ctx.fill();
+            
+            // Draw shape symbols
+            ctx.fillStyle = '#4b0082';
+            
+            // Rectangle
+            ctx.beginPath();
+            ctx.rect(x - 15, y - 30, 10, 6);
+            ctx.fill();
+            
+            // Square
+            ctx.beginPath();
+            ctx.rect(x + 5, y - 30, 8, 8);
+            ctx.fill();
+            
+            // Triangle
+            ctx.beginPath();
+            ctx.moveTo(x - 10, y - 15);
+            ctx.lineTo(x - 5, y - 23);
+            ctx.lineTo(x, y - 15);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Circle
+            ctx.beginPath();
+            ctx.arc(x + 10, y - 18, 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Text
+            ctx.fillStyle = '#4b0082';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('SHAPE', x, y);
+            ctx.fillText('MASTER', x, y + 15);
+        }
+
+        // Sound functions
+        function playButtonSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume / 100, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.3);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.3);
+            }
+        }
+        
+        function playTickSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume / 100 * 0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.1);
+            }
+        }
+        
+        function playSelectSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(660, audioContext.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + 0.1);
+                
+                gainNode.gain.setValueAtTime(gameState.settings.soundVolume / 100 * 0.5, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.2);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.2);
+            }
+        }
+        
+        function playSuccessSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                
+                notes.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.1);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.1);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume / 100 * 0.5, audioContext.currentTime + index * 0.1 + 0.01);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + index * 0.1 + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.1);
+                    oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
+                });
+            }
+        }
+        
+        function playErrorSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                const frequencies = [349.23, 329.63, 311.13]; // F4, E4, D#4/Eb4
+                
+                frequencies.forEach((frequency, index) => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime + index * 0.15);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + index * 0.15);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume / 100 * 0.5, audioContext.currentTime + index * 0.15 + 0.01);
+                    gainNode.gain.linearRampToValueAtTime(0.001, audioContext.currentTime + index * 0.15 + 0.3);
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                    
+                    oscillator.start(audioContext.currentTime + index * 0.15);
+                    oscillator.stop(audioContext.currentTime + index * 0.15 + 0.3);
+                });
+            }
+        }
+        
+function playCelebrationSound() {
+            if (audioContext && gameState.settings.soundVolume > 0) {
+                // Major scale ascending and then chord
+                const notes = [
+                    { freq: 523.25, time: 0 },    // C5
+                    { freq: 587.33, time: 0.15 }, // D5
+                    { freq: 659.25, time: 0.3 },  // E5
+                    { freq: 698.46, time: 0.45 }, // F5
+                    { freq: 783.99, time: 0.6 },  // G5
+                    { freq: 880.00, time: 0.75 }, // A5
+                    { freq: 987.77, time: 0.9 },  // B5
+                    { freq: 1046.50, time: 1.05 }, // C6
+                    // Final chord
+                    { freq: 523.25, time: 1.3 }, // C5
+                    { freq: 659.25, time: 1.3 }, // E5
+                    { freq: 783.99, time: 1.3 }, // G5
+                    { freq: 1046.50, time: 1.3 }  // C6
+                ];
+                
+                notes.forEach(note => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                    gainNode.gain.linearRampToValueAtTime(gameState.settings.soundVolume / 100 * 0.5, audioContext.currentTime + note.time + 0.01);
+                    
+                    // Longer sustain for the final chord
+                    if (note.time === 1.3) {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 1.0);
+                        oscillator.start(audioContext.currentTime + note.time);
+                        oscillator.stop(audioContext.currentTime + note.time + 1.0);
+                    } else {
+                        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 0.3);
+                        oscillator.start(audioContext.currentTime + note.time);
+                        oscillator.stop(audioContext.currentTime + note.time + 0.3);
+                    }
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+                });
+            }
+        }
+
+       // Toggle settings drawer
+        function toggleSettingsDrawer() {
+            const drawer = elements.settings.settingsDrawer;
+            
+            if (drawer.classList.contains('open')) {
+                drawer.classList.remove('open');
+            } else {
+                drawer.classList.add('open');
+            }
+        }
+        
+        // Toggle sound
+        function toggleSound() {
+            const soundButton = elements.buttons.soundToggle;
+            
+            if (gameState.settings.soundVolume > 0) {
+                // Turn sound off
+                gameState.settings.prevSoundVolume = gameState.settings.soundVolume;
+                gameState.settings.soundVolume = 0;
+                soundButton.textContent = '🔇';
+                elements.settings.soundSlider.value = 0;
+            } else {
+                // Turn sound on (restore previous volume or default to 50)
+                gameState.settings.soundVolume = gameState.settings.prevSoundVolume || 50;
+                soundButton.textContent = '🔊';
+                elements.settings.soundSlider.value = gameState.settings.soundVolume;
+            }
+            
+            // Update settings display
+            updateSettingsDisplay();
+        }
+        
+        // Show help modal
+        function showHelpModal() {
+            elements.modal.helpModal.classList.add('visible');
+        }
+        
+        // Hide help modal
+        function hideHelpModal() {
+            elements.modal.helpModal.classList.remove('visible');
+        }
+        
+        // Update settings display
+        function updateSettingsDisplay() {
+            // Update difficulty text
+            const difficultyLabels = ['Easy', 'Medium', 'Hard'];
+            elements.settings.difficultyValue.textContent = difficultyLabels[gameState.settings.difficulty - 1];
+            
+            // Update sound value
+            elements.settings.soundValue.textContent = `${gameState.settings.soundVolume}%`;
+            
+            // Update animation speed text
+            const animationLabels = ['Slow', 'Normal', 'Fast'];
+            elements.settings.animationValue.textContent = animationLabels[gameState.settings.animationSpeed - 1];
+            
+            // Update number range text
+            const rangeLabels = ['1-5', '1-10', '1-20'];
+            elements.settings.numberRangeValue.textContent = rangeLabels[gameState.settings.numberRange - 1];
+            
+            // Update checkbox states
+            elements.settings.hintToggle.checked = gameState.settings.hintsEnabled;
+            elements.settings.animationToggle.checked = gameState.settings.animationsEnabled;
+            elements.settings.formulaToggle.checked = gameState.settings.formulasEnabled;
+            elements.settings.rectangleToggle.checked = gameState.settings.shapeTypes.rectangle;
+            elements.settings.squareToggle.checked = gameState.settings.shapeTypes.square;
+            elements.settings.triangleToggle.checked = gameState.settings.shapeTypes.triangle;
+            elements.settings.circleToggle.checked = gameState.settings.shapeTypes.circle;
+            
+            // Update slider values
+            elements.settings.difficultySlider.value = gameState.settings.difficulty;
+            elements.settings.soundSlider.value = gameState.settings.soundVolume;
+            elements.settings.animationSlider.value = gameState.settings.animationSpeed;
+            elements.settings.numberRangeSlider.value = gameState.settings.numberRange;
+        }
+        
+        // Switch to a different screen
+        function goToScreen(screenName) {
+            // Hide all screens
+            Object.values(elements.screens).forEach(screen => {
+                screen.classList.remove('visible');
+            });
+            
+            // Show the requested screen
+            elements.screens[screenName].classList.add('visible');
+            
+            // Stop any ongoing animations
+            clearParticles();
+            
+            // Hide speech bubbles
+            Object.values(elements.characters).forEach(bubble => {
+                if (bubble) bubble.style.opacity = '0';
+            });
+            
+            // Reset hint text
+            if (elements.displays.hintText) {
+                elements.displays.hintText.style.opacity = '0';
+            }
+            
+            // Show appropriate welcome messages based on screen
+            if (screenName === 'startScreen') {
+                setTimeout(() => {
+                    elements.characters.professorBubbleStart.style.opacity = '1';
+                    playSelectSound();
+                }, 500);
+                
+                setTimeout(() => {
+                    elements.characters.helperBubbleStart.style.opacity = '1';
+                    playSelectSound();
+                }, 1500);
+            } else if (screenName === 'gameScreen') {
+                setTimeout(() => {
+                    elements.characters.professorBubble.style.opacity = '1';
+                    playSelectSound();
+                }, 500);
+            }
+        }
+        
+        // Helper function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+        
+        // Initialize the game when the window loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html> 

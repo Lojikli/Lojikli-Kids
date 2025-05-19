@@ -1024,7 +1024,11 @@
             quizOptions: document.querySelector('.quiz-options'),
             quizButton: document.querySelector('.quiz-button'),
             quizProgress: document.querySelector('.quiz-progress'),
-            melodyBubble: document.getElementById('melody-bubble')
+            melodyBubble: document.getElementById('melody-bubble'),
+            gameControls: document.querySelector('.game-controls'),
+            leftButton: document.querySelector('.left-button'),
+            rightButton: document.querySelector('.right-button'),
+            jumpIndicator: document.querySelector('.jump-indicator')
         };
 
         // Create sound generation
@@ -1535,15 +1539,19 @@
             document.addEventListener('touchend', handleTouchEnd);
             
             // Add event listeners for on-screen controls
-            document.querySelector('.left-button').addEventListener('pointerdown', () => { gameState.leftPressed = true; });
-            document.querySelector('.left-button').addEventListener('pointerup', () => { gameState.leftPressed = false; });
-            document.querySelector('.left-button').addEventListener('pointerout', () => { gameState.leftPressed = false; });
+            if (elements.leftButton && elements.rightButton) {
+                elements.leftButton.addEventListener('pointerdown', () => { gameState.leftPressed = true; });
+                elements.leftButton.addEventListener('pointerup', () => { gameState.leftPressed = false; });
+                elements.leftButton.addEventListener('pointerout', () => { gameState.leftPressed = false; });
+                
+                elements.rightButton.addEventListener('pointerdown', () => { gameState.rightPressed = true; });
+                elements.rightButton.addEventListener('pointerup', () => { gameState.rightPressed = false; });
+                elements.rightButton.addEventListener('pointerout', () => { gameState.rightPressed = false; });
+            }
             
-            document.querySelector('.right-button').addEventListener('pointerdown', () => { gameState.rightPressed = true; });
-            document.querySelector('.right-button').addEventListener('pointerup', () => { gameState.rightPressed = false; });
-            document.querySelector('.right-button').addEventListener('pointerout', () => { gameState.rightPressed = false; });
-            
-            document.querySelector('.jump-button').addEventListener('pointerdown', handleJumpButtonPress);
+            // Add event listener for game container to handle tile clicks
+            elements.gameContainer.addEventListener('click', handleTileClick);
+            elements.gameContainer.addEventListener('touchend', handleTileClick);
             
             // Add event listener for toggle controls
             document.getElementById('controls-toggle').addEventListener('change', toggleControlsVisibility);
@@ -1691,7 +1699,7 @@
             }
             
             // Position the tile
-            tileElement.style.transform = `translate3d(${x}px, ${y}px, 0) rotateX(30deg)`;
+            tileElement.style.transform = `translate3d(${x - 60}px, ${y - 20}px, 0) rotateX(30deg)`;
             
             // Add tile to game container
             elements.gameContainer.appendChild(tileElement);
@@ -1767,7 +1775,7 @@
                 tile.y += getTileSpeed() * dt;
                 
                 // Update tile position in DOM
-                tile.element.style.transform = `translate3d(${tile.x}px, ${tile.y}px, 0) rotateX(${30 + Math.sin(Date.now() / 1000) * 5}deg)`;
+                tile.element.style.transform = `translate3d(${tile.x - 60}px, ${tile.y - 20}px, 0) rotateX(${30 + Math.sin(Date.now() / 1000) * 5}deg)`;
                 
                 // Remove tiles that go off screen
                 if (tile.y > gameState.gameHeight + 100) {
@@ -1828,7 +1836,7 @@
             }
             
             // Position the tile
-            tileElement.style.transform = `translate3d(${x}px, ${-100}px, 0) rotateX(30deg)`;
+            tileElement.style.transform = `translate3d(${x - 60}px, ${-100}px, 0) rotateX(30deg)`;
             
             // Add tile to game container
             elements.gameContainer.appendChild(tileElement);
@@ -2380,7 +2388,7 @@
                 // Pause
                 elements.buttons.pause.textContent = '▶️';
                 
-                // Show message
+// Show message
                 showMelodyMessage("Paused! Click ▶️ to continue");
                 
                 // Pause background music
@@ -2830,7 +2838,7 @@
         
         // Jump to a specific tile
         function jumpToTile(tile) {
-            // Can only jump from a current tile or when already in the air
+            // Can only jump if currently on a tile or already in the air
             if (!gameState.currentTile && !gameState.isMovingToTarget) return;
             
             // Store starting position
@@ -2886,9 +2894,8 @@
             if (controlsToggle) {
                 gameState.showControls = controlsToggle.checked;
                 
-                const controlsElement = document.querySelector('.game-controls');
-                if (controlsElement) {
-                    controlsElement.style.opacity = gameState.showControls ? '1' : '0';
+                if (elements.gameControls) {
+                    elements.gameControls.style.opacity = gameState.showControls ? '1' : '0';
                 }
                 
                 saveSettings();

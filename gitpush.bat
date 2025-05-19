@@ -10,21 +10,25 @@ echo.
 copy "index.html" "index.html.bak.%date:~-4,4%%date:~-7,2%%date:~-10,2%" /Y
 echo Created backup: index.html.bak.%date:~-4,4%%date:~-7,2%%date:~-10,2%
 
-:: Create a timestamp file to track when files were last seen
-if not exist "last_update.txt" (
-    echo Creating new tracking file for first-time run...
-    echo %date% %time% > "last_update.txt"
-)
-
-:: Read the last update timestamp
-set /p LAST_UPDATE=<"last_update.txt"
-echo Last update was: %LAST_UPDATE%
-
 :: Create temporary files to store scan results
 set "temp_file=%TEMP%\temp_files.txt"
 set "toddler_js=%TEMP%\toddler_js.txt"
 set "elementary_js=%TEMP%\elementary_js.txt"
 set "new_games_js=%TEMP%\new_games_js.txt"
+set "new_files_list=%TEMP%\new_files.txt"
+
+:: Get list of untracked files and files that have been added since last commit
+echo Getting list of new files from git...
+git ls-files --others --exclude-standard > "%new_files_list%"
+git diff --name-only --cached >> "%new_files_list%"
+git diff --name-only >> "%new_files_list%"
+
+:: Sort and remove duplicates from the new files list
+sort "%new_files_list%" /o "%new_files_list%"
+
+echo Found the following new files:
+type "%new_files_list%"
+echo.
 
 :: Create the start of the repository object in separate files
 echo // Define the structure of your repository> "%toddler_js%"
@@ -37,9 +41,6 @@ echo     "5 yr old": [> "%elementary_js%"
 echo // Recently added games>> "%new_games_js%"
 echo const recentlyAddedGames = [>> "%new_games_js%"
 
-:: Check for newly added files since last run
-echo Scanning for newly added or modified games...
-
 :: Scan and process the "2 yr old" directory
 echo Scanning toddler directory...
 set "first_file=yes"
@@ -47,7 +48,6 @@ set "first_new_game=yes"
 for %%f in ("2 yr old\*.html") do (
     set "filename=%%~nxf"
     set "filepath=2 yr old\!filename!"
-    set "filetime=%%~tf"
     
     :: Add to repository structure
     if "!first_file!"=="yes" (
@@ -57,22 +57,22 @@ for %%f in ("2 yr old\*.html") do (
         echo         ,"!filename!">> "%toddler_js%"
     )
     
-    :: Check if this is a new or modified file since last update
-    for /f "tokens=1-5 delims=/ " %%a in ("!filetime!") do (
-        set "file_date=%%a/%%b/%%c"
-        set "file_time=%%d:%%e"
-    )
-    
-    :: Compare with last update time (simplified comparison)
+    :: Check if this is a new file by looking in the git new files list
     set "is_new="
-    for /f "tokens=1-5 delims=/ " %%a in ("%LAST_UPDATE%") do (
-        set "last_date=%%a/%%b/%%c"
-        set "last_time=%%d:%%e"
-    )
-    
-    if "!file_date!!file_time!" GTR "!last_date!!last_time!" (
+    findstr /C:"2 yr old/!filename!" "%new_files_list%" >nul
+    if !errorlevel! equ 0 (
         set "is_new=yes"
-        echo New/modified file found: !filepath! (!file_date! !file_time!)
+        echo New game found: !filepath!
+    ) else (
+        :: Alternative method: check if file was created recently (within last 30 days)
+        for /f "tokens=1-3 delims=/" %%a in ('echo %date%') do set "current_date=%%c%%b%%a"
+        for /f "tokens=1-3 delims=/" %%a in ('forfiles /P "2 yr old" /M "!filename!" /C "cmd /c echo @fdate"') do set "file_date=%%c%%b%%a"
+        
+        set /a date_diff=!current_date! - !file_date!
+        if !date_diff! lss 30 (
+            set "is_new=yes"
+            echo Recently created game found: !filepath! (Created !file_date!)
+        )
     )
     
     :: If new, add to new games array
@@ -111,7 +111,6 @@ set "first_file=yes"
 for %%f in ("5 yr old\*.html") do (
     set "filename=%%~nxf"
     set "filepath=5 yr old\!filename!"
-    set "filetime=%%~tf"
     
     :: Add to repository structure
     if "!first_file!"=="yes" (
@@ -121,22 +120,22 @@ for %%f in ("5 yr old\*.html") do (
         echo         ,"!filename!">> "%elementary_js%"
     )
     
-    :: Check if this is a new or modified file since last update
-    for /f "tokens=1-5 delims=/ " %%a in ("!filetime!") do (
-        set "file_date=%%a/%%b/%%c"
-        set "file_time=%%d:%%e"
-    )
-    
-    :: Compare with last update time (simplified comparison)
+    :: Check if this is a new file by looking in the git new files list
     set "is_new="
-    for /f "tokens=1-5 delims=/ " %%a in ("%LAST_UPDATE%") do (
-        set "last_date=%%a/%%b/%%c"
-        set "last_time=%%d:%%e"
-    )
-    
-    if "!file_date!!file_time!" GTR "!last_date!!last_time!" (
+    findstr /C:"5 yr old/!filename!" "%new_files_list%" >nul
+    if !errorlevel! equ 0 (
         set "is_new=yes"
-        echo New/modified file found: !filepath! (!file_date! !file_time!)
+        echo New game found: !filepath!
+    ) else (
+        :: Alternative method: check if file was created recently (within last 30 days)
+        for /f "tokens=1-3 delims=/" %%a in ('echo %date%') do set "current_date=%%c%%b%%a"
+        for /f "tokens=1-3 delims=/" %%a in ('forfiles /P "5 yr old" /M "!filename!" /C "cmd /c echo @fdate"') do set "file_date=%%c%%b%%a"
+        
+        set /a date_diff=!current_date! - !file_date!
+        if !date_diff! lss 30 (
+            set "is_new=yes"
+            echo Recently created game found: !filepath! (Created !file_date!)
+        )
     )
     
     :: If new, add to new games array
@@ -188,10 +187,13 @@ del "%temp_file%" 2>nul
 del "%toddler_js%" 2>nul
 del "%elementary_js%" 2>nul
 del "%new_games_js%" 2>nul
+del "%new_files_list%" 2>nul
 
-:: Update the last update timestamp
-echo %date% %time% > "last_update.txt"
-echo Updated last_update.txt timestamp
+:: After running, create a "promoted" file to mark these games as not new anymore
+echo %date% %time% > "last_games_push.txt"
+echo. >> "last_games_push.txt"
+echo Recently added games: >> "last_games_push.txt"
+type "%new_games_js%" >> "last_games_push.txt"
 
 :: Get current branch
 for /f "tokens=*" %%i in ('git rev-parse --abbrev-ref HEAD') do set current_branch=%%i

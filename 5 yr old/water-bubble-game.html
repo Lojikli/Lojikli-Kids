@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Water Bubble Ring Challenge</title>
+    <title>Water Bubble Ring Challenge - Improved</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
         
@@ -23,7 +23,7 @@
             position: relative;
             margin: auto;
             width: 800px;
-            height: 600px;
+            height: 670px; /* Made taller to accommodate angle controls */
             display: flex;
             flex-direction: column;
         }
@@ -89,6 +89,70 @@
         .toggle-button:active {
             box-shadow: 0 2px 0 #483D8B;
             transform: translateY(2px);
+        }
+        
+        /* New angle controls */
+        #angle-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        
+        .angle-control {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .angle-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .angle-button {
+            width: 36px;
+            height: 36px;
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #6C5CE7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #483D8B;
+        }
+        
+        .angle-button:active {
+            box-shadow: 0 1px 0 #483D8B;
+            transform: translateY(2px);
+        }
+        
+        .angle-button.left {
+            background-color: #4ECDC4;
+            box-shadow: 0 3px 0 #33A8A0;
+        }
+        
+        .angle-button.right {
+            background-color: #FFD166;
+            box-shadow: 0 3px 0 #E6B800;
+        }
+        
+        .angle-display {
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            width: 60px;
+            text-align: center;
+            font-size: 14px;
         }
         
         #difficulty-control {
@@ -297,6 +361,27 @@
     <div id="game-container">
         <canvas id="game-canvas" width="800" height="550"></canvas>
         
+        <!-- New angle controls -->
+        <div id="angle-controls">
+            <div class="angle-control">
+                <span class="angle-label">Left Jet Angle</span>
+                <div class="angle-buttons">
+                    <button id="left-angle-decrease" class="angle-button left">-</button>
+                    <span id="left-angle-display" class="angle-display">45°</span>
+                    <button id="left-angle-increase" class="angle-button left">+</button>
+                </div>
+            </div>
+            
+            <div class="angle-control">
+                <span class="angle-label">Right Jet Angle</span>
+                <div class="angle-buttons">
+                    <button id="right-angle-decrease" class="angle-button right">-</button>
+                    <span id="right-angle-display" class="angle-display">135°</span>
+                    <button id="right-angle-increase" class="angle-button right">+</button>
+                </div>
+            </div>
+        </div>
+        
         <div id="controls">
             <div class="button-group">
                 <button id="left-jet-button" class="game-button left">Left Jet</button>
@@ -329,11 +414,11 @@
         
         <div id="tutorial-overlay">
             <div id="tutorial-content">
-                <h2>Welcome to Water Bubble Ring Challenge!</h2>
+                <h2>Welcome to the Improved Water Bubble Ring Challenge!</h2>
                 <p>In this game, you'll learn about water physics while having fun placing rings on rods.</p>
                 <p>Press the <strong>Left Jet</strong> and <strong>Right Jet</strong> buttons to create bubbles that push the rings.</p>
-                <p>Hold the button to increase power, then release at just the right moment!</p>
-                <p>Try to get all the rings onto the rods to complete each level.</p>
+                <p>You can now <strong>change the angle</strong> of each jet using the + and - buttons!</p>
+                <p>Rings will naturally fall toward the jets at the bottom. Position your jets strategically!</p>
             </div>
             <div id="tutorial-nav">
                 <button id="tutorial-next" class="tutorial-button">Next</button>
@@ -387,17 +472,17 @@
             rings: [],
             rods: [],
             leftJet: {
-                x: 150,
-                y: CANVAS_HEIGHT - BORDER_THICKNESS - 60,
-                angle: -60,
+                x: CANVAS_WIDTH / 2 - 30, // Left jet is now closer to center
+                y: CANVAS_HEIGHT - BORDER_THICKNESS - 20, // At the lowest point
+                angle: 45, // Now in degrees, positive angles
                 power: 0,
                 active: false,
                 powerIncreasing: true
             },
             rightJet: {
-                x: CANVAS_WIDTH - 150,
-                y: CANVAS_HEIGHT - BORDER_THICKNESS - 60,
-                angle: -120,
+                x: CANVAS_WIDTH / 2 + 30, // Right jet is now closer to center
+                y: CANVAS_HEIGHT - BORDER_THICKNESS - 20, // At the lowest point
+                angle: 135, // Now in degrees, positive angles
                 power: 0,
                 active: false,
                 powerIncreasing: true
@@ -446,6 +531,14 @@
         const rightPowerFill = document.getElementById('right-power-fill');
         const leftPowerIndicator = document.getElementById('left-power-indicator');
         const rightPowerIndicator = document.getElementById('right-power-indicator');
+        
+        // New angle control elements
+        const leftAngleDecrease = document.getElementById('left-angle-decrease');
+        const leftAngleIncrease = document.getElementById('left-angle-increase');
+        const leftAngleDisplay = document.getElementById('left-angle-display');
+        const rightAngleDecrease = document.getElementById('right-angle-decrease');
+        const rightAngleIncrease = document.getElementById('right-angle-increase');
+        const rightAngleDisplay = document.getElementById('right-angle-display');
         
         // Audio context for sound effects
         let audioContext;
@@ -542,11 +635,11 @@
             
             if (step === 1) {
                 tutorialContent.innerHTML = `
-                    <h2>Welcome to Water Bubble Ring Challenge!</h2>
+                    <h2>Welcome to the Improved Water Bubble Ring Challenge!</h2>
                     <p>In this game, you'll learn about water physics while having fun placing rings on rods.</p>
                     <p>Press the <strong>Left Jet</strong> and <strong>Right Jet</strong> buttons to create bubbles that push the rings.</p>
-                    <p>Hold the button to increase power, then release at just the right moment!</p>
-                    <p>Try to get all the rings onto the rods to complete each level.</p>
+                    <p>You can now <strong>change the angle</strong> of each jet using the + and - buttons!</p>
+                    <p>Rings will naturally fall toward the jets at the bottom. Position your jets strategically!</p>
                 `;
                 tutorialNext.style.display = 'block';
                 tutorialStart.style.display = 'none';
@@ -557,7 +650,7 @@
                     <p><strong>Buoyancy</strong> - Things float or sink in water depending on their density</p>
                     <p><strong>Water Resistance</strong> - Water slows objects down as they move through it</p>
                     <p><strong>Water Pressure</strong> - Water pushes in all directions</p>
-                    <p>Use these principles to guide the rings to the rods!</p>
+                    <p>Aim carefully! Adjust your jet angles for the perfect shot!</p>
                 `;
                 tutorialNext.style.display = 'none';
                 tutorialStart.style.display = 'block';
@@ -683,10 +776,19 @@
             });
         }
         
+        // Update angle display
+        function updateAngleDisplay() {
+            leftAngleDisplay.textContent = `${gameState.leftJet.angle}°`;
+            rightAngleDisplay.textContent = `${gameState.rightJet.angle}°`;
+        }
+        
         // Game initialization
         function initGame() {
             // Draw characters
             drawCharacters();
+            
+            // Update angle display
+            updateAngleDisplay();
             
             // Apply difficulty settings
             applyDifficulty();
@@ -724,6 +826,7 @@
             
             leftJetButton.addEventListener('mouseup', () => {
                 createBubbleSound();
+                createJetBurst(gameState.leftJet);
                 gameState.leftJet.active = false;
                 gameState.leftJet.power = 0;
             });
@@ -738,6 +841,7 @@
             leftJetButton.addEventListener('touchend', (e) => {
                 e.preventDefault();
                 createBubbleSound();
+                createJetBurst(gameState.leftJet);
                 gameState.leftJet.active = false;
                 gameState.leftJet.power = 0;
             });
@@ -751,6 +855,7 @@
             
             rightJetButton.addEventListener('mouseup', () => {
                 createBubbleSound();
+                createJetBurst(gameState.rightJet);
                 gameState.rightJet.active = false;
                 gameState.rightJet.power = 0;
             });
@@ -765,6 +870,7 @@
             rightJetButton.addEventListener('touchend', (e) => {
                 e.preventDefault();
                 createBubbleSound();
+                createJetBurst(gameState.rightJet);
                 gameState.rightJet.active = false;
                 gameState.rightJet.power = 0;
             });
@@ -804,6 +910,55 @@
                 gameState.settings.level++;
                 resetGame();
             });
+            
+            // Angle control buttons
+            leftAngleDecrease.addEventListener('click', () => {
+                gameState.leftJet.angle = Math.max(0, gameState.leftJet.angle - 5);
+                updateAngleDisplay();
+                createPopSound();
+            });
+            
+            leftAngleIncrease.addEventListener('click', () => {
+                gameState.leftJet.angle = Math.min(180, gameState.leftJet.angle + 5);
+                updateAngleDisplay();
+                createPopSound();
+            });
+            
+            rightAngleDecrease.addEventListener('click', () => {
+                gameState.rightJet.angle = Math.max(0, gameState.rightJet.angle - 5);
+                updateAngleDisplay();
+                createPopSound();
+            });
+            
+            rightAngleIncrease.addEventListener('click', () => {
+                gameState.rightJet.angle = Math.min(180, gameState.rightJet.angle + 5);
+                updateAngleDisplay();
+                createPopSound();
+            });
+        }
+        
+        // Create a burst of bubbles when releasing a jet button
+        function createJetBurst(jet) {
+            const angle = jet.angle * (Math.PI / 180);
+            const burstPower = jet.power;
+            
+            // Create more bubbles for a stronger burst effect
+            for (let i = 0; i < burstPower * 3; i++) {
+                // Add randomness to bubble direction
+                const spreadAngle = 0.4; // Wider spread
+                const bubbleAngle = angle + (Math.random() * spreadAngle - spreadAngle/2);
+                const speedVariation = 0.8 + Math.random() * 0.4;
+                
+                // Create bubbles with higher initial velocity
+                gameState.bubbles.push({
+                    x: jet.x,
+                    y: jet.y,
+                    vx: Math.cos(bubbleAngle) * burstPower * speedVariation * 1.5,
+                    vy: Math.sin(bubbleAngle) * burstPower * speedVariation * 1.5,
+                    size: 3 + Math.random() * (burstPower / 2), // Larger bubbles for stronger bursts
+                    life: 1.0
+                });
+            }
         }
         
         // Change difficulty setting
@@ -826,17 +981,16 @@
             // Create rings
             gameState.rings = [];
             for (let i = 0; i < settings.ringCount; i++) {
-                // Alternate left and right sides for initial ring positions
-                let x;
-                if (i % 2 === 0) {
-                    x = 100 + (Math.random() * 100);
-                } else {
-                    x = CANVAS_WIDTH - 100 - (Math.random() * 100);
-                }
+                // Position rings around the tank
+                const angle = (Math.PI * 2) * (i / settings.ringCount) + (Math.random() * 0.5);
+                const distance = 100 + (Math.random() * 150);
+                
+                const x = CANVAS_WIDTH / 2 + Math.cos(angle) * distance;
+                const y = CANVAS_HEIGHT / 3 + Math.sin(angle) * distance * 0.5;
                 
                 gameState.rings.push({
                     x: x,
-                    y: CANVAS_HEIGHT / 2 - 100 - (i * 30),
+                    y: y,
                     vx: 0,
                     vy: 0,
                     color: getRandomRingColor(),
@@ -868,14 +1022,14 @@
             }, 500);
             
             setTimeout(() => {
-                showSpeech('right', "Try to get the rings on the rods!");
+                showSpeech('right', "Adjust the jet angles to aim precisely!");
             }, 3500);
         }
         
         // Start the game
         function startGame() {
             gameState.startTime = Date.now();
-            showSpeech('left', "Let's go! Get those rings on the rods!");
+            showSpeech('left', "Let's go! Use the jets to guide rings to the rods!");
         }
         
         // Generate a random bright color for rings
@@ -884,7 +1038,7 @@
             return `hsl(${hue}, 80%, 60%)`;
         }
         
-        // Calculate water shape points (W-shaped bottom)
+        // NEW: Calculate water shape points (V-shaped bottom)
         function calculateWaterShape() {
             const points = [];
             
@@ -897,20 +1051,14 @@
             // Right wall
             points.push({x: CANVAS_WIDTH - BORDER_THICKNESS, y: CANVAS_HEIGHT - BORDER_THICKNESS});
             
-            // Right slope start
-            points.push({x: CANVAS_WIDTH - BORDER_THICKNESS - 100, y: CANVAS_HEIGHT - BORDER_THICKNESS});
+            // Right slope
+            points.push({x: CANVAS_WIDTH / 2 + 10, y: CANVAS_HEIGHT - BORDER_THICKNESS - 10});
             
-            // Right divot
-            points.push({x: CANVAS_WIDTH - 200, y: CANVAS_HEIGHT - BORDER_THICKNESS - 60});
+            // Center (lowest point)
+            points.push({x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT - BORDER_THICKNESS});
             
-            // Middle peak
-            points.push({x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT - BORDER_THICKNESS - 30});
-            
-            // Left divot
-            points.push({x: 200, y: CANVAS_HEIGHT - BORDER_THICKNESS - 60});
-            
-            // Left slope end
-            points.push({x: BORDER_THICKNESS + 100, y: CANVAS_HEIGHT - BORDER_THICKNESS});
+            // Left slope
+            points.push({x: CANVAS_WIDTH / 2 - 10, y: CANVAS_HEIGHT - BORDER_THICKNESS - 10});
             
             // Bottom left corner
             points.push({x: BORDER_THICKNESS, y: CANVAS_HEIGHT - BORDER_THICKNESS});
@@ -918,26 +1066,27 @@
             return points;
         }
         
-        // Get Y coordinate of boundary at a given X position
+        // NEW: Get Y coordinate of boundary at a given X position (V-shaped)
         function getBoundaryY(x) {
             const centerX = CANVAS_WIDTH / 2;
+            const baseY = CANVAS_HEIGHT - BORDER_THICKNESS;
             
-            if (x < BORDER_THICKNESS + 100) {  // Left wall
-                return CANVAS_HEIGHT - BORDER_THICKNESS;
-            } else if (x < 200) {  // Left slope to divot
-                const t = (x - (BORDER_THICKNESS + 100)) / 100;
-                return CANVAS_HEIGHT - BORDER_THICKNESS - (60 * t);
-            } else if (x < centerX) {  // Left divot to center
-                const t = (x - 200) / (centerX - 200);
-                return CANVAS_HEIGHT - BORDER_THICKNESS - 60 + (30 * t);
-            } else if (x < CANVAS_WIDTH - 200) {  // Center to right divot
-                const t = (x - centerX) / (CANVAS_WIDTH - 200 - centerX);
-                return CANVAS_HEIGHT - BORDER_THICKNESS - 30 - (30 * t);
-            } else if (x < CANVAS_WIDTH - BORDER_THICKNESS - 100) {  // Right slope
-                const t = (x - (CANVAS_WIDTH - 200)) / 100;
-                return CANVAS_HEIGHT - BORDER_THICKNESS - 60 + (60 * t);
-            } else {  // Right wall
-                return CANVAS_HEIGHT - BORDER_THICKNESS;
+            if (x < BORDER_THICKNESS) {
+                return baseY;
+            } else if (x > CANVAS_WIDTH - BORDER_THICKNESS) {
+                return baseY;
+            } else if (x === centerX) {
+                return baseY;
+            } else if (x < centerX) {
+                // Left side of the V - linear interpolation
+                const ratio = (x - BORDER_THICKNESS) / (centerX - BORDER_THICKNESS);
+                const valleyDepth = 80 * (1 - ratio);
+                return baseY - valleyDepth;
+            } else {
+                // Right side of the V - linear interpolation
+                const ratio = (x - centerX) / (CANVAS_WIDTH - BORDER_THICKNESS - centerX);
+                const valleyDepth = 80 * ratio;
+                return baseY - valleyDepth;
             }
         }
         
@@ -1004,9 +1153,9 @@
                     
                     // Show celebration message
                     if (rod.rings === 1) {
-                        showSpeech('right', "Great job! Keep going!");
+                        showSpeech('right', "Great shot! Keep going!");
                     } else {
-                        showSpeech('left', "Wonderful! You're doing it!");
+                        showSpeech('left', "Perfect aim! You're doing it!");
                     }
                     
                     // Check level completion
@@ -1099,9 +1248,9 @@
             }
             
             // Show celebration messages
-            showSpeech('left', "Amazing job! You did it!");
+            showSpeech('left', "Amazing job! You're a real water physicist!");
             setTimeout(() => {
-                showSpeech('right', "You're a bubble master!");
+                showSpeech('right', "Your jet control is perfect!");
             }, 3000);
         }
         
@@ -1213,6 +1362,20 @@
                 ring.vy *= gameState.physics.waterResistance;
                 ring.vy += gameState.physics.gravity;
                 
+                // NEW: Apply a gentle force pulling rings toward the center bottom
+                const centerX = CANVAS_WIDTH / 2;
+                const bottomY = CANVAS_HEIGHT - BORDER_THICKNESS - 10;
+                const dx = centerX - ring.x;
+                const dy = bottomY - ring.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Add a gentle pull toward the center
+                if (distance > 0) {
+                    const pullForce = 0.005;
+                    ring.vx += (dx / distance) * pullForce;
+                    ring.vy += (dy / distance) * pullForce;
+                }
+                
                 // Apply bubble forces
                 for (let j = 0; j < gameState.bubbles.length; j++) {
                     const bubble = gameState.bubbles[j];
@@ -1234,8 +1397,8 @@
                     const dy = ring.y - gameState.leftJet.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     
-                    if (distance < 100) {
-                        const force = (1 - distance / 100) * gameState.leftJet.power * 0.1;
+                    if (distance < 150) { // Increased range
+                        const force = (1 - distance / 150) * gameState.leftJet.power * 0.15; // Increased force
                         ring.vx += Math.cos(angle) * force;
                         ring.vy += Math.sin(angle) * force;
                     }
@@ -1247,8 +1410,8 @@
                     const dy = ring.y - gameState.rightJet.y;
                     const distance = Math.sqrt(dx * dx + dy * dy);
                     
-                    if (distance < 100) {
-                        const force = (1 - distance / 100) * gameState.rightJet.power * 0.1;
+                    if (distance < 150) { // Increased range
+                        const force = (1 - distance / 150) * gameState.rightJet.power * 0.15; // Increased force
                         ring.vx += Math.cos(angle) * force;
                         ring.vy += Math.sin(angle) * force;
                     }
@@ -1411,6 +1574,26 @@
                 ctx.lineTo(CANVAS_WIDTH - BORDER_THICKNESS, y);
                 ctx.stroke();
             }
+            
+            // Draw the V-shaped bottom with more detail
+            ctx.beginPath();
+            ctx.moveTo(BORDER_THICKNESS, CANVAS_HEIGHT - BORDER_THICKNESS);
+            
+            // Draw left slope
+            for (let x = BORDER_THICKNESS; x <= CANVAS_WIDTH / 2; x += 10) {
+                const y = getBoundaryY(x);
+                ctx.lineTo(x, y);
+            }
+            
+            // Draw right slope
+            for (let x = CANVAS_WIDTH / 2; x <= CANVAS_WIDTH - BORDER_THICKNESS; x += 10) {
+                const y = getBoundaryY(x);
+                ctx.lineTo(x, y);
+            }
+            
+            ctx.strokeStyle = 'rgba(30, 144, 255, 0.8)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
         
         // Draw the rods
@@ -1512,7 +1695,7 @@
             // Draw jet stream if active
             if (gameState.leftJet.active) {
                 const angle = gameState.leftJet.angle * (Math.PI / 180);
-                const jetLength = gameState.leftJet.power * 5;
+                const jetLength = gameState.leftJet.power * 6;
                 
                 // Draw stream
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
@@ -1522,6 +1705,29 @@
                 ctx.lineTo(
                     gameState.leftJet.x + Math.cos(angle) * jetLength,
                     gameState.leftJet.y + Math.sin(angle) * jetLength
+                );
+                ctx.stroke();
+                
+                // Draw direction line (always visible)
+                ctx.strokeStyle = 'rgba(78, 205, 196, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(gameState.leftJet.x, gameState.leftJet.y);
+                ctx.lineTo(
+                    gameState.leftJet.x + Math.cos(angle) * 30,
+                    gameState.leftJet.y + Math.sin(angle) * 30
+                );
+                ctx.stroke();
+            } else {
+                // Draw direction line (always visible)
+                const angle = gameState.leftJet.angle * (Math.PI / 180);
+                ctx.strokeStyle = 'rgba(78, 205, 196, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(gameState.leftJet.x, gameState.leftJet.y);
+                ctx.lineTo(
+                    gameState.leftJet.x + Math.cos(angle) * 30,
+                    gameState.leftJet.y + Math.sin(angle) * 30
                 );
                 ctx.stroke();
             }
@@ -1535,7 +1741,7 @@
             // Draw jet stream if active
             if (gameState.rightJet.active) {
                 const angle = gameState.rightJet.angle * (Math.PI / 180);
-                const jetLength = gameState.rightJet.power * 5;
+                const jetLength = gameState.rightJet.power * 6;
                 
                 // Draw stream
                 ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
@@ -1545,6 +1751,29 @@
                 ctx.lineTo(
                     gameState.rightJet.x + Math.cos(angle) * jetLength,
                     gameState.rightJet.y + Math.sin(angle) * jetLength
+                );
+                ctx.stroke();
+                
+                // Draw direction line (always visible)
+                ctx.strokeStyle = 'rgba(255, 209, 102, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(gameState.rightJet.x, gameState.rightJet.y);
+                ctx.lineTo(
+                    gameState.rightJet.x + Math.cos(angle) * 30,
+                    gameState.rightJet.y + Math.sin(angle) * 30
+                );
+                ctx.stroke();
+            } else {
+                // Draw direction line (always visible)
+                const angle = gameState.rightJet.angle * (Math.PI / 180);
+                ctx.strokeStyle = 'rgba(255, 209, 102, 0.5)';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(gameState.rightJet.x, gameState.rightJet.y);
+                ctx.lineTo(
+                    gameState.rightJet.x + Math.cos(angle) * 30,
+                    gameState.rightJet.y + Math.sin(angle) * 30
                 );
                 ctx.stroke();
             }

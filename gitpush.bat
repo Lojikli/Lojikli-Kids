@@ -15,41 +15,29 @@ set "temp_file=%TEMP%\temp_files.txt"
 set "toddler_js=%TEMP%\toddler_js.txt"
 set "elementary_js=%TEMP%\elementary_js.txt"
 set "new_games_js=%TEMP%\new_games_js.txt"
-set "new_files_list=%TEMP%\new_files.txt"
+set "recent_files=%TEMP%\recent_files.txt"
 
-:: Get list of untracked files and recently added files
-echo Getting list of new files from git...
-
-:: Create a list of truly new files (untracked + recently added)
-git ls-files --others --exclude-standard > "%new_files_list%"
-
-:: Add files recently added to git (last 30 commits)
-git log --name-status --diff-filter=A -n 30 | findstr /R "^A" | findstr /R "\.html$" >> "%new_files_list%"
-
-:: Sort and remove duplicates
-type "%new_files_list%" | sort /unique > "%TEMP%\sorted_new_files.txt"
-copy "%TEMP%\sorted_new_files.txt" "%new_files_list%" /Y
-
-echo Found the following potentially new files:
-type "%new_files_list%"
-echo.
-
-:: Create the start of the repository object in separate files
 echo // Define the structure of your repository> "%toddler_js%"
 echo const repository = {>> "%toddler_js%"
 echo     "2 yr old": [>> "%toddler_js%"
 
 echo     "5 yr old": [> "%elementary_js%"
 
-:: Create the new games array
 echo // Recently added games>> "%new_games_js%"
 echo const recentlyAddedGames = [>> "%new_games_js%"
 
-:: Scan and process the "2 yr old" directory
-echo Scanning toddler directory...
-set "first_file=yes"
+:: Get the most recent files by directly sorting by date/time
+echo Finding recent games by modification date...
+dir "2 yr old\*.html" /B /O-D > "%recent_files%"
+dir "5 yr old\*.html" /B /O-D >> "%recent_files%"
+
+:: We'll show the 8 most recently modified games
+set "count=0"
 set "first_new_game=yes"
 
+:: Process toddler directory first 
+echo Scanning toddler directory...
+set "first_file=yes"
 for %%f in ("2 yr old\*.html") do (
     set "filename=%%~nxf"
     set "filepath=2 yr old\!filename!"
@@ -60,37 +48,6 @@ for %%f in ("2 yr old\*.html") do (
         set "first_file=no"
     ) else (
         echo         ,"!filename!">> "%toddler_js%"
-    )
-    
-    :: Check if this is a new file by looking in the git new files list
-    set "is_new="
-    :: Check if the file appears in our new files list (with both kinds of slashes)
-    findstr /I /C:"2 yr old/!filename!" "%new_files_list%" >nul 2>&1
-    if !errorlevel! equ 0 (
-        set "is_new=yes"
-        echo New game found: !filepath!
-    )
-    
-    :: Only add to the new games array if it's truly new
-    if defined is_new (
-        if "!first_new_game!"=="yes" (
-            echo     {>> "%new_games_js%"
-            set "first_new_game=no"
-        ) else (
-            echo     ,{>> "%new_games_js%"
-        )
-        
-        :: Get nice name and icon for the new game entry
-        call :GetNiceName "!filename!" nice_name
-        call :GetIconClass "!filename!" icon_class
-        call :GetCategory "!filename!" category_name
-        
-        echo         name: "!nice_name!",>> "%new_games_js%"
-        echo         icon: "!icon_class!",>> "%new_games_js%"
-        echo         category: "!category_name!",>> "%new_games_js%"
-        echo         description: "Fun !category_name! game for kids!",>> "%new_games_js%"
-        echo         path: "2 yr old/!filename!">> "%new_games_js%"
-        echo     }>> "%new_games_js%"
     )
     
     set /a toddler_count+=1
@@ -116,16 +73,32 @@ for %%f in ("5 yr old\*.html") do (
         echo         ,"!filename!">> "%elementary_js%"
     )
     
-    :: Check if this is a new file by looking in the git new files list
-    set "is_new="
-    findstr /I /C:"5 yr old/!filename!" "%new_files_list%" >nul 2>&1
-    if !errorlevel! equ 0 (
-        set "is_new=yes"
-        echo New game found: !filepath!
-    )
-    
-    :: Only add to the new games array if it's truly new
-    if defined is_new (
+    set /a elementary_count+=1
+)
+if not defined elementary_count set "elementary_count=0"
+echo Found %elementary_count% files in elementary directory
+
+:: Add the closing of the repository object
+echo     ]>> "%elementary_js%"
+echo };>> "%elementary_js%"
+
+:: Now identify the most recent files by file date
+echo Identifying the newest games by date modified...
+
+:: Sort the recent files list by date/time (most recent first)
+:: We'll use this to find the newest files
+
+:: Extract the 8 most recent files from each directory
+echo Finding most recent games in 2 yr old directory...
+for /f "tokens=*" %%f in ('dir "2 yr old\*.html" /B /O-D 2^>nul') do (
+    if !count! lss 4 (
+        set "filename=%%f"
+        set "filepath=2 yr old\!filename!"
+        set "dir_part=2 yr old"
+        
+        echo Recent game found: !filepath!
+        
+        :: Add to new games array
         if "!first_new_game!"=="yes" (
             echo     {>> "%new_games_js%"
             set "first_new_game=no"
@@ -142,51 +115,51 @@ for %%f in ("5 yr old\*.html") do (
         echo         icon: "!icon_class!",>> "%new_games_js%"
         echo         category: "!category_name!",>> "%new_games_js%"
         echo         description: "Fun !category_name! game for kids!",>> "%new_games_js%"
-        echo         path: "5 yr old/!filename!">> "%new_games_js%"
+        echo         path: "!dir_part!/!filename!">> "%new_games_js%"
         echo     }>> "%new_games_js%"
+        
+        set /a count+=1
     )
-    
-    set /a elementary_count+=1
 )
-if not defined elementary_count set "elementary_count=0"
-echo Found %elementary_count% files in elementary directory
 
-:: Add the closing of the repository object
-echo     ]>> "%elementary_js%"
-echo };>> "%elementary_js%"
+:: Reset count for 5 yr old directory
+set "count=0"
+
+echo Finding most recent games in 5 yr old directory...
+for /f "tokens=*" %%f in ('dir "5 yr old\*.html" /B /O-D 2^>nul') do (
+    if !count! lss 4 (
+        set "filename=%%f"
+        set "filepath=5 yr old\!filename!"
+        set "dir_part=5 yr old"
+        
+        echo Recent game found: !filepath!
+        
+        :: Only add comma if we've already added at least one game
+        if "!first_new_game!"=="yes" (
+            echo     {>> "%new_games_js%"
+            set "first_new_game=no"
+        ) else (
+            echo     ,{>> "%new_games_js%"
+        )
+        
+        :: Get nice name and icon for the new game entry
+        call :GetNiceName "!filename!" nice_name
+        call :GetIconClass "!filename!" icon_class
+        call :GetCategory "!filename!" category_name
+        
+        echo         name: "!nice_name!",>> "%new_games_js%"
+        echo         icon: "!icon_class!",>> "%new_games_js%"
+        echo         category: "!category_name!",>> "%new_games_js%"
+        echo         description: "Fun !category_name! game for kids!",>> "%new_games_js%"
+        echo         path: "!dir_part!/!filename!">> "%new_games_js%"
+        echo     }>> "%new_games_js%"
+        
+        set /a count+=1
+    )
+)
 
 :: Close the new games array
 echo ];>> "%new_games_js%"
-
-:: If no new games were found, create a few sample entries to demonstrate the feature
-findstr /C:"{" "%new_games_js%" >nul
-if errorlevel 1 (
-    echo No new games found. Adding sample entries for demonstration...
-    
-    echo     {>> "%new_games_js%"
-    echo         name: "Space Explorer",>> "%new_games_js%"
-    echo         icon: "fas fa-rocket",>> "%new_games_js%"
-    echo         category: "science",>> "%new_games_js%"
-    echo         description: "Blast off into space and learn about planets, stars, and galaxies in this exciting adventure!",>> "%new_games_js%"
-    echo         path: "#">> "%new_games_js%"
-    echo     },>> "%new_games_js%"
-    
-    echo     {>> "%new_games_js%"
-    echo         name: "Math Adventure",>> "%new_games_js%"
-    echo         icon: "fas fa-calculator",>> "%new_games_js%"
-    echo         category: "math",>> "%new_games_js%"
-    echo         description: "Fun math game for kids!",>> "%new_games_js%"
-    echo         path: "#">> "%new_games_js%"
-    echo     },>> "%new_games_js%"
-    
-    echo     {>> "%new_games_js%"
-    echo         name: "Music Maker",>> "%new_games_js%"
-    echo         icon: "fas fa-music",>> "%new_games_js%"
-    echo         category: "music",>> "%new_games_js%"
-    echo         description: "Create your own tunes and learn about notes, rhythm, and musical instruments.",>> "%new_games_js%"
-    echo         path: "#">> "%new_games_js%"
-    echo     }>> "%new_games_js%"
-)
 
 :: Combine the temporary files
 type "%toddler_js%" > "%temp_file%"
@@ -203,8 +176,7 @@ del "%temp_file%" 2>nul
 del "%toddler_js%" 2>nul
 del "%elementary_js%" 2>nul
 del "%new_games_js%" 2>nul
-del "%new_files_list%" 2>nul
-del "%TEMP%\sorted_new_files.txt" 2>nul
+del "%recent_files%" 2>nul
 
 :: After running, create a "promoted" file to mark these games as not new anymore
 echo %date% %time% > "last_games_push.txt"
@@ -218,7 +190,7 @@ for /f "tokens=*" %%i in ('git rev-parse --abbrev-ref HEAD') do set current_bran
 :: Git operations
 echo Committing and pushing changes...
 git add .
-git commit -m "Updated index.html with repository structure and new games tracking"
+git commit -m "Updated index.html with repository structure and featured recent games"
 git push origin %current_branch%
 
 echo ===== SUCCESS: CHANGES PUSHED TO GITHUB =====
@@ -345,7 +317,7 @@ if !errorlevel! equ 0 (
 )
 
 :: Check for game-related keywords
-echo !filename! | findstr /i "game battleship pacman shooter connect4 soduku" > nul
+echo !filename! | findstr /i "game battleship pacman shooter connect4 soduku bubble" > nul
 if !errorlevel! equ 0 (
     set "icon=fas fa-gamepad"
     goto :iconSet
@@ -372,6 +344,20 @@ if !errorlevel! equ 0 (
     goto :iconSet
 )
 
+:: Check for coordinate/number line related keywords
+echo !filename! | findstr /i "coordinates numberline" > nul  
+if !errorlevel! equ 0 (
+    set "icon=fas fa-ruler-horizontal"
+    goto :iconSet
+)
+
+:: Check for water related keywords
+echo !filename! | findstr /i "water bubble" > nul
+if !errorlevel! equ 0 (
+    set "icon=fas fa-water"
+    goto :iconSet
+)
+
 :iconSet
 endlocal & set "%~2=%icon%"
 goto :EOF
@@ -388,7 +374,7 @@ for %%a in (a b c d e f g h i j k l m n o p q r s t u v w x y z) do set "filenam
 set "category=interactive"
 
 :: Check for math-related keywords
-echo !filename! | findstr /i "math multiply division fraction algebra calculus factor geometry number pemdas subtract scientific zero plot triang trig decimal statistics" > nul
+echo !filename! | findstr /i "math multiply division fraction algebra calculus factor geometry number pemdas subtract scientific zero plot triang trig decimal statistics coordinates" > nul
 if !errorlevel! equ 0 (
     set "category=math"
     goto :categorySet
@@ -419,6 +405,13 @@ if !errorlevel! equ 0 (
 echo !filename! | findstr /i "game battleship pacman shooter connect4 adventure soduku bubble asteroid snake solitaire trouble lander mahjong" > nul
 if !errorlevel! equ 0 (
     set "category=games"
+    goto :categorySet
+)
+
+:: Check for water-related keywords
+echo !filename! | findstr /i "water bubble" > nul
+if !errorlevel! equ 0 (
+    set "category=science"
     goto :categorySet
 )
 

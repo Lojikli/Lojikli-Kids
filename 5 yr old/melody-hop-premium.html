@@ -1,0 +1,4124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Melody Hop: Premium Edition</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <style>
+        /* ===== Core Styles ===== */
+        :root {
+            /* Main color palette */
+            --primary: #6344e6;
+            --primary-dark: #4e35b8;
+            --primary-light: #8468ff;
+            --secondary: #ff6e91;
+            --secondary-dark: #e64d6e;
+            --secondary-light: #ff8ba7;
+            --accent: #33e6b8;
+            --accent-dark: #28b190;
+            --accent-light: #5fffd5;
+            --dark: #1a103c;
+            --mid: #392d66;
+            --light: #eff1fa;
+            
+            /* UI Elements */
+            --surface: rgba(255, 255, 255, 0.1);
+            --surface-elevated: rgba(255, 255, 255, 0.18);
+            --overlay: rgba(26, 16, 60, 0.8);
+            
+            /* Game Difficulty Colors */
+            --easy: #4cd964;
+            --medium: #ffcc00;
+            --hard: #ff3b30;
+            
+            /* Typography */
+            --font-heading: 'Montserrat', 'Arial Rounded MT Bold', sans-serif;
+            --font-body: 'Nunito', 'Arial', sans-serif;
+            
+            /* Animations */
+            --transition-quick: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-medium: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-bounce: 0.5s cubic-bezier(0.25, 0.1, 0.25, 1.5);
+            
+            /* Sizing */
+            --border-radius-sm: 8px;
+            --border-radius-md: 16px;
+            --border-radius-lg: 24px;
+            --border-radius-xl: 32px;
+            --border-radius-pill: 9999px;
+            
+            /* Shadows */
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.2);
+            --shadow-inner: inset 0 2px 8px rgba(0, 0, 0, 0.15);
+            
+            /* Z-indices */
+            --z-background: -10;
+            --z-game: 1;
+            --z-ui: 10;
+            --z-overlay: 100;
+            --z-modal: 1000;
+        }
+
+        /* Fonts */
+        @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Nunito:wght@300;400;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: var(--font-body);
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--dark), var(--mid));
+            color: var(--light);
+            overflow: hidden;
+            touch-action: none;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-heading);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        button {
+            font-family: var(--font-heading);
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+
+        /* ===== Utility Classes ===== */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--secondary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .premium-badge {
+            background: linear-gradient(45deg, #ffcc00, #ff9500);
+            color: #222;
+            font-size: 0.65em;
+            padding: 2px 8px;
+            border-radius: var(--border-radius-pill);
+            margin-left: 10px;
+            vertical-align: middle;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: var(--shadow-sm);
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .premium-badge i {
+            margin-right: 4px;
+            font-size: 0.9em;
+        }
+
+        .premium-feature {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .premium-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: var(--overlay);
+            backdrop-filter: blur(8px);
+            z-index: var(--z-overlay);
+        }
+
+        .premium-overlay .upgrade-message {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .premium-overlay .upgrade-message h3 {
+            margin-bottom: 10px;
+            font-size: 1.4em;
+        }
+
+        .premium-overlay .upgrade-message p {
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .premium-overlay .upgrade-button {
+            background: linear-gradient(45deg, var(--secondary), var(--secondary-dark));
+            padding: 12px 24px;
+            border-radius: var(--border-radius-pill);
+            color: white;
+            font-weight: 600;
+            font-size: 1em;
+            box-shadow: var(--shadow-md);
+            transition: transform var(--transition-quick), box-shadow var(--transition-quick);
+        }
+
+        .premium-overlay .upgrade-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* ===== Containers ===== */
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(180deg, var(--dark), var(--primary-dark));
+            overflow: hidden;
+        }
+
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: var(--z-overlay);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity var(--transition-medium);
+            padding: 20px;
+        }
+
+        .screen.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        /* ===== Start Screen ===== */
+        #start-screen {
+            background: linear-gradient(135deg, var(--dark), var(--primary-dark));
+            text-align: center;
+        }
+
+        #start-screen .logo {
+            margin-bottom: 30px;
+        }
+
+        #start-screen .logo h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            line-height: 1;
+            text-shadow: 0 2px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        #start-screen .logo p {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+
+        /* Animated music notes */
+        .music-notes {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: var(--z-background);
+        }
+
+        .music-note {
+            position: absolute;
+            font-size: 30px;
+            color: rgba(255, 255, 255, 0.15);
+            animation: float 15s linear infinite;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(120vh) rotate(0deg);
+                opacity: 0;
+            }
+            10% {
+                opacity: 1;
+            }
+            90% {
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-20vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* ===== Game Elements ===== */
+        #player {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            z-index: var(--z-game);
+            transition: transform 0.1s;
+        }
+
+        .player-character {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--secondary);
+            overflow: hidden;
+            box-shadow: var(--shadow-md), inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+            position: relative;
+            transition: transform var(--transition-quick);
+        }
+
+        .player-character .face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .player-character .eyes {
+            display: flex;
+            justify-content: space-around;
+            width: 70%;
+            margin-bottom: 5px;
+        }
+
+        .player-character .eye {
+            width: 8px;
+            height: 8px;
+            background: var(--dark);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        .player-character .eye:after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            width: 3px;
+            height: 3px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        .player-character .mouth {
+            width: 16px;
+            height: 8px;
+            background: var(--dark);
+            border-radius: 0 0 8px 8px;
+        }
+
+        .player-character .mouth.happy {
+            border-radius: 8px 8px 0 0;
+        }
+
+        .player-trail {
+            position: absolute;
+            pointer-events: none;
+            z-index: calc(var(--z-game) - 1);
+        }
+
+        .tile {
+            position: absolute;
+            width: 120px;
+            height: 40px;
+            background: linear-gradient(to right, var(--secondary-dark), var(--secondary));
+            border-radius: 20px;
+            box-shadow: var(--shadow-md), inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+            transform-style: preserve-3d;
+            transition: opacity 0.3s;
+            cursor: pointer;
+            z-index: var(--z-game);
+        }
+
+        .tile:hover {
+            filter: brightness(1.1);
+        }
+
+        .tile.note {
+            background: linear-gradient(to right, var(--primary-dark), var(--primary));
+        }
+
+        .tile.power {
+            background: linear-gradient(to right, var(--accent-dark), var(--accent));
+            animation: pulse 1.5s infinite;
+        }
+
+        .tile.premium {
+            background: linear-gradient(to right, #ffcc00, #ff9500);
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.5), inset 0 -4px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale3d(1, 1, 1); }
+            50% { transform: scale3d(1.05, 1.05, 1.05); }
+            100% { transform: scale3d(1, 1, 1); }
+        }
+
+        .note-icon {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+        }
+
+        /* ===== UI Elements ===== */
+        .primary-button {
+            background: linear-gradient(45deg, var(--primary), var(--primary-light));
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 8px;
+            border-radius: var(--border-radius-pill);
+            font-size: 1.1em;
+            font-weight: 600;
+            box-shadow: var(--shadow-md), inset 0 -4px 0 rgba(0, 0, 0, 0.1);
+            transition: transform var(--transition-quick), box-shadow var(--transition-quick);
+        }
+
+        .primary-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg), inset 0 -4px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .primary-button:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-sm), inset 0 -2px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .secondary-button {
+            background: var(--surface);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            margin: 8px;
+            border-radius: var(--border-radius-pill);
+            font-size: 1.1em;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-sm);
+            transition: all var(--transition-quick);
+        }
+
+        .secondary-button:hover {
+            background: var(--surface-elevated);
+            transform: translateY(-2px);
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        /* ===== Game HUD ===== */
+        .hud {
+            position: absolute;
+            z-index: var(--z-ui);
+            pointer-events: none;
+        }
+
+        #score-display {
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2em;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+        }
+
+        #level-display {
+            top: 20px;
+            left: 20px;
+            font-size: 1.3em;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+        }
+
+        #combo-display {
+            top: 70px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.3em;
+            font-weight: 600;
+            color: white;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        /* ===== Settings Panel ===== */
+        .settings-panel {
+            background: var(--surface-elevated);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .settings-panel h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .settings-group {
+            margin-bottom: 25px;
+        }
+
+        .settings-group h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            color: var(--secondary);
+        }
+
+        .slider-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .slider-label {
+            width: 100px;
+            font-weight: 600;
+        }
+
+        .slider-value {
+            width: 50px;
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .slider {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            margin: 0 15px;
+            background: var(--surface);
+            border-radius: var(--border-radius-pill);
+            outline: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            transition: transform var(--transition-quick), background var(--transition-quick);
+        }
+
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            background: var(--primary-light);
+        }
+
+        /* Character selection */
+        .character-select {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .character-option {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: var(--surface);
+            cursor: pointer;
+            transition: transform var(--transition-medium);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+        }
+
+        .character-option.selected {
+            transform: scale(1.1);
+            box-shadow: 0 0 0 3px var(--primary), var(--shadow-md);
+        }
+
+        .character-option.premium-locked:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .character-option.premium-locked:before {
+            content: '\f023';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            z-index: 1;
+            font-size: 20px;
+        }
+
+        /* Toggle switches */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .toggle-label {
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 26px;
+        }
+
+        .toggle-switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--surface);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Difficulty selection */
+        .difficulty-select {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .difficulty-option {
+            flex: 1;
+            padding: 12px;
+            background: var(--surface);
+            border-radius: var(--border-radius-md);
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-quick);
+            font-weight: 600;
+        }
+
+        .difficulty-option:hover {
+            background: var(--surface-elevated);
+        }
+
+        .difficulty-option.selected {
+            background: var(--primary);
+            transform: scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        .difficulty-option[data-difficulty="easy"].selected {
+            background: var(--easy);
+        }
+
+        .difficulty-option[data-difficulty="medium"].selected {
+            background: var(--medium);
+        }
+
+        .difficulty-option[data-difficulty="hard"].selected {
+            background: var(--hard);
+        }
+
+        /* ===== Subscription Screens ===== */
+        #subscription-screen {
+            background: linear-gradient(135deg, var(--dark), var(--primary-dark));
+        }
+
+        .subscription-panel {
+            background: var(--surface-elevated);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .subscription-panel h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .subscription-options {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .subscription-option {
+            background: var(--surface);
+            border-radius: var(--border-radius-md);
+            padding: 25px;
+            width: 250px;
+            text-align: center;
+            transition: transform var(--transition-medium), box-shadow var(--transition-medium);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .subscription-option:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .subscription-option.selected {
+            box-shadow: 0 0 0 3px var(--primary), var(--shadow-lg);
+        }
+
+        .subscription-option.premium {
+            background: linear-gradient(135deg, var(--dark), var(--primary-dark));
+        }
+
+        .subscription-option.best-value:before {
+            content: 'BEST VALUE';
+            position: absolute;
+            top: 15px;
+            right: -30px;
+            background: var(--accent);
+            color: var(--dark);
+            transform: rotate(45deg);
+            padding: 5px 40px;
+            font-size: 0.7em;
+            font-weight: 700;
+        }
+
+        .subscription-name {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .subscription-price {
+            font-size: 2em;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .subscription-period {
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin-bottom: 20px;
+        }
+
+        .subscription-features {
+            text-align: left;
+            margin-bottom: 20px;
+        }
+
+        .subscription-features li {
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .subscription-features li:before {
+            content: '\f00c';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        .subscription-button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: var(--border-radius-pill);
+            font-weight: 600;
+            width: 100%;
+            transition: all var(--transition-quick);
+        }
+
+        .subscription-button:hover {
+            background: var(--primary-light);
+        }
+
+        /* ===== Game Over Screen ===== */
+        #game-over-screen {
+            background: var(--overlay);
+            backdrop-filter: blur(10px);
+        }
+
+        .game-over-panel {
+            background: var(--surface-elevated);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+
+        .game-over-panel h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .score-container {
+            margin: 30px 0;
+        }
+
+        .final-score {
+            font-size: 3em;
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .high-score {
+            font-size: 1.2em;
+            opacity: 0.8;
+        }
+
+        /* ===== Pause Menu ===== */
+        #pause-menu {
+            background: var(--overlay);
+            backdrop-filter: blur(10px);
+        }
+
+        .pause-panel {
+            background: var(--surface-elevated);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+
+        .pause-panel h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        /* ===== Particle Effects ===== */
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            z-index: var(--z-game);
+        }
+
+        /* ===== Progression System ===== */
+        .progress-container {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 500px;
+            height: 10px;
+            background-color: var(--surface);
+            border-radius: var(--border-radius-pill);
+            overflow: hidden;
+            box-shadow: var(--shadow-inner);
+            z-index: var(--z-ui);
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            width: 0%;
+            transition: width 0.3s;
+            box-shadow: 0 0 10px var(--primary-light);
+        }
+
+        /* ===== Achievements ===== */
+        #achievements-screen {
+            background: linear-gradient(135deg, var(--dark), var(--primary-dark));
+        }
+
+        .achievements-panel {
+            background: var(--surface-elevated);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            height: 80%;
+            max-height: 600px;
+            box-shadow: var(--shadow-lg);
+            overflow-y: auto;
+        }
+
+        .achievements-panel h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .achievement {
+            background: var(--surface);
+            border-radius: var(--border-radius-md);
+            padding: 20px;
+            text-align: center;
+            transition: transform var(--transition-quick);
+        }
+
+        .achievement:hover {
+            transform: translateY(-5px);
+        }
+
+        .achievement.locked {
+            opacity: 0.6;
+        }
+
+        .achievement-icon {
+            font-size: 2em;
+            margin-bottom: 15px;
+            color: var(--accent);
+        }
+
+        .achievement.locked .achievement-icon {
+            color: var(--surface-elevated);
+        }
+
+        .achievement-name {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .achievement-description {
+            font-size: 0.9em;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .achievement-progress {
+            height: 5px;
+            background: var(--surface-elevated);
+            border-radius: var(--border-radius-pill);
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .achievement-progress-bar {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+        }
+
+        /* ===== Character Select ===== */
+        #character-screen {
+            background: linear-gradient(135deg, var(--dark), var(--primary-dark));
+        }
+
+        .character-panel {
+            background: var(--surface-elevated);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            width: 90%;
+            max-width: 800px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .character-panel h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .characters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .character-card {
+            background: var(--surface);
+            border-radius: var(--border-radius-md);
+            padding: 20px;
+            text-align: center;
+            transition: transform var(--transition-medium);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .character-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .character-card.selected {
+            box-shadow: 0 0 0 3px var(--primary), var(--shadow-md);
+        }
+
+        .character-card.premium-locked:after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+        }
+
+        .character-card.premium-locked:before {
+            content: '\f023';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            z-index: 1;
+            font-size: 30px;
+        }
+
+        .character-preview {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            margin: 0 auto 15px;
+            position: relative;
+        }
+
+        .character-info {
+            margin-top: auto;
+        }
+
+        .character-name {
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .character-special {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        /* ===== Game Controls ===== */
+        .game-controls {
+            position: absolute;
+            bottom: 60px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-around;
+            z-index: var(--z-ui);
+            pointer-events: none;
+        }
+
+        .control-button {
+            width: 80px;
+            height: 80px;
+            background: var(--surface-elevated);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2em;
+            cursor: pointer;
+            user-select: none;
+            pointer-events: auto;
+            backdrop-filter: blur(5px);
+            box-shadow: var(--shadow-md);
+            color: white;
+            transition: transform var(--transition-quick), background var(--transition-quick);
+        }
+
+        .control-button:active {
+            transform: scale(0.95);
+            background: var(--primary);
+        }
+
+        #pause-button {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: var(--surface);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: var(--z-ui);
+            backdrop-filter: blur(5px);
+            color: white;
+            font-size: 1.5em;
+            box-shadow: var(--shadow-sm);
+            transition: background var(--transition-quick);
+        }
+
+        #pause-button:hover {
+            background: var(--surface-elevated);
+        }
+
+        /* ===== Notifications ===== */
+        .notification {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--surface-elevated);
+            backdrop-filter: blur(10px);
+            padding: 15px 25px;
+            border-radius: var(--border-radius-pill);
+            box-shadow: var(--shadow-lg);
+            color: white;
+            font-weight: 600;
+            font-size: 1.2em;
+            opacity: 0;
+            transition: opacity var(--transition-medium);
+            z-index: var(--z-ui);
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .notification.show {
+            opacity: 1;
+        }
+
+        /* ===== Leaderboard ===== */
+        #leaderboard-screen {
+            background: linear-gradient(135deg, var(--dark), var(--primary-dark));
+        }
+
+        .leaderboard-panel {
+            background: var(--surface-elevated);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            padding: 30px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .leaderboard-panel h2 {
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .leaderboard-tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: var(--surface);
+            cursor: pointer;
+            transition: background var(--transition-quick);
+            font-weight: 600;
+        }
+
+        .leaderboard-tab:first-child {
+            border-radius: var(--border-radius-md) 0 0 var(--border-radius-md);
+        }
+
+        .leaderboard-tab:last-child {
+            border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0;
+        }
+
+        .leaderboard-tab.active {
+            background: var(--primary);
+        }
+
+        .leaderboard-entries {
+            margin-bottom: 20px;
+        }
+
+        .leaderboard-entry {
+            display: flex;
+            align-items: center;
+            padding: 15px;
+            border-radius: var(--border-radius-md);
+            margin-bottom: 10px;
+            background: var(--surface);
+            transition: transform var(--transition-quick);
+        }
+
+        .leaderboard-entry:hover {
+            transform: translateX(5px);
+        }
+
+        .entry-rank {
+            font-weight: 700;
+            font-size: 1.2em;
+            width: 50px;
+            text-align: center;
+        }
+
+        .entry-rank.top-1 {
+            color: gold;
+        }
+
+        .entry-rank.top-2 {
+            color: silver;
+        }
+
+        .entry-rank.top-3 {
+            color: #cd7f32; /* bronze */
+        }
+
+        .entry-player {
+            flex: 1;
+            display: flex;
+            align-items: center;
+        }
+
+        .entry-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 15px;
+            background: var(--surface-elevated);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .entry-name {
+            font-weight: 600;
+        }
+
+        .entry-score {
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .entry-player.is-you .entry-name:after {
+            content: '(You)';
+            margin-left: 5px;
+            font-size: 0.8em;
+            color: var(--primary);
+        }
+
+        /* ===== Responsive Adjustments ===== */
+        @media (max-width: 768px) {
+            .subscription-options {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .characters-grid {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+            
+            .achievements-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            #start-screen .logo h1 {
+                font-size: 3rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .settings-panel, 
+            .subscription-panel, 
+            .game-over-panel,
+            .pause-panel,
+            .achievements-panel,
+            .character-panel,
+            .leaderboard-panel {
+                padding: 20px;
+            }
+            
+            .characters-grid {
+                grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            }
+            
+            .character-card {
+                height: 180px;
+                padding: 15px;
+            }
+            
+            .achievements-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            #start-screen .logo h1 {
+                font-size: 2.5rem;
+            }
+            
+            .primary-button, .secondary-button {
+                padding: 12px 20px;
+                font-size: 1em;
+            }
+        }
+
+        /* ===== Animations ===== */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .animation-bounce {
+            animation: bounce 2s ease infinite;
+        }
+
+        .animation-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .animation-fadeIn {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .animation-slideIn {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        .animation-scaleIn {
+            animation: scaleIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Background Music Notes Animation -->
+        <div class="music-notes" id="background-notes"></div>
+        
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <div class="logo">
+                <h1 class="text-gradient">Melody Hop</h1>
+                <p>Jump to the beat and collect musical notes!</p>
+            </div>
+            
+            <div class="button-row">
+                <button id="play-button" class="primary-button">
+                    <i class="fas fa-play"></i> Play
+                </button>
+                <button id="characters-button" class="secondary-button">
+                    <i class="fas fa-user"></i> Characters
+                </button>
+            </div>
+            
+            <div class="button-row">
+                <button id="leaderboard-button" class="secondary-button">
+                    <i class="fas fa-trophy"></i> Leaderboard
+                </button>
+                <button id="achievements-button" class="secondary-button">
+                    <i class="fas fa-award"></i> Achievements
+                </button>
+            </div>
+            
+            <div class="button-row">
+                <button id="settings-button" class="secondary-button">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button id="subscription-button" class="secondary-button">
+                    <i class="fas fa-crown"></i> Premium
+                </button>
+            </div>
+        </div>
+        
+        <!-- Settings Screen -->
+        <div id="settings-screen" class="screen">
+            <div class="settings-panel">
+                <h2>Settings</h2>
+                
+                <div class="settings-group">
+                    <h3>Audio</h3>
+                    <div class="slider-container">
+                        <div class="slider-label">Music</div>
+                        <input type="range" min="0" max="100" value="80" class="slider" id="music-slider">
+                        <div class="slider-value" id="music-value">80%</div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">Sound FX</div>
+                        <input type="range" min="0" max="100" value="100" class="slider" id="sfx-slider">
+                        <div class="slider-value" id="sfx-value">100%</div>
+                    </div>
+                </div>
+                
+                <div class="settings-group">
+                    <h3>Game Settings</h3>
+                    <div class="slider-container">
+                        <div class="slider-label">Speed</div>
+                        <input type="range" min="1" max="10" value="5" class="slider" id="speed-slider">
+                        <div class="slider-value" id="speed-value">5</div>
+                    </div>
+                    
+                    <div class="difficulty-select">
+                        <div class="difficulty-option selected" data-difficulty="easy">Easy</div>
+                        <div class="difficulty-option" data-difficulty="medium">Medium</div>
+                        <div class="difficulty-option" data-difficulty="hard">Hard</div>
+                    </div>
+                    
+                    <div class="toggle-container">
+                        <div class="toggle-label">Show Controls</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked id="controls-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="toggle-container">
+                        <div class="toggle-label">Visual Effects</div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" checked id="effects-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-group premium-feature">
+                    <h3>Appearance <span class="premium-badge"><i class="fas fa-crown"></i> PREMIUM</span></h3>
+                    <div class="character-select">
+                        <div class="character-option selected" style="background-color: #ff6e91;">
+                            <div class="player-character" style="background-color: #ff6e91;">
+                                <div class="face">
+                                    <div class="eyes">
+                                        <div class="eye"></div>
+                                        <div class="eye"></div>
+                                    </div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="character-option" style="background-color: #33e6b8;">
+                            <div class="player-character" style="background-color: #33e6b8;">
+                                <div class="face">
+                                    <div class="eyes">
+                                        <div class="eye"></div>
+                                        <div class="eye"></div>
+                                    </div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="character-option premium-locked" style="background-color: #ffcc00;">
+                            <div class="player-character" style="background-color: #ffcc00;">
+                                <div class="face">
+                                    <div class="eyes">
+                                        <div class="eye"></div>
+                                        <div class="eye"></div>
+                                    </div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="character-option premium-locked" style="background-color: #6e45e2;">
+                            <div class="player-character" style="background-color: #6e45e2;">
+                                <div class="face">
+                                    <div class="eyes">
+                                        <div class="eye"></div>
+                                        <div class="eye"></div>
+                                    </div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="premium-overlay">
+                        <div class="upgrade-message">
+                            <h3>Premium Feature</h3>
+                            <p>Unlock premium characters and customization options</p>
+                            <button class="upgrade-button">Upgrade Now</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-row">
+                    <button id="settings-back" class="secondary-button">Back</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Character Selection Screen -->
+        <div id="character-screen" class="screen">
+            <div class="character-panel">
+                <h2>Characters</h2>
+                
+                <div class="characters-grid">
+                    <!-- Standard Characters -->
+                    <div class="character-card selected" data-character="melody">
+                        <div class="character-preview">
+                            <div class="player-character" style="background-color: #ff6e91;">
+                                <div class="face">
+                                    <div class="eyes">
+                                        <div class="eye"></div>
+                                        <div class="eye"></div>
+                                    </div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="character-info">
+                            <div class="character-name">Melody</div>
+                            <div class="character-special">Standard jumper</div>
+                        </div>
+                    </div>
+                    
+                    <div class="character-card" data-character="echo">
+                        <div class="character-preview">
+                            <div class="player-character" style="background-color: #33e6b8;">
+                                <div class="face">
+                                    <div class="eyes">
+                                        <div class="eye"></div>
+                                        <div class="eye"></div>
+                                    </div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="character-info">
+                            <div class="character-name">Echo</div>
+                            <div class="character-special">Higher jumps</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Premium Characters -->
+                    <div class="character-card premium-locked" data-character="goldie">
+                        <div class="character-preview">
+                            <div class="player-character" style="background-color: #ffcc00;">
+                                <div class="face">
+                                    <div class="eyes">
+                                        <div class="eye"></div>
+                                        <div class="eye"></div>
+                                    </div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="character-info">
+                            <div class="character-name">Goldie</div>
+                            <div class="character-special">Double points</div>
+                        </div>
+                    </div>
+                    
+                    <div class="character-card premium-locked" data-character="violet">
+                        <div class="character-preview">
+                            <div class="player-character" style="background-color: #6e45e2;">
+                                <div class="face">
+                                    <div class="eyes">
+                                        <div class="eye"></div>
+                                        <div class="eye"></div>
+                                    </div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="character-info">
+                            <div class="character-name">Violet</div>
+                            <div class="character-special">Double notes</div>
+                        </div>
+                    </div>
+                    
+                    <div class="character-card premium-locked" data-character="pixel">
+                        <div class="character-preview">
+                            <div class="player-character" style="background-color: #ff9500;">
+                                <div class="face">
+                                    <div class="eyes">
+                                        <div class="eye"></div>
+                                        <div class="eye"></div>
+                                    </div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="character-info">
+                            <div class="character-name">Pixel</div>
+                            <div class="character-special">Slower tiles</div>
+                        </div>
+                    </div>
+                    
+                    <div class="character-card premium-locked" data-character="shadow">
+                        <div class="character-preview">
+                            <div class="player-character" style="background-color: #232323;">
+                                <div class="face">
+                                    <div class="eyes">
+                                        <div class="eye"></div>
+                                        <div class="eye"></div>
+                                    </div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="character-info">
+                            <div class="character-name">Shadow</div>
+                            <div class="character-special">Extra life</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="premium-feature">
+                    <div class="premium-overlay">
+                        <div class="upgrade-message">
+                            <h3>Premium Feature</h3>
+                            <p>Upgrade to unlock all characters with special abilities</p>
+                            <button class="upgrade-button">Upgrade Now</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-row">
+                    <button id="characters-back" class="secondary-button">Back</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Achievements Screen -->
+        <div id="achievements-screen" class="screen">
+            <div class="achievements-panel">
+                <h2>Achievements</h2>
+                
+                <div class="achievements-grid">
+                    <div class="achievement">
+                        <div class="achievement-icon">
+                            <i class="fas fa-shoe-prints"></i>
+                        </div>
+                        <div class="achievement-name">First Steps</div>
+                        <div class="achievement-description">Play your first game</div>
+                        <div class="achievement-progress">
+                            <div class="achievement-progress-bar" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement">
+                        <div class="achievement-icon">
+                            <i class="fas fa-sack-dollar"></i>
+                        </div>
+                        <div class="achievement-name">Point Collector</div>
+                        <div class="achievement-description">Score 1,000 points in one game</div>
+                        <div class="achievement-progress">
+                            <div class="achievement-progress-bar" style="width: 60%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement locked">
+                        <div class="achievement-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        <div class="achievement-name">Combo Master</div>
+                        <div class="achievement-description">Get a 10x combo streak</div>
+                        <div class="achievement-progress">
+                            <div class="achievement-progress-bar" style="width: 30%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement locked">
+                        <div class="achievement-icon">
+                            <i class="fas fa-stairs"></i>
+                        </div>
+                        <div class="achievement-name">High Climber</div>
+                        <div class="achievement-description">Reach level 10</div>
+                        <div class="achievement-progress">
+                            <div class="achievement-progress-bar" style="width: 40%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement locked">
+                        <div class="achievement-icon">
+                            <i class="fas fa-music"></i>
+                        </div>
+                        <div class="achievement-name">Note Collector</div>
+                        <div class="achievement-description">Collect 100 music notes</div>
+                        <div class="achievement-progress">
+                            <div class="achievement-progress-bar" style="width: 45%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement locked">
+                        <div class="achievement-icon">
+                            <i class="fas fa-crown"></i>
+                        </div>
+                        <div class="achievement-name">Champion</div>
+                        <div class="achievement-description">Reach the top of the leaderboard</div>
+                        <div class="achievement-progress">
+                            <div class="achievement-progress-bar" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement locked">
+                        <div class="achievement-icon">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="achievement-name">Dedicated Player</div>
+                        <div class="achievement-description">Play for 7 consecutive days</div>
+                        <div class="achievement-progress">
+                            <div class="achievement-progress-bar" style="width: 20%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="achievement locked premium-feature">
+                        <div class="achievement-icon">
+                            <i class="fas fa-medal"></i>
+                        </div>
+                        <div class="achievement-name">Premium Explorer</div>
+                        <div class="achievement-description">Try all premium characters</div>
+                        <div class="achievement-progress">
+                            <div class="achievement-progress-bar" style="width: 0%"></div>
+                        </div>
+                        
+                        <div class="premium-overlay">
+                            <div class="upgrade-message">
+                                <h3>Premium Feature</h3>
+                                <p>Unlock premium achievements</p>
+                                <button class="upgrade-button">Upgrade Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="button-row">
+                    <button id="achievements-back" class="secondary-button">Back</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Leaderboard Screen -->
+        <div id="leaderboard-screen" class="screen">
+            <div class="leaderboard-panel">
+                <h2>Leaderboard</h2>
+                
+                <div class="leaderboard-tabs">
+                    <div class="leaderboard-tab active" data-period="weekly">Weekly</div>
+                    <div class="leaderboard-tab" data-period="alltime">All Time</div>
+                    <div class="leaderboard-tab premium-feature" data-period="friends">
+                        Friends
+                        <div class="premium-overlay">
+                            <div class="upgrade-message">
+                                <h3>Premium Feature</h3>
+                                <button class="upgrade-button">Upgrade Now</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="leaderboard-entries">
+                    <div class="leaderboard-entry">
+                        <div class="entry-rank top-1">1</div>
+                        <div class="entry-player">
+                            <div class="entry-avatar">MG</div>
+                            <div class="entry-name">MusicGuru</div>
+                        </div>
+                        <div class="entry-score">24,650</div>
+                    </div>
+                    
+                    <div class="leaderboard-entry">
+                        <div class="entry-rank top-2">2</div>
+                        <div class="entry-player">
+                            <div class="entry-avatar">BH</div>
+                            <div class="entry-name">BeatHopper</div>
+                        </div>
+                        <div class="entry-score">19,320</div>
+                    </div>
+                    
+                    <div class="leaderboard-entry">
+                        <div class="entry-rank top-3">3</div>
+                        <div class="entry-player">
+                            <div class="entry-avatar">NJ</div>
+                            <div class="entry-name">NoteJumper</div>
+                        </div>
+                        <div class="entry-score">17,840</div>
+                    </div>
+                    
+                    <div class="leaderboard-entry">
+                        <div class="entry-rank">4</div>
+                        <div class="entry-player is-you">
+                            <div class="entry-avatar">ME</div>
+                            <div class="entry-name">MelodyExplorer</div>
+                        </div>
+                        <div class="entry-score">15,230</div>
+                    </div>
+                    
+                    <div class="leaderboard-entry">
+                        <div class="entry-rank">5</div>
+                        <div class="entry-player">
+                            <div class="entry-avatar">RM</div>
+                            <div class="entry-name">RhythmMaster</div>
+                        </div>
+                        <div class="entry-score">12,450</div>
+                    </div>
+                </div>
+                
+                <div class="button-row">
+                    <button id="leaderboard-back" class="secondary-button">Back</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Subscription Screen -->
+        <div id="subscription-screen" class="screen">
+            <div class="subscription-panel">
+                <h2>Upgrade to Premium</h2>
+                
+                <div class="subscription-options">
+                    <div class="subscription-option">
+                        <div class="subscription-name">Free</div>
+                        <div class="subscription-price">$0</div>
+                        <div class="subscription-period">Forever</div>
+                        <ul class="subscription-features">
+                            <li>Basic gameplay</li>
+                            <li>2 characters</li>
+                            <li>Standard leaderboard</li>
+                            <li>Ad supported</li>
+                        </ul>
+                        <button class="subscription-button" data-plan="free">Current Plan</button>
+                    </div>
+                    
+                    <div class="subscription-option premium best-value">
+                        <div class="subscription-name">Premium</div>
+                        <div class="subscription-price">$4.99</div>
+                        <div class="subscription-period">per month</div>
+                        <ul class="subscription-features">
+                            <li>All basic features</li>
+                            <li>All characters</li>
+                            <li>Ad-free experience</li>
+                            <li>Exclusive power-ups</li>
+                            <li>Custom themes</li>
+                            <li>Friend leaderboards</li>
+                            <li>Early access to updates</li>
+                        </ul>
+                        <button class="subscription-button" data-plan="premium-monthly">Subscribe</button>
+                    </div>
+                    
+                    <div class="subscription-option premium">
+                        <div class="subscription-name">Premium Annual</div>
+                        <div class="subscription-price">$39.99</div>
+                        <div class="subscription-period">per year (save 33%)</div>
+                        <ul class="subscription-features">
+                            <li>All Premium features</li>
+                            <li>2 months free</li>
+                            <li>Exclusive yearly character</li>
+                            <li>Priority support</li>
+                        </ul>
+                        <button class="subscription-button" data-plan="premium-annual">Subscribe</button>
+                    </div>
+                </div>
+                
+                <div class="button-row">
+                    <button id="subscription-back" class="secondary-button">Back</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game Over Screen -->
+        <div id="game-over-screen" class="screen">
+            <div class="game-over-panel">
+                <h2>Game Over</h2>
+                
+                <div class="score-container">
+                    <div class="final-score">0</div>
+                    <div class="high-score">High Score: 0</div>
+                </div>
+                
+                <div class="button-row">
+                    <button id="play-again-button" class="primary-button">Play Again</button>
+                    <button id="home-button" class="secondary-button">Home</button>
+                </div>
+                
+                <div class="premium-feature">
+                    <button id="premium-continue-button" class="secondary-button">
+                        <i class="fas fa-crown"></i> Continue Game
+                    </button>
+                    
+                    <div class="premium-overlay">
+                        <div class="upgrade-message">
+                            <h3>Premium Feature</h3>
+                            <p>Premium users can continue after game over</p>
+                            <button class="upgrade-button">Upgrade Now</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Pause Menu -->
+        <div id="pause-menu" class="screen">
+            <div class="pause-panel">
+                <h2>Paused</h2>
+                
+                <div class="button-row">
+                    <button id="resume-button" class="primary-button">Resume</button>
+                    <button id="restart-button" class="secondary-button">Restart</button>
+                    <button id="quit-button" class="secondary-button">Quit</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Game UI Elements -->
+        <div id="score-display" class="hud">Score: 0</div>
+        <div id="level-display" class="hud">Level: 1</div>
+        <div id="combo-display" class="hud">Combo: x1</div>
+        <button id="pause-button"><i class="fas fa-pause"></i></button>
+        
+        <div class="progress-container">
+            <div class="progress-bar"></div>
+        </div>
+        
+        <div class="game-controls">
+            <div class="control-button left-button"><i class="fas fa-arrow-left"></i></div>
+            <div class="control-button right-button"><i class="fas fa-arrow-right"></i></div>
+        </div>
+        
+        <!-- Game Elements -->
+        <div id="player">
+            <div class="player-character">
+                <div class="face">
+                    <div class="eyes">
+                        <div class="eye"></div>
+                        <div class="eye"></div>
+                    </div>
+                    <div class="mouth"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Notifications -->
+        <div class="notification" id="level-up-notification">Level Up!</div>
+    </div>
+
+    <script>
+        // ===== Game Constants and Variables =====
+        const gameState = {
+            // Game status
+            isPlaying: false,
+            isPaused: false,
+            isSubscribed: false, // Subscription status
+            
+            // Game metrics
+            score: 0,
+            highScore: 0,
+            level: 1,
+            comboStreak: 0,
+            comboMultiplier: 1,
+            levelProgress: 0,
+            notesCollected: 0,
+            
+            // Game settings
+            speed: 1,
+            tileFrequency: 15,
+            musicVolume: 0.8,
+            sfxVolume: 1.0,
+            showControls: true,
+            visualEffects: true,
+            difficulty: 'easy',
+            
+            // Player data
+            currentCharacter: 'melody',
+            playerColor: '#ff6e91',
+            playerPosition: { x: 0, y: 0 },
+            
+            // Movement
+            targetPosition: null,
+            isMovingToTarget: false,
+            jumpProgress: 0,
+            jumpDuration: 0.5,
+            leftPressed: false,
+            rightPressed: false,
+            
+            // Game objects
+            tiles: [],
+            effects: [],
+            fallingNotes: [],
+            
+            // Timing
+            lastTileTime: 0,
+            currentTile: null,
+            lastTime: 0,
+            
+            // UI
+            screenWidth: window.innerWidth,
+            screenHeight: window.innerHeight,
+            
+            // Achievements
+            achievements: {
+                firstSteps: { earned: true, progress: 100 },
+                pointCollector: { earned: false, progress: 60 },
+                comboMaster: { earned: false, progress: 30 },
+                highClimber: { earned: false, progress: 40 },
+                noteCollector: { earned: false, progress: 45 },
+                champion: { earned: false, progress: 0 },
+                dedicatedPlayer: { earned: false, progress: 20 },
+                premiumExplorer: { earned: false, progress: 0 }
+            }
+        };
+
+        // Audio context and sounds
+        let audioContext;
+        let sounds = {};
+        let musicLoop;
+
+        // Animation frame ID for game loop
+        let animationFrameId;
+
+        // ===== DOM Element References =====
+        const elements = {
+            // Screens
+            screens: {
+                start: document.getElementById('start-screen'),
+                settings: document.getElementById('settings-screen'),
+                character: document.getElementById('character-screen'),
+                achievements: document.getElementById('achievements-screen'),
+                leaderboard: document.getElementById('leaderboard-screen'),
+                subscription: document.getElementById('subscription-screen'),
+                gameOver: document.getElementById('game-over-screen'),
+                pause: document.getElementById('pause-menu')
+            },
+            
+            // Buttons
+            buttons: {
+                play: document.getElementById('play-button'),
+                settings: document.getElementById('settings-button'),
+                characters: document.getElementById('characters-button'),
+                leaderboard: document.getElementById('leaderboard-button'),
+                achievements: document.getElementById('achievements-button'),
+                subscription: document.getElementById('subscription-button'),
+                settingsBack: document.getElementById('settings-back'),
+                charactersBack: document.getElementById('characters-back'),
+                achievementsBack: document.getElementById('achievements-back'),
+                leaderboardBack: document.getElementById('leaderboard-back'),
+                subscriptionBack: document.getElementById('subscription-back'),
+                playAgain: document.getElementById('play-again-button'),
+                home: document.getElementById('home-button'),
+                premiumContinue: document.getElementById('premium-continue-button'),
+                pause: document.getElementById('pause-button'),
+                resume: document.getElementById('resume-button'),
+                restart: document.getElementById('restart-button'),
+                quit: document.getElementById('quit-button')
+            },
+            
+            // Game elements
+            player: document.getElementById('player'),
+            playerCharacter: document.querySelector('.player-character'),
+            gameContainer: document.getElementById('game-container'),
+            scoreDisplay: document.getElementById('score-display'),
+            levelDisplay: document.getElementById('level-display'),
+            comboDisplay: document.getElementById('combo-display'),
+            progressBar: document.querySelector('.progress-bar'),
+            gameControls: document.querySelector('.game-controls'),
+            leftButton: document.querySelector('.left-button'),
+            rightButton: document.querySelector('.right-button'),
+            
+            // Notifications
+            levelUpNotification: document.getElementById('level-up-notification'),
+            
+            // Settings
+            musicSlider: document.getElementById('music-slider'),
+            sfxSlider: document.getElementById('sfx-slider'),
+            speedSlider: document.getElementById('speed-slider'),
+            musicValue: document.getElementById('music-value'),
+            sfxValue: document.getElementById('sfx-value'),
+            speedValue: document.getElementById('speed-value'),
+            controlsToggle: document.getElementById('controls-toggle'),
+            effectsToggle: document.getElementById('effects-toggle'),
+            characterOptions: document.querySelectorAll('.character-option'),
+            difficultyOptions: document.querySelectorAll('.difficulty-option'),
+            
+            // Results
+            finalScore: document.querySelector('.final-score'),
+            highScore: document.querySelector('.high-score'),
+            
+            // Background
+            backgroundNotes: document.getElementById('background-notes')
+        };
+
+        // ===== Initialization =====
+        function init() {
+            // Load saved settings
+            loadSettings();
+            
+            // Initialize audio system
+            initAudio();
+            
+            // Create animated background notes
+            createBackgroundNotes();
+            
+            // Add event listeners for all buttons
+            setupEventListeners();
+            
+            // Set initial player position
+            resetPlayerPosition();
+            
+            // Handle window resize
+            window.addEventListener('resize', handleResize);
+            handleResize();
+        }
+
+        // Create background music notes animation
+        function createBackgroundNotes() {
+            const noteChars = ['♩', '♪', '♫', '♬', '𝄞'];
+            const noteCount = 20;
+            
+            for (let i = 0; i < noteCount; i++) {
+                const note = document.createElement('div');
+                note.className = 'music-note';
+                note.textContent = noteChars[Math.floor(Math.random() * noteChars.length)];
+                note.style.left = `${Math.random() * 100}%`;
+                note.style.animationDuration = `${15 + Math.random() * 15}s`;
+                note.style.animationDelay = `${Math.random() * 30}s`;
+                elements.backgroundNotes.appendChild(note);
+            }
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Menu navigation
+            elements.buttons.play.addEventListener('click', startGame);
+            elements.buttons.settings.addEventListener('click', () => showScreen('settings'));
+            elements.buttons.characters.addEventListener('click', () => showScreen('character'));
+            elements.buttons.leaderboard.addEventListener('click', () => showScreen('leaderboard'));
+            elements.buttons.achievements.addEventListener('click', () => showScreen('achievements'));
+            elements.buttons.subscription.addEventListener('click', () => showScreen('subscription'));
+            
+            // Back buttons
+            elements.buttons.settingsBack.addEventListener('click', () => showScreen('start'));
+            elements.buttons.charactersBack.addEventListener('click', () => showScreen('start'));
+            elements.buttons.achievementsBack.addEventListener('click', () => showScreen('start'));
+            elements.buttons.leaderboardBack.addEventListener('click', () => showScreen('start'));
+            elements.buttons.subscriptionBack.addEventListener('click', () => showScreen('start'));
+            
+            // Game over screen
+            elements.buttons.playAgain.addEventListener('click', restartGame);
+            elements.buttons.home.addEventListener('click', goToMainMenu);
+            elements.buttons.premiumContinue.addEventListener('click', premiumContinue);
+            
+            // Pause menu
+            elements.buttons.pause.addEventListener('click', togglePause);
+            elements.buttons.resume.addEventListener('click', resumeGame);
+            elements.buttons.restart.addEventListener('click', restartGame);
+            elements.buttons.quit.addEventListener('click', goToMainMenu);
+            
+            // Settings changes
+            elements.musicSlider.addEventListener('input', updateMusicVolume);
+            elements.sfxSlider.addEventListener('input', updateSfxVolume);
+            elements.speedSlider.addEventListener('input', updateGameSpeed);
+            elements.controlsToggle.addEventListener('change', toggleControls);
+            elements.effectsToggle.addEventListener('change', toggleEffects);
+            
+            // Difficulty selection
+            elements.difficultyOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    elements.difficultyOptions.forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    gameState.difficulty = option.dataset.difficulty;
+                    saveSettings();
+                    playSound('click');
+                });
+            });
+            
+            // Character selection
+            elements.characterOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    // Skip locked characters if not premium
+                    if (option.classList.contains('premium-locked') && !gameState.isSubscribed) {
+                        showSubscriptionPrompt();
+                        return;
+                    }
+                    
+                    elements.characterOptions.forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    gameState.playerColor = option.dataset.color || option.style.backgroundColor;
+                    elements.playerCharacter.style.backgroundColor = gameState.playerColor;
+                    saveSettings();
+                    playSound('click');
+                });
+            });
+            
+            // Character card selection
+            document.querySelectorAll('.character-card').forEach(card => {
+                card.addEventListener('click', () => {
+                    // Skip locked characters if not premium
+                    if (card.classList.contains('premium-locked') && !gameState.isSubscribed) {
+                        showSubscriptionPrompt();
+                        return;
+                    }
+                    
+                    document.querySelectorAll('.character-card').forEach(c => c.classList.remove('selected'));
+                    card.classList.add('selected');
+                    
+                    gameState.currentCharacter = card.dataset.character;
+                    const preview = card.querySelector('.player-character');
+                    gameState.playerColor = preview.style.backgroundColor;
+                    elements.playerCharacter.style.backgroundColor = gameState.playerColor;
+                    saveSettings();
+                    playSound('click');
+                });
+            });
+            
+            // Subscription buttons
+            document.querySelectorAll('.subscription-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    if (button.dataset.plan === 'free') return;
+                    
+                    // Simulate subscription purchase - in a real app, this would be connected to a payment gateway
+                    gameState.isSubscribed = true;
+                    updatePremiumUI();
+                    showNotification('Premium activated!');
+                    playSound('success');
+                });
+            });
+            
+            // Upgrade buttons
+            document.querySelectorAll('.upgrade-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    showScreen('subscription');
+                    playSound('click');
+                });
+            });
+            
+            // Leaderboard tabs
+            document.querySelectorAll('.leaderboard-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Skip premium tabs if not subscribed
+                    if (tab.classList.contains('premium-feature') && !gameState.isSubscribed) {
+                        showSubscriptionPrompt();
+                        return;
+                    }
+                    
+                    document.querySelectorAll('.leaderboard-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    playSound('click');
+                });
+            });
+            
+            // Game controls
+            if (elements.leftButton && elements.rightButton) {
+                elements.leftButton.addEventListener('pointerdown', () => { gameState.leftPressed = true; });
+                elements.leftButton.addEventListener('pointerup', () => { gameState.leftPressed = false; });
+                elements.leftButton.addEventListener('pointerout', () => { gameState.leftPressed = false; });
+                
+                elements.rightButton.addEventListener('pointerdown', () => { gameState.rightPressed = true; });
+                elements.rightButton.addEventListener('pointerup', () => { gameState.rightPressed = false; });
+                elements.rightButton.addEventListener('pointerout', () => { gameState.rightPressed = false; });
+            }
+            
+            // Keyboard controls
+            document.addEventListener('keydown', handleKeyDown);
+            document.addEventListener('keyup', handleKeyUp);
+            
+            // Touch controls
+            document.addEventListener('touchstart', handleTouchStart);
+            document.addEventListener('touchmove', handleTouchMove);
+            document.addEventListener('touchend', handleTouchEnd);
+            
+            // Tile click/tap for jumping
+            elements.gameContainer.addEventListener('click', handleTileClick);
+        }
+
+        // Load saved settings
+        function loadSettings() {
+            try {
+                const savedSettings = localStorage.getItem('melodyHopSettings');
+                if (savedSettings) {
+                    const settings = JSON.parse(savedSettings);
+                    
+                    // Game settings
+                    gameState.musicVolume = settings.musicVolume || 0.8;
+                    gameState.sfxVolume = settings.sfxVolume || 1.0;
+                    gameState.speed = settings.speed || 1;
+                    gameState.difficulty = settings.difficulty || 'easy';
+                    gameState.showControls = settings.showControls !== undefined ? settings.showControls : true;
+                    gameState.visualEffects = settings.visualEffects !== undefined ? settings.visualEffects : true;
+                    gameState.playerColor = settings.playerColor || '#ff6e91';
+                    gameState.currentCharacter = settings.currentCharacter || 'melody';
+                    
+                    // High score
+                    gameState.highScore = settings.highScore || 0;
+                    
+                    // Subscription status
+                    gameState.isSubscribed = settings.isSubscribed || false;
+                    
+                    // Update UI to match settings
+                    elements.musicSlider.value = gameState.musicVolume * 100;
+                    elements.sfxSlider.value = gameState.sfxVolume * 100;
+                    elements.speedSlider.value = gameState.speed;
+                    elements.musicValue.textContent = `${Math.round(gameState.musicVolume * 100)}%`;
+                    elements.sfxValue.textContent = `${Math.round(gameState.sfxVolume * 100)}%`;
+                    elements.speedValue.textContent = gameState.speed;
+                    elements.controlsToggle.checked = gameState.showControls;
+                    elements.effectsToggle.checked = gameState.visualEffects;
+                    elements.highScore.textContent = `High Score: ${gameState.highScore}`;
+                    
+                    // Set difficulty
+                    elements.difficultyOptions.forEach(option => {
+                        option.classList.toggle('selected', option.dataset.difficulty === gameState.difficulty);
+                    });
+                    
+                    // Set character
+                    elements.characterOptions.forEach(option => {
+                        const color = option.dataset.color || option.style.backgroundColor;
+                        option.classList.toggle('selected', color === gameState.playerColor);
+                    });
+                    
+                    document.querySelectorAll('.character-card').forEach(card => {
+                        card.classList.toggle('selected', card.dataset.character === gameState.currentCharacter);
+                    });
+                    
+                    // Update player character appearance
+                    elements.playerCharacter.style.backgroundColor = gameState.playerColor;
+                    
+                    // Update premium UI
+                    updatePremiumUI();
+                }
+            } catch (error) {
+                console.error('Error loading settings:', error);
+            }
+        }
+
+        // Save settings
+        function saveSettings() {
+            const settings = {
+                musicVolume: gameState.musicVolume,
+                sfxVolume: gameState.sfxVolume,
+                speed: gameState.speed,
+                difficulty: gameState.difficulty,
+                showControls: gameState.showControls,
+                visualEffects: gameState.visualEffects,
+                playerColor: gameState.playerColor,
+                currentCharacter: gameState.currentCharacter,
+                highScore: gameState.highScore,
+                isSubscribed: gameState.isSubscribed
+            };
+            
+            localStorage.setItem('melodyHopSettings', JSON.stringify(settings));
+        }
+
+        // Update premium UI elements based on subscription status
+        function updatePremiumUI() {
+            const premiumFeatures = document.querySelectorAll('.premium-feature');
+            const premiumLocked = document.querySelectorAll('.premium-locked');
+            
+            premiumFeatures.forEach(feature => {
+                const overlay = feature.querySelector('.premium-overlay');
+                if (overlay) {
+                    overlay.style.display = gameState.isSubscribed ? 'none' : 'flex';
+                }
+            });
+            
+            premiumLocked.forEach(locked => {
+                locked.classList.toggle('premium-locked', !gameState.isSubscribed);
+            });
+            
+            // Update subscription buttons
+            document.querySelectorAll('.subscription-button').forEach(button => {
+                if (button.dataset.plan === 'free') {
+                    button.textContent = gameState.isSubscribed ? 'Available' : 'Current Plan';
+                } else {
+                    button.textContent = gameState.isSubscribed ? 'Subscribed' : 'Subscribe';
+                    button.disabled = gameState.isSubscribed;
+                }
+            });
+        }
+
+        // ===== Audio System =====
+        async function initAudio() {
+            try {
+                // Create audio context
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioContext = new AudioContext();
+                
+                // Create master gain node
+                const masterGain = audioContext.createGain();
+                masterGain.gain.value = 1;
+                masterGain.connect(audioContext.destination);
+                
+                // Create sound effect presets
+                await createSounds(masterGain);
+                
+                // Create background music
+                await createBackgroundMusic(masterGain);
+            } catch (error) {
+                console.error('Error initializing audio:', error);
+            }
+        }
+
+        // Create sound effects
+        async function createSounds(masterOutput) {
+            // Define sound presets
+            const soundPresets = {
+                click: {
+                    type: 'oscillator',
+                    options: {
+                        type: 'sine',
+                        frequency: 440,
+                        duration: 0.1,
+                        gain: 0.3,
+                        attack: 0.01,
+                        release: 0.05
+                    }
+                },
+                jump: {
+                    type: 'oscillator',
+                    options: {
+                        type: 'sine',
+                        frequency: 660,
+                        frequencyEnd: 880,
+                        duration: 0.2,
+                        gain: 0.4,
+                        attack: 0.01,
+                        release: 0.1
+                    }
+                },
+                note: {
+                    type: 'oscillator',
+                    options: {
+                        type: 'sine',
+                        frequency: 880,
+                        duration: 0.5,
+                        gain: 0.5,
+                        attack: 0.01,
+                        release: 0.3
+                    }
+                },
+                levelUp: {
+                    type: 'sequence',
+                    options: {
+                        notes: [
+                            { freq: 523.25, time: 0 },    // C5
+                            { freq: 659.25, time: 0.1 },  // E5
+                            { freq: 783.99, time: 0.2 },  // G5
+                            { freq: 1046.50, time: 0.3 }  // C6
+                        ],
+                        type: 'sine',
+                        gain: 0.5,
+                        noteDuration: 0.2
+                    }
+                },
+                success: {
+                    type: 'sequence',
+                    options: {
+                        notes: [
+                            { freq: 523.25, time: 0 },    // C5
+                            { freq: 659.25, time: 0.1 },  // E5
+                            { freq: 783.99, time: 0.2 }   // G5
+                        ],
+                        type: 'sine',
+                        gain: 0.5,
+                        noteDuration: 0.3
+                    }
+                },
+                gameOver: {
+                    type: 'sequence',
+                    options: {
+                        notes: [
+                            { freq: 783.99, time: 0 },    // G5
+                            { freq: 698.46, time: 0.2 },  // F5
+                            { freq: 659.25, time: 0.4 },  // E5
+                            { freq: 523.25, time: 0.6 }   // C5
+                        ],
+                        type: 'sine',
+                        gain: 0.5,
+                        noteDuration: 0.4
+                    }
+                },
+                powerUp: {
+                    type: 'oscillator',
+                    options: {
+                        type: 'sine',
+                        frequency: 523.25,
+                        frequencyEnd: 1046.50,
+                        duration: 0.5,
+                        gain: 0.5,
+                        attack: 0.01,
+                        release: 0.2
+                    }
+                }
+            };
+            
+            // Create sound generators
+            sounds = {};
+            
+            for (const [name, preset] of Object.entries(soundPresets)) {
+                sounds[name] = createSoundGenerator(preset, masterOutput);
+            }
+        }
+
+        // Create a sound generator based on preset
+// Create a sound generator based on preset
+function createSoundGenerator(preset, output) {
+    switch (preset.type) {
+        case 'oscillator':
+            return function() {
+                if (!audioContext || gameState.sfxVolume <= 0) return;
+                
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = preset.options.type;
+                oscillator.frequency.setValueAtTime(preset.options.frequency, audioContext.currentTime);
+                
+                if (preset.options.frequencyEnd) {
+                    oscillator.frequency.exponentialRampToValueAtTime(
+                        preset.options.frequencyEnd, 
+                        audioContext.currentTime + preset.options.duration
+                    );
+                }
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+                gainNode.gain.linearRampToValueAtTime(
+                    preset.options.gain * gameState.sfxVolume, 
+                    audioContext.currentTime + preset.options.attack
+                );
+                gainNode.gain.setValueAtTime(
+                    preset.options.gain * gameState.sfxVolume, 
+                    audioContext.currentTime + preset.options.duration - preset.options.release
+                );
+                gainNode.gain.exponentialRampToValueAtTime(
+                    0.001, 
+                    audioContext.currentTime + preset.options.duration
+                );
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(output);
+                
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + preset.options.duration);
+            };
+        
+        case 'sequence':
+            return function() {
+                if (!audioContext || gameState.sfxVolume <= 0) return;
+                
+                preset.options.notes.forEach(note => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+                    
+                    oscillator.type = preset.options.type;
+                    oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                    
+                    gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                    gainNode.gain.linearRampToValueAtTime(
+                        preset.options.gain * gameState.sfxVolume, 
+                        audioContext.currentTime + note.time + 0.01
+                    );
+                    gainNode.gain.exponentialRampToValueAtTime(
+                        0.001,
+                        audioContext.currentTime + note.time + preset.options.noteDuration
+                    );
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(output);
+                    
+                    oscillator.start(audioContext.currentTime + note.time);
+                    oscillator.stop(audioContext.currentTime + note.time + preset.options.noteDuration);
+                });
+            };
+        
+        default:
+            return function() {};
+    }
+}
+
+        // Create background music
+        async function createBackgroundMusic(masterOutput) {
+            try {
+                const musicGain = audioContext.createGain();
+                musicGain.gain.value = gameState.musicVolume;
+                musicGain.connect(masterOutput);
+                
+                // Create procedural music
+                const bpm = 110;
+                const beatDuration = 60 / bpm;
+                const measures = 8;
+                const totalDuration = beatDuration * 4 * measures;
+                
+                const musicBuffer = audioContext.createBuffer(
+                    2, // stereo
+                    audioContext.sampleRate * totalDuration,
+                    audioContext.sampleRate
+                );
+                
+                const leftChannel = musicBuffer.getChannelData(0);
+                const rightChannel = musicBuffer.getChannelData(1);
+                
+                // Base chord progression (C, G, Am, F in 4/4 time)
+                const chords = [
+                    [261.63, 329.63, 392.00], // C major
+                    [392.00, 493.88, 587.33], // G major
+                    [220.00, 277.18, 329.63], // A minor
+                    [349.23, 440.00, 523.25]  // F major
+                ];
+                
+                // Melody notes (relative to C major scale)
+                const melodyNotes = [
+                    [5, 0.5], [4, 0.5], [3, 0.5], [4, 0.5], // Measure 1
+                    [5, 1], [5, 1],                         // Measure 2
+                    [5, 0.5], [4, 0.5], [3, 0.5], [4, 0.5], // Measure 3
+                    [3, 1], [2, 1],                         // Measure 4
+                    [2, 0.5], [3, 0.5], [4, 0.5], [5, 0.5], // Measure 5
+                    [4, 1], [3, 1],                         // Measure 6
+                    [2, 0.5], [1, 0.5], [2, 0.5], [3, 0.5], // Measure 7
+                    [1, 1], [0, 1]                          // Measure 8
+                ];
+                
+                // C major scale frequencies
+                const cMajorScale = [261.63, 293.66, 329.63, 349.23, 392.00, 440.00, 493.88, 523.25];
+                
+                // Fill the buffer with synthesized music
+                let time = 0;
+                for (let measure = 0; measure < measures; measure++) {
+                    // Current chord for this measure
+                    const chord = chords[measure % chords.length];
+                    
+                    // Each measure has 4 beats
+                    for (let beat = 0; beat < 4; beat++) {
+                        // Add chord on beats 0 and 2
+                        if (beat === 0 || beat === 2) {
+                            addChord(chord, time, beatDuration * 1.9);
+                        }
+                        
+                        time += beatDuration;
+                    }
+                }
+                
+                // Add melody
+                time = 0;
+                for (const [noteIndex, duration] of melodyNotes) {
+                    const frequency = cMajorScale[noteIndex];
+                    addNote(frequency, time, beatDuration * duration, 0.2);
+                    time += beatDuration * duration;
+                }
+                
+                // Helper function to add a chord
+                function addChord(frequencies, startTime, duration) {
+                    for (const frequency of frequencies) {
+                        addNote(frequency, startTime, duration, 0.1);
+                    }
+                }
+                
+                // Helper function to add a note
+                function addNote(frequency, startTime, duration, volume) {
+                    // Convert time to sample index
+                    const startSample = Math.floor(startTime * audioContext.sampleRate);
+                    const endSample = Math.floor((startTime + duration) * audioContext.sampleRate);
+                    
+                    // Attack and release in seconds
+                    const attack = 0.01;
+                    const release = 0.05;
+                    
+                    const attackSamples = Math.floor(attack * audioContext.sampleRate);
+                    const releaseSamples = Math.floor(release * audioContext.sampleRate);
+                    
+                    for (let i = startSample; i < endSample; i++) {
+                        if (i >= musicBuffer.length) break;
+                        
+                        // Calculate amplitude envelope
+                        let amplitude = volume;
+                        
+                        // Apply attack
+                        if (i - startSample < attackSamples) {
+                            amplitude *= (i - startSample) / attackSamples;
+                        }
+                        
+                        // Apply release
+                        if (endSample - i < releaseSamples) {
+                            amplitude *= (endSample - i) / releaseSamples;
+                        }
+                        
+                        // Generate sine wave
+                        const sampleTime = i / audioContext.sampleRate;
+                        const sample = Math.sin(2 * Math.PI * frequency * sampleTime) * amplitude;
+                        
+                        // Add to both channels with slight variation for stereo effect
+                        if (i < leftChannel.length) {
+                            leftChannel[i] += sample * 0.95;
+                            rightChannel[i] += sample * 1.05;
+                        }
+                    }
+                }
+                
+                // Store the music buffer for playing
+                musicLoop = {
+                    buffer: musicBuffer,
+                    source: null,
+                    gainNode: musicGain
+                };
+                
+            } catch (error) {
+                console.error('Error creating background music:', error);
+            }
+        }
+
+        // Play background music
+        function playBackgroundMusic() {
+            if (!audioContext || !musicLoop || !musicLoop.buffer) return;
+            
+            // Stop any existing music
+            stopBackgroundMusic();
+            
+            // Create new source
+            musicLoop.source = audioContext.createBufferSource();
+            musicLoop.source.buffer = musicLoop.buffer;
+            musicLoop.source.loop = true;
+            musicLoop.source.connect(musicLoop.gainNode);
+            musicLoop.source.start();
+        }
+
+        // Stop background music
+        function stopBackgroundMusic() {
+            if (!musicLoop || !musicLoop.source) return;
+            
+            try {
+                musicLoop.source.stop();
+                musicLoop.source = null;
+            } catch (error) {
+                console.error('Error stopping music:', error);
+            }
+        }
+
+        // Play a sound by name
+        function playSound(name) {
+            if (!sounds[name]) return;
+            
+            // Resume audio context if suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Play the sound
+            sounds[name]();
+        }
+
+        // Update music volume
+        function updateMusicVolume() {
+            const value = parseInt(elements.musicSlider.value);
+            elements.musicValue.textContent = `${value}%`;
+            
+            gameState.musicVolume = value / 100;
+            
+            // Update music gain node
+            if (musicLoop && musicLoop.gainNode) {
+                musicLoop.gainNode.gain.value = gameState.musicVolume;
+            }
+            
+            saveSettings();
+            playSound('click');
+        }
+
+        // Update sound effects volume
+        function updateSfxVolume() {
+            const value = parseInt(elements.sfxSlider.value);
+            elements.sfxValue.textContent = `${value}%`;
+            
+            gameState.sfxVolume = value / 100;
+            
+            saveSettings();
+            playSound('click');
+        }
+
+        // Update game speed
+        function updateGameSpeed() {
+            const value = parseInt(elements.speedSlider.value);
+            elements.speedValue.textContent = value;
+            
+            gameState.speed = value;
+            
+            saveSettings();
+            playSound('click');
+        }
+
+        // Toggle on-screen controls
+        function toggleControls() {
+            gameState.showControls = elements.controlsToggle.checked;
+            
+            if (elements.gameControls) {
+                elements.gameControls.style.opacity = gameState.showControls ? '1' : '0';
+            }
+            
+            saveSettings();
+            playSound('click');
+        }
+
+        // Toggle visual effects
+        function toggleEffects() {
+            gameState.visualEffects = elements.effectsToggle.checked;
+            saveSettings();
+            playSound('click');
+        }
+
+        // ===== Screen Management =====
+        function showScreen(screenName) {
+            // Hide all screens
+            Object.values(elements.screens).forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Show the requested screen
+            if (elements.screens[screenName]) {
+                elements.screens[screenName].classList.add('active');
+            }
+            
+            playSound('click');
+        }
+
+        // Show subscription prompt
+        function showSubscriptionPrompt() {
+            showScreen('subscription');
+            playSound('click');
+        }
+
+        // ===== Game Control Functions =====
+        function startGame() {
+            // Resume audio context if suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+            
+            // Hide start screen
+            showScreen(null);
+            
+            // Reset game state
+            gameState.isPlaying = true;
+            gameState.isPaused = false;
+            gameState.score = 0;
+            gameState.level = 1;
+            gameState.comboStreak = 0;
+            gameState.comboMultiplier = 1;
+            gameState.levelProgress = 0;
+            gameState.notesCollected = 0;
+            gameState.tiles = [];
+            gameState.lastTileTime = 0;
+            gameState.currentTile = null;
+            
+            // Update UI
+            elements.scoreDisplay.textContent = `Score: ${gameState.score}`;
+            elements.levelDisplay.textContent = `Level: ${gameState.level}`;
+            elements.progressBar.style.width = '0%';
+            elements.comboDisplay.style.opacity = '0';
+            
+            // Reset player position
+            resetPlayerPosition();
+            
+            // Create initial platform
+            createStartingPlatform();
+            
+            // Play background music
+            playBackgroundMusic();
+            
+            // Show on-screen controls if enabled
+            if (elements.gameControls) {
+                elements.gameControls.style.opacity = gameState.showControls ? '1' : '0';
+            }
+            
+            // Start game loop
+            gameLoop();
+        }
+
+        function resetPlayerPosition() {
+            gameState.playerPosition = {
+                x: gameState.screenWidth / 2,
+                y: gameState.screenHeight * 0.8
+            };
+            
+            updatePlayerPosition();
+        }
+
+        function updatePlayerPosition() {
+            elements.player.style.left = `${gameState.playerPosition.x - 30}px`;
+            elements.player.style.top = `${gameState.playerPosition.y - 30}px`;
+        }
+
+        function createStartingPlatform() {
+            // Create a starter tile right under the player
+            const centerTile = createTile(gameState.screenWidth / 2, gameState.screenHeight * 0.85, 'normal');
+            
+            // Create a few tiles ahead in a pattern
+            const tileWidth = 120;
+            const spacing = tileWidth * 1.5;
+            
+            // Create tiles going upward with alternating positions
+            createTile(gameState.screenWidth / 2 - spacing, gameState.screenHeight * 0.7, 'normal');
+            createTile(gameState.screenWidth / 2 + spacing, gameState.screenHeight * 0.55, 'note');
+            createTile(gameState.screenWidth / 2 - spacing, gameState.screenHeight * 0.4, 'normal');
+            createTile(gameState.screenWidth / 2, gameState.screenHeight * 0.25, 'power');
+            
+            // Set current tile
+            gameState.currentTile = centerTile;
+            
+            // Delay before spawning more tiles
+            gameState.lastTileTime = Date.now() + 1000;
+        }
+
+        function createTile(x, y, type = 'normal') {
+            // Create tile element
+            const tileElement = document.createElement('div');
+            tileElement.className = 'tile';
+            
+            let noteIcon = '';
+            
+            if (type === 'note') {
+                tileElement.classList.add('note');
+                
+                // Add note icon
+                const iconElement = document.createElement('div');
+                iconElement.className = 'note-icon';
+                
+                const noteIcons = ['♩', '♪', '♫', '♬', '𝄞'];
+                noteIcon = noteIcons[Math.floor(Math.random() * noteIcons.length)];
+                
+                iconElement.textContent = noteIcon;
+                tileElement.appendChild(iconElement);
+            } else if (type === 'power') {
+                tileElement.classList.add('power');
+            } else if (type === 'premium' && gameState.isSubscribed) {
+                tileElement.classList.add('premium');
+            }
+            
+            // Position the tile
+            tileElement.style.transform = `translate3d(${x - 60}px, ${y - 20}px, 0) rotateX(30deg)`;
+            
+            // Add tile to game container
+            elements.gameContainer.appendChild(tileElement);
+            
+            // Store tile data
+            const tile = {
+                element: tileElement,
+                x,
+                y,
+                width: 120,
+                height: 40,
+                type,
+                noteIcon,
+                collected: false
+            };
+            
+            gameState.tiles.push(tile);
+            return tile;
+        }
+
+        // Main game loop
+        function gameLoop() {
+            if (!gameState.isPlaying) return;
+            
+            if (gameState.isPaused) {
+                animationFrameId = requestAnimationFrame(gameLoop);
+                return;
+            }
+            
+            // Calculate time delta for consistent movement
+            const now = Date.now();
+            const dt = Math.min((now - (gameState.lastTime || now)) / 1000, 0.1); // Cap at 100ms
+            gameState.lastTime = now;
+            
+            // Move tiles
+            moveTiles(dt);
+            
+            // Create new tiles
+            if (now - gameState.lastTileTime > getTileDelay()) {
+                const tileType = getRandomTileType();
+                createRandomTile(tileType);
+                gameState.lastTileTime = now;
+            }
+            
+            // Move player
+            movePlayer(dt);
+            
+            // Check collisions
+            checkCollisions();
+            
+            // Check for game over
+            checkGameOver();
+            
+            // Update level progress
+            updateProgress();
+            
+            // Create falling notes background effect
+            if (gameState.visualEffects && Math.random() < 0.02) {
+                createFallingNote();
+            }
+            
+            // Move effects
+            updateEffects(dt);
+            
+            // Request next frame
+            animationFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function getRandomTileType() {
+            const rand = Math.random();
+            
+            // Premium tiles only for subscribers
+            if (gameState.isSubscribed && rand < 0.05) {
+                return 'premium';
+            }
+            
+            // More power tiles at higher levels
+            if (rand < 0.05 + (gameState.level * 0.01)) {
+                return 'power';
+            }
+            
+            // More note tiles at higher levels
+            if (rand < 0.3 + (gameState.level * 0.02)) {
+                return 'note';
+            }
+            
+            return 'normal';
+        }
+
+        function createRandomTile(type) {
+            // Calculate a random x position
+            const padding = 100;
+            const minX = padding;
+            const maxX = gameState.screenWidth - padding;
+            
+            let x;
+            
+            if (gameState.tiles.length === 0) {
+                // First tile - under player
+                x = gameState.playerPosition.x;
+            } else {
+                // Use the last few tiles to determine a good position
+                const lastTiles = gameState.tiles.slice(-3);
+                
+                if (lastTiles.length > 0) {
+                    const lastX = lastTiles[lastTiles.length - 1].x;
+                    
+                    // 70% chance to alternate direction
+                    if (lastTiles.length >= 2 && Math.random() < 0.7) {
+                        const secondLastX = lastTiles[lastTiles.length - 2].x;
+                        const direction = lastX > secondLastX ? -1 : 1;
+                        
+                        // Jump distance based on difficulty and level
+                        let jumpDistance;
+                        switch (gameState.difficulty) {
+                            case 'easy':
+                                jumpDistance = 100 + Math.random() * 80;
+                                break;
+                            case 'medium':
+                                jumpDistance = 120 + Math.random() * 100;
+                                break;
+                            case 'hard':
+                                jumpDistance = 150 + Math.random() * 120;
+                                break;
+                            default:
+                                jumpDistance = 120 + Math.random() * 80;
+                        }
+                        
+                        // Increase jump distance slightly with level
+                        jumpDistance *= (1 + (gameState.level * 0.02));
+                        
+                        x = lastX + (direction * jumpDistance);
+                    } else {
+                        // Random position but avoid stacking too many tiles
+                        const direction = Math.random() > 0.5 ? 1 : -1;
+                        const jumpDistance = 120 + Math.random() * 100;
+                        x = lastX + (direction * jumpDistance);
+                    }
+                    
+                    // Ensure within screen bounds
+                    x = Math.max(minX, Math.min(maxX, x));
+                } else {
+                    // Fallback to random position
+                    x = minX + Math.random() * (maxX - minX);
+                }
+            }
+            
+            // Create the tile just above the screen
+            createTile(x, -50, type);
+        }
+
+        function moveTiles(dt) {
+            const fallingSpeed = getTileSpeed();
+            
+            for (let i = gameState.tiles.length - 1; i >= 0; i--) {
+                const tile = gameState.tiles[i];
+                
+                // Move tile down
+                tile.y += fallingSpeed * dt;
+                
+                // Update tile position in DOM
+                tile.element.style.transform = `translate3d(${tile.x - 60}px, ${tile.y - 20}px, 0) rotateX(30deg)`;
+                
+                // Remove tiles that go off screen
+                if (tile.y > gameState.screenHeight + 100) {
+                    tile.element.remove();
+                    gameState.tiles.splice(i, 1);
+                }
+            }
+        }
+
+        function movePlayer(dt) {
+            // Manual left/right movement
+            if (!gameState.isMovingToTarget) {
+                const moveSpeed = 50; // Pixels per second
+                
+                if (gameState.leftPressed) {
+                    gameState.playerPosition.x = Math.max(30, gameState.playerPosition.x - moveSpeed * dt);
+                }
+                
+                if (gameState.rightPressed) {
+                    gameState.playerPosition.x = Math.min(gameState.screenWidth - 30, gameState.playerPosition.x + moveSpeed * dt);
+                }
+                
+                // Apply gravity if not on a tile
+                if (!gameState.currentTile) {
+                    // Gravity based on difficulty
+                    let gravity;
+                    switch (gameState.difficulty) {
+                        case 'easy':
+                            gravity = 300;
+                            break;
+                        case 'medium':
+                            gravity = 500;
+                            break;
+                        case 'hard':
+                            gravity = 700;
+                            break;
+                        default:
+                            gravity = 500;
+                    }
+                    
+                    gameState.playerPosition.y += gravity * dt;
+                }
+            }
+            // Animated jump to target
+            else if (gameState.targetPosition) {
+                gameState.jumpProgress += dt / gameState.jumpDuration;
+                
+                if (gameState.jumpProgress >= 1) {
+                    // Jump completed
+                    gameState.playerPosition.x = gameState.targetPosition.x;
+                    gameState.playerPosition.y = gameState.targetPosition.y;
+                    gameState.isMovingToTarget = false;
+                    gameState.targetPosition = null;
+                    gameState.jumpProgress = 0;
+                } else {
+                    // Calculate position along jump arc
+                    const startX = gameState.jumpStartPosition.x;
+                    const startY = gameState.jumpStartPosition.y;
+                    const targetX = gameState.targetPosition.x;
+                    const targetY = gameState.targetPosition.y;
+                    
+                    // Easing function for smooth movement
+                    const t = gameState.jumpProgress;
+                    const easedT = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; // Ease in-out quad
+                    
+                    // Linear interpolation for x position
+                    gameState.playerPosition.x = startX + (targetX - startX) * easedT;
+                    
+                    // Parabolic arc for y position
+                    const arcHeight = Math.min(150, Math.abs(targetY - startY) * 0.7);
+                    const arcY = Math.sin(easedT * Math.PI) * arcHeight;
+                    gameState.playerPosition.y = startY + (targetY - startY) * easedT - arcY;
+                    
+                    // Create jump trail effect
+                    if (gameState.visualEffects && Math.random() < 0.2) {
+                        createJumpTrail();
+                    }
+                }
+            }
+            
+            // Update player position in DOM
+            updatePlayerPosition();
+        }
+
+        function createJumpTrail() {
+            const trail = document.createElement('div');
+            trail.className = 'player-trail';
+            
+            // Copy player appearance for trail
+            const trailCharacter = document.createElement('div');
+            trailCharacter.className = 'player-character';
+            trailCharacter.style.backgroundColor = gameState.playerColor;
+            trailCharacter.style.opacity = '0.3';
+            trailCharacter.style.transform = 'scale(0.8)';
+            
+            trail.appendChild(trailCharacter);
+            
+            // Position at current player position
+            trail.style.left = `${gameState.playerPosition.x - 30}px`;
+            trail.style.top = `${gameState.playerPosition.y - 30}px`;
+            
+            // Add to game container
+            elements.gameContainer.appendChild(trail);
+            
+            // Fade out and remove
+            setTimeout(() => {
+                trail.style.opacity = '0';
+                setTimeout(() => {
+                    if (trail.parentNode) {
+                        trail.remove();
+                    }
+                }, 300);
+            }, 50);
+        }
+
+        function createFallingNote() {
+            const note = document.createElement('div');
+            note.className = 'music-note';
+            
+            const noteIcons = ['♩', '♪', '♫', '♬', '𝄞'];
+            note.textContent = noteIcons[Math.floor(Math.random() * noteIcons.length)];
+            
+            // Position randomly
+            const x = Math.random() * gameState.screenWidth;
+            note.style.left = `${x}px`;
+            note.style.top = '0';
+            note.style.opacity = '0.2';
+            note.style.fontSize = `${Math.random() * 20 + 20}px`;
+            note.style.animation = `float ${Math.random() * 10 + 10}s linear forwards`;
+            
+            // Add to game container
+            elements.gameContainer.appendChild(note);
+            
+            // Store in game state
+            gameState.fallingNotes.push({
+                element: note,
+                x,
+                y: 0
+            });
+            
+            // Remove after animation completes
+            setTimeout(() => {
+                if (note.parentNode) {
+                    note.remove();
+                }
+            }, 20000);
+        }
+
+        function updateEffects(dt) {
+            // Move any active effects
+            gameState.effects.forEach((effect, index) => {
+                // Update position
+                effect.x += effect.vx * dt;
+                effect.y += effect.vy * dt;
+                
+                // Update rotation
+                effect.rotation += effect.rotationSpeed * dt;
+                
+                // Update opacity
+                effect.opacity -= effect.fadeSpeed * dt;
+                
+                // Update element
+                if (effect.element) {
+                    effect.element.style.transform = `translate(${effect.x}px, ${effect.y}px) rotate(${effect.rotation}deg)`;
+                    effect.element.style.opacity = Math.max(0, effect.opacity);
+                }
+                
+                // Remove if faded out
+                if (effect.opacity <= 0 && effect.element) {
+                    effect.element.remove();
+                    gameState.effects.splice(index, 1);
+                }
+            });
+        }
+
+        function checkCollisions() {
+            // Skip if actively jumping
+            if (gameState.isMovingToTarget) return;
+            
+            // Reset current tile
+            const wasOnTile = gameState.currentTile !== null;
+            gameState.currentTile = null;
+            
+            for (const tile of gameState.tiles) {
+                const playerBottom = gameState.playerPosition.y + 30;
+                const tileTop = tile.y;
+                const playerX = gameState.playerPosition.x;
+                const tileLeft = tile.x - tile.width / 2;
+                const tileRight = tile.x + tile.width / 2;
+                
+                // Slightly forgiving collision detection
+                if (playerBottom >= tileTop - 5 && playerBottom <= tileTop + 25 && 
+                    playerX >= tileLeft && playerX <= tileRight) {
+                    
+                    // Land on tile
+                    gameState.playerPosition.y = tileTop - 30;
+                    gameState.currentTile = tile;
+                    
+                    // Jump landing feedback
+                    if (!wasOnTile) {
+                        playSound('jump');
+                        
+                        // Visual feedback - player bounce
+                        elements.playerCharacter.style.transform = 'scale(1.2)';
+                        setTimeout(() => {
+                            elements.playerCharacter.style.transform = 'scale(1)';
+                        }, 150);
+                    }
+                    
+                    // Process tile effects if not already collected
+                    if (!tile.collected) {
+                        processTileEffect(tile);
+                        tile.collected = true;
+                    }
+                    
+                    break;
+                }
+            }
+        }
+
+        function processTileEffect(tile) {
+            // Base points for any tile
+            addPoints(10);
+            
+            // Special effects based on tile type
+            switch (tile.type) {
+                case 'note':
+                    // Collect music note
+                    playSound('note');
+                    
+                    // Add points
+                    addPoints(50);
+                    
+                    // Increase combo
+                    increaseCombo();
+                    
+                    // Track for achievements
+                    gameState.notesCollected++;
+                    
+                    // Visual effect
+                    if (gameState.visualEffects) {
+                        createParticleEffect(tile.x, tile.y, 'note');
+                    }
+                    break;
+                
+                case 'power':
+                    // Power up effect
+                    playSound('powerUp');
+                    
+                    // Add points
+                    addPoints(100);
+                    
+                    // Visual effect
+                    if (gameState.visualEffects) {
+                        createParticleEffect(tile.x, tile.y, 'power');
+                    }
+                    
+                    // Random power-up effect
+                    const powerUps = [
+                        slowDownTiles,
+                        doublePoints,
+                        extraLife
+                    ];
+                    
+                    const randomPowerUp = powerUps[Math.floor(Math.random() * powerUps.length)];
+                    randomPowerUp();
+                    break;
+                
+                case 'premium':
+                    // Premium tile effect (only for subscribers)
+                    if (gameState.isSubscribed) {
+                        playSound('success');
+                        
+                        // Add extra points
+                        addPoints(200);
+                        
+                        // Guarantee a power-up
+                        const premiumPowerUps = [
+                            slowDownTiles,
+                            doublePoints,
+                            extraLife,
+                            clearPath
+                        ];
+                        
+                        const premiumPowerUp = premiumPowerUps[Math.floor(Math.random() * premiumPowerUps.length)];
+                        premiumPowerUp();
+                        
+                        // Visual effect
+                        if (gameState.visualEffects) {
+                            createParticleEffect(tile.x, tile.y, 'premium');
+                        }
+                    } else {
+                        // Treat as normal tile for non-subscribers
+                        playSound('jump');
+                    }
+                    break;
+                
+                default:
+                    playSound('jump');
+                    break;
+            }
+        }
+
+        function createParticleEffect(x, y, type) {
+            const particleCount = type === 'premium' ? 30 : (type === 'power' ? 20 : 10);
+            
+            for (let i = 0; i < particleCount; i++) {
+                // Create particle element
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                
+                // Set size and appearance based on type
+                let size, color;
+                
+                switch (type) {
+                    case 'note':
+                        size = Math.random() * 10 + 5;
+                        particle.style.width = `${size}px`;
+                        particle.style.height = `${size}px`;
+                        particle.style.borderRadius = '50%';
+                        particle.style.backgroundColor = gameState.playerColor;
+                        break;
+                    
+                    case 'power':
+                        size = Math.random() * 15 + 10;
+                        particle.style.width = `${size}px`;
+                        particle.style.height = `${size}px`;
+                        particle.style.borderRadius = '50%';
+                        particle.style.backgroundColor = '#33e6b8';
+                        break;
+                    
+                    case 'premium':
+                        size = Math.random() * 12 + 8;
+                        particle.style.width = `${size}px`;
+                        particle.style.height = `${size}px`;
+                        
+                        // Star shape
+                        const r = size / 2;
+                        const starPoints = [];
+                        for (let i = 0; i < 10; i++) {
+                            const radius = i % 2 === 0 ? r : r/2;
+                            const angle = Math.PI * i / 5;
+                            starPoints.push(`${radius * Math.cos(angle) + r},${radius * Math.sin(angle) + r}`);
+                        }
+                        
+                        particle.style.clipPath = `polygon(${starPoints.join(', ')})`;
+                        particle.style.backgroundColor = '#ffcc00';
+                        break;
+                }
+                
+                // Position at effect origin
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                
+                // Add to game container
+                elements.gameContainer.appendChild(particle);
+                
+                // Define physics
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 200 + 100;
+                const vx = Math.cos(angle) * speed;
+                const vy = Math.sin(angle) * speed;
+                const rotationSpeed = Math.random() * 360 - 180;
+                
+                // Store effect data
+                gameState.effects.push({
+                    element: particle,
+                    x,
+                    y,
+                    vx,
+                    vy,
+                    rotation: 0,
+                    rotationSpeed,
+                    opacity: 1,
+                    fadeSpeed: Math.random() * 0.5 + 1
+                });
+            }
+        }
+
+        // Power-up: Slow down tiles
+        function slowDownTiles() {
+            showNotification('Slow Motion!');
+            
+            // Store original speed
+            const originalSpeed = gameState.speed;
+            
+            // Reduce speed
+            gameState.speed = Math.max(1, gameState.speed - 3);
+            
+            // Restore after duration
+            setTimeout(() => {
+                gameState.speed = originalSpeed;
+            }, 5000);
+        }
+
+        // Power-up: Double points
+        function doublePoints() {
+            showNotification('Double Points!');
+            
+            // Store original multiplier
+            const originalMultiplier = gameState.comboMultiplier;
+            
+            // Double the multiplier
+            gameState.comboMultiplier *= 2;
+            
+            // Update UI
+            elements.comboDisplay.textContent = `Combo: x${gameState.comboMultiplier}`;
+            elements.comboDisplay.style.opacity = '1';
+            
+            // Restore after duration
+            setTimeout(() => {
+                gameState.comboMultiplier = originalMultiplier;
+                
+                // Update UI
+                if (gameState.comboStreak > 0) {
+                    elements.comboDisplay.textContent = `Combo: x${gameState.comboMultiplier}`;
+                } else {
+                    elements.comboDisplay.style.opacity = '0';
+                }
+            }, 5000);
+        }
+
+        // Power-up: Extra life (safety net)
+        function extraLife() {
+            showNotification('Safety Net!');
+            
+            // Create temporary platform at the bottom
+            const safetyTile = document.createElement('div');
+            safetyTile.className = 'tile power';
+            safetyTile.style.width = `${gameState.screenWidth - 200}px`;
+            safetyTile.style.transform = `translate3d(${gameState.screenWidth / 2 - (gameState.screenWidth - 200) / 2}px, ${gameState.screenHeight - 100}px, 0) rotateX(30deg)`;
+            
+            elements.gameContainer.appendChild(safetyTile);
+            
+            // Remove after duration
+            setTimeout(() => {
+                safetyTile.style.opacity = '0';
+                setTimeout(() => {
+                    if (safetyTile.parentNode) {
+                        safetyTile.remove();
+                    }
+                }, 500);
+            }, 8000);
+        }
+
+        // Premium Power-up: Clear path
+        function clearPath() {
+            showNotification('Clear Path!');
+            
+            // Create a series of tiles leading upward
+            const playerX = gameState.playerPosition.x;
+            const startY = gameState.playerPosition.y - 100;
+            const tileCount = 5;
+            const spacing = 100;
+            
+            for (let i = 0; i < tileCount; i++) {
+                // Alternate left and right
+                const offsetX = i % 2 === 0 ? -100 : 100;
+                const y = startY - (i * spacing);
+                
+                // Create tile with slight delay
+                setTimeout(() => {
+                    createTile(playerX + offsetX, y, i % 3 === 0 ? 'note' : 'normal');
+                }, i * 100);
+            }
+        }
+
+        // Show notification
+        function showNotification(text) {
+            const notification = elements.levelUpNotification;
+            notification.textContent = text;
+            notification.classList.add('show');
+            
+            // Hide after duration
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        // Increase combo
+        function increaseCombo() {
+            gameState.comboStreak++;
+            
+            // Update combo multiplier based on streak
+            if (gameState.comboStreak >= 10) {
+                gameState.comboMultiplier = 4;
+                
+                // Achievement: Combo Master
+                if (gameState.achievements.comboMaster.earned === false) {
+                    gameState.achievements.comboMaster.earned = true;
+                    gameState.achievements.comboMaster.progress = 100;
+                    showNotification('Achievement: Combo Master!');
+                }
+            } else if (gameState.comboStreak >= 5) {
+                gameState.comboMultiplier = 2;
+            } else if (gameState.comboStreak >= 3) {
+                gameState.comboMultiplier = 1.5;
+            }
+            
+            // Update UI
+            elements.comboDisplay.textContent = `Combo: x${gameState.comboMultiplier}`;
+            elements.comboDisplay.style.opacity = '1';
+        }
+
+        // Reset combo
+        function resetCombo() {
+            gameState.comboStreak = 0;
+            gameState.comboMultiplier = 1;
+            
+            // Update UI
+            elements.comboDisplay.style.opacity = '0';
+        }
+
+        // Add points to score
+        function addPoints(points) {
+            // Apply combo multiplier
+            const multipliedPoints = Math.floor(points * gameState.comboMultiplier);
+            
+            // Add to score
+            gameState.score += multipliedPoints;
+            
+            // Update score display
+            elements.scoreDisplay.textContent = `Score: ${gameState.score}`;
+            
+            // Update level progress
+            gameState.levelProgress += multipliedPoints;
+            
+            // Check for high score
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                saveSettings();
+            }
+            
+            // Check for point collector achievement
+            if (gameState.score >= 1000 && gameState.achievements.pointCollector.earned === false) {
+                gameState.achievements.pointCollector.earned = true;
+                gameState.achievements.pointCollector.progress = 100;
+                showNotification('Achievement: Point Collector!');
+            }
+        }
+
+        // Update level progress
+        function updateProgress() {
+            // Calculate progress percentage
+            const levelThreshold = 1000 + (gameState.level * 500);
+            const percentage = Math.min(100, (gameState.levelProgress / levelThreshold) * 100);
+            
+            // Update progress bar
+            elements.progressBar.style.width = `${percentage}%`;
+            
+            // Check for level up
+            if (gameState.levelProgress >= levelThreshold) {
+                levelUp();
+            }
+        }
+
+        // Level up
+        function levelUp() {
+            // Increase level
+            gameState.level++;
+            
+            // Reset progress
+            gameState.levelProgress = 0;
+            
+            // Update UI
+            elements.levelDisplay.textContent = `Level: ${gameState.level}`;
+            elements.progressBar.style.width = '0%';
+            
+            // Play level up sound
+            playSound('levelUp');
+            
+            // Show notification
+            showNotification(`Level ${gameState.level}!`);
+            
+            // Check for high climber achievement
+            if (gameState.level >= 10 && gameState.achievements.highClimber.earned === false) {
+                gameState.achievements.highClimber.earned = true;
+                gameState.achievements.highClimber.progress = 100;
+                showNotification('Achievement: High Climber!');
+            }
+            
+            // Create level up effect
+            if (gameState.visualEffects) {
+                createLevelUpEffect();
+            }
+        }
+
+        // Create level up visual effect
+        function createLevelUpEffect() {
+            // Create level text animation
+            const levelText = document.createElement('div');
+            levelText.textContent = `LEVEL ${gameState.level}`;
+            levelText.style.position = 'absolute';
+            levelText.style.left = '50%';
+            levelText.style.top = '50%';
+            levelText.style.transform = 'translate(-50%, -50%)';
+            levelText.style.fontSize = '5em';
+            levelText.style.fontWeight = '800';
+            levelText.style.color = 'rgba(255, 255, 255, 0)';
+            levelText.style.textShadow = '0 0 20px var(--primary)';
+            levelText.style.zIndex = '20';
+            levelText.style.transition = 'all 0.5s ease-out';
+            
+            elements.gameContainer.appendChild(levelText);
+            
+            // Animate
+            setTimeout(() => {
+                levelText.style.color = 'rgba(255, 255, 255, 1)';
+                levelText.style.fontSize = '8em';
+                levelText.style.textShadow = '0 0 30px var(--primary)';
+            }, 100);
+            
+            setTimeout(() => {
+                levelText.style.top = '40%';
+                levelText.style.opacity = '0';
+            }, 1500);
+            
+            setTimeout(() => {
+                levelText.remove();
+            }, 2500);
+            
+            // Create particle burst
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    if (gameState.isPlaying && !gameState.isPaused) {
+                        createParticleEffect(
+                            gameState.screenWidth / 2 + (Math.random() * 300 - 150),
+                            gameState.screenHeight / 2 + (Math.random() * 100 - 50),
+                            'premium'
+                        );
+                    }
+                }, Math.random() * 1000);
+            }
+        }
+
+        // Check for game over
+        function checkGameOver() {
+            // End the game if player falls off the bottom of the screen
+            if (gameState.playerPosition.y > gameState.screenHeight + 100) {
+                endGame();
+            }
+        }
+
+        // End the game
+        function endGame() {
+            // Set game state
+            gameState.isPlaying = false;
+            
+            // Stop game loop
+            cancelAnimationFrame(animationFrameId);
+            
+            // Stop background music
+            stopBackgroundMusic();
+            
+            // Play game over sound
+            playSound('gameOver');
+            
+            // Update game over screen
+            elements.finalScore.textContent = gameState.score;
+            elements.highScore.textContent = `High Score: ${gameState.highScore}`;
+            
+            // Show game over screen
+            showScreen('gameOver');
+            
+            // Clear effects
+            clearEffects();
+        }
+
+        // Clear all visual effects
+        function clearEffects() {
+            // Remove all particle effects
+            gameState.effects.forEach(effect => {
+                if (effect.element && effect.element.parentNode) {
+                    effect.element.remove();
+                }
+            });
+            
+            gameState.effects = [];
+            
+            // Remove all falling notes
+            gameState.fallingNotes.forEach(note => {
+                if (note.element && note.element.parentNode) {
+                    note.element.remove();
+                }
+            });
+            
+            gameState.fallingNotes = [];
+        }
+
+        // Restart the game
+        function restartGame() {
+            // Hide current screen
+            if (elements.screens.gameOver.classList.contains('active')) {
+                elements.screens.gameOver.classList.remove('active');
+            }
+            
+            if (elements.screens.pause.classList.contains('active')) {
+                elements.screens.pause.classList.remove('active');
+            }
+            
+            // Clear existing tiles
+            gameState.tiles.forEach(tile => {
+                if (tile.element && tile.element.parentNode) {
+                    tile.element.remove();
+                }
+            });
+            
+            // Start a new game
+            startGame();
+        }
+
+        // Go to main menu
+        function goToMainMenu() {
+            // Hide current screen
+            if (elements.screens.gameOver.classList.contains('active')) {
+                elements.screens.gameOver.classList.remove('active');
+            }
+            
+            if (elements.screens.pause.classList.contains('active')) {
+                elements.screens.pause.classList.remove('active');
+            }
+            
+            // Stop game loop
+            cancelAnimationFrame(animationFrameId);
+            
+            // Stop background music
+            stopBackgroundMusic();
+            
+            // Clear existing tiles
+            gameState.tiles.forEach(tile => {
+                if (tile.element && tile.element.parentNode) {
+                    tile.element.remove();
+                }
+            });
+            
+            // Clear effects
+            clearEffects();
+            
+            // Show start screen
+            showScreen('start');
+        }
+
+        // Premium feature: Continue after game over
+        function premiumContinue() {
+            // Only works for subscribers
+            if (!gameState.isSubscribed) {
+                showSubscriptionPrompt();
+                return;
+            }
+            
+            // Hide game over screen
+            elements.screens.gameOver.classList.remove('active');
+            
+            // Reposition player
+            gameState.playerPosition.y = gameState.screenHeight - 100;
+            updatePlayerPosition();
+            
+            // Create safety platforms
+            const x = gameState.playerPosition.x;
+            createTile(x, gameState.playerPosition.y + 30, 'premium');
+            createTile(x - 150, gameState.playerPosition.y - 100, 'note');
+            createTile(x + 150, gameState.playerPosition.y - 200, 'power');
+            
+            // Resume game
+            gameState.isPlaying = true;
+            playBackgroundMusic();
+            gameLoop();
+        }
+
+        // Toggle pause
+        function togglePause() {
+            if (!gameState.isPlaying) return;
+            
+            gameState.isPaused = !gameState.isPaused;
+            
+            if (gameState.isPaused) {
+                // Show pause menu
+                showScreen('pause');
+                
+                // Slow down background music
+                if (musicLoop && musicLoop.source) {
+                    musicLoop.source.playbackRate.value = 0.5;
+                }
+            } else {
+                // Hide pause menu
+                elements.screens.pause.classList.remove('active');
+                
+                // Resume background music
+                if (musicLoop && musicLoop.source) {
+                    musicLoop.source.playbackRate.value = 1.0;
+                }
+            }
+        }
+
+        // Resume game from pause
+        function resumeGame() {
+            if (!gameState.isPaused) return;
+            
+            // Hide pause menu
+            elements.screens.pause.classList.remove('active');
+            
+            // Resume game
+            gameState.isPaused = false;
+            
+            // Resume background music
+            if (musicLoop && musicLoop.source) {
+                musicLoop.source.playbackRate.value = 1.0;
+            }
+        }
+
+        // ===== Input Handling =====
+        function handleKeyDown(e) {
+            if (e.key === 'ArrowLeft') {
+                gameState.leftPressed = true;
+            } else if (e.key === 'ArrowRight') {
+                gameState.rightPressed = true;
+            } else if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') {
+                togglePause();
+            }
+        }
+
+        function handleKeyUp(e) {
+            if (e.key === 'ArrowLeft') {
+                gameState.leftPressed = false;
+            } else if (e.key === 'ArrowRight') {
+                gameState.rightPressed = false;
+            }
+        }
+
+        function handleTouchStart(e) {
+            if (e.touches.length === 0) return;
+            
+            const touch = e.touches[0];
+            
+            // Detect if touch is on left or right side for movement
+            if (touch.clientX < gameState.screenWidth / 3) {
+                gameState.leftPressed = true;
+            } else if (touch.clientX > gameState.screenWidth * 2 / 3) {
+                gameState.rightPressed = true;
+            }
+        }
+
+        function handleTouchMove(e) {
+            // Prevent default to avoid scrolling
+            e.preventDefault();
+        }
+
+        function handleTouchEnd(e) {
+            gameState.leftPressed = false;
+            gameState.rightPressed = false;
+        }
+
+        function handleTileClick(e) {
+            // Only process clicks during gameplay
+            if (!gameState.isPlaying || gameState.isPaused) return;
+            
+            // Skip if already jumping
+            if (gameState.isMovingToTarget) return;
+            
+            // Get click coordinates
+            const clickX = e.clientX || (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientX : null);
+            const clickY = e.clientY || (e.changedTouches && e.changedTouches[0] ? e.changedTouches[0].clientY : null);
+            
+            if (!clickX || !clickY) return;
+            
+            // Find closest tile
+            let closestTile = null;
+            let closestDistance = Infinity;
+            
+            for (const tile of gameState.tiles) {
+                // Skip tiles below player
+                if (tile.y > gameState.playerPosition.y + 150) continue;
+                
+                // Calculate distance to tile
+                const dx = tile.x - clickX;
+                const dy = tile.y - clickY;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Check if this tile is closer
+                if (distance < closestDistance) {
+                    closestDistance = distance;
+                    closestTile = tile;
+                }
+            }
+            
+            // Jump to tile if close enough to click
+            if (closestTile && closestDistance < 100) {
+                jumpToTile(closestTile);
+            }
+        }
+
+        function jumpToTile(tile) {
+            // Can only jump if on a tile
+            if (!gameState.currentTile && !gameState.isMovingToTarget) return;
+            
+            // Store starting position
+            gameState.jumpStartPosition = {
+                x: gameState.playerPosition.x,
+                y: gameState.playerPosition.y
+            };
+            
+            // Set target position
+            gameState.targetPosition = {
+                x: tile.x,
+                y: tile.y - 30 // Account for player height
+            };
+            
+            // Start jump
+            gameState.isMovingToTarget = true;
+            gameState.jumpProgress = 0;
+            
+            // Adjust jump duration based on distance
+            const dx = gameState.targetPosition.x - gameState.jumpStartPosition.x;
+            const dy = gameState.targetPosition.y - gameState.jumpStartPosition.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            
+            // Faster jumps for closer tiles
+            gameState.jumpDuration = 0.3 + (distance / 1000);
+            
+            // Play jump sound
+            playSound('jump');
+            
+            // Visual feedback
+            elements.playerCharacter.style.transform = 'scale(1.2)';
+            setTimeout(() => {
+                elements.playerCharacter.style.transform = 'scale(1)';
+            }, 150);
+        }
+
+        // ===== Utility Functions =====
+        function getTileSpeed() {
+            // Base speed adjusted by game speed and level
+            return 150 + (gameState.speed * 20) + (gameState.level * 10);
+        }
+
+        function getTileDelay() {
+            // Base delay adjusted by difficulty and level
+            let baseDelay;
+            
+            switch (gameState.difficulty) {
+                case 'easy':
+                    baseDelay = 1800;
+                    break;
+                case 'medium':
+                    baseDelay = 1500;
+                    break;
+                case 'hard':
+                    baseDelay = 1200;
+                    break;
+                default:
+                    baseDelay = 1500;
+            }
+            
+            // Reduce delay as level increases
+            return Math.max(800, baseDelay - (gameState.level * 50));
+        }
+
+        function handleResize() {
+            gameState.screenWidth = window.innerWidth;
+            gameState.screenHeight = window.innerHeight;
+        }
+
+        // Initialize game on window load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

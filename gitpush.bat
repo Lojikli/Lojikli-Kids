@@ -15,32 +15,31 @@ set "temp_file=%TEMP%\temp_files.txt"
 set "toddler_js=%TEMP%\toddler_js.txt"
 set "elementary_js=%TEMP%\elementary_js.txt"
 set "new_games_js=%TEMP%\new_games_js.txt"
-set "recent_files=%TEMP%\recent_files.txt"
 
+:: Create the start of the repository object in separate files
 echo // Define the structure of your repository> "%toddler_js%"
 echo const repository = {>> "%toddler_js%"
 echo     "2 yr old": [>> "%toddler_js%"
 
 echo     "5 yr old": [> "%elementary_js%"
 
+:: Create the new games array
 echo // Recently added games>> "%new_games_js%"
 echo const recentlyAddedGames = [>> "%new_games_js%"
 
-:: Get the most recent files by directly sorting by date/time
-echo Finding recent games by modification date...
-dir "2 yr old\*.html" /B /O-D > "%recent_files%"
-dir "5 yr old\*.html" /B /O-D >> "%recent_files%"
+:: Create a combined temporary file of all recent files from both directories
+echo Creating list of newest files...
+del "%TEMP%\all_recent_files.txt" 2>nul
 
-:: We'll show the 8 most recently modified games
-set "count=0"
-set "first_new_game=yes"
+:: Use Windows dir command to list files by date, newest first
+dir "5 yr old\*.html" /B /O-D /A-D > "%TEMP%\recent_5yr.txt"
+dir "2 yr old\*.html" /B /O-D /A-D > "%TEMP%\recent_2yr.txt"
 
-:: Process toddler directory first 
+:: Process toddler directory first (2 yr old)
 echo Scanning toddler directory...
 set "first_file=yes"
 for %%f in ("2 yr old\*.html") do (
     set "filename=%%~nxf"
-    set "filepath=2 yr old\!filename!"
     
     :: Add to repository structure
     if "!first_file!"=="yes" (
@@ -49,21 +48,16 @@ for %%f in ("2 yr old\*.html") do (
     ) else (
         echo         ,"!filename!">> "%toddler_js%"
     )
-    
-    set /a toddler_count+=1
 )
-if not defined toddler_count set "toddler_count=0"
-echo Found %toddler_count% files in toddler directory
 
 :: Add the closing bracket and comma for the first array
 echo     ],>> "%toddler_js%"
 
-:: Scan and process the "5 yr old" directory
+:: Scan and process the "5 yr old" directory for repository structure
 echo Scanning elementary directory...
 set "first_file=yes"
 for %%f in ("5 yr old\*.html") do (
     set "filename=%%~nxf"
-    set "filepath=5 yr old\!filename!"
     
     :: Add to repository structure
     if "!first_file!"=="yes" (
@@ -72,33 +66,24 @@ for %%f in ("5 yr old\*.html") do (
     ) else (
         echo         ,"!filename!">> "%elementary_js%"
     )
-    
-    set /a elementary_count+=1
 )
-if not defined elementary_count set "elementary_count=0"
-echo Found %elementary_count% files in elementary directory
 
 :: Add the closing of the repository object
 echo     ]>> "%elementary_js%"
 echo };>> "%elementary_js%"
 
-:: Now identify the most recent files by file date
-echo Identifying the newest games by date modified...
+:: Now add the newest games from both directories to the recentlyAddedGames array
+echo Adding newest games to slider...
 
-:: Sort the recent files list by date/time (most recent first)
-:: We'll use this to find the newest files
+:: First, handle the 5 yr old directory (typically has more new games)
+set "count=0"
+set "first_new_game=yes"
 
-:: Extract the 8 most recent files from each directory
-echo Finding most recent games in 2 yr old directory...
-for /f "tokens=*" %%f in ('dir "2 yr old\*.html" /B /O-D 2^>nul') do (
-    if !count! lss 4 (
+:: Take the first 5 newest games from 5 yr old directory
+for /f "tokens=*" %%f in ('type "%TEMP%\recent_5yr.txt"') do (
+    if !count! lss 5 (
         set "filename=%%f"
-        set "filepath=2 yr old\!filename!"
-        set "dir_part=2 yr old"
         
-        echo Recent game found: !filepath!
-        
-        :: Add to new games array
         if "!first_new_game!"=="yes" (
             echo     {>> "%new_games_js%"
             set "first_new_game=no"
@@ -111,30 +96,26 @@ for /f "tokens=*" %%f in ('dir "2 yr old\*.html" /B /O-D 2^>nul') do (
         call :GetIconClass "!filename!" icon_class
         call :GetCategory "!filename!" category_name
         
+        echo Adding as NEW: 5 yr old\!filename!
+        
         echo         name: "!nice_name!",>> "%new_games_js%"
         echo         icon: "!icon_class!",>> "%new_games_js%"
         echo         category: "!category_name!",>> "%new_games_js%"
         echo         description: "Fun !category_name! game for kids!",>> "%new_games_js%"
-        echo         path: "!dir_part!/!filename!">> "%new_games_js%"
+        echo         path: "5 yr old/!filename!">> "%new_games_js%"
         echo     }>> "%new_games_js%"
         
         set /a count+=1
     )
 )
 
-:: Reset count for 5 yr old directory
+:: Then add up to 3 newest games from 2 yr old directory
 set "count=0"
-
-echo Finding most recent games in 5 yr old directory...
-for /f "tokens=*" %%f in ('dir "5 yr old\*.html" /B /O-D 2^>nul') do (
-    if !count! lss 4 (
+for /f "tokens=*" %%f in ('type "%TEMP%\recent_2yr.txt"') do (
+    if !count! lss 3 (
         set "filename=%%f"
-        set "filepath=5 yr old\!filename!"
-        set "dir_part=5 yr old"
         
-        echo Recent game found: !filepath!
-        
-        :: Only add comma if we've already added at least one game
+        :: Only add comma if we already have games
         if "!first_new_game!"=="yes" (
             echo     {>> "%new_games_js%"
             set "first_new_game=no"
@@ -147,11 +128,13 @@ for /f "tokens=*" %%f in ('dir "5 yr old\*.html" /B /O-D 2^>nul') do (
         call :GetIconClass "!filename!" icon_class
         call :GetCategory "!filename!" category_name
         
+        echo Adding as NEW: 2 yr old\!filename!
+        
         echo         name: "!nice_name!",>> "%new_games_js%"
         echo         icon: "!icon_class!",>> "%new_games_js%"
         echo         category: "!category_name!",>> "%new_games_js%"
         echo         description: "Fun !category_name! game for kids!",>> "%new_games_js%"
-        echo         path: "!dir_part!/!filename!">> "%new_games_js%"
+        echo         path: "2 yr old/!filename!">> "%new_games_js%"
         echo     }>> "%new_games_js%"
         
         set /a count+=1
@@ -168,7 +151,7 @@ echo. >> "%temp_file%"
 type "%new_games_js%" >> "%temp_file%"
 
 :: Update the index.html file using PowerShell
-echo Updating index.html...
+echo Updating index.html with new games...
 powershell -Command "$content = Get-Content -Raw 'index.html'; $repoPattern = '(?s)// Define the structure of your repository.*?const recentlyAddedGames = \[\];'; $repoReplacement = (Get-Content -Raw '%temp_file%'); $newContent = $content -replace $repoPattern, $repoReplacement; Set-Content -Path 'index.html' -Value $newContent -NoNewline"
 
 :: Clean up temp files
@@ -176,13 +159,12 @@ del "%temp_file%" 2>nul
 del "%toddler_js%" 2>nul
 del "%elementary_js%" 2>nul
 del "%new_games_js%" 2>nul
-del "%recent_files%" 2>nul
+del "%TEMP%\recent_5yr.txt" 2>nul
+del "%TEMP%\recent_2yr.txt" 2>nul
+del "%TEMP%\all_recent_files.txt" 2>nul
 
-:: After running, create a "promoted" file to mark these games as not new anymore
-echo %date% %time% > "last_games_push.txt"
-echo. >> "last_games_push.txt"
-echo Recently added games: >> "last_games_push.txt"
-type "%new_games_js%" >> "last_games_push.txt"
+:: Log the update
+echo %date% %time% - Updated index.html with newest games > "last_games_update.txt"
 
 :: Get current branch
 for /f "tokens=*" %%i in ('git rev-parse --abbrev-ref HEAD') do set current_branch=%%i
@@ -190,12 +172,12 @@ for /f "tokens=*" %%i in ('git rev-parse --abbrev-ref HEAD') do set current_bran
 :: Git operations
 echo Committing and pushing changes...
 git add .
-git commit -m "Updated index.html with repository structure and featured recent games"
+git commit -m "Updated index.html with newest games for the slider"
 git push origin %current_branch%
 
 echo ===== SUCCESS: CHANGES PUSHED TO GITHUB =====
 echo.
-echo IMPORTANT: Clear your browser cache (Ctrl+F5) to see changes!
+echo Your newest games are now featured in the slider!
 echo.
 echo Press any key to exit...
 pause > nul
@@ -290,73 +272,99 @@ setlocal EnableDelayedExpansion
 
 :: Convert to lowercase for case-insensitive matching
 set "filename=%~1"
-for %%a in (a b c d e f g h i j k l m n o p q r s t u v w x y z) do set "filename=!filename:%%a=%%a!"
+set "filename=!filename:A=a!"
+set "filename=!filename:B=b!"
+set "filename=!filename:C=c!"
+set "filename=!filename:D=d!"
+set "filename=!filename:E=e!"
+set "filename=!filename:F=f!"
+set "filename=!filename:G=g!"
+set "filename=!filename:H=h!"
+set "filename=!filename:I=i!"
+set "filename=!filename:J=j!"
+set "filename=!filename:K=k!"
+set "filename=!filename:L=l!"
+set "filename=!filename:M=m!"
+set "filename=!filename:N=n!"
+set "filename=!filename:O=o!"
+set "filename=!filename:P=p!"
+set "filename=!filename:Q=q!"
+set "filename=!filename:R=r!"
+set "filename=!filename:S=s!"
+set "filename=!filename:T=t!"
+set "filename=!filename:U=u!"
+set "filename=!filename:V=v!"
+set "filename=!filename:W=w!"
+set "filename=!filename:X=x!"
+set "filename=!filename:Y=y!"
+set "filename=!filename:Z=z!"
 
 :: Set default icon
 set "icon=fas fa-puzzle-piece"
 
-:: Check for math-related keywords
-echo !filename! | findstr /i "math multiply division fraction algebra calculus factor" > nul
-if !errorlevel! equ 0 (
-    set "icon=fas fa-calculator"
+:: Check for water related keywords
+if not "!filename:water=!" == "!filename!" (
+    set "icon=fas fa-water"
     goto :iconSet
 )
 
-:: Check for music-related keywords
-echo !filename! | findstr /i "music piano midi note fifths" > nul
-if !errorlevel! equ 0 (
-    set "icon=fas fa-music"
+:: Check for bubble related keywords
+if not "!filename:bubble=!" == "!filename!" (
+    set "icon=fas fa-water"
     goto :iconSet
 )
 
-:: Check for geography-related keywords
-echo !filename! | findstr /i "country geo globe" > nul
-if !errorlevel! equ 0 (
-    set "icon=fas fa-globe-americas"
+:: Check for coordinates/numberline related keywords
+if not "!filename:coordinates=!" == "!filename!" (
+    set "icon=fas fa-ruler"
     goto :iconSet
 )
 
-:: Check for game-related keywords
-echo !filename! | findstr /i "game battleship pacman shooter connect4 soduku bubble" > nul
-if !errorlevel! equ 0 (
-    set "icon=fas fa-gamepad"
-    goto :iconSet
-)
-
-:: Check for reading/writing-related keywords
-echo !filename! | findstr /i "read writing word" > nul
-if !errorlevel! equ 0 (
-    set "icon=fas fa-book"
-    goto :iconSet
-)
-
-:: Check for timer-related keywords
-echo !filename! | findstr /i "timer" > nul
-if !errorlevel! equ 0 (
-    set "icon=fas fa-clock"
-    goto :iconSet
-)
-
-:: Check for AI/neural-related keywords
-echo !filename! | findstr /i "neural ai" > nul
-if !errorlevel! equ 0 (
-    set "icon=fas fa-brain"
-    goto :iconSet
-)
-
-:: Check for coordinate/number line related keywords
-echo !filename! | findstr /i "coordinates numberline" > nul  
-if !errorlevel! equ 0 (
+if not "!filename:numberline=!" == "!filename!" (
     set "icon=fas fa-ruler-horizontal"
     goto :iconSet
 )
 
-:: Check for water related keywords
-echo !filename! | findstr /i "water bubble" > nul
-if !errorlevel! equ 0 (
-    set "icon=fas fa-water"
-    goto :iconSet
-)
+:: Check for math-related keywords
+if not "!filename:math=!" == "!filename!" set "icon=fas fa-calculator" & goto :iconSet
+if not "!filename:multiply=!" == "!filename!" set "icon=fas fa-calculator" & goto :iconSet
+if not "!filename:division=!" == "!filename!" set "icon=fas fa-calculator" & goto :iconSet
+if not "!filename:fraction=!" == "!filename!" set "icon=fas fa-calculator" & goto :iconSet
+if not "!filename:algebra=!" == "!filename!" set "icon=fas fa-calculator" & goto :iconSet
+if not "!filename:calculus=!" == "!filename!" set "icon=fas fa-calculator" & goto :iconSet
+if not "!filename:factor=!" == "!filename!" set "icon=fas fa-calculator" & goto :iconSet
+
+:: Check for music-related keywords
+if not "!filename:music=!" == "!filename!" set "icon=fas fa-music" & goto :iconSet
+if not "!filename:piano=!" == "!filename!" set "icon=fas fa-music" & goto :iconSet
+if not "!filename:midi=!" == "!filename!" set "icon=fas fa-music" & goto :iconSet
+if not "!filename:note=!" == "!filename!" set "icon=fas fa-music" & goto :iconSet
+if not "!filename:fifths=!" == "!filename!" set "icon=fas fa-music" & goto :iconSet
+
+:: Check for geography-related keywords
+if not "!filename:country=!" == "!filename!" set "icon=fas fa-globe-americas" & goto :iconSet
+if not "!filename:geo=!" == "!filename!" set "icon=fas fa-globe-americas" & goto :iconSet
+if not "!filename:globe=!" == "!filename!" set "icon=fas fa-globe-americas" & goto :iconSet
+
+:: Check for game-related keywords
+if not "!filename:game=!" == "!filename!" set "icon=fas fa-gamepad" & goto :iconSet
+if not "!filename:battleship=!" == "!filename!" set "icon=fas fa-gamepad" & goto :iconSet
+if not "!filename:pacman=!" == "!filename!" set "icon=fas fa-gamepad" & goto :iconSet
+if not "!filename:shooter=!" == "!filename!" set "icon=fas fa-gamepad" & goto :iconSet
+if not "!filename:connect4=!" == "!filename!" set "icon=fas fa-gamepad" & goto :iconSet
+if not "!filename:soduku=!" == "!filename!" set "icon=fas fa-gamepad" & goto :iconSet
+
+:: Check for reading/writing-related keywords
+if not "!filename:read=!" == "!filename!" set "icon=fas fa-book" & goto :iconSet
+if not "!filename:writing=!" == "!filename!" set "icon=fas fa-book" & goto :iconSet
+if not "!filename:word=!" == "!filename!" set "icon=fas fa-book" & goto :iconSet
+
+:: Check for timer-related keywords
+if not "!filename:timer=!" == "!filename!" set "icon=fas fa-clock" & goto :iconSet
+
+:: Check for AI/neural-related keywords
+if not "!filename:neural=!" == "!filename!" set "icon=fas fa-brain" & goto :iconSet
+if not "!filename:ai=!" == "!filename!" set "icon=fas fa-brain" & goto :iconSet
 
 :iconSet
 endlocal & set "%~2=%icon%"
@@ -368,52 +376,96 @@ setlocal EnableDelayedExpansion
 
 :: Convert to lowercase for case-insensitive matching
 set "filename=%~1"
-for %%a in (a b c d e f g h i j k l m n o p q r s t u v w x y z) do set "filename=!filename:%%a=%%a!"
+set "filename=!filename:A=a!"
+set "filename=!filename:B=b!"
+set "filename=!filename:C=c!"
+set "filename=!filename:D=d!"
+set "filename=!filename:E=e!"
+set "filename=!filename:F=f!"
+set "filename=!filename:G=g!"
+set "filename=!filename:H=h!"
+set "filename=!filename:I=i!"
+set "filename=!filename:J=j!"
+set "filename=!filename:K=k!"
+set "filename=!filename:L=l!"
+set "filename=!filename:M=m!"
+set "filename=!filename:N=n!"
+set "filename=!filename:O=o!"
+set "filename=!filename:P=p!"
+set "filename=!filename:Q=q!"
+set "filename=!filename:R=r!"
+set "filename=!filename:S=s!"
+set "filename=!filename:T=t!"
+set "filename=!filename:U=u!"
+set "filename=!filename:V=v!"
+set "filename=!filename:W=w!"
+set "filename=!filename:X=x!"
+set "filename=!filename:Y=y!"
+set "filename=!filename:Z=z!"
 
 :: Set default category
 set "category=interactive"
 
+:: Check for water/bubble related keywords
+if not "!filename:water=!" == "!filename!" set "category=science" & goto :categorySet
+if not "!filename:bubble=!" == "!filename!" set "category=science" & goto :categorySet
+
+:: Check for coordinate/numberline related keywords
+if not "!filename:coordinates=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:numberline=!" == "!filename!" set "category=math" & goto :categorySet
+
 :: Check for math-related keywords
-echo !filename! | findstr /i "math multiply division fraction algebra calculus factor geometry number pemdas subtract scientific zero plot triang trig decimal statistics coordinates" > nul
-if !errorlevel! equ 0 (
-    set "category=math"
-    goto :categorySet
-)
+if not "!filename:math=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:multiply=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:division=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:fraction=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:algebra=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:calculus=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:factor=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:geometry=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:number=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:pemdas=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:subtract=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:scientific=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:zero=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:plot=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:triang=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:trig=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:decimal=!" == "!filename!" set "category=math" & goto :categorySet
+if not "!filename:statistics=!" == "!filename!" set "category=math" & goto :categorySet
 
 :: Check for music-related keywords
-echo !filename! | findstr /i "music piano midi note fifths harmonic" > nul
-if !errorlevel! equ 0 (
-    set "category=music"
-    goto :categorySet
-)
+if not "!filename:music=!" == "!filename!" set "category=music" & goto :categorySet
+if not "!filename:piano=!" == "!filename!" set "category=music" & goto :categorySet
+if not "!filename:midi=!" == "!filename!" set "category=music" & goto :categorySet
+if not "!filename:note=!" == "!filename!" set "category=music" & goto :categorySet
+if not "!filename:fifths=!" == "!filename!" set "category=music" & goto :categorySet
+if not "!filename:harmonic=!" == "!filename!" set "category=music" & goto :categorySet
 
 :: Check for geography-related keywords
-echo !filename! | findstr /i "country geo globe" > nul
-if !errorlevel! equ 0 (
-    set "category=geography"
-    goto :categorySet
-)
+if not "!filename:country=!" == "!filename!" set "category=geography" & goto :categorySet
+if not "!filename:geo=!" == "!filename!" set "category=geography" & goto :categorySet
+if not "!filename:globe=!" == "!filename!" set "category=geography" & goto :categorySet
 
 :: Check for language-related keywords
-echo !filename! | findstr /i "reading writing word" > nul
-if !errorlevel! equ 0 (
-    set "category=language"
-    goto :categorySet
-)
+if not "!filename:reading=!" == "!filename!" set "category=language" & goto :categorySet
+if not "!filename:writing=!" == "!filename!" set "category=language" & goto :categorySet
+if not "!filename:word=!" == "!filename!" set "category=language" & goto :categorySet
 
 :: Check for game-related keywords
-echo !filename! | findstr /i "game battleship pacman shooter connect4 adventure soduku bubble asteroid snake solitaire trouble lander mahjong" > nul
-if !errorlevel! equ 0 (
-    set "category=games"
-    goto :categorySet
-)
-
-:: Check for water-related keywords
-echo !filename! | findstr /i "water bubble" > nul
-if !errorlevel! equ 0 (
-    set "category=science"
-    goto :categorySet
-)
+if not "!filename:game=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:battleship=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:pacman=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:shooter=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:connect4=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:adventure=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:soduku=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:asteroid=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:snake=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:solitaire=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:trouble=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:lander=!" == "!filename!" set "category=games" & goto :categorySet
+if not "!filename:mahjong=!" == "!filename!" set "category=games" & goto :categorySet
 
 :categorySet
 endlocal & set "%~2=%category%"

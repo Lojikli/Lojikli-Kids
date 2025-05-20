@@ -1,0 +1,3549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoQuest: Latitude & Longitude Explorer</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        :root {
+            --primary: #2563EB;
+            --primary-dark: #1D4ED8;
+            --secondary: #F97316;
+            --secondary-dark: #EA580C;
+            --success: #10B981;
+            --error: #EF4444;
+            --neutral-50: #F9FAFB;
+            --neutral-100: #F3F4F6;
+            --neutral-200: #E5E7EB;
+            --neutral-300: #D1D5DB;
+            --neutral-700: #374151;
+            --neutral-800: #1F2937;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --border-radius-sm: 0.375rem;
+            --border-radius-md: 0.5rem;
+            --border-radius-lg: 0.75rem;
+            --transition-normal: all 0.3s ease;
+        }
+
+        body {
+            overflow: hidden;
+            background-color: var(--neutral-100);
+            color: var(--neutral-800);
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Header */
+        #header {
+            background-color: var(--primary);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            height: 60px;
+        }
+
+        #game-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            flex-grow: 1;
+            letter-spacing: -0.025em;
+        }
+
+        #score-display {
+            font-size: 1rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background-color: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--border-radius-md);
+        }
+
+        #score-number {
+            background-color: white;
+            color: var(--primary);
+            border-radius: 50%;
+            width: 2rem;
+            height: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+        }
+
+        /* Main content area */
+        #game-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Map container */
+        #map-container {
+            flex-grow: 1;
+            position: relative;
+            z-index: 1;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Side panel */
+        #side-panel {
+            width: 340px;
+            background-color: white;
+            padding: 1.5rem;
+            box-shadow: -4px 0 20px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            z-index: 10;
+        }
+
+        #location-info {
+            background-color: var(--neutral-50);
+            border-radius: var(--border-radius-md);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--neutral-200);
+        }
+
+        #location-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.025em;
+        }
+
+        #location-description {
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 1.25rem;
+            color: var(--neutral-700);
+        }
+
+        #coordinates-display {
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--secondary);
+            margin-bottom: 1.25rem;
+            padding: 0.75rem;
+            background-color: var(--neutral-100);
+            border-radius: var(--border-radius-md);
+            text-align: center;
+            border-left: 4px solid var(--secondary);
+        }
+
+        #hint-button {
+            background-color: var(--success);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-md);
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-bottom: 1.25rem;
+            transition: var(--transition-normal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        #hint-button:hover {
+            background-color: #0EA271;
+            transform: translateY(-2px);
+        }
+
+        #hint-button:active {
+            transform: translateY(0);
+        }
+
+        #hint-icon {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+
+        #hint-display {
+            background-color: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+            border-radius: var(--border-radius-md);
+            display: none;
+            color: #92400E;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        #find-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-md);
+            padding: 1rem 1.5rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: auto;
+            transition: var(--transition-normal);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        #find-button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        #find-button:active {
+            transform: translateY(0);
+        }
+
+        #find-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        /* Quiz panel */
+        #quiz-panel {
+            position: absolute;
+            width: 550px;
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none;
+            animation: slide-up 0.5s ease-out;
+        }
+
+        @keyframes slide-up {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -40%);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        #quiz-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+            text-align: center;
+            letter-spacing: -0.025em;
+        }
+
+        #quiz-question {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--neutral-800);
+            line-height: 1.5;
+        }
+
+        #quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .quiz-option {
+            background-color: var(--neutral-100);
+            border: 2px solid var(--neutral-300);
+            border-radius: var(--border-radius-md);
+            padding: 1rem;
+            font-size: 1.125rem;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            display: flex;
+            align-items: center;
+        }
+
+        .quiz-option:hover {
+            background-color: var(--neutral-200);
+            border-color: var(--primary);
+        }
+
+        .quiz-option.selected {
+            background-color: rgba(37, 99, 235, 0.1);
+            border-color: var(--primary);
+            font-weight: 600;
+        }
+
+        .quiz-option::before {
+            content: '';
+            width: 1.25rem;
+            height: 1.25rem;
+            border-radius: 50%;
+            border: 2px solid var(--neutral-300);
+            margin-right: 0.75rem;
+            box-sizing: border-box;
+            transition: var(--transition-normal);
+            flex-shrink: 0;
+        }
+
+        .quiz-option:hover::before {
+            border-color: var(--primary);
+        }
+
+        .quiz-option.selected::before {
+            border: 6px solid var(--primary);
+        }
+
+        .quiz-option.correct {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-color: var(--success);
+        }
+
+        .quiz-option.correct::before {
+            border: 6px solid var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-color: var(--error);
+        }
+
+        .quiz-option.incorrect::before {
+            border: 6px solid var(--error);
+        }
+
+        #check-answer-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-md);
+            padding: 1rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: var(--transition-normal);
+        }
+
+        #check-answer-button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        #check-answer-button:active {
+            transform: translateY(0);
+        }
+
+        /* Settings panel */
+        #settings-panel {
+            position: absolute;
+            width: 500px;
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none;
+            animation: slide-up 0.5s ease-out;
+        }
+
+        #settings-title {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            text-align: center;
+            letter-spacing: -0.025em;
+        }
+
+        .settings-section {
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--neutral-200);
+            padding-bottom: 1.5rem;
+        }
+
+        .settings-section:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+            margin-bottom: 1rem;
+        }
+
+        .settings-section h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            color: var(--neutral-700);
+            font-weight: 700;
+        }
+
+        .settings-option {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .settings-option:last-child {
+            margin-bottom: 0;
+        }
+
+        .settings-option label {
+            font-size: 1rem;
+            margin-right: 1rem;
+            min-width: 150px;
+            color: var(--neutral-700);
+        }
+
+        .settings-option input[type="range"] {
+            flex-grow: 1;
+            height: 8px;
+            -webkit-appearance: none;
+            background: var(--neutral-200);
+            border-radius: 4px;
+            outline: none;
+        }
+
+        .settings-option input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+        }
+
+        .settings-option input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            border: none;
+        }
+
+        .settings-option select {
+            flex-grow: 1;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--border-radius-md);
+            border: 1px solid var(--neutral-300);
+            font-size: 1rem;
+            color: var(--neutral-700);
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .settings-option select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+        }
+
+        #close-settings-button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-md);
+            padding: 1rem;
+            font-size: 1.125rem;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
+            transition: var(--transition-normal);
+        }
+
+        #close-settings-button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        #close-settings-button:active {
+            transform: translateY(0);
+        }
+
+        /* Tutorial panel */
+        #tutorial-panel {
+            position: absolute;
+            width: 650px;
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: block;
+            animation: fade-in 0.5s ease-out;
+        }
+
+        @keyframes fade-in {
+            0% {
+                opacity: 0;
+            }
+            100% {
+                opacity: 1;
+            }
+        }
+
+        #tutorial-title {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            text-align: center;
+            letter-spacing: -0.025em;
+        }
+
+        #tutorial-content {
+            font-size: 1.125rem;
+            line-height: 1.6;
+            margin-bottom: 1.5rem;
+            overflow-y: auto;
+            max-height: 400px;
+            color: var(--neutral-700);
+            padding: 0.5rem;
+        }
+
+        #tutorial-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #tutorial-content::-webkit-scrollbar-track {
+            background: var(--neutral-100);
+            border-radius: 4px;
+        }
+
+        #tutorial-content::-webkit-scrollbar-thumb {
+            background-color: var(--neutral-300);
+            border-radius: 4px;
+        }
+
+        #tutorial-content p {
+            margin-bottom: 1rem;
+        }
+
+        #tutorial-content strong {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        #tutorial-content ul, #tutorial-content ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        #tutorial-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        #tutorial-img {
+            width: 100%;
+            max-height: 200px;
+            margin-bottom: 1.5rem;
+            border-radius: var(--border-radius-md);
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #tutorial-img svg {
+            width: 100%;
+            height: 200px;
+        }
+
+        #tutorial-navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+        }
+
+        .tutorial-nav-button {
+            background-color: var(--neutral-200);
+            color: var(--neutral-700);
+            border: none;
+            border-radius: var(--border-radius-md);
+            padding: 0.75rem 1.25rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tutorial-nav-button:hover {
+            background-color: var(--neutral-300);
+            transform: translateY(-2px);
+        }
+
+        .tutorial-nav-button:active {
+            transform: translateY(0);
+        }
+
+        #start-game-button {
+            background-color: var(--secondary);
+            color: white;
+            width: 100%;
+            padding: 1rem;
+            font-size: 1.25rem;
+            margin-top: 1.5rem;
+            font-weight: 700;
+        }
+
+        #start-game-button:hover {
+            background-color: var(--secondary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        #start-game-button:active {
+            transform: translateY(0);
+        }
+
+        /* Reward screen */
+        #reward-screen {
+            position: absolute;
+            width: 80%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none;
+            text-align: center;
+            animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes pop-in {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8);
+            }
+            80% {
+                transform: translate(-50%, -50%) scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        #reward-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: -0.025em;
+        }
+
+        #reward-text {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--neutral-700);
+            line-height: 1.5;
+        }
+
+        #reward-animation {
+            height: 350px;
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+            background-color: var(--neutral-50);
+            border-radius: var(--border-radius-lg);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        #continue-button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius-md);
+            padding: 1rem 2rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition-normal);
+            margin-top: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        #continue-button:hover {
+            background-color: var(--secondary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        #continue-button:active {
+            transform: translateY(0);
+        }
+
+        /* Character styles */
+        .character {
+            position: absolute;
+            z-index: 100;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .character.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #captain-geo {
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+            transition-delay: 0.1s;
+        }
+
+        #coordinator-cora {
+            bottom: 20px;
+            right: 20px;
+            width: 120px;
+            height: 120px;
+            transition-delay: 0.2s;
+        }
+
+        .speech-bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: var(--border-radius-md);
+            padding: 1rem 1.25rem;
+            max-width: 280px;
+            box-shadow: var(--shadow-md);
+            font-size: 1rem;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            z-index: 101;
+            line-height: 1.5;
+            border: 1px solid var(--neutral-200);
+            transform: translateY(10px);
+            pointer-events: none;
+        }
+
+        .speech-bubble.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        #captain-geo-bubble {
+            bottom: 130px;
+            left: 20px;
+        }
+
+        #coordinator-cora-bubble {
+            bottom: 130px;
+            right: 20px;
+        }
+
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            width: 0;
+            height: 0;
+            border: 10px solid transparent;
+            border-top-color: white;
+            border-bottom: 0;
+        }
+
+        #captain-geo-bubble:after {
+            left: 20px;
+            margin-left: 0;
+        }
+
+        #coordinator-cora-bubble:after {
+            right: 20px;
+            margin-right: 0;
+        }
+
+        /* Controls */
+        #controls {
+            position: absolute;
+            right: 360px;
+            bottom: 20px;
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+        }
+
+        .control-button {
+            background-color: white;
+            border: none;
+            border-radius: var(--border-radius-md);
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition-normal);
+        }
+
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .control-button:active {
+            transform: translateY(0);
+        }
+
+        .control-button svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Coordinate display */
+        #coordinate-display {
+            position: absolute;
+            left: 20px;
+            top: 80px;
+            background-color: white;
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius-md);
+            font-size: 0.875rem;
+            z-index: 100;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--neutral-200);
+            color: var(--neutral-700);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+        }
+
+        #coordinate-display svg {
+            width: 1rem;
+            height: 1rem;
+            color: var(--primary);
+        }
+
+        .coordinate-value {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        /* Learning path */
+        #learning-path {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            display: flex;
+            gap: 10px;
+            background-color: white;
+            border-radius: 30px;
+            padding: 0.75rem 1rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--neutral-200);
+        }
+
+        .path-segment {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--neutral-200);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--neutral-500);
+            transition: var(--transition-normal);
+        }
+
+        .path-segment:not(:last-child):after {
+            content: '';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 3px;
+            background-color: var(--neutral-200);
+            transition: var(--transition-normal);
+        }
+
+        .path-segment.completed {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .path-segment.completed:not(:last-child):after {
+            background-color: var(--success);
+        }
+
+        .path-segment.current {
+            background-color: var(--secondary);
+            color: white;
+            transform: scale(1.2);
+            box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.3);
+        }
+
+        /* Utility classes */
+        .hidden {
+            display: none !important;
+        }
+
+        .visible {
+            display: block !important;
+        }
+
+        /* Animations */
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        .star {
+            position: absolute;
+            pointer-events: none;
+            z-index: 2000;
+        }
+
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 2000;
+        }
+
+        /* Confetti */
+        .confetti {
+            position: absolute;
+            pointer-events: none;
+            width: 10px;
+            height: 10px;
+            z-index: 2000;
+        }
+
+        /* Target marker pulse */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .pulse-circle {
+            position: absolute;
+            border-radius: 50%;
+            background-color: rgba(37, 99, 235, 0.3);
+            width: 30px;
+            height: 30px;
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Custom map marker */
+        .custom-marker {
+            text-align: center;
+        }
+
+        .marker-pin {
+            width: 30px;
+            height: 30px;
+            border-radius: 50% 50% 50% 0;
+            background-color: var(--primary);
+            position: absolute;
+            transform: rotate(-45deg);
+            left: 50%;
+            top: 50%;
+            margin: -20px 0 0 -15px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .marker-pin::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+        }
+
+        /* Responsive styles */
+        @media (max-width: 1200px) {
+            #tutorial-panel {
+                width: 90%;
+                max-width: 600px;
+            }
+
+            #settings-panel {
+                width: 90%;
+                max-width: 500px;
+            }
+
+            #quiz-panel {
+                width: 90%;
+                max-width: 500px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            #side-panel {
+                width: 300px;
+            }
+
+            #controls {
+                right: 320px;
+            }
+
+            #captain-geo, #coordinator-cora {
+                width: 100px;
+                height: 100px;
+            }
+
+            #captain-geo-bubble, #coordinator-cora-bubble {
+                bottom: 110px;
+                max-width: 250px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            #game-content {
+                flex-direction: column;
+            }
+
+            #side-panel {
+                width: 100%;
+                height: 240px;
+            }
+
+            #controls {
+                right: 20px;
+                bottom: 260px;
+            }
+
+            #learning-path {
+                top: 140px;
+            }
+
+            #reward-screen {
+                width: 95%;
+                padding: 1.5rem;
+            }
+
+            #reward-animation {
+                height: 300px;
+            }
+
+            #captain-geo {
+                left: 10px;
+                bottom: 250px;
+            }
+
+            #coordinator-cora {
+                right: 10px;
+                bottom: 250px;
+            }
+
+            #captain-geo-bubble {
+                left: 10px;
+                bottom: 350px;
+            }
+
+            #coordinator-cora-bubble {
+                right: 10px;
+                bottom: 350px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <!-- Header -->
+        <div id="header">
+            <div id="game-title">GeoQuest: Coordinate Explorer</div>
+            <div id="score-display">
+                Score: <div id="score-number">0</div>
+            </div>
+        </div>
+
+        <!-- Main content area -->
+        <div id="game-content">
+            <!-- Map container -->
+            <div id="map-container">
+                <div id="map"></div>
+                
+                <!-- Coordinate display -->
+                <div id="coordinate-display">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                        <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    Lat: <span id="current-lat" class="coordinate-value">0.00</span>, 
+                    Long: <span id="current-lng" class="coordinate-value">0.00</span>
+                </div>
+                
+                <!-- Learning path -->
+                <div id="learning-path"></div>
+                
+                <!-- Controls -->
+                <div id="controls">
+                    <button class="control-button" id="zoom-in-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                    <button class="control-button" id="zoom-out-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                    </button>
+                    <button class="control-button" id="settings-button">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Characters -->
+                <div class="character" id="captain-geo"></div>
+                <div class="speech-bubble" id="captain-geo-bubble"></div>
+                
+                <div class="character" id="coordinator-cora"></div>
+                <div class="speech-bubble" id="coordinator-cora-bubble"></div>
+            </div>
+
+            <!-- Side panel -->
+            <div id="side-panel">
+                <div id="location-info">
+                    <div id="location-title">Welcome Explorer!</div>
+                    <div id="location-description">
+                        Ready to explore the world? I'll give you coordinates, and you'll need to find amazing places on the map!
+                    </div>
+                    <div id="coordinates-display">
+                        Target: <span id="target-lat">0.00</span>, <span id="target-lng">0.00</span>
+                    </div>
+                    <button id="hint-button">
+                        <svg id="hint-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                        Show Hint
+                    </button>
+                    <div id="hint-display"></div>
+                </div>
+                <button id="find-button">
+                    <svg id="find-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                    </svg>
+                    I Found It!
+                </button>
+            </div>
+        </div>
+
+        <!-- Quiz panel -->
+        <div id="quiz-panel">
+            <div id="quiz-title">Geography Quiz</div>
+            <div id="quiz-question">Which is true about the current location?</div>
+            <div id="quiz-options">
+                <!-- Options will be dynamically added here -->
+            </div>
+            <button id="check-answer-button">Check Answer</button>
+        </div>
+
+        <!-- Settings panel -->
+        <div id="settings-panel">
+            <div id="settings-title">Game Settings</div>
+            
+            <div class="settings-section">
+                <h3>Difficulty Level</h3>
+                <div class="settings-option">
+                    <label for="difficulty-setting">Select Difficulty:</label>
+                    <select id="difficulty-setting">
+                        <option value="easy">Easy</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="hard">Hard</option>
+                        <option value="expert">Expert</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Sound Settings</h3>
+                <div class="settings-option">
+                    <label for="sound-volume">Sound Volume:</label>
+                    <input type="range" id="sound-volume" min="0" max="1" step="0.1" value="0.5">
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Map Style</h3>
+                <div class="settings-option">
+                    <label for="map-style">Map Style:</label>
+                    <select id="map-style">
+                        <option value="streets" selected>Streets</option>
+                        <option value="satellite">Satellite</option>
+                        <option value="terrain">Terrain</option>
+                        <option value="dark">Dark Mode</option>
+                        <option value="watercolor">Watercolor</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3>Learning Focus</h3>
+                <div class="settings-option">
+                    <label for="learning-focus">Focus On:</label>
+                    <select id="learning-focus">
+                        <option value="landmarks" selected>Famous Landmarks</option>
+                        <option value="natural">Natural Wonders</option>
+                        <option value="cities">Major Cities</option>
+                        <option value="all">Everything</option>
+                    </select>
+                </div>
+            </div>
+            
+            <button id="close-settings-button">Save Settings</button>
+        </div>
+
+        <!-- Tutorial panel -->
+        <div id="tutorial-panel">
+            <div id="tutorial-title">Welcome to GeoQuest!</div>
+            
+            <div id="tutorial-img">
+                <!-- Tutorial image/diagram will be dynamically added here -->
+            </div>
+            
+            <div id="tutorial-content">
+                <p>Hello, young explorer! I'm Captain Geo, and this is my friend Coordinator Cora. We're going to take you on an amazing adventure around the world using latitude and longitude coordinates!</p>
+                <p><strong>What are coordinates?</strong></p>
+                <p>Coordinates are like a special address for any place on Earth. They help us find exact locations on our planet.</p>
+                <p><strong>There are two numbers in coordinates:</strong></p>
+                <ul>
+                    <li><strong>Latitude</strong> tells us how far north or south a place is from the Equator (the middle line around Earth). It goes from -90° (South Pole) to 90° (North Pole).</li>
+                    <li><strong>Longitude</strong> tells us how far east or west a place is from the Prime Meridian (a special line that goes through Greenwich, England). It goes from -180° to 180°.</li>
+                </ul>
+                <p>For example, the coordinates 27.99, 86.92 point to Mount Everest, the tallest mountain on Earth!</p>
+            </div>
+            
+            <div id="tutorial-navigation">
+                <button class="tutorial-nav-button" id="previous-tutorial">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Previous
+                </button>
+                <button class="tutorial-nav-button" id="next-tutorial">
+                    Next
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <button id="start-game-button" class="hidden">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                </svg>
+                Start Adventure!
+            </button>
+        </div>
+
+        <!-- Reward screen -->
+        <div id="reward-screen">
+            <div id="reward-title">Congratulations!</div>
+            <div id="reward-text">You've completed the challenge!</div>
+            <div id="reward-animation"></div>
+            <button id="continue-button">
+                Continue Exploring
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 16 16 12 12 8"></polyline>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script>
+        // === Game Initialization and Setup ===
+        
+        // Game elements
+        const elements = {
+            screens: {
+                gameScreen: document.getElementById('game-content'),
+                quizScreen: document.getElementById('quiz-panel'),
+                settingsScreen: document.getElementById('settings-panel'),
+                tutorialScreen: document.getElementById('tutorial-panel'),
+                rewardScreen: document.getElementById('reward-screen')
+            },
+            displays: {
+                scoreNumber: document.getElementById('score-number'),
+                currentLat: document.getElementById('current-lat'),
+                currentLng: document.getElementById('current-lng'),
+                targetLat: document.getElementById('target-lat'),
+                targetLng: document.getElementById('target-lng'),
+                locationTitle: document.getElementById('location-title'),
+                locationDescription: document.getElementById('location-description'),
+                hintText: document.getElementById('hint-display'),
+                quizQuestion: document.getElementById('quiz-question'),
+                quizOptions: document.getElementById('quiz-options'),
+                tutorialContent: document.getElementById('tutorial-content'),
+                tutorialTitle: document.getElementById('tutorial-title'),
+                tutorialImg: document.getElementById('tutorial-img'),
+                rewardText: document.getElementById('reward-text'),
+                rewardAnimation: document.getElementById('reward-animation'),
+                learningPath: document.getElementById('learning-path')
+            },
+            buttons: {
+                findButton: document.getElementById('find-button'),
+                hintButton: document.getElementById('hint-button'),
+                checkAnswerButton: document.getElementById('check-answer-button'),
+                zoomInButton: document.getElementById('zoom-in-button'),
+                zoomOutButton: document.getElementById('zoom-out-button'),
+                settingsButton: document.getElementById('settings-button'),
+                closeSettingsButton: document.getElementById('close-settings-button'),
+                previousTutorial: document.getElementById('previous-tutorial'),
+                nextTutorial: document.getElementById('next-tutorial'),
+                startGameButton: document.getElementById('start-game-button'),
+                continueButton: document.getElementById('continue-button')
+            },
+            settings: {
+                difficulty: document.getElementById('difficulty-setting'),
+                soundVolume: document.getElementById('sound-volume'),
+                mapStyle: document.getElementById('map-style'),
+                learningFocus: document.getElementById('learning-focus')
+            },
+            characters: {
+                captainGeo: document.getElementById('captain-geo'),
+                captainGeoBubble: document.getElementById('captain-geo-bubble'),
+                coordinatorCora: document.getElementById('coordinator-cora'),
+                coordinatorCoraBubble: document.getElementById('coordinator-cora-bubble')
+            }
+        };
+        
+        // Game state
+        const gameState = {
+            score: 0,
+            currentLevel: 1,
+            maxLevel: 10,
+            currentLocation: null,
+            targetLocation: null,
+            map: null,
+            marker: null,
+            targetMarker: null,
+            searchRadius: 0.1, // Degrees (about 11km at the equator)
+            progress: 0,
+            tutorialStep: 1,
+            tutorialMaxSteps: 4,
+            settings: {
+                difficulty: 'medium',
+                soundVolume: 0.5,
+                mapStyle: 'streets',
+                learningFocus: 'landmarks'
+            },
+            currentQuiz: {
+                question: '',
+                options: [],
+                correctAnswer: '',
+                userAnswer: null
+            },
+            animations: {
+                stars: [],
+                bubbles: [],
+                confetti: [],
+                timers: []
+            },
+            audioContext: null,
+            soundBuffers: {}
+        };
+        
+        // Locations database
+        const locationsDB = {
+            landmarks: [
+                {
+                    name: "Eiffel Tower",
+                    coordinates: [48.8584, 2.2945],
+                    description: "A famous iron tower in Paris, France that was built for the 1889 World's Fair.",
+                    difficulty: "easy",
+                    hint: "This tall iron tower is in the capital city of France.",
+                    quiz: {
+                        question: "How tall is the Eiffel Tower?",
+                        options: ["324 meters", "124 meters", "524 meters", "224 meters"],
+                        correct: "324 meters"
+                    }
+                },
+                {
+                    name: "Great Pyramid of Giza",
+                    coordinates: [29.9792, 31.1342],
+                    description: "An ancient wonder of the world, built over 4,500 years ago in Egypt.",
+                    difficulty: "easy",
+                    hint: "These ancient structures are in a country known for its pharaohs and the Nile River.",
+                    quiz: {
+                        question: "How old are the Pyramids of Giza?",
+                        options: ["About 4,500 years", "About 2,000 years", "About 10,000 years", "About 1,000 years"],
+                        correct: "About 4,500 years"
+                    }
+                },
+                {
+                    name: "Statue of Liberty",
+                    coordinates: [40.6892, -74.0445],
+                    description: "A famous statue in New York Harbor, given to the United States by France.",
+                    difficulty: "easy",
+                    hint: "This green lady holds a torch and stands on an island in New York Harbor.",
+                    quiz: {
+                        question: "What is the Statue of Liberty holding in her right hand?",
+                        options: ["A torch", "A book", "A sword", "A shield"],
+                        correct: "A torch"
+                    }
+                },
+                {
+                    name: "Sydney Opera House",
+                    coordinates: [-33.8568, 151.2153],
+                    description: "A famous performing arts center with a unique sail-shaped design in Australia.",
+                    difficulty: "medium",
+                    hint: "This building looks like white sails and is located in the largest city in Australia.",
+                    quiz: {
+                        question: "What is the Sydney Opera House famous for?",
+                        options: ["Its sail-shaped roof design", "Being the tallest building in Australia", "Having the world's largest organ", "Being the oldest opera house"],
+                        correct: "Its sail-shaped roof design"
+                    }
+                },
+                {
+                    name: "Taj Mahal",
+                    coordinates: [27.1751, 78.0421],
+                    description: "A beautiful white marble mausoleum in India, built by an emperor for his wife.",
+                    difficulty: "medium",
+                    hint: "This white marble building in India was built as a tomb for an emperor's wife.",
+                    quiz: {
+                        question: "What is the Taj Mahal made of?",
+                        options: ["White marble", "Limestone", "Granite", "Sandstone"],
+                        correct: "White marble"
+                    }
+                },
+                {
+                    name: "Machu Picchu",
+                    coordinates: [-13.1631, -72.5450],
+                    description: "An ancient Inca citadel set high in the Andes Mountains of Peru.",
+                    difficulty: "hard",
+                    hint: "This ancient city was built by the Inca civilization high in the mountains of Peru.",
+                    quiz: {
+                        question: "In which mountain range is Machu Picchu located?",
+                        options: ["Andes Mountains", "Rocky Mountains", "Himalayas", "Alps"],
+                        correct: "Andes Mountains"
+                    }
+                },
+                {
+                    name: "Easter Island",
+                    coordinates: [-27.1127, -109.3497],
+                    description: "A remote island known for its mysterious giant stone statues called Moai.",
+                    difficulty: "hard",
+                    hint: "This island in the Pacific Ocean is famous for its huge stone head statues.",
+                    quiz: {
+                        question: "What are the famous stone statues on Easter Island called?",
+                        options: ["Moai", "Tiki", "Olmec", "Colossi"],
+                        correct: "Moai"
+                    }
+                },
+                {
+                    name: "Stonehenge",
+                    coordinates: [51.1789, -1.8262],
+                    description: "A prehistoric monument in England with massive standing stones arranged in a circle.",
+                    difficulty: "medium",
+                    hint: "This ancient circle of large stones is located in England and was built thousands of years ago.",
+                    quiz: {
+                        question: "When was Stonehenge built?",
+                        options: ["Around 3000-2000 BC", "Around 1000 AD", "Around 500 BC", "Around 4000 BC"],
+                        correct: "Around 3000-2000 BC"
+                    }
+                },
+                {
+                    name: "Colosseum",
+                    coordinates: [41.8902, 12.4922],
+                    description: "An ancient amphitheater in Rome, Italy where gladiator contests were held.",
+                    difficulty: "medium",
+                    hint: "This large oval amphitheater in Rome was used for gladiatorial contests and public events.",
+                    quiz: {
+                        question: "Which ancient civilization built the Colosseum?",
+                        options: ["Ancient Romans", "Ancient Greeks", "Ancient Egyptians", "Ancient Chinese"],
+                        correct: "Ancient Romans"
+                    }
+                },
+                {
+                    name: "Mount Rushmore",
+                    coordinates: [43.8791, -103.4591],
+                    description: "A massive sculpture carved into the Black Hills in South Dakota featuring four US presidents.",
+                    difficulty: "hard",
+                    hint: "This mountain in the United States has the faces of four presidents carved into it.",
+                    quiz: {
+                        question: "How many presidents are carved into Mount Rushmore?",
+                        options: ["4", "3", "5", "6"],
+                        correct: "4"
+                    }
+                }
+            ],
+            natural: [
+                {
+                    name: "Grand Canyon",
+                    coordinates: [36.0544, -112.2401],
+                    description: "A massive canyon carved by the Colorado River in Arizona, USA.",
+                    difficulty: "easy",
+                    hint: "This huge canyon in Arizona was carved by a river over millions of years.",
+                    quiz: {
+                        question: "Which river carved the Grand Canyon?",
+                        options: ["Colorado River", "Mississippi River", "Amazon River", "Nile River"],
+                        correct: "Colorado River"
+                    }
+                },
+                {
+                    name: "Mount Everest",
+                    coordinates: [27.9881, 86.9250],
+                    description: "The highest mountain on Earth, located in the Himalayas on the border of Nepal and Tibet.",
+                    difficulty: "easy",
+                    hint: "This is the tallest mountain in the world, located in the Himalayas.",
+                    quiz: {
+                        question: "How tall is Mount Everest?",
+                        options: ["8,848 meters", "6,190 meters", "7,500 meters", "9,200 meters"],
+                        correct: "8,848 meters"
+                    }
+                },
+                {
+                    name: "Great Barrier Reef",
+                    coordinates: [-18.2871, 147.6992],
+                    description: "The world's largest coral reef system, located off the coast of Australia.",
+                    difficulty: "medium",
+                    hint: "This is the largest coral reef system in the world, located near Australia.",
+                    quiz: {
+                        question: "What is the Great Barrier Reef made of?",
+                        options: ["Living coral organisms", "Volcanic rock", "Limestone", "Sandstone"],
+                        correct: "Living coral organisms"
+                    }
+                },
+                {
+                    name: "Victoria Falls",
+                    coordinates: [-17.9243, 25.8572],
+                    description: "One of the largest waterfalls in the world, located on the Zambezi River between Zambia and Zimbabwe.",
+                    difficulty: "hard",
+                    hint: "This massive waterfall is on the Zambezi River between two African countries.",
+                    quiz: {
+                        question: "What is the local name for Victoria Falls?",
+                        options: ["Mosi-oa-Tunya (The Smoke That Thunders)", "Dhuandhar (The Smoke Flow)", "Tugela (The Startling)", "Iguazu (Big Water)"],
+                        correct: "Mosi-oa-Tunya (The Smoke That Thunders)"
+                    }
+                },
+                {
+                    name: "Northern Lights (Aurora Borealis)",
+                    coordinates: [68.3581, 18.8308], // Abisko, Sweden (one of the best viewing spots)
+                    description: "A natural light display in the Earth's sky, predominantly seen in high-latitude regions.",
+                    difficulty: "hard",
+                    hint: "This colorful light show in the sky can be seen in countries near the North Pole.",
+                    quiz: {
+                        question: "What causes the Northern Lights?",
+                        options: ["Solar particles colliding with atmospheric gases", "Reflection of sunlight on ice crystals", "Volcanic eruptions", "Ocean bioluminescence"],
+                        correct: "Solar particles colliding with atmospheric gases"
+                    }
+                },
+                {
+                    name: "Amazon Rainforest",
+                    coordinates: [-3.4653, -62.2159], // Central point in Brazil
+                    description: "The largest rainforest on Earth, covering much of northwestern Brazil and parts of other South American countries.",
+                    difficulty: "medium",
+                    hint: "This is the largest rainforest in the world, located mostly in Brazil.",
+                    quiz: {
+                        question: "What percentage of the world's oxygen does the Amazon Rainforest produce?",
+                        options: ["About 20%", "About 50%", "About 5%", "About 80%"],
+                        correct: "About 20%"
+                    }
+                },
+                {
+                    name: "Sahara Desert",
+                    coordinates: [23.4162, 25.6628], // Central point
+                    description: "The largest hot desert in the world, covering most of North Africa.",
+                    difficulty: "medium",
+                    hint: "This is the largest hot desert in the world, covering much of North Africa.",
+                    quiz: {
+                        question: "How much of Africa does the Sahara Desert cover?",
+                        options: ["About one-third", "About half", "About one-fifth", "About three-quarters"],
+                        correct: "About one-third"
+                    }
+                },
+                {
+                    name: "Dead Sea",
+                    coordinates: [31.5590, 35.4732],
+                    description: "A salt lake bordered by Jordan and Israel, known for its extremely high salt content that allows people to float easily.",
+                    difficulty: "medium",
+                    hint: "This body of water has so much salt that people can float without effort.",
+                    quiz: {
+                        question: "Why is it easy to float in the Dead Sea?",
+                        options: ["It has a very high salt content", "It has special magnetic properties", "The water is very warm", "It has a high oil content"],
+                        correct: "It has a very high salt content"
+                    }
+                },
+                {
+                    name: "Pamukkale",
+                    coordinates: [37.9249, 29.1203],
+                    description: "Natural terraces of carbonate minerals left by flowing water in Turkey.",
+                    difficulty: "expert",
+                    hint: "These white terraces in Turkey are formed by hot springs depositing calcium carbonate.",
+                    quiz: {
+                        question: "What does 'Pamukkale' mean in English?",
+                        options: ["Cotton Castle", "White Mountain", "Salt Fortress", "Crystal Palace"],
+                        correct: "Cotton Castle"
+                    }
+                },
+                {
+                    name: "Galápagos Islands",
+                    coordinates: [-0.7392, -90.3028],
+                    description: "An archipelago of volcanic islands in the Pacific Ocean, known for their unique wildlife studied by Charles Darwin.",
+                    difficulty: "hard",
+                    hint: "These islands helped Charles Darwin develop his theory of evolution.",
+                    quiz: {
+                        question: "To which country do the Galápagos Islands belong?",
+                        options: ["Ecuador", "Chile", "Peru", "Colombia"],
+                        correct: "Ecuador"
+                    }
+                }
+            ],
+            cities: [
+                {
+                    name: "New York City",
+                    coordinates: [40.7128, -74.0060],
+                    description: "The most populous city in the United States, known for its skyscrapers and cultural diversity.",
+                    difficulty: "easy",
+                    hint: "This city is home to the Empire State Building and Central Park.",
+                    quiz: {
+                        question: "What is the nickname of New York City?",
+                        options: ["The Big Apple", "The Windy City", "The City of Angels", "The Emerald City"],
+                        correct: "The Big Apple"
+                    }
+                },
+                {
+                    name: "Tokyo",
+                    coordinates: [35.6762, 139.6503],
+                    description: "The capital city of Japan and the most populous metropolitan area in the world.",
+                    difficulty: "easy",
+                    hint: "This is the capital city of Japan and the largest urban area in the world.",
+                    quiz: {
+                        question: "What is the population of Tokyo's metropolitan area?",
+                        options: ["About 37 million", "About 20 million", "About 15 million", "About 50 million"],
+                        correct: "About 37 million"
+                    }
+                },
+                {
+                    name: "Rio de Janeiro",
+                    coordinates: [-22.9068, -43.1729],
+                    description: "A large city in Brazil known for its Carnival festival, beautiful beaches, and the statue of Christ the Redeemer.",
+                    difficulty: "medium",
+                    hint: "This Brazilian city is famous for its Carnival and a huge statue of Jesus on a mountain.",
+                    quiz: {
+                        question: "What is the name of the famous statue overlooking Rio de Janeiro?",
+                        options: ["Christ the Redeemer", "The Great Savior", "Jesus of Brazil", "The Guardian Christ"],
+                        correct: "Christ the Redeemer"
+                    }
+                },
+                {
+                    name: "Venice",
+                    coordinates: [45.4408, 12.3155],
+                    description: "An Italian city built on more than 100 small islands in a lagoon, known for its canals and bridges.",
+                    difficulty: "medium",
+                    hint: "This Italian city has canals instead of streets and is known for gondola rides.",
+                    quiz: {
+                        question: "How many bridges are there in Venice?",
+                        options: ["Over 400", "About 100", "Over 1,000", "About 50"],
+                        correct: "Over 400"
+                    }
+                },
+                {
+                    name: "Dubai",
+                    coordinates: [25.2048, 55.2708],
+                    description: "A city in the United Arab Emirates known for its ultramodern architecture and luxury shopping.",
+                    difficulty: "medium",
+                    hint: "This city in the United Arab Emirates has the world's tallest building.",
+                    quiz: {
+                        question: "What is the name of the tallest building in Dubai?",
+                        options: ["Burj Khalifa", "Dubai Tower", "Emirates Spire", "Al Burj"],
+                        correct: "Burj Khalifa"
+                    }
+                },
+                {
+                    name: "Marrakech",
+                    coordinates: [31.6295, -7.9811],
+                    description: "A major city in Morocco known for its historic medina, vibrant markets, and beautiful gardens.",
+                    difficulty: "hard",
+                    hint: "This city in Morocco is famous for its old markets (souks) and red buildings.",
+                    quiz: {
+                        question: "What is the main square in Marrakech called?",
+                        options: ["Jemaa el-Fnaa", "Medina Square", "Kasbah Plaza", "Souk Circle"],
+                        correct: "Jemaa el-Fnaa"
+                    }
+                },
+                {
+                    name: "Kathmandu",
+                    coordinates: [27.7172, 85.3240],
+                    description: "The capital and largest city of Nepal, located in the Kathmandu Valley.",
+                    difficulty: "hard",
+                    hint: "This is the capital city of Nepal, located in a valley surrounded by the Himalayan mountains.",
+                    quiz: {
+                        question: "What is the most famous temple in Kathmandu called?",
+                        options: ["Swayambhunath (Monkey Temple)", "Angkor Wat", "Golden Temple", "Lotus Temple"],
+                        correct: "Swayambhunath (Monkey Temple)"
+                    }
+                },
+                {
+                    name: "Cape Town",
+                    coordinates: [-33.9249, 18.4241],
+                    description: "A coastal city in South Africa, known for Table Mountain and its harbor.",
+                    difficulty: "hard",
+                    hint: "This city in South Africa is known for a flat-topped mountain and its beautiful coast.",
+                    quiz: {
+                        question: "What is the name of the famous flat-topped mountain in Cape Town?",
+                        options: ["Table Mountain", "Lion's Head", "Signal Hill", "Devil's Peak"],
+                        correct: "Table Mountain"
+                    }
+                },
+                {
+                    name: "Reykjavik",
+                    coordinates: [64.1466, -21.9426],
+                    description: "The capital and largest city of Iceland, known for its geothermal energy and colorful buildings.",
+                    difficulty: "expert",
+                    hint: "This is the northernmost capital city of a sovereign state, located in Iceland.",
+                    quiz: {
+                        question: "How is most of Reykjavik heated?",
+                        options: ["Geothermal energy", "Coal power", "Nuclear energy", "Solar power"],
+                        correct: "Geothermal energy"
+                    }
+                },
+                {
+                    name: "Ulaanbaatar",
+                    coordinates: [47.8864, 106.9057],
+                    description: "The capital and largest city of Mongolia, located in the north central part of the country.",
+                    difficulty: "expert",
+                    hint: "This is the capital city of Mongolia, a country known for its vast steppe lands.",
+                    quiz: {
+                        question: "What percentage of Mongolia's population lives in Ulaanbaatar?",
+                        options: ["About 45%", "About 15%", "About 75%", "About 30%"],
+                        correct: "About 45%"
+                    }
+                }
+            ]
+        };
+        
+        // Tutorial content
+        const tutorials = [
+            {
+                title: "Welcome to GeoQuest!",
+                content: `
+                    <p>Hello, young explorer! I'm Captain Geo, and this is my friend Coordinator Cora. We're going to take you on an amazing adventure around the world using latitude and longitude coordinates!</p>
+                    <p><strong>What are coordinates?</strong></p>
+                    <p>Coordinates are like a special address for any place on Earth. They help us find exact locations on our planet.</p>
+                    <p><strong>There are two numbers in coordinates:</strong></p>
+                    <ul>
+                        <li><strong>Latitude</strong> tells us how far north or south a place is from the Equator (the middle line around Earth). It goes from -90° (South Pole) to 90° (North Pole).</li>
+                        <li><strong>Longitude</strong> tells us how far east or west a place is from the Prime Meridian (a special line that goes through Greenwich, England). It goes from -180° to 180°.</li>
+                    </ul>
+                    <p>For example, the coordinates 27.99, 86.92 point to Mount Everest, the tallest mountain on Earth!</p>
+                `,
+                image: 'coordinates-intro'
+            },
+            {
+                title: "Understanding the Map",
+                content: `
+                    <p>Look at the map in front of you. You can move around by clicking and dragging. Use the + and - buttons to zoom in and out.</p>
+                    <p><strong>Important Lines on the Map:</strong></p>
+                    <ul>
+                        <li>The <strong>Equator</strong> is the line where latitude is 0°. It divides the Earth into Northern and Southern Hemispheres.</li>
+                        <li>The <strong>Prime Meridian</strong> is the line where longitude is 0°. It divides the Earth into Eastern and Western Hemispheres.</li>
+                    </ul>
+                    <p><strong>Reading Coordinates:</strong></p>
+                    <p>Coordinates are always written as (Latitude, Longitude):</p>
+                    <ul>
+                        <li>Positive latitude numbers are <strong>north</strong> of the Equator</li>
+                        <li>Negative latitude numbers are <strong>south</strong> of the Equator</li>
+                        <li>Positive longitude numbers are <strong>east</strong> of the Prime Meridian</li>
+                        <li>Negative longitude numbers are <strong>west</strong> of the Prime Meridian</li>
+                    </ul>
+                    <p>For example: New York City is at 40.7, -74.0, which means it's 40.7° north of the Equator and 74.0° west of the Prime Meridian.</p>
+                `,
+                image: 'coordinates-grid'
+            },
+            {
+                title: "How to Play",
+                content: `
+                    <p>Now that you understand coordinates, let's learn how to play the game!</p>
+                    <p><strong>Game Rules:</strong></p>
+                    <ol>
+                        <li>You'll be given the coordinates of an amazing place on Earth.</li>
+                        <li>Use the map to find this location by navigating to the coordinates.</li>
+                        <li>When you think you've found it, click the "I Found It!" button.</li>
+                        <li>If you're correct, you'll get points and learn cool facts about the place!</li>
+                        <li>If you need help, click the "Show Hint" button for a clue.</li>
+                    </ol>
+                    <p><strong>Tips:</strong></p>
+                    <ul>
+                        <li>Watch the coordinate display as you move your cursor over the map.</li>
+                        <li>Remember that latitude tells you how far north or south to go, and longitude tells you how far east or west to go.</li>
+                        <li>The closer you get to the target, the warmer you are!</li>
+                    </ul>
+                `,
+                image: 'game-interface'
+            },
+            {
+                title: "Ready for Adventure?",
+                content: `
+                    <p>You're all set to become a Coordinate Explorer!</p>
+                    <p>Start with easy locations, and as you get better, you can try more challenging ones. The world is full of amazing places to discover!</p>
+                    <p><strong>Remember:</strong></p>
+                    <ul>
+                        <li>Latitude ranges from -90° (South Pole) to 90° (North Pole)</li>
+                        <li>Longitude ranges from -180° to 180°</li>
+                        <li>Have fun exploring and learning about our wonderful planet!</li>
+                    </ul>
+                    <p>Captain Geo and Coordinator Cora will be with you throughout your journey. Good luck, Explorer!</p>
+                `,
+                image: 'world-map'
+            }
+        ];
+        
+        // Initialize the game
+        function initGame() {
+            // Create audio context
+            try {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                gameState.audioContext = new AudioContext();
+                
+                // Preload sounds
+                loadSounds();
+            } catch (e) {
+                console.warn('Web Audio API is not supported in this browser');
+            }
+            
+            // Initialize map
+            initMap();
+            
+            // Draw characters
+            drawCharacters();
+            
+            // Set up event listeners
+            setupEventListeners();
+            
+            // Apply settings
+            applySettings();
+            
+            // Create learning path
+            createLearningPath();
+            
+            // Start with tutorial for first-time users
+            showTutorial(1);
+        }
+        
+        // Load sounds
+        function loadSounds() {
+            // Create sounds using more sophisticated WebAudio techniques
+            createSound('button', createButtonSound);
+            createSound('success', createSuccessSound);
+            createSound('error', createErrorSound);
+            createSound('tick', createTickSound);
+            createSound('select', createSelectSound);
+            createSound('celebration', createCelebrationSound);
+            createSound('hint', createHintSound);
+            createSound('found', createFoundSound);
+        }
+        
+        // Create sound and store in buffer
+        function createSound(name, generatorFunction) {
+            const buffer = gameState.audioContext.createBuffer(
+                1, // mono
+                gameState.audioContext.sampleRate * 2, // 2 seconds
+                gameState.audioContext.sampleRate
+            );
+            
+            // Generate the actual sound data
+            generatorFunction(buffer);
+            
+            // Store in sound buffers
+            gameState.soundBuffers[name] = buffer;
+        }
+        
+        // Sound generator functions
+        function createButtonSound(buffer) {
+            const channelData = buffer.getChannelData(0);
+            const sampleRate = gameState.audioContext.sampleRate;
+            
+            for (let i = 0; i < sampleRate * 0.15; i++) {
+                // Create a "click" sound with decay
+                const t = i / sampleRate;
+                const frequency = 200 + 400 * Math.exp(-10 * t);
+                channelData[i] = 0.5 * Math.sin(2 * Math.PI * frequency * t) * Math.exp(-15 * t);
+            }
+        }
+        
+        function createTickSound(buffer) {
+            const channelData = buffer.getChannelData(0);
+            const sampleRate = gameState.audioContext.sampleRate;
+            
+            for (let i = 0; i < sampleRate * 0.08; i++) {
+                const t = i / sampleRate;
+                channelData[i] = 0.4 * Math.sin(2 * Math.PI * 1200 * t) * Math.exp(-30 * t);
+            }
+        }
+        
+        function createSelectSound(buffer) {
+            const channelData = buffer.getChannelData(0);
+            const sampleRate = gameState.audioContext.sampleRate;
+            
+            for (let i = 0; i < sampleRate * 0.2; i++) {
+                const t = i / sampleRate;
+                const frequency = 440 + 440 * t; // Rising tone
+                channelData[i] = 0.4 * Math.sin(2 * Math.PI * frequency * t) * Math.exp(-8 * t);
+            }
+        }
+        
+        function createSuccessSound(buffer) {
+            const channelData = buffer.getChannelData(0);
+            const sampleRate = gameState.audioContext.sampleRate;
+            
+            // C Major Chord with arpeggio
+            const frequencies = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+            
+            for (let j = 0; j < frequencies.length; j++) {
+                const freq = frequencies[j];
+                const startSample = Math.floor(j * sampleRate * 0.1);
+                const endSample = Math.floor((j + 1) * sampleRate * 0.3);
+                
+                for (let i = startSample; i < endSample; i++) {
+                    const t = (i - startSample) / sampleRate;
+                    const envelope = Math.exp(-5 * t);
+                    // Add some harmonics for richness
+                    channelData[i] += 0.3 * Math.sin(2 * Math.PI * freq * t) * envelope;
+                    channelData[i] += 0.15 * Math.sin(2 * Math.PI * freq * 2 * t) * envelope; // 1st harmonic
+                    channelData[i] += 0.07 * Math.sin(2 * Math.PI * freq * 3 * t) * envelope; // 2nd harmonic
+                }
+            }
+            
+            // Normalize to prevent clipping
+            let max = 0;
+            for (let i = 0; i < channelData.length; i++) {
+                max = Math.max(max, Math.abs(channelData[i]));
+            }
+            
+            if (max > 0) {
+                for (let i = 0; i < channelData.length; i++) {
+                    channelData[i] /= max;
+                }
+            }
+        }
+        
+        function createErrorSound(buffer) {
+            const channelData = buffer.getChannelData(0);
+            const sampleRate = gameState.audioContext.sampleRate;
+            
+            for (let i = 0; i < sampleRate * 0.5; i++) {
+                const t = i / sampleRate;
+                // Two descending tones
+                const freq1 = 350 - 100 * t;
+                const freq2 = 280 - 80 * t;
+                const envelope = Math.exp(-5 * t);
+                channelData[i] = 0.4 * Math.sin(2 * Math.PI * freq1 * t) * envelope 
+                               + 0.3 * Math.sin(2 * Math.PI * freq2 * t) * envelope;
+            }
+        }
+        
+        function createCelebrationSound(buffer) {
+            const channelData = buffer.getChannelData(0);
+            const sampleRate = gameState.audioContext.sampleRate;
+            
+            // Major scale ascending and then chord
+            const notes = [
+                { freq: 523.25, time: 0 },    // C5
+                { freq: 587.33, time: 0.15 }, // D5
+                { freq: 659.25, time: 0.3 },  // E5
+                { freq: 698.46, time: 0.45 }, // F5
+                { freq: 783.99, time: 0.6 },  // G5
+                { freq: 880.00, time: 0.75 }, // A5
+                { freq: 987.77, time: 0.9 },  // B5
+                { freq: 1046.50, time: 1.05 }, // C6
+                // Final chord
+                { freq: 523.25, time: 1.3 }, // C5
+                { freq: 659.25, time: 1.3 }, // E5
+                { freq: 783.99, time: 1.3 }, // G5
+                { freq: 1046.50, time: 1.3 }  // C6
+            ];
+            
+            notes.forEach(note => {
+                const startSample = Math.floor(sampleRate * note.time);
+                const isChord = note.time === 1.3;
+                const duration = isChord ? 0.7 : 0.2;
+                
+                for (let i = 0; i < sampleRate * duration; i++) {
+                    const t = i / sampleRate;
+                    const sample = startSample + i;
+                    if (sample < channelData.length) {
+                        const envelope = isChord 
+                            ? 0.5 * Math.exp(-3 * t) 
+                            : 0.3 * Math.exp(-10 * t);
+                        channelData[sample] += Math.sin(2 * Math.PI * note.freq * t) * envelope;
+                    }
+                }
+            });
+            
+            // Normalize to prevent clipping
+            let max = 0;
+            for (let i = 0; i < channelData.length; i++) {
+                max = Math.max(max, Math.abs(channelData[i]));
+            }
+            
+            if (max > 0) {
+                for (let i = 0; i < channelData.length; i++) {
+                    channelData[i] = channelData[i] / max * 0.7;
+                }
+            }
+        }
+        
+        function createHintSound(buffer) {
+            const channelData = buffer.getChannelData(0);
+            const sampleRate = gameState.audioContext.sampleRate;
+            
+            for (let i = 0; i < sampleRate * 0.3; i++) {
+                const t = i / sampleRate;
+                // Magical "sparkle" sound
+                const freqMod = 1 + 0.1 * Math.sin(2 * Math.PI * 10 * t);
+                const freq = 1200 * freqMod;
+                const envelope = Math.exp(-10 * t);
+                channelData[i] = 0.3 * Math.sin(2 * Math.PI * freq * t) * envelope;
+            }
+        }
+        
+        function createFoundSound(buffer) {
+            const channelData = buffer.getChannelData(0);
+            const sampleRate = gameState.audioContext.sampleRate;
+            
+            // Rising "discovery" sound
+            for (let i = 0; i < sampleRate * 0.6; i++) {
+                const t = i / sampleRate;
+                const freq1 = 300 + 700 * t; // Rising tone
+                const freq2 = 400 + 1000 * t; // Second rising tone
+                const envelope = t < 0.1 ? t / 0.1 : Math.exp(-3 * (t - 0.1));
+                channelData[i] = 0.3 * Math.sin(2 * Math.PI * freq1 * t) * envelope 
+                               + 0.2 * Math.sin(2 * Math.PI * freq2 * t) * envelope;
+            }
+        }
+        
+        // Play a sound from the buffer
+        function playSound(name) {
+            if (gameState.audioContext && gameState.soundBuffers[name] && gameState.settings.soundVolume > 0) {
+                const source = gameState.audioContext.createBufferSource();
+                const gainNode = gameState.audioContext.createGain();
+                
+                source.buffer = gameState.soundBuffers[name];
+                gainNode.gain.value = gameState.settings.soundVolume;
+                
+                source.connect(gainNode);
+                gainNode.connect(gameState.audioContext.destination);
+                
+                source.start();
+                return source;
+            }
+            return null;
+        }
+        
+        // Initialize map
+        function initMap() {
+            // Create map centered on the world
+            gameState.map = L.map('map', {
+                center: [20, 0],
+                zoom: 2,
+                minZoom: 2,
+                maxZoom: 18,
+                zoomControl: false // We'll add custom zoom controls
+            });
+            
+            // Add tile layer (map style)
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(gameState.map);
+            
+            // Add event listener for map movement
+            gameState.map.on('mousemove', function(e) {
+                // Update current coordinates display
+                elements.displays.currentLat.textContent = e.latlng.lat.toFixed(4);
+                elements.displays.currentLng.textContent = e.latlng.lng.toFixed(4);
+            });
+            
+            // Add graticule (coordinate grid)
+            addGraticule();
+        }
+        
+        // Add graticule (coordinate grid)
+        function addGraticule() {
+            const graticuleStyle = {
+                color: '#777',
+                weight: 1,
+                opacity: 0.4,
+                interactive: false
+            };
+            
+            // Add lines for every 15 degrees
+            for (let lat = -75; lat <= 75; lat += 15) {
+                L.polyline([
+                    [lat, -180],
+                    [lat, 180]
+                ], graticuleStyle).addTo(gameState.map);
+            }
+            
+            for (let lng = -180; lng <= 180; lng += 15) {
+                L.polyline([
+                    [-80, lng],
+                    [80, lng]
+                ], graticuleStyle).addTo(gameState.map);
+            }
+            
+            // Special styling for Equator and Prime Meridian
+            const specialStyle = {
+                color: '#0077cc',
+                weight: 1.5,
+                opacity: 0.6,
+                interactive: false,
+                dashArray: '5, 5'
+            };
+            
+            // Equator
+            L.polyline([
+                [0, -180],
+                [0, 180]
+            ], specialStyle).addTo(gameState.map);
+            
+            // Prime Meridian
+            L.polyline([
+                [-80, 0],
+                [80, 0]
+            ], specialStyle).addTo(gameState.map);
+        }
+        
+        // Draw characters
+        function drawCharacters() {
+            // Captain Geo
+            const captainGeo = elements.characters.captainGeo;
+            captainGeo.innerHTML = `
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                    <!-- Body -->
+                    <ellipse cx="60" cy="85" rx="25" ry="30" fill="#2563EB" />
+                    
+                    <!-- Head -->
+                    <circle cx="60" cy="45" r="20" fill="#FFD700" />
+                    
+                    <!-- Eyes -->
+                    <circle cx="52" cy="40" r="4" fill="white" />
+                    <circle cx="68" cy="40" r="4" fill="white" />
+                    <circle cx="52" cy="40" r="2" fill="#1F2937" />
+                    <circle cx="68" cy="40" r="2" fill="#1F2937" />
+                    
+                    <!-- Glasses -->
+                    <circle cx="52" cy="40" r="6" fill="none" stroke="#1F2937" stroke-width="1.5" />
+                    <circle cx="68" cy="40" r="6" fill="none" stroke="#1F2937" stroke-width="1.5" />
+                    <line x1="58" y1="40" x2="62" y2="40" stroke="#1F2937" stroke-width="1.5" />
+                    
+                    <!-- Smile -->
+                    <path d="M50,50 Q60,60 70,50" fill="none" stroke="#1F2937" stroke-width="1.5" />
+                    
+                    <!-- Beard -->
+                    <path d="M50,55 Q60,70 70,55 Q60,60 50,55" fill="#A0522D" />
+                    
+                    <!-- Hair -->
+                    <path d="M40,35 Q60,15 80,35 Q60,25 40,35" fill="#A0522D" />
+                    
+                    <!-- Arms -->
+                    <line x1="40" y1="75" x2="25" y2="65" stroke="#FFD700" stroke-width="5" stroke-linecap="round" />
+                    <line x1="80" y1="75" x2="95" y2="65" stroke="#FFD700" stroke-width="5" stroke-linecap="round" />
+                    
+                    <!-- Legs -->
+                    <line x1="50" y1="110" x2="45" y2="120" stroke="#2563EB" stroke-width="8" stroke-linecap="round" />
+                    <line x1="70" y1="110" x2="75" y2="120" stroke="#2563EB" stroke-width="8" stroke-linecap="round" />
+                    
+                    <!-- Hat -->
+                    <path d="M40,30 Q60,10 80,30 L75,30 Q60,15 45,30 Z" fill="#2563EB" />
+                    
+                    <!-- Compass in hand -->
+                    <circle cx="95" cy="65" r="5" fill="#FFF" stroke="#333" />
+                    <line x1="95" y1="60" x2="95" y2="70" stroke="#f44336" stroke-width="1" />
+                    <line x1="90" y1="65" x2="100" y2="65" stroke="#333" stroke-width="1" />
+                </svg>
+            `;
+            
+            // Coordinator Cora
+            const coordinatorCora = elements.characters.coordinatorCora;
+            coordinatorCora.innerHTML = `
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                    <!-- Body -->
+                    <ellipse cx="60" cy="85" rx="25" ry="30" fill="#EC4899" />
+                    
+                    <!-- Head -->
+                    <circle cx="60" cy="45" r="20" fill="#FDE68A" />
+                    
+                    <!-- Eyes -->
+                    <circle cx="68" cy="40" r="4" fill="white" />
+                    <circle cx="52" cy="40" r="2" fill="#1F2937" />
+                    <circle cx="68" cy="40" r="2" fill="#1F2937" />
+                    
+                    <!-- Smile -->
+                    <path d="M50,50 Q60,60 70,50" fill="none" stroke="#1F2937" stroke-width="1.5" />
+                    
+                    <!-- Hair -->
+                    <path d="M40,35 Q40,20 60,20 Q80,20 80,35 Q80,25 60,25 Q40,25 40,35" fill="#8D6E00" />
+                    
+                    <!-- Arms -->
+                    <line x1="40" y1="75" x2="25" y2="85" stroke="#FDE68A" stroke-width="5" stroke-linecap="round" />
+                    <line x1="80" y1="75" x2="95" y2="85" stroke="#FDE68A" stroke-width="5" stroke-linecap="round" />
+                    
+                    <!-- Legs -->
+                    <line x1="50" y1="110" x2="45" y2="120" stroke="#EC4899" stroke-width="8" stroke-linecap="round" />
+                    <line x1="70" y1="110" x2="75" y2="120" stroke="#EC4899" stroke-width="8" stroke-linecap="round" />
+                    
+                    <!-- Map in hand -->
+                    <rect x="85" y="80" width="20" height="15" fill="#FFF" stroke="#333" />
+                    <line x1="90" y1="80" x2="90" y2="95" stroke="#333" stroke-width="0.5" />
+                    <line x1="95" y1="80" x2="95" y2="95" stroke="#333" stroke-width="0.5" />
+                    <line x1="100" y1="80" x2="100" y2="95" stroke="#333" stroke-width="0.5" />
+                    <line x1="85" y1="85" x2="105" y2="85" stroke="#333" stroke-width="0.5" />
+                    <line x1="85" y1="90" x2="105" y2="90" stroke="#333" stroke-width="0.5" />
+                    
+                    <!-- Flower in hair -->
+                    <circle cx="75" cy="30" r="5" fill="#FF9800" />
+                    <circle cx="72" cy="27" r="2" fill="#FFEB3B" />
+                    <circle cx="78" cy="27" r="2" fill="#FFEB3B" />
+                    <circle cx="78" cy="33" r="2" fill="#FFEB3B" />
+                    <circle cx="72" cy="33" r="2" fill="#FFEB3B" />
+                </svg>
+            `;
+            
+            // Show the characters
+            elements.characters.captainGeo.classList.add('visible');
+            elements.characters.coordinatorCora.classList.add('visible');
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Find button
+            elements.buttons.findButton.addEventListener('click', function() {
+                checkLocation();
+                playSound('found');
+            });
+            
+            // Hint button
+            elements.buttons.hintButton.addEventListener('click', function() {
+                toggleHint();
+                playSound('hint');
+            });
+            
+            // Check quiz answer button
+            elements.buttons.checkAnswerButton.addEventListener('click', function() {
+                checkQuizAnswer();
+                playSound('button');
+            });
+            
+            // Zoom controls
+            elements.buttons.zoomInButton.addEventListener('click', function() {
+                gameState.map.zoomIn(1);
+                playSound('tick');
+            });
+            
+            elements.buttons.zoomOutButton.addEventListener('click', function() {
+                gameState.map.zoomOut(1);
+                playSound('tick');
+            });
+            
+            // Settings button
+            elements.buttons.settingsButton.addEventListener('click', function() {
+                showScreen('settingsScreen');
+                playSound('button');
+            });
+            
+            // Close settings button
+            elements.buttons.closeSettingsButton.addEventListener('click', function() {
+                saveSettings();
+                showScreen('gameScreen');
+                playSound('button');
+            });
+            
+            // Tutorial navigation
+            elements.buttons.previousTutorial.addEventListener('click', function() {
+                if (gameState.tutorialStep > 1) {
+                    showTutorial(gameState.tutorialStep - 1);
+                }
+                playSound('button');
+            });
+            
+            elements.buttons.nextTutorial.addEventListener('click', function() {
+                if (gameState.tutorialStep < gameState.tutorialMaxSteps) {
+                    showTutorial(gameState.tutorialStep + 1);
+                }
+                playSound('button');
+            });
+            
+            // Start game button
+            elements.buttons.startGameButton.addEventListener('click', function() {
+                showScreen('gameScreen');
+                loadLevel(gameState.currentLevel);
+                playSound('button');
+                
+                // Make sure all speech bubbles are hidden when starting the game
+                elements.characters.captainGeoBubble.style.opacity = '0';
+                elements.characters.coordinatorCoraBubble.style.opacity = '0';
+            });
+            
+            // Continue button
+            elements.buttons.continueButton.addEventListener('click', function() {
+                continueGame();
+                playSound('button');
+            });
+            
+            // Settings changes
+            elements.settings.difficulty.addEventListener('change', function() {
+                playSound('select');
+            });
+            
+            elements.settings.mapStyle.addEventListener('change', function() {
+                playSound('select');
+            });
+            
+            elements.settings.learningFocus.addEventListener('change', function() {
+                playSound('select');
+            });
+            
+            elements.settings.soundVolume.addEventListener('input', function() {
+                gameState.settings.soundVolume = parseFloat(elements.settings.soundVolume.value);
+                playSound('tick');
+            });
+        }
+        
+        // Apply settings
+        function applySettings() {
+            // Apply map style
+            let mapStyle = gameState.settings.mapStyle;
+            let tileLayer;
+            
+            // Remove current tile layer
+            gameState.map.eachLayer(function(layer) {
+                if (layer instanceof L.TileLayer) {
+                    gameState.map.removeLayer(layer);
+                }
+            });
+            
+            // Add new tile layer based on style
+            if (mapStyle === 'satellite') {
+                tileLayer = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+                    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+                });
+            } else if (mapStyle === 'terrain') {
+                tileLayer = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+                    attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+                });
+            } else if (mapStyle === 'dark') {
+                tileLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                });
+            } else if (mapStyle === 'watercolor') {
+                tileLayer = L.tileLayer('https://stamen-tiles-{s}.a.ssl.fastly.net/watercolor/{z}/{x}/{y}.{ext}', {
+                    attribution: 'Map tiles by <a href="http://stamen.com">Stamen Design</a>, <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> &mdash; Map data &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    ext: 'jpg'
+                });
+            } else {
+                // Default to streets
+                tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                });
+            }
+            
+            // Add the new tile layer to the map
+            tileLayer.addTo(gameState.map);
+            
+            // Apply search radius based on difficulty
+            switch (gameState.settings.difficulty) {
+                case 'easy':
+                    gameState.searchRadius = 0.2; // Larger radius for easier finding
+                    break;
+                case 'medium':
+                    gameState.searchRadius = 0.1; 
+                    break;
+                case 'hard':
+                    gameState.searchRadius = 0.05;
+                    break;
+                case 'expert':
+                    gameState.searchRadius = 0.02; // Very precise
+                    break;
+                default:
+                    gameState.searchRadius = 0.1;
+            }
+        }
+        
+        // Save settings
+        function saveSettings() {
+            gameState.settings.difficulty = elements.settings.difficulty.value;
+            gameState.settings.soundVolume = parseFloat(elements.settings.soundVolume.value);
+            gameState.settings.mapStyle = elements.settings.mapStyle.value;
+            gameState.settings.learningFocus = elements.settings.learningFocus.value;
+            
+            // Apply the new settings
+            applySettings();
+            
+            // If we're in the middle of a level, reload it with new settings
+            if (gameState.currentLocation) {
+                loadLevel(gameState.currentLevel);
+            }
+        }
+        
+        // Show tutorial
+        function showTutorial(step) {
+            gameState.tutorialStep = step;
+            
+            // Update content
+            elements.displays.tutorialTitle.textContent = tutorials[step - 1].title;
+            elements.displays.tutorialContent.innerHTML = tutorials[step - 1].content;
+            
+            // Draw the tutorial image
+            drawTutorialImage(tutorials[step - 1].image);
+            
+            // Update navigation buttons
+            if (step === 1) {
+                elements.buttons.previousTutorial.style.visibility = 'hidden';
+            } else {
+                elements.buttons.previousTutorial.style.visibility = 'visible';
+            }
+            
+            if (step === gameState.tutorialMaxSteps) {
+                elements.buttons.nextTutorial.style.visibility = 'hidden';
+                elements.buttons.startGameButton.classList.remove('hidden');
+            } else {
+                elements.buttons.nextTutorial.style.visibility = 'visible';
+                elements.buttons.startGameButton.classList.add('hidden');
+            }
+            
+            // Show the tutorial screen
+            showScreen('tutorialScreen');
+        }
+        
+        // Draw tutorial image
+        function drawTutorialImage(imageType) {
+            const container = elements.displays.tutorialImg;
+            container.innerHTML = '';
+            
+            switch (imageType) {
+                case 'coordinates-intro':
+                    container.innerHTML = `
+                        <svg width="100%" height="200" viewBox="0 0 500 200">
+                            <!-- Earth -->
+                            <circle cx="250" cy="100" r="80" fill="#4DABF7" stroke="#2B8CD2" stroke-width="3" />
+                            
+                            <!-- Continents (simplified) -->
+                            <path d="M230,50 Q240,30 260,40 Q280,35 290,55 Q300,80 280,90 Q260,100 240,85 Q220,70 230,50" fill="#2B8A3E" />
+                            <path d="M190,75 Q200,60 220,65 Q215,80 200,85 Q190,82 190,75" fill="#2B8A3E" />
+                            <path d="M220,120 Q240,115 250,125 Q245,140 225,135 Q218,130 220,120" fill="#2B8A3E" />
+                            <path d="M280,110 Q290,105 300,115 Q305,130 290,135 Q275,130 280,110" fill="#2B8A3E" />
+                            
+                            <!-- Grid lines -->
+                            <line x1="170" y1="100" x2="330" y2="100" stroke="#FFF" stroke-width="1" stroke-dasharray="5,5" />
+                            <line x1="250" y1="20" x2="250" y2="180" stroke="#FFF" stroke-width="1" stroke-dasharray="5,5" />
+                            
+                            <!-- Labels -->
+                            <text x="340" y="100" fill="#2B8CD2" font-size="14" font-weight="bold">Latitude 0° (Equator)</text>
+                            <text x="250" y="15" fill="#2B8CD2" font-size="14" font-weight="bold" text-anchor="middle">Longitude 0°</text>
+                            <text x="250" y="195" fill="#2B8CD2" font-size="14" font-weight="bold" text-anchor="middle">(Prime Meridian)</text>
+                            
+                            <!-- Coordinate example -->
+                            <circle cx="290" cy="60" r="5" fill="#F03E3E" />
+                            <text x="300" y="65" fill="#F03E3E" font-size="12" font-weight="bold">Mt. Everest (27.99°, 86.92°)</text>
+                            <line x1="290" y1="60" x2="290" y2="100" stroke="#F03E3E" stroke-width="1" stroke-dasharray="2,2" />
+                            <line x1="250" y1="60" x2="290" y2="60" stroke="#F03E3E" stroke-width="1" stroke-dasharray="2,2" />
+                        </svg>
+                    `;
+                    break;
+                case 'coordinates-grid':
+                    container.innerHTML = `
+                        <svg width="100%" height="200" viewBox="0 0 500 200">
+                            <!-- Map background -->
+                            <rect x="50" y="20" width="400" height="160" fill="#E7F5FF" stroke="#1971C2" stroke-width="2" />
+                            
+                            <!-- Longitude lines -->
+                            <line x1="150" y1="20" x2="150" y2="180" stroke="#1971C2" stroke-width="1" stroke-dasharray="3,3" />
+                            <line x1="250" y1="20" x2="250" y2="180" stroke="#1971C2" stroke-width="2" />
+                            <line x1="350" y1="20" x2="350" y2="180" stroke="#1971C2" stroke-width="1" stroke-dasharray="3,3" />
+                            
+                            <!-- Latitude lines -->
+                            <line x1="50" y1="60" x2="450" y2="60" stroke="#1971C2" stroke-width="1" stroke-dasharray="3,3" />
+                            <line x1="50" y1="100" x2="450" y2="100" stroke="#1971C2" stroke-width="2" />
+                            <line x1="50" y1="140" x2="450" y2="140" stroke="#1971C2" stroke-width="1" stroke-dasharray="3,3" />
+                            
+                            <!-- Labels -->
+                            <text x="250" y="15" fill="#1971C2" font-size="12" font-weight="bold" text-anchor="middle">NORTH</text>
+                            <text x="250" y="195" fill="#1971C2" font-size="12" font-weight="bold" text-anchor="middle">SOUTH</text>
+                            <text x="45" y="100" fill="#1971C2" font-size="12" font-weight="bold" text-anchor="end">WEST</text>
+                            <text x="455" y="100" fill="#1971C2" font-size="12" font-weight="bold">EAST</text>
+                            
+                            <text x="150" y="190" fill="#1971C2" font-size="11" text-anchor="middle">-90°</text>
+                            <text x="250" y="190" fill="#1971C2" font-size="11" text-anchor="middle">0°</text>
+                            <text x="350" y="190" fill="#1971C2" font-size="11" text-anchor="middle">90°</text>
+                            
+                            <text x="40" y="60" fill="#1971C2" font-size="11" text-anchor="end">90°</text>
+                            <text x="40" y="100" fill="#1971C2" font-size="11" text-anchor="end">0°</text>
+                            <text x="40" y="140" fill="#1971C2" font-size="11" text-anchor="end">-90°</text>
+                            
+                            <!-- New York marker -->
+                            <circle cx="188" cy="60" r="5" fill="#F03E3E" />
+                            <text x="188" y="50" fill="#F03E3E" font-size="11" font-weight="bold" text-anchor="middle">New York</text>
+                            <text x="188" y="45" fill="#F03E3E" font-size="10" text-anchor="middle">(40.7° N, 74.0° W)</text>
+                        </svg>
+                    `;
+                    break;
+                case 'game-interface':
+                    container.innerHTML = `
+                        <svg width="100%" height="200" viewBox="0 0 500 200">
+                            <!-- Game interface mockup -->
+                            <rect x="50" y="20" width="400" height="160" fill="#F8F9FA" stroke="#DEE2E6" stroke-width="2" />
+                            
+                            <!-- Map area -->
+                            <rect x="60" y="30" width="260" height="140" fill="#E7F5FF" stroke="#1971C2" stroke-width="1" />
+                            
+                            <!-- Side panel -->
+                            <rect x="330" y="30" width="110" height="140" fill="#FFF" stroke="#DEE2E6" stroke-width="1" />
+                            
+                            <!-- Map elements -->
+                            <circle cx="180" cy="100" r="30" fill="none" stroke="#1971C2" stroke-width="1" stroke-dasharray="5,3" />
+                            <circle cx="180" cy="100" r="5" fill="#F03E3E" />
+                            
+                            <!-- Target coordinates display -->
+                            <rect x="340" y="50" width="90" height="30" fill="#E7F5FF" stroke="#1971C2" stroke-width="1" rx="5" ry="5" />
+                            <text x="385" y="62" fill="#1971C2" font-size="9" text-anchor="middle">Target Coordinates:</text>
+                            <text x="385" y="74" fill="#1971C2" font-size="10" font-weight="bold" text-anchor="middle">48.85, 2.29</text>
+                            
+                            <!-- Buttons -->
+                            <rect x="340" y="90" width="90" height="20" fill="#4DABF7" stroke="#1971C2" stroke-width="1" rx="5" ry="5" />
+                            <text x="385" y="104" fill="#FFF" font-size="10" font-weight="bold" text-anchor="middle">Show Hint</text>
+                            
+                            <rect x="340" y="120" width="90" height="30" fill="#15AABF" stroke="#1971C2" stroke-width="1" rx="5" ry="5" />
+                            <text x="385" y="140" fill="#FFF" font-size="12" font-weight="bold" text-anchor="middle">I Found It!</text>
+                            
+                            <!-- Instructions -->
+                            <text x="250" y="195" fill="#1971C2" font-size="12" font-weight="bold" text-anchor="middle">Find the target coordinates on the map!</text>
+                        </svg>
+                    `;
+                    break;
+                case 'world-map':
+                    container.innerHTML = `
+                        <svg width="100%" height="200" viewBox="0 0 500 200">
+                            <!-- World map (simplified) -->
+                            <rect x="50" y="20" width="400" height="160" fill="#E7F5FF" />
+                            
+                            <!-- Continents (simplified) -->
+                            <path d="M120,60 Q150,50 160,70 Q180,60 200,70 Q210,90 190,100 Q160,110 140,90 Q120,80 120,60" fill="#2B8A3E" />
+                            <path d="M220,50 Q250,40 270,50 Q290,70 270,90 Q240,100 230,80 Q220,60 220,50" fill="#2B8A3E" />
+                            <path d="M300,60 Q320,50 340,60 Q350,80 330,90 Q310,85 300,60" fill="#2B8A3E" />
+                            <path d="M130,120 Q160,110 180,130 Q170,150 140,140 Q130,130 130,120" fill="#2B8A3E" />
+                            <path d="M250,120 Q270,110 290,120 Q300,140 280,150 Q260,145 250,120" fill="#2B8A3E" />
+                            <path d="M370,120 Q390,110 410,120 Q420,140 400,150 Q380,140 370,120" fill="#2B8A3E" />
+                            
+                            <!-- Landmark icons -->
+                            <circle cx="165" cy="75" r="5" fill="#F03E3E" />
+                            <circle cx="255" cy="60" r="5" fill="#F03E3E" />
+                            <circle cx="325" cy="70" r="5" fill="#F03E3E" />
+                            <circle cx="160" cy="130" r="5" fill="#F03E3E" />
+                            <circle cx="270" cy="135" r="5" fill="#F03E3E" />
+                            <circle cx="390" cy="130" r="5" fill="#F03E3E" />
+                            
+                            <!-- Coordinate grid -->
+                            <line x1="50" y1="100" x2="450" y2="100" stroke="#FFF" stroke-width="1" stroke-dasharray="5,5" />
+                            <line x1="250" y1="20" x2="250" y2="180" stroke="#FFF" stroke-width="1" stroke-dasharray="5,5" />
+                            
+                            <!-- Characters at bottom -->
+                            <circle cx="100" cy="170" r="15" fill="#FFC078" /> <!-- Captain Geo -->
+                            <circle cx="400" cy="170" r="15" fill="#FFD8A8" /> <!-- Coordinator Cora -->
+                            
+                            <!-- Text at bottom -->
+                            <text x="250" y="195" fill="#1971C2" font-size="14" font-weight="bold" text-anchor="middle">Let's explore the world!</text>
+                        </svg>
+                    `;
+                    break;
+                default:
+                    // Generic image if none specified
+                    container.innerHTML = `
+                        <svg width="100%" height="200" viewBox="0 0 500 200">
+                            <rect x="50" y="20" width="400" height="160" fill="#E7F5FF" />
+                            <text x="250" y="100" fill="#1971C2" font-size="24" font-weight="bold" text-anchor="middle">GeoQuest</text>
+                            <text x="250" y="130" fill="#1971C2" font-size="16" text-anchor="middle">Coordinate Explorer</text>
+                        </svg>
+                    `;
+            }
+        }
+        
+        // Load a level
+        function loadLevel(level) {
+            // Clear any existing markers
+            if (gameState.marker) {
+                gameState.map.removeLayer(gameState.marker);
+            }
+            if (gameState.targetMarker) {
+                gameState.map.removeLayer(gameState.targetMarker);
+            }
+            
+            // Update current level
+            gameState.currentLevel = level;
+            
+            // Create a learning path
+            updateLearningPath();
+            
+            // Select a location based on difficulty and learning focus
+            let locations = [];
+            const difficulty = gameState.settings.difficulty;
+            const focus = gameState.settings.learningFocus;
+            
+            if (focus === 'landmarks' || focus === 'all') {
+                locations = locations.concat(locationsDB.landmarks.filter(loc => 
+                    difficulty === 'expert' || loc.difficulty === difficulty || 
+                    (difficulty === 'hard' && loc.difficulty === 'expert')
+                ));
+            }
+            
+            if (focus === 'natural' || focus === 'all') {
+                locations = locations.concat(locationsDB.natural.filter(loc => 
+                    difficulty === 'expert' || loc.difficulty === difficulty || 
+                    (difficulty === 'hard' && loc.difficulty === 'expert')
+                ));
+            }
+            
+            if (focus === 'cities' || focus === 'all') {
+                locations = locations.concat(locationsDB.cities.filter(loc => 
+                    difficulty === 'expert' || loc.difficulty === difficulty || 
+                    (difficulty === 'hard' && loc.difficulty === 'expert')
+                ));
+            }
+            
+            // Shuffle locations and pick one
+            locations = shuffleArray(locations);
+            const location = locations[0];
+            
+            // Store the current location
+            gameState.currentLocation = location;
+            
+            // Update the UI with location info
+            elements.displays.locationTitle.textContent = "Find This Place!";
+            elements.displays.locationDescription.textContent = location.description;
+            elements.displays.targetLat.textContent = location.coordinates[0].toFixed(4);
+            elements.displays.targetLng.textContent = location.coordinates[1].toFixed(4);
+            elements.displays.hintText.textContent = location.hint;
+            elements.displays.hintText.style.display = 'none';
+            
+            // Show a message from a character
+            const message = `Your mission: Find ${location.name} at coordinates ${location.coordinates[0].toFixed(2)}, ${location.coordinates[1].toFixed(2)}. Use the map to navigate there!`;
+            showMessage(elements.characters.captainGeoBubble, message);
+            
+            // Zoom out to world view
+            gameState.map.setView([20, 0], 2);
+        }
+        
+        // Check if the user has found the correct location
+        function checkLocation() {
+            // Get the center of the current map view
+            const center = gameState.map.getCenter();
+            
+            // Get the target coordinates
+            const target = gameState.currentLocation.coordinates;
+            
+            // Calculate distance between points (approximately)
+            const distance = calculateDistance(
+                center.lat, center.lng,
+                target[0], target[1]
+            );
+            
+            // Check if close enough based on search radius
+            if (distance <= gameState.searchRadius) {
+                // Success! Location found
+                foundLocation();
+            } else {
+                // Not close enough
+                const hint = `You're not quite there yet! You're about ${Math.round(distance * 100)} kilometers away. Keep searching!`;
+                showMessage(elements.characters.coordinatorCoraBubble, hint);
+                
+                // Show how close they are
+                if (distance < gameState.searchRadius * 2) {
+                    showMessage(elements.characters.captainGeoBubble, "You're very close! Just a little more adjustment.");
+                } else if (distance < gameState.searchRadius * 5) {
+                    showMessage(elements.characters.captainGeoBubble, "Getting warmer! You're in the general area.");
+                } else {
+                    showMessage(elements.characters.captainGeoBubble, "You're still quite far from the target. Check the coordinates again!");
+                }
+                
+                // Play error sound
+                playSound('error');
+            }
+        }
+        
+        // Calculate rough distance between two coordinates in degrees
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            // This is a simplified distance calculation that works for our game purposes
+            // For more accuracy, you would use the Haversine formula
+            const latDiff = Math.abs(lat1 - lat2);
+            const lonDiff = Math.abs(lon1 - lon2);
+            
+            // Rough estimate of distance in degrees
+            return Math.sqrt(latDiff * latDiff + lonDiff * lonDiff);
+        }
+        
+        // When the location is found
+        function foundLocation() {
+            // Add markers to show the location
+            if (gameState.targetMarker) {
+                gameState.map.removeLayer(gameState.targetMarker);
+            }
+            
+            // Create a custom icon
+            const customIcon = L.divIcon({
+                className: 'custom-icon',
+                html: '<div class="marker-pin"></div>',
+                iconSize: [30, 30],
+                iconAnchor: [15, 30]
+            });
+            
+            // Add marker at the exact target location
+            gameState.targetMarker = L.marker(gameState.currentLocation.coordinates, {
+                icon: customIcon
+            }).addTo(gameState.map);
+            
+            // Add pulse effect
+            const pulseDiv = document.createElement('div');
+            pulseDiv.className = 'pulse-circle';
+            pulseDiv.style.left = `${gameState.map.latLngToContainerPoint(gameState.currentLocation.coordinates).x - 15}px`;
+            pulseDiv.style.top = `${gameState.map.latLngToContainerPoint(gameState.currentLocation.coordinates).y - 15}px`;
+            document.getElementById('map-container').appendChild(pulseDiv);
+            
+            // Clean up pulse after animation
+            setTimeout(() => {
+                pulseDiv.remove();
+            }, 1500);
+            
+            // Update location title
+            elements.displays.locationTitle.textContent = gameState.currentLocation.name;
+            
+            // Play success sound
+            playSound('success');
+            
+            // Create celebration effects
+            createParticleEffect();
+            
+            // Show congratulation message
+            const message = `Great job! You found ${gameState.currentLocation.name}! Let's test your knowledge about this place.`;
+            showMessage(elements.characters.captainGeoBubble, message);
+            
+            // Increment score
+            gameState.score++;
+            elements.displays.scoreNumber.textContent = gameState.score;
+            
+            // Show quiz after a short delay
+            setTimeout(function() {
+                showQuiz();
+            }, 2000);
+        }
+        
+        // Show a quiz for the current location
+        function showQuiz() {
+            // Set up quiz from current location
+            gameState.currentQuiz.question = gameState.currentLocation.quiz.question;
+            gameState.currentQuiz.options = gameState.currentLocation.quiz.options;
+            gameState.currentQuiz.correctAnswer = gameState.currentLocation.quiz.correct;
+            gameState.currentQuiz.userAnswer = null;
+            
+            // Update quiz panel content
+            elements.displays.quizQuestion.textContent = gameState.currentQuiz.question;
+            
+            // Clear previous options
+            elements.displays.quizOptions.innerHTML = '';
+            
+            // Add new options
+            gameState.currentQuiz.options.forEach(option => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.addEventListener('click', function() {
+                    selectQuizOption(this);
+                    playSound('select');
+                });
+                elements.displays.quizOptions.appendChild(optionElement);
+            });
+            
+            // Show the quiz panel
+            showScreen('quizScreen');
+        }
+        
+        // Select a quiz option
+        function selectQuizOption(optionElement) {
+            // Clear any previous selections
+            const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+            options.forEach(option => {
+                option.classList.remove('selected');
+                option.classList.remove('correct');
+                option.classList.remove('incorrect');
+            });
+            
+            // Select the clicked option
+            optionElement.classList.add('selected');
+            
+            // Store user's answer
+            gameState.currentQuiz.userAnswer = optionElement.textContent;
+        }
+        
+        // Check quiz answer
+        function checkQuizAnswer() {
+            if (!gameState.currentQuiz.userAnswer) {
+                // No answer selected
+                showMessage(elements.characters.captainGeoBubble, "Please select an answer first!");
+                return;
+            }
+            
+            // Check if the answer is correct
+            if (gameState.currentQuiz.userAnswer === gameState.currentQuiz.correctAnswer) {
+                // Correct answer
+                playSound('success');
+                createParticleEffect();
+                
+                // Show celebration message
+                showMessage(elements.characters.captainGeoBubble, "Excellent! That's correct!");
+                
+                // Increment score
+                gameState.score++;
+                elements.displays.scoreNumber.textContent = gameState.score;
+                
+                // Proceed to next question or end quiz
+                if (gameState.currentLevel >= gameState.maxLevel) {
+                    // Game completed
+                    setTimeout(() => {
+                        completeGame();
+                    }, 2000);
+                } else {
+                    // Next level
+                    setTimeout(() => {
+                        gameState.currentLevel++;
+                        loadLevel(gameState.currentLevel);
+                        showScreen('gameScreen');
+                    }, 2000);
+                }
+            } else {
+                // Incorrect answer
+                playSound('error');
+                
+                // Show hint message
+                showMessage(elements.characters.captainGeoBubble, `Not quite. The correct answer is ${gameState.currentQuiz.correctAnswer}.`);
+                
+                // Highlight correct answer
+                const options = elements.displays.quizOptions.querySelectorAll('.quiz-option');
+                options.forEach(option => {
+                    if (option.textContent === gameState.currentQuiz.correctAnswer) {
+                        option.classList.add('correct');
+                    } else if (option.classList.contains('selected')) {
+                        option.classList.add('incorrect');
+                    }
+                });
+                
+                // Next level after delay
+                setTimeout(() => {
+                    if (gameState.currentLevel >= gameState.maxLevel) {
+                        completeGame();
+                    } else {
+                        gameState.currentLevel++;
+                        loadLevel(gameState.currentLevel);
+                        showScreen('gameScreen');
+                    }
+                }, 3000);
+            }
+        }
+        
+        // Complete the game
+        function completeGame() {
+            // Show reward screen
+            showScreen('rewardScreen');
+            
+            // Set reward text based on score
+            if (gameState.score >= gameState.maxLevel) {
+                elements.displays.rewardText.textContent = "Amazing! You're a Coordinate Master!";
+            } else if (gameState.score >= Math.floor(gameState.maxLevel * 0.7)) {
+                elements.displays.rewardText.textContent = "Great job! You're getting really good with coordinates!";
+            } else {
+                elements.displays.rewardText.textContent = "Good effort! Keep practicing to master geography coordinates!";
+            }
+            
+            // Create celebration animation
+            createRewardAnimation();
+            
+            // Play celebration sound
+            playSound('celebration');
+        }
+        
+        // Continue game after completion
+        function continueGame() {
+            // Reset game state for next session
+            gameState.currentLevel = 1;
+            gameState.score = 0;
+            elements.displays.scoreNumber.textContent = '0';
+            
+            // Load the first level
+            loadLevel(gameState.currentLevel);
+            
+            // Show the game screen
+            showScreen('gameScreen');
+        }
+        
+        // Show a screen
+        function showScreen(screenName) {
+            // Hide all screens
+            Object.values(elements.screens).forEach(screen => {
+                screen.classList.remove('visible');
+                screen.classList.add('hidden');
+            });
+            
+            // Show the requested screen
+            elements.screens[screenName].classList.remove('hidden');
+            elements.screens[screenName].classList.add('visible');
+        }
+        
+        // Toggle hint visibility
+        function toggleHint() {
+            const hintText = elements.displays.hintText;
+            
+            if (hintText.style.display === 'block') {
+                hintText.style.display = 'none';
+            } else {
+                hintText.style.display = 'block';
+                
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    hintText.style.display = 'none';
+                }, 5000);
+            }
+        }
+        
+        // Show a character message
+        function showMessage(bubbleElement, message) {
+            // Set the message text
+            bubbleElement.textContent = message;
+            
+            // Show the bubble
+            bubbleElement.classList.add('visible');
+            
+            // Auto-hide after delay based on message length
+            const delay = Math.max(3000, message.length * 50);
+            setTimeout(() => {
+                bubbleElement.classList.remove('visible');
+            }, delay);
+        }
+        
+        // Create learning path
+        function createLearningPath() {
+            const pathContainer = elements.displays.learningPath;
+            
+            // Clear any existing segments
+            pathContainer.innerHTML = '';
+            
+            // Create segments for each level
+            for (let i = 0; i < gameState.maxLevel; i++) {
+                const segment = document.createElement('div');
+                segment.className = 'path-segment';
+                segment.setAttribute('data-level', i + 1);
+                pathContainer.appendChild(segment);
+            }
+        }
+        
+        // Update learning path
+        function updateLearningPath() {
+            const segments = elements.displays.learningPath.querySelectorAll('.path-segment');
+            
+            segments.forEach((segment, index) => {
+                const level = index + 1;
+                
+                if (level < gameState.currentLevel) {
+                    segment.className = 'path-segment completed';
+                } else if (level === gameState.currentLevel) {
+                    segment.className = 'path-segment current';
+                } else {
+                    segment.className = 'path-segment';
+                }
+            });
+        }
+        
+        // Helper function to shuffle an array (Fisher-Yates algorithm)
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+        
+        // Create celebration particle effect
+        function createParticleEffect() {
+            // Clear any existing particles
+            clearParticles();
+            
+            // Create stars or bubbles
+            const particleCount = 30;
+            const particleTypes = ['star', 'bubble', 'confetti'];
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particleType = particleTypes[Math.floor(Math.random() * particleTypes.length)];
+                createParticle(particleType);
+            }
+        }
+        
+        // Create a single particle
+        function createParticle(type) {
+            const container = document.getElementById('game-container');
+            
+            if (type === 'star') {
+                // Create a star
+                const star = document.createElement('div');
+                star.className = 'star';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = Math.random() * window.innerHeight;
+                
+                // Random size
+                const size = Math.random() * 30 + 10;
+                
+                // Star SVG
+                star.innerHTML = `
+                    <svg width="${size}" height="${size}" viewBox="0 0 51 48">
+                        <path fill="#FFD700" d="m25,1 6,17h18l-14,11 5,17-15-10-15,10 5-17-14-11h18z"/>
+                    </svg>
+                `;
+                
+                star.style.left = `${x}px`;
+                star.style.top = `${y}px`;
+                container.appendChild(star);
+                
+                // Animation
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                const dx = Math.cos(angle) * speed;
+                const dy = Math.sin(angle) * speed;
+                
+                let opacity = 1;
+                let posX = x;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    opacity -= 0.01;
+                    posX += dx;
+                    posY += dy;
+                    
+                    star.style.opacity = opacity;
+                    star.style.left = `${posX}px`;
+                    star.style.top = `${posY}px`;
+                    
+                    if (opacity <= 0) {
+                        clearInterval(animation);
+                        star.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.stars.push(star);
+                gameState.animations.timers.push(animation);
+            } else if (type === 'bubble') {
+                // Create a bubble
+                const bubble = document.createElement('div');
+                bubble.className = 'bubble';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = window.innerHeight + 20;
+                
+                // Random size
+                const size = Math.random() * 40 + 20;
+                
+                // Random color
+                const colors = ['#FF9A00', '#4b0082', '#4CAF50', '#f44336', '#2196F3'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                bubble.style.backgroundColor = color;
+                bubble.style.left = `${x}px`;
+                bubble.style.top = `${y}px`;
+                bubble.style.opacity = '0.7';
+                container.appendChild(bubble);
+                
+                // Animation
+                const speed = Math.random() * 3 + 1;
+                let posY = y;
+                
+                const animation = setInterval(() => {
+                    posY -= speed;
+                    bubble.style.top = `${posY}px`;
+                    
+                    if (posY < -size) {
+                        clearInterval(animation);
+                        bubble.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.bubbles.push(bubble);
+                gameState.animations.timers.push(animation);
+            } else {
+                // Create confetti
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                
+                // Random position
+                const x = Math.random() * window.innerWidth;
+                const y = -20;
+                
+                // Random size
+                const width = Math.random() * 10 + 5;
+                const height = Math.random() * 10 + 10;
+                
+                // Random color
+                const colors = ['#FF9A00', '#4b0082', '#4CAF50', '#f44336', '#2196F3', '#FFEB3B', '#9C27B0'];
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                
+                confetti.style.width = `${width}px`;
+                confetti.style.height = `${height}px`;
+                confetti.style.backgroundColor = color;
+                confetti.style.left = `${x}px`;
+                confetti.style.top = `${y}px`;
+                confetti.style.transform = `rotate(${Math.random() * 360}deg)`;
+                container.appendChild(confetti);
+                
+                // Animation
+                const fallSpeed = Math.random() * 5 + 2;
+                const swayAmount = Math.random() * 5 + 3;
+                const swaySpeed = Math.random() * 0.1 + 0.05;
+                const rotateSpeed = Math.random() * 5 + 2;
+                
+                let posY = y;
+                let time = 0;
+                
+                const animation = setInterval(() => {
+                    time += 0.1;
+                    posY += fallSpeed;
+                    const posX = x + Math.sin(time * swaySpeed) * swayAmount;
+                    const rotation = time * rotateSpeed * 36;
+                    
+                    confetti.style.top = `${posY}px`;
+                    confetti.style.left = `${posX}px`;
+                    confetti.style.transform = `rotate(${rotation}deg)`;
+                    
+                    if (posY > window.innerHeight + 20) {
+                        clearInterval(animation);
+                        confetti.remove();
+                    }
+                }, 20);
+                
+                gameState.animations.confetti.push(confetti);
+                gameState.animations.timers.push(animation);
+            }
+        }
+        
+        // Clear all particles
+        function clearParticles() {
+            // Clear all animation timers
+            gameState.animations.timers.forEach(timer => {
+                clearInterval(timer);
+            });
+            
+            // Remove all stars, bubbles, and confetti
+            gameState.animations.stars.forEach(star => {
+                if (star.parentNode) {
+                    star.remove();
+                }
+            });
+            
+            gameState.animations.bubbles.forEach(bubble => {
+                if (bubble.parentNode) {
+                    bubble.remove();
+                }
+            });
+            
+            gameState.animations.confetti.forEach(confetti => {
+                if (confetti.parentNode) {
+                    confetti.remove();
+                }
+            });
+            
+            // Reset arrays
+            gameState.animations.stars = [];
+            gameState.animations.bubbles = [];
+            gameState.animations.confetti = [];
+            gameState.animations.timers = [];
+        }
+        
+        // Create reward animation
+        function createRewardAnimation() {
+            const container = elements.displays.rewardAnimation;
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create canvas for celebration
+            const canvas = document.createElement('canvas');
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            container.appendChild(canvas);
+            
+            const ctx = canvas.getContext('2d');
+            
+            // Draw map background
+            ctx.fillStyle = '#F0F9FF';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw grid lines for lat/long
+            ctx.strokeStyle = '#BFE7FD';
+            ctx.lineWidth = 1;
+            
+            // Draw latitude lines
+            for (let i = 0; i <= 10; i++) {
+                const y = i * (canvas.height / 10);
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+                
+                // Label with latitude
+                ctx.fillStyle = '#3E9DDD';
+                ctx.font = '12px Nunito, sans-serif';
+                ctx.fillText(`${90 - i * 18}°`, 5, y + 15);
+            }
+            
+            // Draw longitude lines
+            for (let i = 0; i <= 10; i++) {
+                const x = i * (canvas.width / 10);
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+                
+                // Label with longitude
+                ctx.fillStyle = '#3E9DDD';
+                ctx.font = '12px Nunito, sans-serif';
+                ctx.fillText(`${-180 + i * 36}°`, x + 3, canvas.height - 5);
+            }
+            
+            // Draw the equator and prime meridian
+            ctx.strokeStyle = '#F97316';
+            ctx.lineWidth = 2;
+            
+            // Equator
+            const equatorY = canvas.height / 2;
+            ctx.beginPath();
+            ctx.moveTo(0, equatorY);
+            ctx.lineTo(canvas.width, equatorY);
+            ctx.stroke();
+            
+            // Prime Meridian
+            const meridianX = canvas.width / 2;
+            ctx.beginPath();
+            ctx.moveTo(meridianX, 0);
+            ctx.lineTo(meridianX, canvas.height);
+            ctx.stroke();
+            
+            // Label Equator and Prime Meridian
+            ctx.fillStyle = '#F97316';
+            ctx.font = 'bold 14px Nunito, sans-serif';
+            ctx.fillText('Equator (0°)', canvas.width - 100, equatorY - 5);
+            ctx.fillText('Prime Meridian (0°)', meridianX + 5, 20);
+            
+            // Draw a few "famous locations" points
+            const locations = [
+                { name: "Eiffel Tower", lat: 48.8584, lng: 2.2945 },
+                { name: "Great Pyramid", lat: 29.9792, lng: 31.1342 },
+                { name: "Mount Everest", lat: 27.9881, lng: 86.9250 },
+                { name: "Statue of Liberty", lat: 40.6892, lng: -74.0445 },
+                { name: "Sydney Opera House", lat: -33.8568, lng: 151.2153 }
+            ];
+            
+            locations.forEach(loc => {
+                // Convert lat/lng to canvas coordinates
+                const x = ((loc.lng + 180) / 360) * canvas.width;
+                const y = ((90 - loc.lat) / 180) * canvas.height;
+                
+                // Draw point
+                ctx.fillStyle = '#2563EB';
+                ctx.beginPath();
+                ctx.arc(x, y, 5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw label
+                ctx.fillStyle = '#1F2937';
+                ctx.font = '10px Nunito, sans-serif';
+                ctx.fillText(loc.name, x + 8, y + 3);
+            });
+            
+            // Draw characters
+            drawCharacterOnCanvas(ctx, 'captain', 50, 50, 100);
+            drawCharacterOnCanvas(ctx, 'coordinator', canvas.width - 150, 50, 100);
+            
+            // Medal/Trophy
+            drawMedal(ctx, canvas.width / 2, canvas.height / 2, 70);
+            
+            // Score display
+            ctx.font = 'bold 24px Nunito, sans-serif';
+            ctx.fillStyle = '#2563EB';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Your Score: ${gameState.score}`, canvas.width / 2, canvas.height - 50);
+            
+            // Text with encouragement
+            ctx.font = '18px Nunito, sans-serif';
+            ctx.fillText('You\'re a coordinate master explorer!', canvas.width / 2, canvas.height - 20);
+            
+            // Start particle animation
+            createParticleEffect();
+        }
+        
+        // Draw a character on the canvas
+        function drawCharacterOnCanvas(ctx, character, x, y, size) {
+            if (character === 'captain') {
+                // Draw Captain Geo
+                // Body
+                ctx.fillStyle = '#2563EB';
+                ctx.beginPath();
+                ctx.ellipse(x + size/2, y + size/2 + 30, size/4, size/3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Head
+                ctx.fillStyle = '#FFD700';
+                ctx.beginPath();
+                ctx.arc(x + size/2, y + size/3, size/5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(x + size/2 - size/10, y + size/3 - size/50, size/25, 0, Math.PI * 2);
+                ctx.arc(x + size/2 + size/10, y + size/3 - size/50, size/25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(x + size/2 - size/10, y + size/3 - size/50, size/50, 0, Math.PI * 2);
+                ctx.arc(x + size/2 + size/10, y + size/3 - size/50, size/50, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Glasses
+                ctx.strokeStyle = 'black';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(x + size/2 - size/10, y + size/3 - size/50, size/15, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.arc(x + size/2 + size/10, y + size/3 - size/50, size/15, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x + size/2 - size/15, y + size/3 - size/50);
+                ctx.lineTo(x + size/2 + size/15, y + size/3 - size/50);
+                ctx.stroke();
+                
+                // Smile
+                ctx.beginPath();
+                ctx.moveTo(x + size/2 - size/10, y + size/3 + size/10);
+                ctx.quadraticCurveTo(x + size/2, y + size/3 + size/6, x + size/2 + size/10, y + size/3 + size/10);
+                ctx.stroke();
+                
+                // Beard
+                ctx.fillStyle = '#A0522D';
+                ctx.beginPath();
+                ctx.moveTo(x + size/2 - size/10, y + size/3 + size/10);
+                ctx.quadraticCurveTo(x + size/2, y + size/3 + size/5, x + size/2 + size/10, y + size/3 + size/10);
+                ctx.quadraticCurveTo(x + size/2, y + size/3 + size/8, x + size/2 - size/10, y + size/3 + size/10);
+                ctx.fill();
+                
+                // Hat
+                ctx.fillStyle = '#2563EB';
+                ctx.beginPath();
+                ctx.moveTo(x + size/3, y + size/4);
+                ctx.quadraticCurveTo(x + size/2, y + size/8, x + size*2/3, y + size/4);
+                ctx.quadraticCurveTo(x + size/2, y + size/6, x + size/3, y + size/4);
+                ctx.fill();
+                
+            } else {
+                // Draw Coordinator Cora
+                // Body
+                ctx.fillStyle = '#EC4899';
+                ctx.beginPath();
+                ctx.ellipse(x + size/2, y + size/2 + 30, size/4, size/3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Head
+                ctx.fillStyle = '#FDE68A';
+                ctx.beginPath();
+                ctx.arc(x + size/2, y + size/3, size/5, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Eyes
+                ctx.fillStyle = 'white';
+                ctx.beginPath();
+                ctx.arc(x + size/2 - size/10, y + size/3 - size/50, size/25, 0, Math.PI * 2);
+                ctx.arc(x + size/2 + size/10, y + size/3 - size/50, size/25, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath();
+                ctx.arc(x + size/2 - size/10, y + size/3 - size/50, size/50, 0, Math.PI * 2);
+                ctx.arc(x + size/2 + size/10, y + size/3 - size/50, size/50, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Smile
+                ctx.beginPath();
+                ctx.moveTo(x + size/2 - size/10, y + size/3 + size/10);
+                ctx.quadraticCurveTo(x + size/2, y + size/3 + size/6, x + size/2 + size/10, y + size/3 + size/10);
+                ctx.stroke();
+                
+                // Hair
+                ctx.fillStyle = '#8D6E00';
+                ctx.beginPath();
+                ctx.moveTo(x + size/3, y + size/4);
+                ctx.quadraticCurveTo(x + size/3, y + size/8, x + size/2, y + size/8);
+                ctx.quadraticCurveTo(x + size*2/3, y + size/8, x + size*2/3, y + size/4);
+                ctx.quadraticCurveTo(x + size*2/3, y + size/6, x + size/2, y + size/6);
+                ctx.quadraticCurveTo(x + size/3, y + size/6, x + size/3, y + size/4);
+                ctx.fill();
+                
+                // Flower in hair
+                ctx.fillStyle = '#FF9800';
+                ctx.beginPath();
+                ctx.arc(x + size*2/3, y + size/5, size/20, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.fillStyle = '#FFEB3B';
+                ctx.beginPath();
+                ctx.arc(x + size*2/3 - size/30, y + size/5 - size/30, size/40, 0, Math.PI * 2);
+                ctx.arc(x + size*2/3 + size/30, y + size/5 - size/30, size/40, 0, Math.PI * 2);
+                ctx.arc(x + size*2/3 + size/30, y + size/5 + size/30, size/40, 0, Math.PI * 2);
+                ctx.arc(x + size*2/3 - size/30, y + size/5 + size/30, size/40, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Draw medal
+        function drawMedal(ctx, x, y, size) {
+            // Medal circle
+            const gradient = ctx.createRadialGradient(x, y, size/10, x, y, size/2);
+            gradient.addColorStop(0, '#FFD700');
+            gradient.addColorStop(0.8, '#FFB900');
+            gradient.addColorStop(1, '#FFA000');
+            
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(x, y, size/2, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Add rim
+            ctx.strokeStyle = '#B27200';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(x, y, size/2, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Add ribbon
+            ctx.fillStyle = '#2563EB';
+            ctx.beginPath();
+            ctx.moveTo(x - size/5, y);
+            ctx.lineTo(x + size/5, y);
+            ctx.lineTo(x + size/8, y + size/2 + size/4);
+            ctx.lineTo(x, y + size/2 + size/8);
+            ctx.lineTo(x - size/8, y + size/2 + size/4);
+            ctx.closePath();
+            ctx.fill();
+            
+            // Add globe symbol in center
+            ctx.strokeStyle = '#2563EB';
+            ctx.lineWidth = 2;
+            
+            // Latitude lines
+            for (let i = 1; i <= 3; i++) {
+                ctx.beginPath();
+                ctx.ellipse(x, y, size/3, size/3 * Math.cos(Math.PI * i/8), 0, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+            
+            // Longitude lines
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                ctx.arc(x, y, size/3, i * Math.PI/4, i * Math.PI/4 + Math.PI);
+                ctx.stroke();
+            }
+            
+            // Add text
+            ctx.fillStyle = '#2563EB';
+            ctx.font = `${size/10}px Nunito, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillText('COORDINATE', x, y - size/10);
+            ctx.fillText('MASTER', x, y + size/8);
+        }
+        
+        // Initialize the game when the window loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>
+                    

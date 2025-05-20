@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Bubble Ring Challenge</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+        
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Nunito', sans-serif;
+            background: linear-gradient(to bottom, #87CEEB, #1E90FF);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            user-select: none;
+        }
+        
+        #game-container {
+            position: relative;
+            margin: auto;
+            width: 800px;
+            height: 600px;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        #game-canvas {
+            background-color: #87CEEB;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        #controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .game-button {
+            padding: 10px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #FF6B6B;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #D63031;
+            transition: all 0.1s;
+            outline: none;
+        }
+        
+        .game-button:active {
+            box-shadow: 0 2px 0 #D63031;
+            transform: translateY(2px);
+        }
+        
+        .game-button.left {
+            background-color: #4ECDC4;
+            box-shadow: 0 4px 0 #33A8A0;
+        }
+        
+        .game-button.right {
+            background-color: #FFD166;
+            box-shadow: 0 4px 0 #E6B800;
+        }
+        
+        .toggle-button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #6C5CE7;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #483D8B;
+            transition: all 0.1s;
+        }
+        
+        .toggle-button:active {
+            box-shadow: 0 2px 0 #483D8B;
+            transform: translateY(2px);
+        }
+        
+        #difficulty-control {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        #difficulty-label {
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        
+        #tutorial-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        #tutorial-content {
+            max-width: 500px;
+            font-size: 18px;
+            line-height: 1.5;
+        }
+        
+        #tutorial-content h2 {
+            color: #FFD166;
+            margin-bottom: 20px;
+        }
+        
+        #tutorial-content p {
+            margin-bottom: 15px;
+        }
+        
+        #tutorial-nav {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .tutorial-button {
+            padding: 8px 15px;
+            background-color: #FF6B6B;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .character {
+            position: absolute;
+            bottom: 20px;
+            width: 100px;
+            height: 100px;
+        }
+        
+        #character-left {
+            left: 20px;
+        }
+        
+        #character-right {
+            right: 20px;
+        }
+        
+        .speech-bubble {
+            position: absolute;
+            background-color: white;
+            border-radius: 20px;
+            padding: 15px;
+            max-width: 200px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.5s;
+            z-index: 5;
+        }
+        
+        #speech-left {
+            bottom: 110px;
+            left: 50px;
+        }
+        
+        #speech-right {
+            bottom: 110px;
+            right: 50px;
+        }
+        
+        .speech-bubble:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            transform: rotate(45deg);
+        }
+        
+        #speech-left:after {
+            left: 30px;
+        }
+        
+        #speech-right:after {
+            right: 30px;
+        }
+        
+        #level-complete {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            transition: transform 0.5s cubic-bezier(0.18, 1.25, 0.6, 1.25);
+            z-index: 20;
+        }
+        
+        #level-complete h2 {
+            color: #FF6B6B;
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        #level-complete p {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+        
+        #next-level-button {
+            padding: 12px 25px;
+            font-size: 20px;
+            background-color: #4ECDC4;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #33A8A0;
+            transition: all 0.1s;
+        }
+        
+        #next-level-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #33A8A0;
+        }
+        
+        #next-level-button:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #33A8A0;
+        }
+        
+        .power-meter {
+            position: absolute;
+            width: 20px;
+            height: 100px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        #left-power-meter {
+            left: 20px;
+            bottom: 150px;
+        }
+        
+        #right-power-meter {
+            right: 20px;
+            bottom: 150px;
+        }
+        
+        .power-fill {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            height: 0%;
+            background: linear-gradient(to top, #4ECDC4, #6C5CE7);
+            transition: height 0.1s;
+        }
+        
+        .power-indicator {
+            position: absolute;
+            right: -25px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="game-canvas" width="800" height="550"></canvas>
+        
+        <div id="controls">
+            <div class="button-group">
+                <button id="left-jet-button" class="game-button left">Left Jet</button>
+                <button id="reset-button" class="game-button">Reset Game</button>
+                <button id="right-jet-button" class="game-button right">Right Jet</button>
+            </div>
+            
+            <div id="difficulty-control">
+                <span id="difficulty-label">Difficulty: Easy</span>
+                <button id="difficulty-button" class="toggle-button">Change</button>
+                <button id="help-button" class="toggle-button">Help</button>
+            </div>
+        </div>
+        
+        <div class="power-meter" id="left-power-meter">
+            <div class="power-fill" id="left-power-fill"></div>
+            <span class="power-indicator" id="left-power-indicator">0</span>
+        </div>
+        
+        <div class="power-meter" id="right-power-meter">
+            <div class="power-fill" id="right-power-fill"></div>
+            <span class="power-indicator" id="right-power-indicator">0</span>
+        </div>
+        
+        <div class="character" id="character-left"></div>
+        <div class="speech-bubble" id="speech-left"></div>
+        
+        <div class="character" id="character-right"></div>
+        <div class="speech-bubble" id="speech-right"></div>
+        
+        <div id="tutorial-overlay">
+            <div id="tutorial-content">
+                <h2>Welcome to Water Bubble Ring Challenge!</h2>
+                <p>In this game, you'll learn about water physics while having fun placing rings on rods.</p>
+                <p>Press the <strong>Left Jet</strong> and <strong>Right Jet</strong> buttons to create bubbles that push the rings.</p>
+                <p>Hold the button to increase power, then release at just the right moment!</p>
+                <p>Try to get all the rings onto the rods to complete each level.</p>
+            </div>
+            <div id="tutorial-nav">
+                <button id="tutorial-next" class="tutorial-button">Next</button>
+                <button id="tutorial-start" class="tutorial-button">Start Game</button>
+            </div>
+        </div>
+        
+        <div id="level-complete">
+            <h2>Great Job!</h2>
+            <p>You completed the level!</p>
+            <div id="level-stats"></div>
+            <button id="next-level-button">Next Level</button>
+        </div>
+    </div>
+
+    <script>
+        // Game Constants
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 550;
+        const BORDER_THICKNESS = 40;
+        const RING_RADIUS = 15;
+        const MAX_POWER = 12;
+        
+        // Difficulty presets
+        const DIFFICULTY_SETTINGS = {
+            easy: {
+                gravityStrength: 0.1,
+                waterResistance: 0.98,
+                powerCycleSpeed: 1,
+                ringCount: 3,
+                rodCount: 3
+            },
+            medium: {
+                gravityStrength: 0.2,
+                waterResistance: 0.97,
+                powerCycleSpeed: 1.5,
+                ringCount: 4,
+                rodCount: 4
+            },
+            hard: {
+                gravityStrength: 0.3,
+                waterResistance: 0.96,
+                powerCycleSpeed: 2,
+                ringCount: 5,
+                rodCount: 5
+            }
+        };
+        
+        // Game state
+        let gameState = {
+            rings: [],
+            rods: [],
+            leftJet: {
+                x: 150,
+                y: CANVAS_HEIGHT - BORDER_THICKNESS - 60,
+                angle: -60,
+                power: 0,
+                active: false,
+                powerIncreasing: true
+            },
+            rightJet: {
+                x: CANVAS_WIDTH - 150,
+                y: CANVAS_HEIGHT - BORDER_THICKNESS - 60,
+                angle: -120,
+                power: 0,
+                active: false,
+                powerIncreasing: true
+            },
+            settings: {
+                difficulty: 'easy',
+                level: 1
+            },
+            physics: {
+                gravity: 0.1,
+                waterResistance: 0.98,
+                powerCycleSpeed: 1
+            },
+            tutorial: {
+                active: true,
+                step: 1,
+                maxSteps: 2
+            },
+            levelComplete: false,
+            startTime: 0,
+            endTime: 0,
+            bubbles: [],
+            particles: []
+        };
+        
+        // Get DOM elements
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const leftJetButton = document.getElementById('left-jet-button');
+        const rightJetButton = document.getElementById('right-jet-button');
+        const resetButton = document.getElementById('reset-button');
+        const difficultyButton = document.getElementById('difficulty-button');
+        const difficultyLabel = document.getElementById('difficulty-label');
+        const helpButton = document.getElementById('help-button');
+        const tutorialOverlay = document.getElementById('tutorial-overlay');
+        const tutorialNext = document.getElementById('tutorial-next');
+        const tutorialStart = document.getElementById('tutorial-start');
+        const levelCompleteScreen = document.getElementById('level-complete');
+        const nextLevelButton = document.getElementById('next-level-button');
+        const levelStats = document.getElementById('level-stats');
+        const characterLeft = document.getElementById('character-left');
+        const characterRight = document.getElementById('character-right');
+        const speechLeft = document.getElementById('speech-left');
+        const speechRight = document.getElementById('speech-right');
+        const leftPowerFill = document.getElementById('left-power-fill');
+        const rightPowerFill = document.getElementById('right-power-fill');
+        const leftPowerIndicator = document.getElementById('left-power-indicator');
+        const rightPowerIndicator = document.getElementById('right-power-indicator');
+        
+        // Audio context for sound effects
+        let audioContext;
+        try {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+            console.log('Web Audio API is not supported in this browser');
+        }
+        
+        // Characters
+        function drawCharacters() {
+            // Professor Bubble (left character)
+            characterLeft.innerHTML = `
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                    <!-- Body -->
+                    <ellipse cx="50" cy="70" rx="25" ry="30" fill="#4ECDC4" />
+                    
+                    <!-- Head -->
+                    <circle cx="50" cy="40" r="20" fill="#FFE0B5" />
+                    
+                    <!-- Eyes -->
+                    <circle cx="42" cy="35" r="4" fill="white" />
+                    <circle cx="58" cy="35" r="4" fill="white" />
+                    <circle cx="42" cy="35" r="2" fill="#333" />
+                    <circle cx="58" cy="35" r="2" fill="#333" />
+                    
+                    <!-- Glasses -->
+                    <circle cx="42" cy="35" r="6" fill="none" stroke="#333" stroke-width="1.5" />
+                    <circle cx="58" cy="35" r="6" fill="none" stroke="#333" stroke-width="1.5" />
+                    <line x1="48" y1="35" x2="52" y2="35" stroke="#333" stroke-width="1.5" />
+                    
+                    <!-- Smile -->
+                    <path d="M40,45 Q50,55 60,45" fill="none" stroke="#333" stroke-width="1.5" />
+                    
+                    <!-- Hair -->
+                    <path d="M30,25 Q50,15 70,25 Q50,20 30,25" fill="#888" />
+                    
+                    <!-- Arms -->
+                    <line x1="30" y1="65" x2="15" y2="60" stroke="#4ECDC4" stroke-width="5" stroke-linecap="round" />
+                    <line x1="70" y1="65" x2="85" y2="60" stroke="#4ECDC4" stroke-width="5" stroke-linecap="round" />
+                    
+                    <!-- Bowtie -->
+                    <polygon points="50,55 45,50 55,50" fill="#FF6B6B" />
+                    <polygon points="50,55 45,60 55,60" fill="#FF6B6B" />
+                </svg>
+            `;
+            
+            // Captain Splash (right character)
+            characterRight.innerHTML = `
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                    <!-- Body -->
+                    <ellipse cx="50" cy="70" rx="25" ry="30" fill="#FFD166" />
+                    
+                    <!-- Head -->
+                    <circle cx="50" cy="40" r="20" fill="#FFE0B5" />
+                    
+                    <!-- Eyes -->
+                    <circle cx="42" cy="35" r="4" fill="white" />
+                    <circle cx="58" cy="35" r="4" fill="white" />
+                    <circle cx="42" cy="35" r="2" fill="#333" />
+                    <circle cx="58" cy="35" r="2" fill="#333" />
+                    
+                    <!-- Smile -->
+                    <path d="M40,45 Q50,55 60,45" fill="none" stroke="#333" stroke-width="1.5" />
+                    
+                    <!-- Cap -->
+                    <path d="M30,25 Q50,15 70,25 L65,30 Q50,22 35,30 Z" fill="#3498DB" />
+                    
+                    <!-- Arms -->
+                    <line x1="30" y1="65" x2="15" y2="60" stroke="#FFD166" stroke-width="5" stroke-linecap="round" />
+                    <line x1="70" y1="65" x2="85" y2="60" stroke="#FFD166" stroke-width="5" stroke-linecap="round" />
+                    
+                    <!-- Captain emblem -->
+                    <circle cx="50" cy="55" r="5" fill="#FF6B6B" />
+                    <text x="50" y="58" font-size="8" fill="white" text-anchor="middle">C</text>
+                </svg>
+            `;
+        }
+        
+        // Speech bubble functions
+        function showSpeech(side, text, duration = 3000) {
+            const bubble = side === 'left' ? speechLeft : speechRight;
+            bubble.textContent = text;
+            bubble.style.opacity = '1';
+            
+            setTimeout(() => {
+                bubble.style.opacity = '0';
+            }, duration);
+        }
+        
+        // Tutorial functions
+        function showTutorial(step) {
+            const tutorialContent = document.getElementById('tutorial-content');
+            
+            if (step === 1) {
+                tutorialContent.innerHTML = `
+                    <h2>Welcome to Water Bubble Ring Challenge!</h2>
+                    <p>In this game, you'll learn about water physics while having fun placing rings on rods.</p>
+                    <p>Press the <strong>Left Jet</strong> and <strong>Right Jet</strong> buttons to create bubbles that push the rings.</p>
+                    <p>Hold the button to increase power, then release at just the right moment!</p>
+                    <p>Try to get all the rings onto the rods to complete each level.</p>
+                `;
+                tutorialNext.style.display = 'block';
+                tutorialStart.style.display = 'none';
+            } else if (step === 2) {
+                tutorialContent.innerHTML = `
+                    <h2>Water Physics!</h2>
+                    <p>Learn how objects float and move in water:</p>
+                    <p><strong>Buoyancy</strong> - Things float or sink in water depending on their density</p>
+                    <p><strong>Water Resistance</strong> - Water slows objects down as they move through it</p>
+                    <p><strong>Water Pressure</strong> - Water pushes in all directions</p>
+                    <p>Use these principles to guide the rings to the rods!</p>
+                `;
+                tutorialNext.style.display = 'none';
+                tutorialStart.style.display = 'block';
+            }
+            
+            gameState.tutorial.step = step;
+        }
+        
+        // Sound effect generators
+        function createBubbleSound() {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(600 + Math.random() * 200, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.5);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.5);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+        
+        function createSuccessSound() {
+            if (!audioContext) return;
+            
+            const notes = [
+                { freq: 523.25, time: 0 },     // C5
+                { freq: 659.25, time: 0.1 },   // E5
+                { freq: 783.99, time: 0.2 },   // G5
+                { freq: 1046.50, time: 0.3 }   // C6
+            ];
+            
+            notes.forEach(note => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(note.freq, audioContext.currentTime + note.time);
+                
+                gainNode.gain.setValueAtTime(0, audioContext.currentTime + note.time);
+                gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + note.time + 0.05);
+                gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + note.time + 0.4);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start(audioContext.currentTime + note.time);
+                oscillator.stop(audioContext.currentTime + note.time + 0.4);
+            });
+        }
+        
+        function createPopSound() {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(600, audioContext.currentTime + 0.1);
+            
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioContext.currentTime + 0.02);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioContext.currentTime + 0.1);
+        }
+        
+        function createCelebrationSound() {
+            if (!audioContext) return;
+            
+            const melody = [
+                { note: 'C5', duration: 0.2 },
+                { note: 'E5', duration: 0.2 },
+                { note: 'G5', duration: 0.2 },
+                { note: 'C6', duration: 0.4 }
+            ];
+            
+            const noteFrequencies = {
+                'C5': 523.25,
+                'D5': 587.33,
+                'E5': 659.25,
+                'F5': 698.46,
+                'G5': 783.99,
+                'A5': 880.00,
+                'B5': 987.77,
+                'C6': 1046.50
+            };
+            
+            let time = audioContext.currentTime;
+            
+            melody.forEach(item => {
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.type = 'sine';
+                oscillator.frequency.value = noteFrequencies[item.note];
+                
+                gainNode.gain.setValueAtTime(0, time);
+                gainNode.gain.linearRampToValueAtTime(0.3, time + 0.05);
+                gainNode.gain.linearRampToValueAtTime(0.2, time + item.duration - 0.05);
+                gainNode.gain.linearRampToValueAtTime(0, time + item.duration);
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.start(time);
+                oscillator.stop(time + item.duration);
+                
+                time += item.duration;
+            });
+        }
+        
+        // Game initialization
+        function initGame() {
+            // Draw characters
+            drawCharacters();
+            
+            // Apply difficulty settings
+            applyDifficulty();
+            
+            // Reset game state
+            resetGame();
+            
+            // Show tutorial
+            showTutorial(1);
+            
+            // Start animation loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Apply difficulty settings
+        function applyDifficulty() {
+            const settings = DIFFICULTY_SETTINGS[gameState.settings.difficulty];
+            
+            // Update game physics values (in gameState, not globals)
+            gameState.physics = {
+                gravity: settings.gravityStrength,
+                waterResistance: settings.waterResistance,
+                powerCycleSpeed: settings.powerCycleSpeed
+            };
+        }
+        
+        // Set up event listeners
+        function setupEventListeners() {
+            // Left jet button
+            leftJetButton.addEventListener('mousedown', () => {
+                gameState.leftJet.active = true;
+                gameState.leftJet.powerIncreasing = true;
+                gameState.leftJet.power = 1;
+            });
+            
+            leftJetButton.addEventListener('mouseup', () => {
+                createBubbleSound();
+                gameState.leftJet.active = false;
+                gameState.leftJet.power = 0;
+            });
+            
+            leftJetButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                gameState.leftJet.active = true;
+                gameState.leftJet.powerIncreasing = true;
+                gameState.leftJet.power = 1;
+            });
+            
+            leftJetButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                createBubbleSound();
+                gameState.leftJet.active = false;
+                gameState.leftJet.power = 0;
+            });
+            
+            // Right jet button
+            rightJetButton.addEventListener('mousedown', () => {
+                gameState.rightJet.active = true;
+                gameState.rightJet.powerIncreasing = true;
+                gameState.rightJet.power = 1;
+            });
+            
+            rightJetButton.addEventListener('mouseup', () => {
+                createBubbleSound();
+                gameState.rightJet.active = false;
+                gameState.rightJet.power = 0;
+            });
+            
+            rightJetButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                gameState.rightJet.active = true;
+                gameState.rightJet.powerIncreasing = true;
+                gameState.rightJet.power = 1;
+            });
+            
+            rightJetButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                createBubbleSound();
+                gameState.rightJet.active = false;
+                gameState.rightJet.power = 0;
+            });
+            
+            // Reset button
+            resetButton.addEventListener('click', () => {
+                resetGame();
+            });
+            
+            // Difficulty button
+            difficultyButton.addEventListener('click', () => {
+                cycleDifficulty();
+            });
+            
+            // Help button
+            helpButton.addEventListener('click', () => {
+                gameState.tutorial.active = true;
+                showTutorial(1);
+                tutorialOverlay.style.display = 'flex';
+            });
+            
+            // Tutorial navigation
+            tutorialNext.addEventListener('click', () => {
+                showTutorial(gameState.tutorial.step + 1);
+            });
+            
+            tutorialStart.addEventListener('click', () => {
+                gameState.tutorial.active = false;
+                tutorialOverlay.style.display = 'none';
+                startGame();
+            });
+            
+            // Next level button
+            nextLevelButton.addEventListener('click', () => {
+                levelCompleteScreen.style.transform = 'translate(-50%, -50%) scale(0)';
+                gameState.levelComplete = false;
+                gameState.settings.level++;
+                resetGame();
+            });
+        }
+        
+        // Change difficulty setting
+        function cycleDifficulty() {
+            const difficulties = ['easy', 'medium', 'hard'];
+            const currentIndex = difficulties.indexOf(gameState.settings.difficulty);
+            const nextIndex = (currentIndex + 1) % difficulties.length;
+            gameState.settings.difficulty = difficulties[nextIndex];
+            
+            difficultyLabel.textContent = `Difficulty: ${gameState.settings.difficulty.charAt(0).toUpperCase() + gameState.settings.difficulty.slice(1)}`;
+            
+            applyDifficulty();
+            resetGame();
+        }
+        
+        // Reset game state
+        function resetGame() {
+            const settings = DIFFICULTY_SETTINGS[gameState.settings.difficulty];
+            
+            // Create rings
+            gameState.rings = [];
+            for (let i = 0; i < settings.ringCount; i++) {
+                // Alternate left and right sides for initial ring positions
+                let x;
+                if (i % 2 === 0) {
+                    x = 100 + (Math.random() * 100);
+                } else {
+                    x = CANVAS_WIDTH - 100 - (Math.random() * 100);
+                }
+                
+                gameState.rings.push({
+                    x: x,
+                    y: CANVAS_HEIGHT / 2 - 100 - (i * 30),
+                    vx: 0,
+                    vy: 0,
+                    color: getRandomRingColor(),
+                    onRod: false,
+                    rodIndex: -1
+                });
+            }
+            
+            // Create rods
+            gameState.rods = [];
+            for (let i = 0; i < settings.rodCount; i++) {
+                const spacing = CANVAS_WIDTH / (settings.rodCount + 1);
+                gameState.rods.push({
+                    x: spacing * (i + 1),
+                    y: 150,
+                    height: 100,
+                    rings: 0
+                });
+            }
+            
+            // Reset other game state
+            gameState.bubbles = [];
+            gameState.particles = [];
+            gameState.startTime = Date.now();
+            
+            // Provide hints through character speech
+            setTimeout(() => {
+                showSpeech('left', "Hold the jet buttons to build up power!");
+            }, 500);
+            
+            setTimeout(() => {
+                showSpeech('right', "Try to get the rings on the rods!");
+            }, 3500);
+        }
+        
+        // Start the game
+        function startGame() {
+            gameState.startTime = Date.now();
+            showSpeech('left', "Let's go! Get those rings on the rods!");
+        }
+        
+        // Generate a random bright color for rings
+        function getRandomRingColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return `hsl(${hue}, 80%, 60%)`;
+        }
+        
+        // Calculate water shape points (W-shaped bottom)
+        function calculateWaterShape() {
+            const points = [];
+            
+            // Top left corner
+            points.push({x: BORDER_THICKNESS, y: BORDER_THICKNESS});
+            
+            // Top right corner
+            points.push({x: CANVAS_WIDTH - BORDER_THICKNESS, y: BORDER_THICKNESS});
+            
+            // Right wall
+            points.push({x: CANVAS_WIDTH - BORDER_THICKNESS, y: CANVAS_HEIGHT - BORDER_THICKNESS});
+            
+            // Right slope start
+            points.push({x: CANVAS_WIDTH - BORDER_THICKNESS - 100, y: CANVAS_HEIGHT - BORDER_THICKNESS});
+            
+            // Right divot
+            points.push({x: CANVAS_WIDTH - 200, y: CANVAS_HEIGHT - BORDER_THICKNESS - 60});
+            
+            // Middle peak
+            points.push({x: CANVAS_WIDTH / 2, y: CANVAS_HEIGHT - BORDER_THICKNESS - 30});
+            
+            // Left divot
+            points.push({x: 200, y: CANVAS_HEIGHT - BORDER_THICKNESS - 60});
+            
+            // Left slope end
+            points.push({x: BORDER_THICKNESS + 100, y: CANVAS_HEIGHT - BORDER_THICKNESS});
+            
+            // Bottom left corner
+            points.push({x: BORDER_THICKNESS, y: CANVAS_HEIGHT - BORDER_THICKNESS});
+            
+            return points;
+        }
+        
+        // Get Y coordinate of boundary at a given X position
+        function getBoundaryY(x) {
+            const centerX = CANVAS_WIDTH / 2;
+            
+            if (x < BORDER_THICKNESS + 100) {  // Left wall
+                return CANVAS_HEIGHT - BORDER_THICKNESS;
+            } else if (x < 200) {  // Left slope to divot
+                const t = (x - (BORDER_THICKNESS + 100)) / 100;
+                return CANVAS_HEIGHT - BORDER_THICKNESS - (60 * t);
+            } else if (x < centerX) {  // Left divot to center
+                const t = (x - 200) / (centerX - 200);
+                return CANVAS_HEIGHT - BORDER_THICKNESS - 60 + (30 * t);
+            } else if (x < CANVAS_WIDTH - 200) {  // Center to right divot
+                const t = (x - centerX) / (CANVAS_WIDTH - 200 - centerX);
+                return CANVAS_HEIGHT - BORDER_THICKNESS - 30 - (30 * t);
+            } else if (x < CANVAS_WIDTH - BORDER_THICKNESS - 100) {  // Right slope
+                const t = (x - (CANVAS_WIDTH - 200)) / 100;
+                return CANVAS_HEIGHT - BORDER_THICKNESS - 60 + (60 * t);
+            } else {  // Right wall
+                return CANVAS_HEIGHT - BORDER_THICKNESS;
+            }
+        }
+        
+        // Ring collision handling
+        function handleRingCollision(ring) {
+            // Wall collisions
+            if (ring.x < BORDER_THICKNESS + RING_RADIUS) {
+                ring.x = BORDER_THICKNESS + RING_RADIUS;
+                ring.vx *= -0.7;
+            } else if (ring.x > CANVAS_WIDTH - BORDER_THICKNESS - RING_RADIUS) {
+                ring.x = CANVAS_WIDTH - BORDER_THICKNESS - RING_RADIUS;
+                ring.vx *= -0.7;
+            }
+            
+            if (ring.y < BORDER_THICKNESS + RING_RADIUS) {
+                ring.y = BORDER_THICKNESS + RING_RADIUS;
+                ring.vy *= -0.7;
+            }
+            
+            // Check collision with bottom boundary
+            const boundaryY = getBoundaryY(ring.x);
+            if (ring.y > boundaryY - RING_RADIUS) {
+                ring.y = boundaryY - RING_RADIUS;
+                
+                // Calculate the slope for reflection
+                const dx = 1;
+                const dy = getBoundaryY(ring.x + dx) - getBoundaryY(ring.x);
+                const normal_angle = Math.atan2(-dx, dy);
+                
+                // Reflect velocity
+                const speed = Math.sqrt(ring.vx * ring.vx + ring.vy * ring.vy);
+                const angle = Math.atan2(ring.vy, ring.vx);
+                const new_angle = 2 * normal_angle - angle;
+                
+                ring.vx = speed * Math.cos(new_angle) * 0.7;
+                ring.vy = speed * Math.sin(new_angle) * 0.7;
+            }
+            
+            // Rod collisions
+            for (let i = 0; i < gameState.rods.length; i++) {
+                const rod = gameState.rods[i];
+                const dx = ring.x - rod.x;
+                const dy = ring.y - rod.y - rod.height / 2;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                
+                // Check if ring is close to rod top
+                if (!ring.onRod && distance < RING_RADIUS && ring.y < rod.y + 20) {
+                    // Place ring on rod
+                    ring.onRod = true;
+                    ring.rodIndex = i;
+                    ring.x = rod.x;
+                    ring.y = rod.y + 10 + (rod.rings * (RING_RADIUS * 2));
+                    ring.vx = 0;
+                    ring.vy = 0;
+                    
+                    // Increment rod ring counter
+                    rod.rings++;
+                    
+                    // Play success sound
+                    createPopSound();
+                    
+                    // Create celebration particles
+                    createRingParticles(ring.x, ring.y, ring.color);
+                    
+                    // Show celebration message
+                    if (rod.rings === 1) {
+                        showSpeech('right', "Great job! Keep going!");
+                    } else {
+                        showSpeech('left', "Wonderful! You're doing it!");
+                    }
+                    
+                    // Check level completion
+                    checkLevelComplete();
+                    
+                    break;
+                }
+                
+                // General collision with rod body
+                if (!ring.onRod && distance < RING_RADIUS + 5) {
+                    // Bounce off the rod
+                    const nx = dx / distance;
+                    const ny = dy / distance;
+                    const dot = ring.vx * nx + ring.vy * ny;
+                    
+                    ring.vx = ring.vx - 2 * dot * nx;
+                    ring.vy = ring.vy - 2 * dot * ny;
+                    
+                    // Apply damping
+                    ring.vx *= 0.8;
+                    ring.vy *= 0.8;
+                    
+                    // Move ring outside collision
+                    const pushDistance = RING_RADIUS + 5 - distance;
+                    ring.x += nx * pushDistance;
+                    ring.y += ny * pushDistance;
+                }
+            }
+        }
+        
+        // Create particles when a ring is placed on a rod
+        function createRingParticles(x, y, color) {
+            for (let i = 0; i < 20; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 1 + Math.random() * 3;
+                
+                gameState.particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: 3 + Math.random() * 5,
+                    color: color,
+                    life: 1.0
+                });
+            }
+        }
+        
+        // Check if the level is complete
+        function checkLevelComplete() {
+            const allRingsOnRods = gameState.rings.every(ring => ring.onRod);
+            
+            if (allRingsOnRods && !gameState.levelComplete) {
+                gameState.levelComplete = true;
+                gameState.endTime = Date.now();
+                
+                // Show level complete screen after a short delay
+                setTimeout(() => {
+                    createCelebrationSound();
+                    showLevelComplete();
+                }, 1000);
+            }
+        }
+        
+        // Show level complete screen
+        function showLevelComplete() {
+            const levelCompleteScreen = document.getElementById('level-complete');
+            const levelStats = document.getElementById('level-stats');
+            
+            // Calculate time
+            const timeElapsed = (gameState.endTime - gameState.startTime) / 1000;
+            
+            // Set stats
+            levelStats.innerHTML = `
+                <p>Time: ${timeElapsed.toFixed(2)} seconds</p>
+                <p>Level: ${gameState.settings.level}</p>
+                <p>Difficulty: ${gameState.settings.difficulty}</p>
+            `;
+            
+            // Show screen with animation
+            levelCompleteScreen.style.transform = 'translate(-50%, -50%) scale(1)';
+            
+            // Create lots of celebration particles
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const x = Math.random() * CANVAS_WIDTH;
+                    const y = Math.random() * (CANVAS_HEIGHT / 2);
+                    createRingParticles(x, y, getRandomRingColor());
+                }, i * 50);
+            }
+            
+            // Show celebration messages
+            showSpeech('left', "Amazing job! You did it!");
+            setTimeout(() => {
+                showSpeech('right', "You're a bubble master!");
+            }, 3000);
+        }
+        
+        // Create bubbles from jets
+        function createBubbles() {
+            // Left jet bubbles
+            if (gameState.leftJet.active) {
+                const angle = gameState.leftJet.angle * (Math.PI / 180);
+                const bubbleCount = Math.floor(gameState.leftJet.power / 3) + 1;
+                
+                for (let i = 0; i < bubbleCount; i++) {
+                    // Add randomness to bubble direction
+                    const bubbleAngle = angle + (Math.random() * 0.5 - 0.25);
+                    const speedVariation = 0.8 + Math.random() * 0.4;
+                    
+                    gameState.bubbles.push({
+                        x: gameState.leftJet.x,
+                        y: gameState.leftJet.y,
+                        vx: Math.cos(bubbleAngle) * gameState.leftJet.power * speedVariation,
+                        vy: Math.sin(bubbleAngle) * gameState.leftJet.power * speedVariation,
+                        size: 3 + Math.random() * 5,
+                        life: 1.0
+                    });
+                }
+            }
+            
+            // Right jet bubbles
+            if (gameState.rightJet.active) {
+                const angle = gameState.rightJet.angle * (Math.PI / 180);
+                const bubbleCount = Math.floor(gameState.rightJet.power / 3) + 1;
+                
+                for (let i = 0; i < bubbleCount; i++) {
+                    // Add randomness to bubble direction
+                    const bubbleAngle = angle + (Math.random() * 0.5 - 0.25);
+                    const speedVariation = 0.8 + Math.random() * 0.4;
+                    
+                    gameState.bubbles.push({
+                        x: gameState.rightJet.x,
+                        y: gameState.rightJet.y,
+                        vx: Math.cos(bubbleAngle) * gameState.rightJet.power * speedVariation,
+                        vy: Math.sin(bubbleAngle) * gameState.rightJet.power * speedVariation,
+                        size: 3 + Math.random() * 5,
+                        life: 1.0
+                    });
+                }
+            }
+        }
+        
+        // Update bubble positions and properties
+        function updateBubbles() {
+            for (let i = gameState.bubbles.length - 1; i >= 0; i--) {
+                const bubble = gameState.bubbles[i];
+                
+                // Move bubble
+                bubble.x += bubble.vx;
+                bubble.y += bubble.vy;
+                
+                // Apply physics
+                bubble.vx *= 0.98;
+                bubble.vy *= 0.98;
+                bubble.vy -= 0.1; // Bubbles rise
+                
+                // Reduce life
+                bubble.life -= 0.02;
+                
+                // Remove dead bubbles
+                if (bubble.life <= 0 || 
+                    bubble.x < 0 || bubble.x > CANVAS_WIDTH || 
+                    bubble.y < 0 || bubble.y > CANVAS_HEIGHT) {
+                    gameState.bubbles.splice(i, 1);
+                }
+            }
+        }
+        
+        // Update particle positions and properties
+        function updateParticles() {
+            for (let i = gameState.particles.length - 1; i >= 0; i--) {
+                const particle = gameState.particles[i];
+                
+                // Move particle
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                
+                // Apply physics
+                particle.vx *= 0.96;
+                particle.vy *= 0.96;
+                particle.vy += 0.05; // Gravity
+                
+                // Reduce life
+                particle.life -= 0.02;
+                
+                // Remove dead particles
+                if (particle.life <= 0) {
+                    gameState.particles.splice(i, 1);
+                }
+            }
+        }
+        
+        // Update ring positions based on physics
+        function updateRings() {
+            for (let i = 0; i < gameState.rings.length; i++) {
+                const ring = gameState.rings[i];
+                
+                // Skip rings already placed on rods
+                if (ring.onRod) continue;
+                
+                // Apply physics
+                ring.vx *= gameState.physics.waterResistance;
+                ring.vy *= gameState.physics.waterResistance;
+                ring.vy += gameState.physics.gravity;
+                
+                // Apply bubble forces
+                for (let j = 0; j < gameState.bubbles.length; j++) {
+                    const bubble = gameState.bubbles[j];
+                    const dx = ring.x - bubble.x;
+                    const dy = ring.y - bubble.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 50) {
+                        const force = (1 - distance / 50) * bubble.size * 0.01;
+                        ring.vx += (dx / distance) * force;
+                        ring.vy += (dy / distance) * force;
+                    }
+                }
+                
+                // Apply jet forces directly
+                if (gameState.leftJet.active) {
+                    const angle = gameState.leftJet.angle * (Math.PI / 180);
+                    const dx = ring.x - gameState.leftJet.x;
+                    const dy = ring.y - gameState.leftJet.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 100) {
+                        const force = (1 - distance / 100) * gameState.leftJet.power * 0.1;
+                        ring.vx += Math.cos(angle) * force;
+                        ring.vy += Math.sin(angle) * force;
+                    }
+                }
+                
+                if (gameState.rightJet.active) {
+                    const angle = gameState.rightJet.angle * (Math.PI / 180);
+                    const dx = ring.x - gameState.rightJet.x;
+                    const dy = ring.y - gameState.rightJet.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (distance < 100) {
+                        const force = (1 - distance / 100) * gameState.rightJet.power * 0.1;
+                        ring.vx += Math.cos(angle) * force;
+                        ring.vy += Math.sin(angle) * force;
+                    }
+                }
+                
+                // Update position
+                ring.x += ring.vx;
+                ring.y += ring.vy;
+                
+                // Handle collisions
+                handleRingCollision(ring);
+            }
+        }
+        
+        // Update jet power based on button press
+        function updateJetPower() {
+            // Left jet power cycle
+            if (gameState.leftJet.active) {
+                if (gameState.leftJet.powerIncreasing) {
+                    gameState.leftJet.power += gameState.physics.powerCycleSpeed * 0.1;
+                    if (gameState.leftJet.power >= MAX_POWER) {
+                        gameState.leftJet.powerIncreasing = false;
+                    }
+                } else {
+                    gameState.leftJet.power -= gameState.physics.powerCycleSpeed * 0.1;
+                    if (gameState.leftJet.power <= 1) {
+                        gameState.leftJet.powerIncreasing = true;
+                    }
+                }
+            }
+            
+            // Right jet power cycle
+            if (gameState.rightJet.active) {
+                if (gameState.rightJet.powerIncreasing) {
+                    gameState.rightJet.power += gameState.physics.powerCycleSpeed * 0.1;
+                    if (gameState.rightJet.power >= MAX_POWER) {
+                        gameState.rightJet.powerIncreasing = false;
+                    }
+                } else {
+                    gameState.rightJet.power -= gameState.physics.powerCycleSpeed * 0.1;
+                    if (gameState.rightJet.power <= 1) {
+                        gameState.rightJet.powerIncreasing = true;
+                    }
+                }
+            }
+            
+            // Update power meter displays
+            if (gameState.leftJet.active) {
+                const powerPercent = (gameState.leftJet.power / MAX_POWER) * 100;
+                leftPowerFill.style.height = `${powerPercent}%`;
+                leftPowerIndicator.textContent = Math.floor(gameState.leftJet.power);
+            } else {
+                leftPowerFill.style.height = '0%';
+                leftPowerIndicator.textContent = '0';
+            }
+            
+            if (gameState.rightJet.active) {
+                const powerPercent = (gameState.rightJet.power / MAX_POWER) * 100;
+                rightPowerFill.style.height = `${powerPercent}%`;
+                rightPowerIndicator.textContent = Math.floor(gameState.rightJet.power);
+            } else {
+                rightPowerFill.style.height = '0%';
+                rightPowerIndicator.textContent = '0';
+            }
+        }
+        
+        // Draw everything to the canvas
+        function drawGame() {
+            // Clear canvas
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Draw water background with wavy pattern
+            drawWaterBackground();
+            
+            // Draw tank border
+            drawTank();
+            
+            // Draw rods
+            drawRods();
+            
+            // Draw rings
+            drawRings();
+            
+            // Draw bubbles
+            drawBubbles();
+            
+            // Draw particles
+            drawParticles();
+            
+            // Draw jets
+            drawJets();
+            
+            // Draw UI
+            drawUI();
+        }
+        
+        // Draw wavy water background
+        function drawWaterBackground() {
+            // Create gradient
+            const gradient = ctx.createLinearGradient(0, 0, 0, CANVAS_HEIGHT);
+            gradient.addColorStop(0, '#87CEEB');
+            gradient.addColorStop(1, '#1E90FF');
+            
+            // Fill background
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+            
+            // Draw wavy lines for water effect
+            const time = Date.now() / 1000;
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+            ctx.lineWidth = 1;
+            
+            for (let y = 30; y < CANVAS_HEIGHT; y += 30) {
+                ctx.beginPath();
+                
+                for (let x = 0; x < CANVAS_WIDTH; x += 10) {
+                    const waveHeight = Math.sin(x * 0.03 + time * 2) * 5;
+                    
+                    if (x === 0) {
+                        ctx.moveTo(x, y + waveHeight);
+                    } else {
+                        ctx.lineTo(x, y + waveHeight);
+                    }
+                }
+                
+                ctx.stroke();
+            }
+        }
+        
+        // Draw tank with water shape
+        function drawTank() {
+            const waterShape = calculateWaterShape();
+            
+            // Draw tank fill
+            ctx.fillStyle = 'rgba(173, 216, 230, 0.6)';
+            ctx.beginPath();
+            ctx.moveTo(waterShape[0].x, waterShape[0].y);
+            
+            for (let i = 1; i < waterShape.length; i++) {
+                ctx.lineTo(waterShape[i].x, waterShape[i].y);
+            }
+            
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw tank border
+            ctx.strokeStyle = '#1E90FF';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            
+            // Draw highlights
+            const time = Date.now() / 1000;
+            
+            for (let i = 1; i < 5; i++) {
+                const y = BORDER_THICKNESS + i * 60 + Math.sin(time * 0.5 + i) * 5;
+                
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.1 - i * 0.02})`;
+                ctx.beginPath();
+                ctx.moveTo(BORDER_THICKNESS, y);
+                ctx.lineTo(CANVAS_WIDTH - BORDER_THICKNESS, y);
+                ctx.stroke();
+            }
+        }
+        
+        // Draw the rods
+        function drawRods() {
+            for (let i = 0; i < gameState.rods.length; i++) {
+                const rod = gameState.rods[i];
+                
+                // Draw rod base
+                ctx.fillStyle = '#8B4513';
+                ctx.beginPath();
+                ctx.arc(rod.x, rod.y + rod.height + 10, 15, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw rod body
+                ctx.fillStyle = '#CD853F';
+                ctx.beginPath();
+                ctx.rect(rod.x - 3, rod.y, 6, rod.height);
+                ctx.fill();
+                
+                // Draw top cap
+                ctx.fillStyle = '#F4A460';
+                ctx.beginPath();
+                ctx.arc(rod.x, rod.y, 5, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Draw the rings
+        function drawRings() {
+            for (let i = 0; i < gameState.rings.length; i++) {
+                const ring = gameState.rings[i];
+                
+                // Draw outer ring
+                ctx.fillStyle = ring.color;
+                ctx.beginPath();
+                ctx.arc(ring.x, ring.y, RING_RADIUS, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw inner hole
+                ctx.fillStyle = 'rgba(173, 216, 230, 0.6)';
+                ctx.beginPath();
+                ctx.arc(ring.x, ring.y, RING_RADIUS * 0.6, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw highlight
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.beginPath();
+                ctx.arc(ring.x - RING_RADIUS * 0.3, ring.y - RING_RADIUS * 0.3, RING_RADIUS * 0.2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        // Draw the bubbles
+        function drawBubbles() {
+            ctx.globalAlpha = 0.7;
+            
+            for (let i = 0; i < gameState.bubbles.length; i++) {
+                const bubble = gameState.bubbles[i];
+                
+                // Draw bubble
+                ctx.fillStyle = `rgba(255, 255, 255, ${bubble.life * 0.5})`;
+                ctx.beginPath();
+                ctx.arc(bubble.x, bubble.y, bubble.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw highlight
+                ctx.fillStyle = `rgba(255, 255, 255, ${bubble.life * 0.8})`;
+                ctx.beginPath();
+                ctx.arc(bubble.x - bubble.size * 0.3, bubble.y - bubble.size * 0.3, bubble.size * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.globalAlpha = 1.0;
+        }
+        
+        // Draw the particles
+        function drawParticles() {
+            for (let i = 0; i < gameState.particles.length; i++) {
+                const particle = gameState.particles[i];
+                
+                ctx.fillStyle = particle.color;
+                ctx.globalAlpha = particle.life;
+                ctx.beginPath();
+                ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            
+            ctx.globalAlpha = 1.0;
+        }
+        
+        // Draw the jets
+        function drawJets() {
+            // Draw left jet
+            ctx.fillStyle = '#4ECDC4';
+            ctx.beginPath();
+            ctx.arc(gameState.leftJet.x, gameState.leftJet.y, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw jet stream if active
+            if (gameState.leftJet.active) {
+                const angle = gameState.leftJet.angle * (Math.PI / 180);
+                const jetLength = gameState.leftJet.power * 5;
+                
+                // Draw stream
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(gameState.leftJet.x, gameState.leftJet.y);
+                ctx.lineTo(
+                    gameState.leftJet.x + Math.cos(angle) * jetLength,
+                    gameState.leftJet.y + Math.sin(angle) * jetLength
+                );
+                ctx.stroke();
+            }
+            
+            // Draw right jet
+            ctx.fillStyle = '#FFD166';
+            ctx.beginPath();
+            ctx.arc(gameState.rightJet.x, gameState.rightJet.y, 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw jet stream if active
+            if (gameState.rightJet.active) {
+                const angle = gameState.rightJet.angle * (Math.PI / 180);
+                const jetLength = gameState.rightJet.power * 5;
+                
+                // Draw stream
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(gameState.rightJet.x, gameState.rightJet.y);
+                ctx.lineTo(
+                    gameState.rightJet.x + Math.cos(angle) * jetLength,
+                    gameState.rightJet.y + Math.sin(angle) * jetLength
+                );
+                ctx.stroke();
+            }
+        }
+        
+        // Draw UI elements on canvas
+        function drawUI() {
+            // Draw score
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 20px Nunito, sans-serif';
+            ctx.textAlign = 'center';
+            
+            // Count completed rings
+            const completedRings = gameState.rings.filter(ring => ring.onRod).length;
+            ctx.fillText(`Rings: ${completedRings}/${gameState.rings.length}`, CANVAS_WIDTH / 2, 30);
+            
+            // Draw level
+            ctx.fillText(`Level: ${gameState.settings.level}`, CANVAS_WIDTH / 2, 60);
+            
+            // Draw time
+            if (!gameState.levelComplete) {
+                const timeElapsed = (Date.now() - gameState.startTime) / 1000;
+                ctx.fillText(`Time: ${timeElapsed.toFixed(1)}s`, CANVAS_WIDTH / 2, 90);
+            }
+        }
+        
+        // Main game loop
+        function gameLoop() {
+            // Skip updates if tutorial is active
+            if (!gameState.tutorial.active && !gameState.levelComplete) {
+                // Update game state
+                updateJetPower();
+                createBubbles();
+                updateBubbles();
+                updateRings();
+                updateParticles();
+            }
+            
+            // Draw everything
+            drawGame();
+            
+            // Continue the loop
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Initialize game when page loads
+        window.addEventListener('load', () => {
+            initGame();
+            setupEventListeners();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Number Line Adventures</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f9ff;
+            touch-action: manipulation;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .game-title {
+            text-align: center;
+            color: #1e40af;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .term-button {
+            font-size: 24px;
+            padding: 10px 20px;
+            border: 2px solid #2563eb;
+            border-radius: 8px;
+            background: white;
+            color: #1e40af;
+            cursor: pointer;
+            min-width: 80px;
+            text-align: center;
+        }
+        .operation {
+            font-size: 32px;
+            color: #2563eb;
+            padding: 0 10px;
+            cursor: pointer;
+        }
+        .number-line-container {
+            position: relative;
+            margin: 20px 0;
+        }
+        .number-line {
+            position: relative;
+            height: 80px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            overflow: hidden;
+            touch-action: none;
+        }
+        .line {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #2563eb;
+        }
+        .marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            background: #2563eb;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 2;
+            transition: left 0.2s ease;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+        }
+        .marker:after {
+            content: '';
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 8px solid #2563eb;
+        }
+        .number {
+            position: absolute;
+            bottom: 10px;
+            transform: translateX(-50%);
+            font-size: 14px;
+            color: #1e40af;
+        }
+        .tick {
+            position: absolute;
+            top: calc(50% - 5px);
+            width: 2px;
+            height: 10px;
+            background: #2563eb;
+            transform: translateX(-50%);
+        }
+        .zoom-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 5px 0;
+        }
+        .zoom-button {
+            font-size: 18px;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .score {
+            text-align: right;
+            color: #1e40af;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+        .feedback {
+            text-align: center;
+            font-size: 18px;
+            margin: 20px 0;
+            height: 24px;
+        }
+        .correct {
+            color: #059669;
+        }
+        .incorrect {
+            color: #dc2626;
+        }
+        .check-button {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            font-size: 18px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .check-button:disabled {
+            background: #93c5fd;
+            cursor: not-allowed;
+        }
+        .settings {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .setting-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .level-button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            background: white;
+            color: #2563eb;
+            border: 2px solid #2563eb;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .level-button.active {
+            background: #2563eb;
+            color: white;
+        }
+        .current-value {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #2563eb;
+            font-weight: bold;
+            background: rgba(255,255,255,0.8);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+        @media (max-width: 480px) {
+            .game-title {
+                font-size: 20px;
+            }
+            .term-button {
+                font-size: 20px;
+                min-width: 60px;
+                padding: 8px 16px;
+            }
+            .settings {
+                flex-direction: column;
+                align-items: center;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-title">Number Line Adventures</div>
+        <div class="score">Score: <span id="score">0</span> | Level: <span id="level">1</span></div>
+        
+        <div class="level-selector" id="levelSelector">
+            <button class="level-button active" data-level="1">Level 1</button>
+            <button class="level-button" data-level="2">Level 2</button>
+            <button class="level-button" data-level="3">Level 3</button>
+        </div>
+        
+        <div class="settings">
+            <div class="setting-option">
+                <input type="checkbox" id="allowNegative">
+                <label for="allowNegative">Include Negative Numbers</label>
+            </div>
+            <div class="setting-option">
+                <input type="checkbox" id="allowSubtraction">
+                <label for="allowSubtraction">Include Subtraction</label>
+            </div>
+            <div class="setting-option">
+                <input type="checkbox" id="allowMultiplication">
+                <label for="allowMultiplication">Include Multiplication</label>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div id="term1" class="term-button">5</div>
+            <div id="operation" class="operation">+</div>
+            <div id="term2" class="term-button">3</div>
+            <div class="operation">=</div>
+            <div id="result" class="term-button">?</div>
+        </div>
+
+        <div class="number-line-container">
+            <div class="number-line" id="numberLine">
+                <div class="line"></div>
+                <div class="current-value" id="currentValue">0</div>
+            </div>
+            <div class="zoom-controls">
+                <button class="zoom-button" id="zoomOut">−</button>
+                <button class="zoom-button" id="zoomIn">+</button>
+            </div>
+        </div>
+        
+        <div class="feedback" id="feedback"></div>
+        <button class="check-button" id="checkButton">Check Answer</button>
+    </div>
+
+    <script>
+        class NumberLineGame {
+            constructor() {
+                this.score = 0;
+                this.term1Value = 0;
+                this.term2Value = 0;
+                this.operation = '+';
+                this.markerPosition = 0;
+                this.isDragging = false;
+                this.currentLevel = 1;
+                
+                // Scale settings
+                this.minValue = -10;
+                this.maxValue = 10;
+                this.visibleRange = 20; // Number of units visible at once
+                this.stepSize = 1; // Distance between markers
+                
+                // Get DOM elements
+                this.initializeDOM();
+                
+                // Setup game
+                this.setupNumberLine();
+                this.setupEventListeners();
+                this.generateQuestion();
+            }
+
+            initializeDOM() {
+                this.numberLine = document.getElementById('numberLine');
+                this.term1 = document.getElementById('term1');
+                this.term2 = document.getElementById('term2');
+                this.operationEl = document.getElementById('operation');
+                this.result = document.getElementById('result');
+                this.feedback = document.getElementById('feedback');
+                this.scoreElement = document.getElementById('score');
+                this.levelElement = document.getElementById('level');
+                this.checkButton = document.getElementById('checkButton');
+                this.allowNegative = document.getElementById('allowNegative');
+                this.allowSubtraction = document.getElementById('allowSubtraction');
+                this.allowMultiplication = document.getElementById('allowMultiplication');
+                this.currentValueEl = document.getElementById('currentValue');
+                this.zoomIn = document.getElementById('zoomIn');
+                this.zoomOut = document.getElementById('zoomOut');
+                this.levelButtons = document.querySelectorAll('.level-button');
+            }
+
+            setupNumberLine() {
+                // Clear previous number line
+                this.numberLine.innerHTML = '<div class="line"></div><div class="current-value" id="currentValue">0</div>';
+                this.currentValueEl = document.getElementById('currentValue');
+                
+                // Create tick marks and number labels
+                const totalMarkers = Math.floor((this.maxValue - this.minValue) / this.stepSize) + 1;
+                
+                for (let i = 0; i < totalMarkers; i++) {
+                    const value = this.minValue + (i * this.stepSize);
+                    const position = this.numberToPosition(value);
+                    
+                    // Add tick mark
+                    const tick = document.createElement('div');
+                    tick.className = 'tick';
+                    tick.style.left = `${position}%`;
+                    this.numberLine.appendChild(tick);
+                    
+                    // Add number label every 1, 2, 5 or 10 steps depending on the range
+                    if (this.shouldShowLabel(value)) {
+                        const number = document.createElement('div');
+                        number.className = 'number';
+                        number.textContent = value;
+                        number.style.left = `${position}%`;
+                        this.numberLine.appendChild(number);
+                    }
+                }
+
+                // Create draggable marker
+                this.marker = document.createElement('div');
+                this.marker.className = 'marker';
+                this.marker.style.left = '50%';
+                this.numberLine.appendChild(this.marker);
+            }
+            
+            shouldShowLabel(value) {
+                // Display fewer labels when zoomed out
+                if (this.visibleRange > 100) return value % 20 === 0;
+                if (this.visibleRange > 50) return value % 10 === 0;
+                if (this.visibleRange > 20) return value % 5 === 0;
+                if (this.visibleRange > 10) return value % 2 === 0;
+                return true; // Show all labels when zoomed in enough
+            }
+
+            setupEventListeners() {
+                // Mouse events for marker
+                this.marker.addEventListener('mousedown', this.startDragging.bind(this));
+                document.addEventListener('mousemove', this.drag.bind(this));
+                document.addEventListener('mouseup', this.stopDragging.bind(this));
+
+                // Touch events for marker
+                this.marker.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.startDragging(e.touches[0]);
+                });
+                document.addEventListener('touchmove', (e) => {
+                    if (this.isDragging) {
+                        e.preventDefault();
+                        this.drag(e.touches[0]);
+                    }
+                }, { passive: false });
+                document.addEventListener('touchend', this.stopDragging.bind(this));
+
+                // Number line click event
+                this.numberLine.addEventListener('mousedown', (e) => {
+                    // Only handle clicks on the number line itself, not the marker
+                    if (e.target === this.marker) return;
+                    
+                    const rect = this.numberLine.getBoundingClientRect();
+                    const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                    const position = (x / rect.width) * 100;
+                    
+                    this.moveMarker(position);
+                });
+                
+                // Number line touch for mobile
+                this.numberLine.addEventListener('touchstart', (e) => {
+                    // Only handle touches on the number line itself, not the marker
+                    if (e.target === this.marker) return;
+                    
+                    const rect = this.numberLine.getBoundingClientRect();
+                    const touch = e.touches[0];
+                    const x = Math.max(0, Math.min(touch.clientX - rect.left, rect.width));
+                    const position = (x / rect.width) * 100;
+                    
+                    this.moveMarker(position);
+                    e.preventDefault();
+                });
+
+                // Zoom controls
+                this.zoomIn.addEventListener('click', () => this.zoom(0.5));
+                this.zoomOut.addEventListener('click', () => this.zoom(2));
+
+                // Check button
+                this.checkButton.addEventListener('click', () => this.checkAnswer());
+
+                // Operation toggle
+                this.operationEl.addEventListener('click', () => {
+                    this.cycleOperation();
+                    this.updateResultDisplay();
+                });
+
+                // Settings changes
+                this.allowNegative.addEventListener('change', () => {
+                    this.updateScale();
+                    this.generateQuestion();
+                });
+                this.allowSubtraction.addEventListener('change', () => this.generateQuestion());
+                this.allowMultiplication.addEventListener('change', () => this.generateQuestion());
+
+                // Level selection
+                this.levelButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        this.setLevel(parseInt(button.dataset.level));
+                    });
+                });
+            }
+            
+            cycleOperation() {
+                const validOperations = ['+'];
+                if (this.allowSubtraction.checked) validOperations.push('-');
+                if (this.allowMultiplication.checked) validOperations.push('×');
+                
+                // Find current index and get next operation
+                const currentIndex = validOperations.indexOf(this.operation);
+                const nextIndex = (currentIndex + 1) % validOperations.length;
+                this.operation = validOperations[nextIndex];
+                this.operationEl.textContent = this.operation;
+            }
+            
+            setLevel(level) {
+                this.currentLevel = level;
+                this.levelElement.textContent = level;
+                
+                // Update UI
+                this.levelButtons.forEach(button => {
+                    button.classList.toggle('active', parseInt(button.dataset.level) === level);
+                });
+                
+                // Update scale and difficulty based on level
+                this.updateScale();
+                this.generateQuestion();
+            }
+            
+            updateScale() {
+                // Adjust the scale based on level and settings
+                if (this.currentLevel === 1) {
+                    this.minValue = this.allowNegative.checked ? -10 : 0;
+                    this.maxValue = 10;
+                    this.visibleRange = this.maxValue - this.minValue;
+                    this.stepSize = 1;
+                } else if (this.currentLevel === 2) {
+                    this.minValue = this.allowNegative.checked ? -20 : 0;
+                    this.maxValue = 20;
+                    this.visibleRange = this.maxValue - this.minValue;
+                    this.stepSize = 1;
+                } else if (this.currentLevel === 3) {
+                    this.minValue = this.allowNegative.checked ? -50 : 0;
+                    this.maxValue = 50;
+                    this.visibleRange = this.maxValue - this.minValue;
+                    this.stepSize = 5;
+                }
+                
+                // Rebuild the number line with new scale
+                this.setupNumberLine();
+            }
+            
+            zoom(factor) {
+                // Calculate new range while keeping center point
+                const centerPoint = (this.maxValue + this.minValue) / 2;
+                const newRange = this.visibleRange * factor;
+                
+                // Limit zoom range
+                const adjustedRange = Math.max(10, Math.min(200, newRange));
+                
+                if (adjustedRange !== this.visibleRange) {
+                    this.visibleRange = adjustedRange;
+                    
+                    // Update min and max values while keeping the center
+                    this.minValue = Math.floor(centerPoint - (this.visibleRange / 2));
+                    this.maxValue = Math.ceil(centerPoint + (this.visibleRange / 2));
+                    
+                    // Adjust step size based on range
+                    if (this.visibleRange > 100) this.stepSize = 10;
+                    else if (this.visibleRange > 50) this.stepSize = 5;
+                    else if (this.visibleRange > 20) this.stepSize = 2;
+                    else this.stepSize = 1;
+                    
+                    // Rebuild the number line
+                    this.setupNumberLine();
+                    
+                    // Reposition marker
+                    this.moveMarker(this.numberToPosition(this.markerPosition));
+                }
+            }
+            
+            adjustScaleToFitAnswer(answer) {
+                // If the answer is outside the current visible range, adjust the scale
+                if (answer < this.minValue || answer > this.maxValue) {
+                    // Define a buffer so answer isn't at the very edge
+                    const buffer = Math.max(5, Math.floor(this.visibleRange * 0.1));
+                    
+                    // Center the scale around the answer
+                    const centerPoint = answer;
+                    this.minValue = Math.floor(centerPoint - (this.visibleRange / 2));
+                    this.maxValue = Math.ceil(centerPoint + (this.visibleRange / 2));
+                    
+                    // Ensure we maintain buffer on both sides
+                    if (this.maxValue - answer < buffer) {
+                        this.maxValue = answer + buffer;
+                    }
+                    if (answer - this.minValue < buffer) {
+                        this.minValue = answer - buffer;
+                    }
+                    
+                    // Rebuild the number line
+                    this.setupNumberLine();
+                }
+            }
+
+            startDragging(e) {
+                this.isDragging = true;
+                this.marker.style.transition = 'none';
+            }
+
+            drag(e) {
+                if (!this.isDragging) return;
+
+                const rect = this.numberLine.getBoundingClientRect();
+                const x = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+                const position = (x / rect.width) * 100;
+                
+                this.moveMarker(position);
+            }
+
+            stopDragging() {
+                this.isDragging = false;
+                this.marker.style.transition = 'left 0.2s ease';
+            }
+            
+            moveMarker(position) {
+                this.marker.style.left = `${position}%`;
+                this.markerPosition = this.positionToNumber(position);
+                this.result.textContent = this.markerPosition;
+                this.currentValueEl.textContent = this.markerPosition;
+            }
+
+            numberToPosition(number) {
+                return ((number - this.minValue) / (this.maxValue - this.minValue)) * 100;
+            }
+
+            positionToNumber(position) {
+                const rawValue = ((position / 100) * (this.maxValue - this.minValue)) + this.minValue;
+                
+                // Snap to nearest step
+                return Math.round(rawValue / this.stepSize) * this.stepSize;
+            }
+
+            generateQuestion() {
+                // Generate question based on current level and settings
+                let range, term1Range, term2Range;
+                
+                if (this.currentLevel === 1) {
+                    range = this.allowNegative.checked ? [-10, 10] : [0, 10];
+                    term1Range = range;
+                    term2Range = [1, 5]; // Keep second term smaller in level 1
+                } else if (this.currentLevel === 2) {
+                    range = this.allowNegative.checked ? [-20, 20] : [0, 20];
+                    term1Range = range;
+                    term2Range = this.allowNegative.checked ? [-10, 10] : [0, 10];
+                } else {
+                    range = this.allowNegative.checked ? [-50, 50] : [0, 50];
+                    term1Range = range;
+                    term2Range = this.allowNegative.checked ? [-20, 20] : [0, 20];
+                }
+                
+                // Generate first term
+                this.term1Value = this.getRandomInt(term1Range[0], term1Range[1]);
+                
+                // Generate second term
+                this.term2Value = this.getRandomInt(term2Range[0], term2Range[1]);
+                
+                // Determine operation
+                const validOperations = ['+'];
+                if (this.allowSubtraction.checked) validOperations.push('-');
+                if (this.allowMultiplication.checked) validOperations.push('×');
+                
+                this.operation = validOperations[Math.floor(Math.random() * validOperations.length)];
+                
+                // Update UI with question
+                this.term1.textContent = this.term1Value;
+                this.term2.textContent = this.term2Value;
+                this.operationEl.textContent = this.operation;
+                this.result.textContent = '?';
+                
+                // Calculate expected answer and adjust scale if needed
+                const expectedAnswer = this.calculateAnswer();
+                this.adjustScaleToFitAnswer(expectedAnswer);
+                
+                // Reset marker position to first term
+                this.moveMarker(this.numberToPosition(this.term1Value));
+                
+                // Clear feedback
+                this.feedback.textContent = '';
+                this.feedback.className = 'feedback';
+                this.checkButton.disabled = false;
+            }
+            
+            getRandomInt(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+            
+            updateResultDisplay() {
+                // Update the expected answer display (for debugging)
+                const expectedAnswer = this.calculateAnswer();
+                console.log("Expected answer:", expectedAnswer);
+            }
+
+            calculateAnswer() {
+                switch (this.operation) {
+                    case '+': 
+                        return this.term1Value + this.term2Value;
+                    case '-': 
+                        return this.term1Value - this.term2Value;
+                    case '×': 
+                        return this.term1Value * this.term2Value;
+                    default:
+                        return 0;
+                }
+            }
+
+            checkAnswer() {
+                const correctAnswer = this.calculateAnswer();
+                const isCorrect = this.markerPosition === correctAnswer;
+                
+                if (isCorrect) {
+                    this.score++;
+                    this.feedback.textContent = 'Correct! Great job! 🌟';
+                    this.feedback.className = 'feedback correct';
+                    
+                    // Increase difficulty occasionally
+                    if (this.score % 5 === 0 && this.currentLevel < 3) {
+                        this.setLevel(this.currentLevel + 1);
+                    }
+                } else {
+                    this.feedback.textContent = `Try again! The answer was ${correctAnswer}`;
+                    this.feedback.className = 'feedback incorrect';
+                    
+                    // Show correct position
+                    setTimeout(() => {
+                        this.moveMarker(this.numberToPosition(correctAnswer));
+                    }, 1000);
+                }
+                
+                this.scoreElement.textContent = this.score;
+                this.checkButton.disabled = true;
+                
+                setTimeout(() => {
+                    this.generateQuestion();
+                }, 2500);
+            }
+        }
+
+        // Start the game when the page loads
+        window.addEventListener('load', () => {
+            new NumberLineGame();
+        });
+    </script>
+</body>
+</html>

@@ -61,37 +61,9 @@ for %%f in ("5 yr old\*.html") do (
 echo     ]>> "%elementary_js%"
 echo };>> "%elementary_js%"
 
-:: Create a merged list of all HTML files with their modification dates for sorting
-echo Creating list of all HTML files with modification dates...
->"%file_dates%" (
-    for %%f in ("2 yr old\*.html") do (
-        for /f "tokens=1-5 delims=/ " %%a in ("%%~tf") do (
-            set "month=%%b"
-            set "day=%%c"
-            set "year=%%d"
-            set "time=%%e"
-            
-            :: Format date for sorting (YYYY-MM-DD HH:MM:SS)
-            echo %%~tf,%%~tf,"2 yr old",%%~nxf
-        )
-    )
-    
-    for %%f in ("5 yr old\*.html") do (
-        for /f "tokens=1-5 delims=/ " %%a in ("%%~tf") do (
-            set "month=%%b"
-            set "day=%%c"
-            set "year=%%d"
-            set "time=%%e"
-            
-            :: Format date for sorting (YYYY-MM-DD HH:MM:SS)
-            echo %%~tf,%%~tf,"5 yr old",%%~nxf
-        )
-    )
-)
-
-:: Use PowerShell to sort the files by date and get the top 10 most recent
-echo Determining most recently modified games...
-powershell -Command "$files = Get-Content '%file_dates%' | ForEach-Object { $parts = $_ -split ','; [PSCustomObject]@{ Date = [DateTime]::ParseExact($parts[0], 'MM/dd/yyyy HH:mm:ss', $null); OrigDate = $parts[1]; Dir = $parts[2].Trim('\"'); File = $parts[3].Trim('\"') } } | Sort-Object Date -Descending | Select-Object -First 10; $files | ForEach-Object { \"{0},{1},{2}\" -f $_.OrigDate, $_.Dir, $_.File } | Set-Content '%file_dates%'"
+:: Use PowerShell to directly get file info, sort by date, and save the most recent files
+echo Creating and sorting list of most recently modified games...
+powershell -Command "$files = Get-ChildItem -Path '2 yr old\*.html','5 yr old\*.html' | Sort-Object LastWriteTime -Descending | Select-Object -First 10; foreach ($file in $files) { $dir = ($file.DirectoryName -replace '\\', '/'); $name = $file.Name; $date = $file.LastWriteTime.ToString('MM/dd/yyyy HH:mm:ss'); Add-Content -Path '%file_dates%' -Value \"$date,$dir,$name\" }"
 
 :: Create the recently added games array
 echo // Recently added games> "%recent_games_js%"
@@ -99,10 +71,15 @@ echo const recentlyAddedGames = [>> "%recent_games_js%"
 
 :: Add recently modified games to the array
 set "first_game=yes"
-for /f "tokens=1-3 delims=," %%a in ('type "%file_dates%"') do (
+for /f "tokens=1* delims=," %%a in ('type "%file_dates%"') do (
     set "date=%%a"
-    set "dir=%%b"
-    set "file=%%c"
+    set "rest=%%b"
+    
+    :: Split the rest into directory and file
+    for /f "tokens=1,2 delims=," %%c in ("!rest!") do (
+        set "dir=%%c"
+        set "file=%%d"
+    )
     
     :: Remove any quotes around the directory and file
     set "dir=!dir:"=!"
@@ -112,6 +89,8 @@ for /f "tokens=1-3 delims=," %%a in ('type "%file_dates%"') do (
     set "name=!file:.html=!"
     set "name=!name:-= !"
     set "name=!name:_= !"
+    
+    :: Remove version numbers
     set "name=!name:v0.= !"
     set "name=!name:v1.= !"
     set "name=!name:v2.= !"
@@ -160,7 +139,7 @@ for /f "tokens=1-3 delims=," %%a in ('type "%file_dates%"') do (
     )
     
     :: Create a basic description
-    set "description=A !category! activity that helps kids practice !name!"
+    set "description=A !category! activity that helps kids learn and explore"
     
     :: Add the game to the array
     if "!first_game!"=="yes" (
@@ -188,7 +167,7 @@ echo. >> "%temp_file%"
 type "%recent_games_js%" >> "%temp_file%"
 
 :: Update the index.html file using PowerShell
-echo Updating index.html with featured games...
+echo Updating index.html with recently modified games...
 powershell -Command "$content = Get-Content -Raw 'index.html'; $repoPattern = '(?s)// Define the structure of your repository.*?const recentlyAddedGames = \[\s*\];'; $repoReplacement = (Get-Content -Raw '%temp_file%'); $newContent = $content -replace $repoPattern, $repoReplacement; Set-Content -Path 'index.html' -Value $newContent -NoNewline"
 
 :: Clean up temp files

@@ -14,7 +14,8 @@ echo Created backup: index.html.bak.%date:~-4,4%%date:~-7,2%%date:~-10,2%
 set "temp_file=%TEMP%\temp_files.txt"
 set "toddler_js=%TEMP%\toddler_js.txt"
 set "elementary_js=%TEMP%\elementary_js.txt"
-set "new_games_js=%TEMP%\new_games_js.txt"
+set "recent_games_js=%TEMP%\recent_games_js.txt"
+set "file_dates=%TEMP%\file_dates.txt"
 
 :: Create the start of the repository object in separate files
 echo // Define the structure of your repository> "%toddler_js%"
@@ -60,33 +61,131 @@ for %%f in ("5 yr old\*.html") do (
 echo     ]>> "%elementary_js%"
 echo };>> "%elementary_js%"
 
-:: Create the new games array using the featured_games.json configuration file
-echo // Recently added games>> "%new_games_js%"
-echo const recentlyAddedGames = [>> "%new_games_js%"
-
-:: Read featured games from JSON configuration
-echo Reading featured games from configuration file...
-
-if not exist "featured_games.json" (
-    echo WARNING: featured_games.json not found. Creating a default configuration.
-    echo {"featured_games":[]} > "featured_games.json"
-    echo Please edit featured_games.json to add your featured games!
-    echo No featured games will be shown in the slider.
-) else (
-    echo Found featured_games.json
+:: Create a merged list of all HTML files with their modification dates for sorting
+echo Creating list of all HTML files with modification dates...
+>"%file_dates%" (
+    for %%f in ("2 yr old\*.html") do (
+        for /f "tokens=1-5 delims=/ " %%a in ("%%~tf") do (
+            set "month=%%b"
+            set "day=%%c"
+            set "year=%%d"
+            set "time=%%e"
+            
+            :: Format date for sorting (YYYY-MM-DD HH:MM:SS)
+            echo %%~tf,%%~tf,"2 yr old",%%~nxf
+        )
+    )
     
-    :: Use PowerShell to parse the JSON and extract the featured games
-    powershell -Command "$json = Get-Content -Raw 'featured_games.json' | ConvertFrom-Json; $first = $true; foreach ($game in $json.featured_games) { if (-not $first) { Add-Content -Path '%new_games_js%' -Value '    ,' -NoNewline }; $first = $false; Add-Content -Path '%new_games_js%' -Value '{'; Add-Content -Path '%new_games_js%' -Value ('        name: \"' + $game.custom_name + '\",'); $iconClass = ''; $category = ''; if ($game.filename -match 'math|algebra|calculus|fraction|multiply|division') { $iconClass = 'fas fa-calculator'; $category = 'math' } elseif ($game.filename -match 'music|piano|midi|note') { $iconClass = 'fas fa-music'; $category = 'music' } elseif ($game.filename -match 'country|geo|globe') { $iconClass = 'fas fa-globe-americas'; $category = 'geography' } elseif ($game.filename -match 'read|writing|word') { $iconClass = 'fas fa-book'; $category = 'language' } elseif ($game.filename -match 'game|battle|pacman|connect') { $iconClass = 'fas fa-gamepad'; $category = 'games' } else { $iconClass = 'fas fa-puzzle-piece'; $category = 'interactive' }; Add-Content -Path '%new_games_js%' -Value ('        icon: \"' + $iconClass + '\",'); Add-Content -Path '%new_games_js%' -Value ('        category: \"' + $category + '\",'); Add-Content -Path '%new_games_js%' -Value ('        description: \"' + $game.custom_description + '\",'); Add-Content -Path '%new_games_js%' -Value ('        path: \"' + $game.path + '/' + $game.filename + '\"'); Add-Content -Path '%new_games_js%' -Value '    }' }"
+    for %%f in ("5 yr old\*.html") do (
+        for /f "tokens=1-5 delims=/ " %%a in ("%%~tf") do (
+            set "month=%%b"
+            set "day=%%c"
+            set "year=%%d"
+            set "time=%%e"
+            
+            :: Format date for sorting (YYYY-MM-DD HH:MM:SS)
+            echo %%~tf,%%~tf,"5 yr old",%%~nxf
+        )
+    )
 )
 
-:: Close the new games array
-echo ];>> "%new_games_js%"
+:: Use PowerShell to sort the files by date and get the top 10 most recent
+echo Determining most recently modified games...
+powershell -Command "$files = Get-Content '%file_dates%' | ForEach-Object { $parts = $_ -split ','; [PSCustomObject]@{ Date = [DateTime]::ParseExact($parts[0], 'MM/dd/yyyy HH:mm:ss', $null); OrigDate = $parts[1]; Dir = $parts[2].Trim('\"'); File = $parts[3].Trim('\"') } } | Sort-Object Date -Descending | Select-Object -First 10; $files | ForEach-Object { \"{0},{1},{2}\" -f $_.OrigDate, $_.Dir, $_.File } | Set-Content '%file_dates%'"
+
+:: Create the recently added games array
+echo // Recently added games> "%recent_games_js%"
+echo const recentlyAddedGames = [>> "%recent_games_js%"
+
+:: Add recently modified games to the array
+set "first_game=yes"
+for /f "tokens=1-3 delims=," %%a in ('type "%file_dates%"') do (
+    set "date=%%a"
+    set "dir=%%b"
+    set "file=%%c"
+    
+    :: Remove any quotes around the directory and file
+    set "dir=!dir:"=!"
+    set "file=!file:"=!"
+    
+    :: Determine a nice name from the filename
+    set "name=!file:.html=!"
+    set "name=!name:-= !"
+    set "name=!name:_= !"
+    set "name=!name:v0.= !"
+    set "name=!name:v1.= !"
+    set "name=!name:v2.= !"
+    set "name=!name:v3.= !"
+    
+    :: Determine the appropriate icon and category
+    set "icon=fas fa-puzzle-piece"
+    set "category=interactive"
+    
+    set "filename_lower=!file!"
+    call :toLowerCase filename_lower
+    
+    if "!filename_lower!" == "!filename_lower:math=!" if "!filename_lower!" == "!filename_lower:algebra=!" if "!filename_lower!" == "!filename_lower:calculus=!" if "!filename_lower!" == "!filename_lower:fraction=!" if "!filename_lower!" == "!filename_lower:multiply=!" if "!filename_lower!" == "!filename_lower:division=!" (
+        rem Not math
+    ) else (
+        set "icon=fas fa-calculator"
+        set "category=math"
+    )
+    
+    if "!filename_lower!" == "!filename_lower:music=!" if "!filename_lower!" == "!filename_lower:piano=!" if "!filename_lower!" == "!filename_lower:midi=!" if "!filename_lower!" == "!filename_lower:note=!" if "!filename_lower!" == "!filename_lower:melody=!" (
+        rem Not music
+    ) else (
+        set "icon=fas fa-music"
+        set "category=music"
+    )
+    
+    if "!filename_lower!" == "!filename_lower:country=!" if "!filename_lower!" == "!filename_lower:geo=!" if "!filename_lower!" == "!filename_lower:globe=!" if "!filename_lower!" == "!filename_lower:map=!" (
+        rem Not geography
+    ) else (
+        set "icon=fas fa-globe-americas"
+        set "category=geography"
+    )
+    
+    if "!filename_lower!" == "!filename_lower:read=!" if "!filename_lower!" == "!filename_lower:writing=!" if "!filename_lower!" == "!filename_lower:word=!" if "!filename_lower!" == "!filename_lower:letter=!" (
+        rem Not language
+    ) else (
+        set "icon=fas fa-book"
+        set "category=language"
+    )
+    
+    if "!filename_lower!" == "!filename_lower:game=!" if "!filename_lower!" == "!filename_lower:battle=!" if "!filename_lower!" == "!filename_lower:pacman=!" if "!filename_lower!" == "!filename_lower:connect=!" if "!filename_lower!" == "!filename_lower:snake=!" if "!filename_lower!" == "!filename_lower:puzzle=!" if "!filename_lower!" == "!filename_lower:shooter=!" (
+        rem Not games
+    ) else (
+        set "icon=fas fa-gamepad"
+        set "category=games"
+    )
+    
+    :: Create a basic description
+    set "description=A !category! activity that helps kids practice !name!"
+    
+    :: Add the game to the array
+    if "!first_game!"=="yes" (
+        echo     {>> "%recent_games_js%"
+        set "first_game=no"
+    ) else (
+        echo     ,{>> "%recent_games_js%"
+    )
+    
+    echo         name: "!name!",>> "%recent_games_js%"
+    echo         icon: "!icon!",>> "%recent_games_js%"
+    echo         category: "!category!",>> "%recent_games_js%"
+    echo         description: "!description!",>> "%recent_games_js%"
+    echo         path: "!dir!/!file!">> "%recent_games_js%"
+    echo     }>> "%recent_games_js%"
+)
+
+:: Close the recently added games array
+echo ];>> "%recent_games_js%"
 
 :: Combine the temporary files
 type "%toddler_js%" > "%temp_file%"
 type "%elementary_js%" >> "%temp_file%"
 echo. >> "%temp_file%"
-type "%new_games_js%" >> "%temp_file%"
+type "%recent_games_js%" >> "%temp_file%"
 
 :: Update the index.html file using PowerShell
 echo Updating index.html with featured games...
@@ -96,10 +195,11 @@ powershell -Command "$content = Get-Content -Raw 'index.html'; $repoPattern = '(
 del "%temp_file%" 2>nul
 del "%toddler_js%" 2>nul
 del "%elementary_js%" 2>nul
-del "%new_games_js%" 2>nul
+del "%recent_games_js%" 2>nul
+del "%file_dates%" 2>nul
 
 :: Log the update
-echo %date% %time% - Updated index.html with featured games > "last_games_update.txt"
+echo %date% %time% - Updated index.html with recently modified games > "last_games_update.txt"
 
 :: Get current branch
 for /f "tokens=*" %%i in ('git rev-parse --abbrev-ref HEAD') do set current_branch=%%i
@@ -107,15 +207,18 @@ for /f "tokens=*" %%i in ('git rev-parse --abbrev-ref HEAD') do set current_bran
 :: Git operations
 echo Committing and pushing changes...
 git add .
-git commit -m "Updated index.html with featured games for the slider"
+git commit -m "Updated index.html with recently modified games for the slider"
 git push origin %current_branch%
 
 echo ===== SUCCESS: CHANGES PUSHED TO GITHUB =====
 echo.
-echo Your featured games are now displayed in the slider!
-echo.
-echo To change which games are featured, edit the featured_games.json file.
+echo Your recently modified games are now displayed in the slider!
 echo.
 echo Press any key to exit...
 pause > nul
+exit /b 0
+
+:toLowerCase
+:: Convert to lowercase
+for %%z in (a b c d e f g h i j k l m n o p q r s t u v w x y z) do set "%1=!%1:%%z=%%z!"
 exit /b 0

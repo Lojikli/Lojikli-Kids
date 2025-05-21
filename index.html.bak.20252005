@@ -1,0 +1,160 @@
+});
+            
+            prevArrow.addEventListener('click', () => {
+                slider.scrollBy({
+                    left: -300,
+                    behavior: 'smooth'
+                });
+            });
+        }
+        
+        // Handle category filtering
+        function setupCategoryFiltering() {
+            const categories = document.querySelectorAll('.category');
+            const appCards = document.querySelectorAll('.app-card');
+            
+            categories.forEach(category => {
+                category.addEventListener('click', () => {
+                    // Update active state
+                    categories.forEach(cat => cat.classList.remove('active'));
+                    category.classList.add('active');
+                    
+                    const selectedCategory = category.dataset.category;
+                    
+                    // Filter the app cards
+                    appCards.forEach(card => {
+                        const cardCategories = card.dataset.categories.split(" ");
+                        
+                        if (selectedCategory === 'all' || cardCategories.includes(selectedCategory)) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+        }
+        
+        // Handle search functionality
+        function setupSearch() {
+            const searchBox = document.getElementById('searchBox');
+            const appCards = document.querySelectorAll('.app-card');
+            
+            searchBox.addEventListener('input', () => {
+                const searchTerm = searchBox.value.toLowerCase();
+                
+                appCards.forEach(card => {
+                    const appName = card.querySelector('.app-name').textContent.toLowerCase();
+                    
+                    if (appName.includes(searchTerm)) {
+                        card.style.display = 'flex';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        }
+        
+        // Setup age tabs
+        function setupAgeTabs() {
+            const ageTabs = document.querySelectorAll('.age-tab');
+            const toddlerApps = document.getElementById('toddler-apps');
+            const elementaryApps = document.getElementById('elementary-apps');
+            
+            ageTabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Update active state
+                    ageTabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    const selectedAge = tab.dataset.age;
+                    
+                    // Show/hide appropriate section
+                    if (selectedAge === 'toddler') {
+                        toddlerApps.style.display = 'block';
+                        elementaryApps.style.display = 'none';
+                    } else {
+                        toddlerApps.style.display = 'none';
+                        elementaryApps.style.display = 'block';
+                    }
+                });
+            });
+        }
+        
+        // Setup achievement animations
+        function setupAchievementAnimations() {
+            const achievementCards = document.querySelectorAll('.achievement-card');
+            
+            // Function to animate progress bars
+            function animateProgressBars() {
+                achievementCards.forEach(card => {
+                    const progressBar = card.querySelector('.achievement-progress-bar');
+                    const widthValue = progressBar.style.width;
+                    
+                    // Reset width to 0 first
+                    progressBar.style.width = '0';
+                    
+                    // Set a timeout to animate to the actual width
+                    setTimeout(() => {
+                        progressBar.style.width = widthValue;
+                    }, 300);
+                });
+            }
+            
+            // Use Intersection Observer to trigger animations when cards are visible
+            if ('IntersectionObserver' in window) {
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            animateProgressBars();
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.1 });
+                
+                // Observe the achievement section
+                const achievementSection = document.querySelector('.achievements');
+                if (achievementSection) {
+                    observer.observe(achievementSection);
+                }
+            } else {
+                // Fallback for browsers that don't support IntersectionObserver
+                window.addEventListener('scroll', function() {
+                    const achievementSection = document.querySelector('.achievements');
+                    const rect = achievementSection.getBoundingClientRect();
+                    const isVisible = rect.top < window.innerHeight && rect.bottom >= 0;
+                    
+                    if (isVisible) {
+                        animateProgressBars();
+                        window.removeEventListener('scroll', this);
+                    }
+                });
+            }
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            createAppCards();
+            setupCategoryFiltering();
+            setupSearch();
+            setupAgeTabs();
+            setupNewGamesSlider();
+            setupAchievementAnimations();
+            setupSliderArrows();
+            
+            // Add slight delay to app cards appearance for a staggered animation effect
+            const appCards = document.querySelectorAll('.app-card');
+            appCards.forEach((card, index) => {
+                card.style.animationDelay = `${index * 0.05}s`;
+                card.style.opacity = '0';
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                }, 100 + (index * 50));
+            });
+            
+            const debugInfo = document.getElementById('debugInfo');
+            debugInfo.innerHTML = "DOM loaded successfully";
+        });
+    </script>
+</body>
+</html>

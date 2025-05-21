@@ -23,9 +23,9 @@ $elementaryFiles = Get-ChildItem -Path "5 yr old\*.html" -Name | Sort-Object
 Write-Host "Found $($toddlerFiles.Count) files in '2 yr old' directory" -ForegroundColor White
 Write-Host "Found $($elementaryFiles.Count) files in '5 yr old' directory" -ForegroundColor White
 
-# Create repository structure strings
-$toddlerRepoArray = $toddlerFiles | ForEach-Object { "`"$_`"" } | Join-String -Separator ", "
-$elementaryRepoArray = $elementaryFiles | ForEach-Object { "`"$_`"" } | Join-String -Separator ", "
+# Create repository structure strings - using older PowerShell compatible method
+$toddlerRepoArray = ($toddlerFiles | ForEach-Object { "`"$_`"" }) -join ", "
+$elementaryRepoArray = ($elementaryFiles | ForEach-Object { "`"$_`"" }) -join ", "
 
 $repositoryStructure = @"
 // Define the structure of your repository
@@ -147,23 +147,26 @@ Set-Content -Path "index.html" -Value $updatedContent -NoNewline
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 "$timestamp - Updated index.html with recently modified games" | Out-File -FilePath "last_games_update.txt" -Force
 
+# Get current git branch
+$currentBranch = git rev-parse --abbrev-ref HEAD
+
 # Git operations
 Write-Host "Committing and pushing changes..." -ForegroundColor White
 try {
     git add .
     git commit -m "Updated index.html with recently modified games for the slider"
-    git push origin (git rev-parse --abbrev-ref HEAD)
+    git push origin $currentBranch
     
     Write-Host ""
     Write-Host "===== SUCCESS: CHANGES PUSHED TO GITHUB =====" -ForegroundColor Green
 } catch {
     Write-Host ""
-    Write-Host "⚠️ WARNING: Git operations failed. Changes are saved locally but not pushed." -ForegroundColor Yellow
+    Write-Host "WARNING: Git operations failed. Changes are saved locally but not pushed." -ForegroundColor Yellow
     Write-Host "Error: $_" -ForegroundColor Red
 }
 
 Write-Host ""
 Write-Host "Your recently modified games are now displayed in the slider!" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Press any key to exit..."
-$host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown") | Out-Null
+Write-Host "Press Enter to exit..."
+Read-Host

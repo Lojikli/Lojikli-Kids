@@ -248,15 +248,28 @@ if errorlevel 1 (
     )
 )
 
-rem Push to remote
-echo Pushing to remote repository...
-git branch -M main
-git push -u origin main
+rem Get current branch name
+for /f "tokens=*" %%i in ('git branch --show-current') do set current_branch=%%i
+echo Current branch: !current_branch!
 
-if errorlevel 0 (
+rem Pull latest changes first
+echo Pulling latest changes from remote...
+git pull origin !current_branch!
+if errorlevel 1 (
+    echo WARNING: Pull failed or had conflicts. You may need to resolve manually.
+    echo Attempting to push anyway...
+)
+
+rem Push to remote using current branch
+echo Pushing to remote repository on branch: !current_branch!
+git push -u origin !current_branch!
+
+if %errorlevel% equ 0 (
     echo SUCCESS: Changes pushed to GitHub!
 ) else (
-    echo ERROR: Failed to push. Check your internet connection and repository access.
+    echo ERROR: Failed to push. You may need to pull and merge changes manually.
+    echo Try running: git pull origin main
+    echo Then run this script again.
 )
 
 goto end

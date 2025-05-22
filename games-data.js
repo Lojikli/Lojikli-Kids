@@ -1,5 +1,5 @@
 // Auto-generated games data - DO NOT EDIT MANUALLY 
-// Generated on Wed 05/21/2025 at 20:24:28.96 
+// Generated on Thu 05/22/2025 at 12:44:54.94 
  
 window.gamesData = { 
     toddlerGames: [ 
@@ -21,6 +21,7 @@ window.gamesData = {
         ,{ filename: "bubbleshooter v3 working.html", displayName: "bubbleshooter   V3 working", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "calculus-game.html", displayName: "calculus game", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "Circle of fifths.html", displayName: "Circle of fifths", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "color_pigments.html", displayName: "color pigments", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "Combine Like Terms.html", displayName: "Combine Like Terms", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "compareFractions v0.2.html", displayName: "compareFractions   V0.2", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "connect4.html", displayName: "connect4", category: "games", icon: "fas fa-gamepad" } 

@@ -1,0 +1,1852 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measurement Adventure: Learn with Professor Measure!</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        :root {
+            --primary-blue: #2196F3;
+            --primary-green: #4CAF50;
+            --primary-orange: #FF9800;
+            --primary-purple: #9C27B0;
+            --accent-yellow: #FFEB3B;
+            --accent-pink: #E91E63;
+            --bg-light: #F8F9FA;
+            --bg-white: #FFFFFF;
+            --text-dark: #333333;
+            --text-light: #666666;
+            --success: #4CAF50;
+            --error: #F44336;
+            --warning: #FF9800;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+
+        .game-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+        }
+
+        .header {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: linear-gradient(90deg, var(--primary-blue), var(--primary-green), var(--primary-orange), var(--primary-purple));
+            animation: rainbow-slide 3s linear infinite;
+        }
+
+        @keyframes rainbow-slide {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary-blue), var(--primary-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .score-display {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .score-item {
+            background: var(--bg-light);
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 300px 1fr 300px;
+            gap: 20px;
+            min-height: 600px;
+        }
+
+        .sidebar {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+
+        .game-area {
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            position: relative;
+            min-height: 600px;
+            overflow: hidden;
+        }
+
+        .character {
+            position: absolute;
+            z-index: 100;
+            transition: all 0.5s ease;
+        }
+
+        .character-bubble {
+            position: absolute;
+            background: var(--bg-white);
+            border-radius: 20px;
+            padding: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            max-width: 250px;
+            font-size: 1rem;
+            line-height: 1.4;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.5s ease;
+            z-index: 101;
+        }
+
+        .character-bubble.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .character-bubble::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 30px;
+            width: 0;
+            height: 0;
+            border: 10px solid transparent;
+            border-top-color: var(--bg-white);
+        }
+
+        .professor-measure {
+            bottom: 20px;
+            left: 20px;
+            width: 120px;
+            height: 120px;
+        }
+
+        .scale-salamander {
+            bottom: 20px;
+            right: 20px;
+            width: 100px;
+            height: 100px;
+        }
+
+        .professor-bubble {
+            bottom: 150px;
+            left: 20px;
+        }
+
+        .salamander-bubble {
+            bottom: 130px;
+            right: 20px;
+        }
+
+        .measurement-canvas {
+            width: 100%;
+            height: 400px;
+            border: 3px solid var(--primary-blue);
+            border-radius: 15px;
+            background: #f8f9fa;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .controls-panel {
+            margin-top: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-label {
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: block;
+            color: var(--primary-blue);
+        }
+
+        .button {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.3);
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(33, 150, 243, 0.4);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button.success {
+            background: var(--success);
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .button.warning {
+            background: var(--warning);
+            box-shadow: 0 4px 15px rgba(255, 152, 0, 0.3);
+        }
+
+        .button.secondary {
+            background: var(--primary-purple);
+            box-shadow: 0 4px 15px rgba(156, 39, 176, 0.3);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .input {
+            padding: 10px 15px;
+            border: 2px solid var(--bg-light);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 10px rgba(33, 150, 243, 0.2);
+        }
+
+        .select {
+            padding: 10px 15px;
+            border: 2px solid var(--bg-light);
+            border-radius: 10px;
+            background: white;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        .measurement-type-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .measurement-type {
+            padding: 15px 10px;
+            background: var(--bg-light);
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            font-weight: 600;
+        }
+
+        .measurement-type.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+            transform: scale(1.05);
+        }
+
+        .measurement-type:hover {
+            transform: scale(1.02);
+        }
+
+        .progress-section {
+            margin-bottom: 20px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: var(--bg-light);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-green), var(--primary-blue));
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .settings-panel {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .setting-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: var(--bg-light);
+            border-radius: 10px;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: var(--bg-light);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        .slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: var(--primary-blue);
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+
+        .quiz-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg-white);
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            z-index: 1000;
+            max-width: 500px;
+            width: 90%;
+            opacity: 0;
+            transform: translate(-50%, -50%) scale(0.8);
+            transition: all 0.5s ease;
+        }
+
+        .quiz-panel.visible {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .quiz-question {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--primary-blue);
+        }
+
+        .quiz-options {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-option {
+            padding: 15px;
+            background: var(--bg-light);
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .quiz-option:hover {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .quiz-option.selected {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .quiz-option.correct {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: var(--error);
+            color: white;
+            border-color: var(--error);
+        }
+
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2000;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: var(--accent-yellow);
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .floating-animation {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(5deg); }
+        }
+
+        .ruler {
+            position: absolute;
+            background: #FFF8DC;
+            border: 2px solid #8B4513;
+            border-radius: 5px;
+            cursor: move;
+            user-select: none;
+        }
+
+        .ruler-markings {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .ruler-mark {
+            position: absolute;
+            background: #8B4513;
+        }
+
+        .ruler-number {
+            position: absolute;
+            font-size: 10px;
+            font-weight: bold;
+            color: #8B4513;
+        }
+
+        .measurement-object {
+            position: absolute;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .measurement-object:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .title {
+                font-size: 2rem;
+            }
+            
+            .score-display {
+                flex-direction: column;
+                gap: 10px;
+            }
+        }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            z-index: 1500;
+        }
+
+        .star-particle {
+            color: #FFD700;
+            font-size: 20px;
+            animation: star-twinkle 2s ease-out forwards;
+        }
+
+        @keyframes star-twinkle {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2) rotate(180deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .level-indicator {
+            background: linear-gradient(45deg, var(--primary-purple), var(--primary-blue));
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .concept-explanation {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .concept-explanation::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"><g fill="none" fill-rule="evenodd"><g fill="%23ffffff" fill-opacity="0.1"><circle cx="30" cy="30" r="4"/></g></svg>') repeat;
+            animation: move-background 20s linear infinite;
+        }
+
+        @keyframes move-background {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(60px, 60px); }
+        }
+
+        .explanation-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .difficulty-badges {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .difficulty-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .difficulty-badge.easy {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .difficulty-badge.medium {
+            background: #FF9800;
+            color: white;
+        }
+
+        .difficulty-badge.hard {
+            background: #F44336;
+            color: white;
+        }
+
+        .difficulty-badge.expert {
+            background: #9C27B0;
+            color: white;
+        }
+
+        .difficulty-badge.active {
+            transform: scale(1.1);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .unit-converter {
+            background: var(--bg-light);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .conversion-display {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            gap: 10px;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .conversion-value {
+            text-align: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--primary-blue);
+        }
+
+        .conversion-arrow {
+            font-size: 1.2rem;
+            color: var(--primary-purple);
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="title">Measurement Adventure!</div>
+            <div class="score-display">
+                <div class="score-item">Level: <span id="level-display">1</span></div>
+                <div class="score-item">Score: <span id="score-display">0</span></div>
+                <div class="score-item">Streak: <span id="streak-display">0</span></div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Sidebar - Controls -->
+            <div class="sidebar">
+                <div class="level-indicator">
+                    <div id="current-level-text">Beginner Measurer</div>
+                </div>
+
+                <div class="measurement-type-selector">
+                    <div class="measurement-type active" data-type="length">📏 Length</div>
+                    <div class="measurement-type" data-type="area">📐 Area</div>
+                    <div class="measurement-type" data-type="volume">📦 Volume</div>
+                    <div class="measurement-type" data-type="weight">⚖️ Weight</div>
+                    <div class="measurement-type" data-type="time">⏰ Time</div>
+                    <div class="measurement-type" data-type="temperature">🌡️ Temp</div>
+                </div>
+
+                <div class="difficulty-badges">
+                    <div class="difficulty-badge easy active" data-difficulty="easy">Easy</div>
+                    <div class="difficulty-badge medium" data-difficulty="medium">Medium</div>
+                    <div class="difficulty-badge hard" data-difficulty="hard">Hard</div>
+                    <div class="difficulty-badge expert" data-difficulty="expert">Expert</div>
+                </div>
+
+                <div class="controls-panel">
+                    <div class="control-group">
+                        <label class="control-label">Units</label>
+                        <select class="select" id="unit-select">
+                            <option value="metric">Metric (cm, m, kg)</option>
+                            <option value="imperial">Imperial (in, ft, lb)</option>
+                            <option value="both">Both Systems</option>
+                        </select>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Ruler Type</label>
+                        <select class="select" id="ruler-type">
+                            <option value="virtual">Virtual Ruler</option>
+                            <option value="grid">Grid Lines</option>
+                            <option value="both">Both</option>
+                            <option value="none">No Help</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <input type="number" class="input" id="answer-input" placeholder="Your answer" step="0.1">
+                        <span id="unit-label">cm</span>
+                    </div>
+
+                    <button class="button success" onclick="checkAnswer()">Check Answer</button>
+                    <button class="button" onclick="showHint()">💡 Hint</button>
+                    <button class="button warning" onclick="nextQuestion()">Next Question</button>
+                </div>
+
+                <div class="unit-converter">
+                    <label class="control-label">Unit Converter</label>
+                    <div class="conversion-display">
+                        <div class="conversion-value" id="metric-value">0 cm</div>
+                        <div class="conversion-arrow">⇄</div>
+                        <div class="conversion-value" id="imperial-value">0 in</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Center - Game Area -->
+            <div class="game-area">
+                <div class="concept-explanation">
+                    <div class="explanation-content">
+                        <h3 id="concept-title">Understanding Length</h3>
+                        <p id="concept-text">Length tells us how long something is! We can measure it with rulers, which have marks called units like centimeters or inches.</p>
+                    </div>
+                </div>
+
+                <canvas id="measurement-canvas" class="measurement-canvas" width="600" height="400"></canvas>
+                
+                <!-- Characters -->
+                <div class="character professor-measure floating-animation" id="professor">
+                    <!-- Professor Measure Character -->
+                </div>
+                <div class="character-bubble professor-bubble" id="professor-bubble">
+                    Welcome to Measurement Adventure! I'm Professor Measure, and I'll help you become a measurement master!
+                </div>
+
+                <div class="character scale-salamander floating-animation" id="salamander">
+                    <!-- Scale Salamander Character -->
+                </div>
+                <div class="character-bubble salamander-bubble" id="salamander-bubble">
+                    Hi there! I'm Scale, and I love all things about size and measurement!
+                </div>
+            </div>
+
+            <!-- Right Sidebar - Progress & Settings -->
+            <div class="sidebar">
+                <div class="progress-section">
+                    <label class="control-label">Progress</label>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div id="progress-text">0 / 10 Questions</div>
+                </div>
+
+                <div class="settings-panel">
+                    <h3 style="margin-bottom: 15px; color: var(--primary-blue);">Learning Settings</h3>
+                    
+                    <div class="setting-item">
+                        <label class="control-label">Sound Volume</label>
+                        <input type="range" class="slider" id="volume-slider" min="0" max="100" value="50">
+                    </div>
+
+                    <div class="setting-item">
+                        <label class="control-label">Animation Speed</label>
+                        <input type="range" class="slider" id="animation-speed" min="1" max="5" value="3">
+                    </div>
+
+                    <div class="setting-item">
+                        <label class="control-label">Questions per Level</label>
+                        <input type="range" class="slider" id="questions-per-level" min="5" max="20" value="10">
+                    </div>
+
+                    <div class="setting-item">
+                        <label class="control-label">Precision Level</label>
+                        <select class="select" id="precision-level">
+                            <option value="low">±1 unit (easier)</option>
+                            <option value="medium">±0.5 units</option>
+                            <option value="high">±0.1 units (precise)</option>
+                        </select>
+                    </div>
+
+                    <div class="setting-item">
+                        <label class="control-label">Show Explanations</label>
+                        <select class="select" id="show-explanations">
+                            <option value="always">Always</option>
+                            <option value="incorrect">Only when wrong</option>
+                            <option value="never">Never</option>
+                        </select>
+                    </div>
+
+                    <button class="button secondary" onclick="resetProgress()">Reset Progress</button>
+                    <button class="button" onclick="exportProgress()">Export Progress</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Panel -->
+    <div class="quiz-panel" id="quiz-panel">
+        <h3 class="quiz-question" id="quiz-question">What is measurement?</h3>
+        <div class="quiz-options" id="quiz-options">
+            <!-- Quiz options will be added dynamically -->
+        </div>
+        <button class="button" onclick="checkQuizAnswer()">Submit Answer</button>
+    </div>
+
+    <!-- Overlay -->
+    <div class="overlay" id="overlay"></div>
+
+    <!-- Celebration Container -->
+    <div class="celebration" id="celebration"></div>
+
+    <script>
+        // Game State
+        const gameState = {
+            currentType: 'length',
+            currentDifficulty: 'easy',
+            currentLevel: 1,
+            score: 0,
+            streak: 0,
+            questionsAnswered: 0,
+            questionsPerLevel: 10,
+            correctAnswer: 0,
+            currentObject: null,
+            soundEnabled: true,
+            volume: 0.5,
+            animationSpeed: 3,
+            precision: 'medium',
+            showExplanations: 'always',
+            rulerType: 'virtual',
+            unitSystem: 'metric',
+            audioContext: null,
+            settings: {
+                showGrid: true,
+                autoProgress: true,
+                celebrationIntensity: 'high'
+            }
+        };
+
+        // Measurement Concepts Database
+        const measurementConcepts = {
+            length: {
+                title: "Understanding Length",
+                explanation: "Length tells us how long, wide, or tall something is! We can measure it with rulers, measuring tapes, or by comparing to other objects.",
+                units: {
+                    metric: ['mm', 'cm', 'm', 'km'],
+                    imperial: ['in', 'ft', 'yd', 'mi']
+                },
+                concepts: [
+                    "Length is a one-dimensional measurement",
+                    "We can use standard units to compare lengths",
+                    "Measuring tools help us be precise",
+                    "Different cultures use different unit systems"
+                ]
+            },
+            area: {
+                title: "Understanding Area",
+                explanation: "Area tells us how much space a flat shape covers! It's like counting how many squares fit inside a shape.",
+                units: {
+                    metric: ['mm²', 'cm²', 'm²', 'km²'],
+                    imperial: ['in²', 'ft²', 'yd²', 'mi²']
+                },
+                concepts: [
+                    "Area is length × width for rectangles",
+                    "Different shapes have different area formulas",
+                    "Area is measured in square units",
+                    "Larger areas contain more square units"
+                ]
+            },
+            volume: {
+                title: "Understanding Volume",
+                explanation: "Volume tells us how much space a 3D object takes up! It's like counting how many cubes can fit inside.",
+                units: {
+                    metric: ['ml', 'l', 'cm³', 'm³'],
+                    imperial: ['oz', 'pt', 'qt', 'gal', 'in³', 'ft³']
+                },
+                concepts: [
+                    "Volume is length × width × height for boxes",
+                    "Liquids have volume too",
+                    "Volume is measured in cubic units",
+                    "Conservation: same volume, different shapes"
+                ]
+            },
+            weight: {
+                title: "Understanding Weight & Mass",
+                explanation: "Weight tells us how heavy something is! Mass is how much matter is in something, while weight is the force of gravity on that mass.",
+                units: {
+                    metric: ['mg', 'g', 'kg', 't'],
+                    imperial: ['oz', 'lb', 'st', 'ton']
+                },
+                concepts: [
+                    "Mass vs. weight: mass stays same, weight can change",
+                    "Gravity affects weight (moon vs. Earth)",
+                    "Balance scales compare masses",
+                    "Digital scales measure weight"
+                ]
+            },
+            time: {
+                title: "Understanding Time",
+                explanation: "Time tells us when things happen and how long they take! We can measure duration, speed, and schedule events.",
+                units: {
+                    metric: ['ms', 's', 'min', 'h', 'day', 'week', 'month', 'year'],
+                    imperial: ['ms', 's', 'min', 'h', 'day', 'week', 'month', 'year']
+                },
+                concepts: [
+                    "Time flows in one direction",
+                    "We use clocks and calendars to track time",
+                    "Speed = distance ÷ time",
+                    "Time zones exist because Earth rotates"
+                ]
+            },
+            temperature: {
+                title: "Understanding Temperature",
+                explanation: "Temperature tells us how hot or cold something is! It measures the energy of moving particles in matter.",
+                units: {
+                    metric: ['°C', 'K'],
+                    imperial: ['°F', '°R']
+                },
+                concepts: [
+                    "Temperature measures particle movement",
+                    "Different scales: Celsius, Fahrenheit, Kelvin",
+                    "Heat flows from hot to cold",
+                    "Absolute zero: coldest possible temperature"
+                ]
+            }
+        };
+
+        // Quiz Questions Database
+        const quizQuestions = {
+            length: [
+                {
+                    question: "What tool do we use to measure length?",
+                    options: ["Ruler", "Scale", "Thermometer", "Clock"],
+                    correct: 0,
+                    explanation: "A ruler has marks that help us measure how long things are!"
+                },
+                {
+                    question: "Which is longer: 1 meter or 100 centimeters?",
+                    options: ["1 meter", "100 centimeters", "They're the same", "It depends"],
+                    correct: 2,
+                    explanation: "1 meter equals exactly 100 centimeters! They're the same length."
+                }
+            ],
+            area: [
+                {
+                    question: "How do we find the area of a rectangle?",
+                    options: ["Length + Width", "Length × Width", "Length ÷ Width", "Length - Width"],
+                    correct: 1,
+                    explanation: "Area of a rectangle is length times width! This gives us the total space inside."
+                }
+            ]
+            // More quiz questions for other types...
+        };
+
+        // Initialize Audio Context
+        function initAudio() {
+            try {
+                gameState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn('Web Audio API not supported');
+                gameState.soundEnabled = false;
+            }
+        }
+
+        // Sound Generation Functions
+        function playSound(type, frequency = 440, duration = 0.2) {
+            if (!gameState.soundEnabled || !gameState.audioContext) return;
+
+            const oscillator = gameState.audioContext.createOscillator();
+            const gainNode = gameState.audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(gameState.audioContext.destination);
+
+            gainNode.gain.setValueAtTime(gameState.volume * 0.3, gameState.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, gameState.audioContext.currentTime + duration);
+
+            switch (type) {
+                case 'success':
+                    // Play a happy chord
+                    [261.63, 329.63, 392.00, 523.25].forEach((freq, i) => {
+                        const osc = gameState.audioContext.createOscillator();
+                        const gain = gameState.audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(gameState.audioContext.destination);
+                        osc.frequency.setValueAtTime(freq, gameState.audioContext.currentTime + i * 0.1);
+                        gain.gain.setValueAtTime(gameState.volume * 0.2, gameState.audioContext.currentTime + i * 0.1);
+                        gain.gain.exponentialRampToValueAtTime(0.001, gameState.audioContext.currentTime + i * 0.1 + 0.3);
+                        osc.start(gameState.audioContext.currentTime + i * 0.1);
+                        osc.stop(gameState.audioContext.currentTime + i * 0.1 + 0.3);
+                    });
+                    return;
+                case 'error':
+                    oscillator.frequency.setValueAtTime(200, gameState.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(150, gameState.audioContext.currentTime + duration);
+                    break;
+                case 'click':
+                    oscillator.frequency.setValueAtTime(800, gameState.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(400, gameState.audioContext.currentTime + 0.1);
+                    duration = 0.1;
+                    break;
+                case 'hint':
+                    oscillator.frequency.setValueAtTime(600, gameState.audioContext.currentTime);
+                    oscillator.frequency.linearRampToValueAtTime(900, gameState.audioContext.currentTime + duration);
+                    break;
+                default:
+                    oscillator.frequency.setValueAtTime(frequency, gameState.audioContext.currentTime);
+            }
+
+            oscillator.start();
+            oscillator.stop(gameState.audioContext.currentTime + duration);
+        }
+
+        // Character Drawing Functions
+        function drawProfessorMeasure() {
+            const professor = document.getElementById('professor');
+            professor.innerHTML = `
+                <svg width="120" height="120" viewBox="0 0 120 120">
+                    <!-- Body -->
+                    <ellipse cx="60" cy="85" rx="25" ry="30" fill="#2196F3"/>
+                    
+                    <!-- Head -->
+                    <circle cx="60" cy="45" r="20" fill="#FFE0B2"/>
+                    
+                    <!-- Eyes -->
+                    <circle cx="52" cy="40" r="3" fill="white"/>
+                    <circle cx="68" cy="40" r="3" fill="white"/>
+                    <circle cx="52" cy="40" r="2" fill="#333"/>
+                    <circle cx="68" cy="40" r="2" fill="#333"/>
+                    
+                    <!-- Glasses -->
+                    <circle cx="52" cy="40" r="8" fill="none" stroke="#333" stroke-width="2"/>
+                    <circle cx="68" cy="40" r="8" fill="none" stroke="#333" stroke-width="2"/>
+                    <line x1="60" y1="40" x2="60" y2="40" stroke="#333" stroke-width="2"/>
+                    
+                    <!-- Smile -->
+                    <path d="M50,50 Q60,58 70,50" fill="none" stroke="#333" stroke-width="2"/>
+                    
+                    <!-- Hat -->
+                    <rect x="45" y="25" width="30" height="20" fill="#1976D2" rx="3"/>
+                    <rect x="40" y="40" width="40" height="5" fill="#1976D2" rx="2"/>
+                    
+                    <!-- Arms -->
+                    <line x1="40" y1="75" x2="25" y2="85" stroke="#FFE0B2" stroke-width="6" stroke-linecap="round"/>
+                    <line x1="80" y1="75" x2="95" y2="85" stroke="#FFE0B2" stroke-width="6" stroke-linecap="round"/>
+                    
+                    <!-- Ruler in hand -->
+                    <rect x="90" y="75" width="20" height="3" fill="#FFF8DC" stroke="#8B4513"/>
+                    <line x1="90" y1="77" x2="110" y2="77" stroke="#8B4513" stroke-width="0.5"/>
+                    
+                    <!-- Legs -->
+                    <line x1="50" y1="110" x2="45" y2="120" stroke="#2196F3" stroke-width="8" stroke-linecap="round"/>
+                    <line x1="70" y1="110" x2="75" y2="120" stroke="#2196F3" stroke-width="8" stroke-linecap="round"/>
+                </svg>
+            `;
+        }
+
+        function drawScaleSalamander() {
+            const salamander = document.getElementById('salamander');
+            salamander.innerHTML = `
+                <svg width="100" height="100" viewBox="0 0 100 100">
+                    <!-- Body -->
+                    <ellipse cx="50" cy="60" rx="35" ry="20" fill="#4CAF50"/>
+                    
+                    <!-- Head -->
+                    <circle cx="50" cy="35" r="18" fill="#4CAF50"/>
+                    
+                    <!-- Eyes -->
+                    <circle cx="45" cy="30" r="4" fill="white"/>
+                    <circle cx="55" cy="30" r="4" fill="white"/>
+                    <circle cx="45" cy="30" r="2" fill="#333"/>
+                    <circle cx="55" cy="30" r="2" fill="#333"/>
+                    
+                    <!-- Smile -->
+                    <path d="M42,40 Q50,48 58,40" fill="none" stroke="#333" stroke-width="2"/>
+                    
+                    <!-- Tail -->
+                    <ellipse cx="15" cy="65" rx="15" ry="8" fill="#4CAF50"/>
+                    
+                    <!-- Legs -->
+                    <circle cx="35" cy="75" r="6" fill="#4CAF50"/>
+                    <circle cx="50" cy="78" r="6" fill="#4CAF50"/>
+                    <circle cx="65" cy="75" r="6" fill="#4CAF50"/>
+                    <circle cx="75" cy="70" r="6" fill="#4CAF50"/>
+                    
+                    <!-- Scale pattern -->
+                    <circle cx="40" cy="55" r="3" fill="#66BB6A"/>
+                    <circle cx="50" cy="55" r="3" fill="#66BB6A"/>
+                    <circle cx="60" cy="55" r="3" fill="#66BB6A"/>
+                    <circle cx="45" cy="65" r="3" fill="#66BB6A"/>
+                    <circle cx="55" cy="65" r="3" fill="#66BB6A"/>
+                    
+                    <!-- Balance scale on back -->
+                    <line x1="45" y1="45" x2="55" y2="45" stroke="#FFD700" stroke-width="2"/>
+                    <circle cx="42" cy="48" r="3" fill="none" stroke="#FFD700" stroke-width="1"/>
+                    <circle cx="58" cy="48" r="3" fill="none" stroke="#FFD700" stroke-width="1"/>
+                </svg>
+            `;
+        }
+
+        // Canvas Drawing Functions
+        function setupCanvas() {
+            const canvas = document.getElementById('measurement-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw background grid if enabled
+            if (gameState.rulerType === 'grid' || gameState.rulerType === 'both') {
+                drawGrid(ctx, canvas);
+            }
+            
+            // Draw measurement object
+            drawMeasurementObject(ctx, canvas);
+            
+            // Draw ruler if enabled
+            if (gameState.rulerType === 'virtual' || gameState.rulerType === 'both') {
+                drawVirtualRuler(ctx, canvas);
+            }
+        }
+
+        function drawGrid(ctx, canvas) {
+            ctx.strokeStyle = '#E0E0E0';
+            ctx.lineWidth = 1;
+            
+            const spacing = gameState.unitSystem === 'metric' ? 20 : 24; // 20px = 1cm, 24px = 1inch
+            
+            // Vertical lines
+            for (let x = 0; x < canvas.width; x += spacing) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+            
+            // Horizontal lines
+            for (let y = 0; y < canvas.height; y += spacing) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function drawMeasurementObject(ctx, canvas) {
+            if (!gameState.currentObject) return;
+            
+            const obj = gameState.currentObject;
+            
+            // Set color and style
+            ctx.fillStyle = obj.color;
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            
+            // Draw based on type
+            switch (gameState.currentType) {
+                case 'length':
+                    ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                    ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                    break;
+                case 'area':
+                    if (obj.shape === 'rectangle') {
+                        ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                        ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                    } else if (obj.shape === 'circle') {
+                        ctx.beginPath();
+                        ctx.arc(obj.x + obj.radius, obj.y + obj.radius, obj.radius, 0, 2 * Math.PI);
+                        ctx.fill();
+                        ctx.stroke();
+                    }
+                    break;
+                case 'volume':
+                    // Draw 3D-looking box
+                    draw3DBox(ctx, obj);
+                    break;
+            }
+            
+            // Add measurement hints if enabled
+            if (gameState.showExplanations === 'always') {
+                drawMeasurementHints(ctx, obj);
+            }
+        }
+
+        function draw3DBox(ctx, obj) {
+            const depth = obj.depth || 30;
+            
+            // Front face
+            ctx.fillStyle = obj.color;
+            ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+            ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+            
+            // Top face
+            ctx.fillStyle = adjustBrightness(obj.color, 20);
+            ctx.beginPath();
+            ctx.moveTo(obj.x, obj.y);
+            ctx.lineTo(obj.x + depth, obj.y - depth);
+            ctx.lineTo(obj.x + obj.width + depth, obj.y - depth);
+            ctx.lineTo(obj.x + obj.width, obj.y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Right face
+            ctx.fillStyle = adjustBrightness(obj.color, -20);
+            ctx.beginPath();
+            ctx.moveTo(obj.x + obj.width, obj.y);
+            ctx.lineTo(obj.x + obj.width + depth, obj.y - depth);
+            ctx.lineTo(obj.x + obj.width + depth, obj.y + obj.height - depth);
+            ctx.lineTo(obj.x + obj.width, obj.y + obj.height);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function adjustBrightness(color, amount) {
+            const num = parseInt(color.replace("#", ""), 16);
+            const amt = Math.round(2.55 * amount);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+        }
+
+        function drawMeasurementHints(ctx, obj) {
+            ctx.font = '12px Nunito';
+            ctx.fillStyle = '#666';
+            ctx.textAlign = 'center';
+            
+            if (gameState.currentType === 'length') {
+                // Show length measurement
+                const length = pixelsToUnits(obj.width);
+                ctx.fillText(`${length.toFixed(1)} ${getCurrentUnit()}`, 
+                    obj.x + obj.width / 2, obj.y - 10);
+            } else if (gameState.currentType === 'area') {
+                // Show area calculation
+                const area = calculateArea(obj);
+                ctx.fillText(`Area: ${area.toFixed(1)} ${getCurrentUnit()}²`, 
+                    obj.x + obj.width / 2, obj.y - 10);
+            }
+        }
+
+        function drawVirtualRuler(ctx, canvas) {
+            const rulerHeight = 40;
+            const rulerY = canvas.height - rulerHeight - 10;
+            
+            // Ruler background
+            ctx.fillStyle = '#FFF8DC';
+            ctx.fillRect(50, rulerY, canvas.width - 100, rulerHeight);
+            ctx.strokeStyle = '#8B4513';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(50, rulerY, canvas.width - 100, rulerHeight);
+            
+            // Ruler markings
+            const spacing = gameState.unitSystem === 'metric' ? 20 : 24; // 20px = 1cm, 24px = 1inch
+            const maxUnits = Math.floor((canvas.width - 100) / spacing);
+            
+            ctx.strokeStyle = '#8B4513';
+            ctx.fillStyle = '#8B4513';
+            ctx.font = '10px Nunito';
+            ctx.textAlign = 'center';
+            
+            for (let i = 0; i <= maxUnits; i++) {
+                const x = 50 + i * spacing;
+                
+                // Major tick
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(x, rulerY);
+                ctx.lineTo(x, rulerY + rulerHeight);
+                ctx.stroke();
+                
+                // Number label
+                ctx.fillText(i.toString(), x, rulerY + rulerHeight + 15);
+                
+                // Minor ticks
+                if (i < maxUnits) {
+                    const minorSpacing = spacing / 10;
+                    for (let j = 1; j < 10; j++) {
+                        const minorX = x + j * minorSpacing;
+                        const tickHeight = j === 5 ? rulerHeight * 0.6 : rulerHeight * 0.3;
+                        
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(minorX, rulerY);
+                        ctx.lineTo(minorX, rulerY + tickHeight);
+                        ctx.stroke();
+                    }
+                }
+            }
+            
+            // Unit label
+            ctx.font = '12px Nunito';
+            ctx.fillText(getCurrentUnit(), canvas.width - 25, rulerY + 25);
+        }
+
+        // Utility Functions
+        function getCurrentUnit() {
+            const units = measurementConcepts[gameState.currentType].units;
+            return gameState.unitSystem === 'metric' ? units.metric[0] : units.imperial[0];
+        }
+
+        function pixelsToUnits(pixels) {
+            const pixelsPerUnit = gameState.unitSystem === 'metric' ? 20 : 24; // 20px = 1cm, 24px = 1inch
+            return pixels / pixelsPerUnit;
+        }
+
+        function unitsToPixels(units) {
+            const pixelsPerUnit = gameState.unitSystem === 'metric' ? 20 : 24;
+            return units * pixelsPerUnit;
+        }
+
+        function generateQuestion() {
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD', '#FFB347'];
+            
+            let length, width, height, radius;
+            
+            // Generate dimensions based on difficulty
+            switch (gameState.currentDifficulty) {
+                case 'easy':
+                    length = Math.floor(Math.random() * 10) + 1; // 1-10 units
+                    width = Math.floor(Math.random() * 8) + 1;   // 1-8 units
+                    height = Math.floor(Math.random() * 6) + 1;  // 1-6 units
+                    radius = Math.floor(Math.random() * 5) + 1;  // 1-5 units
+                    break;
+                case 'medium':
+                    length = Math.floor(Math.random() * 15) + 1; // 1-15 units
+                    width = Math.floor(Math.random() * 12) + 1;
+                    height = Math.floor(Math.random() * 10) + 1;
+                    radius = Math.floor(Math.random() * 7) + 1;
+                    break;
+                case 'hard':
+                    length = Math.floor(Math.random() * 20) + 1; // 1-20 units
+                    width = Math.floor(Math.random() * 15) + 1;
+                    height = Math.floor(Math.random() * 12) + 1;
+                    radius = Math.floor(Math.random() * 10) + 1;
+                    break;
+                case 'expert':
+                    length = (Math.random() * 20) + 1;  // 1-20 units with decimals
+                    width = (Math.random() * 15) + 1;
+                    height = (Math.random() * 12) + 1;
+                    radius = (Math.random() * 10) + 1;
+                    break;
+            }
+            
+            // Create measurement object
+            gameState.currentObject = {
+                x: Math.random() * 200 + 100,
+                y: Math.random() * 200 + 50,
+                width: unitsToPixels(length),
+                height: unitsToPixels(width),
+                depth: unitsToPixels(height),
+                radius: unitsToPixels(radius),
+                color: colors[Math.floor(Math.random() * colors.length)],
+                shape: Math.random() > 0.5 ? 'rectangle' : 'circle'
+            };
+            
+            // Calculate correct answer
+            switch (gameState.currentType) {
+                case 'length':
+                    gameState.correctAnswer = length;
+                    break;
+                case 'area':
+                    if (gameState.currentObject.shape === 'rectangle') {
+                        gameState.correctAnswer = length * width;
+                    } else {
+                        gameState.correctAnswer = Math.PI * radius * radius;
+                    }
+                    break;
+                case 'volume':
+                    gameState.correctAnswer = length * width * height;
+                    break;
+                case 'weight':
+                    // Simulate weight based on volume and density
+                    const volume = length * width * height;
+                    const density = 0.5 + Math.random() * 2; // 0.5-2.5 g/cm³
+                    gameState.correctAnswer = volume * density;
+                    break;
+                case 'time':
+                    gameState.correctAnswer = Math.floor(Math.random() * 60) + 1; // 1-60 seconds
+                    break;
+                case 'temperature':
+                    gameState.correctAnswer = Math.floor(Math.random() * 100) + 1; // 1-100°C
+                    break;
+            }
+            
+            setupCanvas();
+            updateUI();
+        }
+
+        function calculateArea(obj) {
+            if (obj.shape === 'rectangle') {
+                return pixelsToUnits(obj.width) * pixelsToUnits(obj.height);
+            } else if (obj.shape === 'circle') {
+                const radius = pixelsToUnits(obj.radius);
+                return Math.PI * radius * radius;
+            }
+            return 0;
+        }
+
+        // Game Functions
+        function checkAnswer() {
+            playSound('click');
+            
+            const userAnswer = parseFloat(document.getElementById('answer-input').value);
+            
+            if (isNaN(userAnswer)) {
+                showMessage("Please enter a valid number!", 'error');
+                return;
+            }
+            
+            let tolerance;
+            switch (gameState.precision) {
+                case 'low': tolerance = 1; break;
+                case 'medium': tolerance = 0.5; break;
+                case 'high': tolerance = 0.1; break;
+            }
+            
+            const isCorrect = Math.abs(userAnswer - gameState.correctAnswer) <= tolerance;
+            
+            if (isCorrect) {
+                gameState.score++;
+                gameState.streak++;
+                playSound('success');
+                createCelebration();
+                showMessage(`Correct! The answer is ${gameState.correctAnswer.toFixed(1)} ${getCurrentUnit()}`, 'success');
+                
+                // Level up check
+                if (gameState.questionsAnswered % gameState.questionsPerLevel === 0) {
+                    levelUp();
+                }
+            } else {
+                gameState.streak = 0;
+                playSound('error');
+                showMessage(`Not quite! The correct answer is ${gameState.correctAnswer.toFixed(1)} ${getCurrentUnit()}. Try the next one!`, 'error');
+                
+                if (gameState.showExplanations === 'always' || gameState.showExplanations === 'incorrect') {
+                    showExplanation();
+                }
+            }
+            
+            gameState.questionsAnswered++;
+            updateUI();
+            
+            // Auto-progress if enabled
+            if (gameState.settings.autoProgress) {
+                setTimeout(nextQuestion, 2000);
+            }
+        }
+
+        function nextQuestion() {
+            playSound('click');
+            document.getElementById('answer-input').value = '';
+            generateQuestion();
+            showCharacterMessage('professor', "Let's measure this new object!");
+        }
+
+        function showHint() {
+            playSound('hint');
+            
+            let hint;
+            switch (gameState.currentType) {
+                case 'length':
+                    hint = "Use the ruler to measure from one end to the other. Count the units!";
+                    break;
+                case 'area':
+                    hint = gameState.currentObject.shape === 'rectangle' 
+                        ? "For rectangles, multiply length × width!" 
+                        : "For circles, use π × radius²!";
+                    break;
+                case 'volume':
+                    hint = "For boxes, multiply length × width × height!";
+                    break;
+                default:
+                    hint = "Look carefully at the object and use the appropriate measuring technique!";
+            }
+            
+            showCharacterMessage('salamander', hint);
+        }
+
+        function levelUp() {
+            gameState.currentLevel++;
+            createCelebration();
+            playSound('success');
+            showMessage(`Level Up! You're now level ${gameState.currentLevel}!`, 'success');
+            
+            // Update level display
+            updateLevelText();
+        }
+
+        function updateLevelText() {
+            const levelTexts = [
+                "Beginner Measurer",
+                "Apprentice Measurer", 
+                "Skilled Measurer",
+                "Expert Measurer",
+                "Master Measurer",
+                "Measurement Wizard",
+                "Dimension Master",
+                "Scale Legend",
+                "Measurement Genius",
+                "Professor of Precision"
+            ];
+            
+            const levelIndex = Math.min(gameState.currentLevel - 1, levelTexts.length - 1);
+            document.getElementById('current-level-text').textContent = levelTexts[levelIndex];
+        }
+
+        // UI Functions
+        function updateUI() {
+            document.getElementById('level-display').textContent = gameState.currentLevel;
+            document.getElementById('score-display').textContent = gameState.score;
+            document.getElementById('streak-display').textContent = gameState.streak;
+            document.getElementById('progress-text').textContent = 
+                `${gameState.questionsAnswered} / ${gameState.questionsPerLevel} Questions`;
+            
+            const progressPercent = (gameState.questionsAnswered % gameState.questionsPerLevel) / gameState.questionsPerLevel * 100;
+            document.getElementById('progress-fill').style.width = progressPercent + '%';
+            
+            // Update unit label
+            document.getElementById('unit-label').textContent = getCurrentUnit();
+            
+            // Update concept explanation
+            const concept = measurementConcepts[gameState.currentType];
+            document.getElementById('concept-title').textContent = concept.title;
+            document.getElementById('concept-text').textContent = concept.explanation;
+            
+            // Update unit converter
+            updateUnitConverter();
+        }
+
+        function updateUnitConverter() {
+            const value = parseFloat(document.getElementById('answer-input').value) || 0;
+            
+            if (gameState.currentType === 'length') {
+                let metricValue, imperialValue;
+                
+                if (gameState.unitSystem === 'metric') {
+                    metricValue = value;
+                    imperialValue = value / 2.54; // cm to inches
+                } else {
+                    imperialValue = value;
+                    metricValue = value * 2.54; // inches to cm
+                }
+                
+                document.getElementById('metric-value').textContent = `${metricValue.toFixed(1)} cm`;
+                document.getElementById('imperial-value').textContent = `${imperialValue.toFixed(1)} in`;
+            }
+        }
+
+        function showMessage(message, type = 'info') {
+            const bubble = type === 'error' ? 'salamander-bubble' : 'professor-bubble';
+            showCharacterMessage(type === 'error' ? 'salamander' : 'professor', message);
+        }
+
+        function showCharacterMessage(character, message) {
+            const bubbleId = character === 'professor' ? 'professor-bubble' : 'salamander-bubble';
+            const bubble = document.getElementById(bubbleId);
+            
+            bubble.textContent = message;
+            bubble.classList.add('visible');
+            
+            setTimeout(() => {
+                bubble.classList.remove('visible');
+            }, 4000);
+        }
+
+        function createCelebration() {
+            const celebration = document.getElementById('celebration');
+            
+            // Create confetti
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 60%)`;
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                celebration.appendChild(confetti);
+            }
+            
+            // Create star particles
+            for (let i = 0; i < 10; i++) {
+                const star = document.createElement('div');
+                star.className = 'particle star-particle';
+                star.textContent = '✨';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 1 + 's';
+                celebration.appendChild(star);
+            }
+            
+            // Clean up after animation
+            setTimeout(() => {
+                celebration.innerHTML = '';
+            }, 5000);
+        }
+
+        function showExplanation() {
+            const explanation = measurementConcepts[gameState.currentType].concepts[
+                Math.floor(Math.random() * measurementConcepts[gameState.currentType].concepts.length)
+            ];
+            showCharacterMessage('professor', `Did you know? ${explanation}`);
+        }
+
+        function showQuiz() {
+            const questions = quizQuestions[gameState.currentType];
+            if (!questions || questions.length === 0) return;
+            
+            const question = questions[Math.floor(Math.random() * questions.length)];
+            
+            document.getElementById('quiz-question').textContent = question.question;
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionDiv = document.createElement('div');
+                optionDiv.className = 'quiz-option';
+                optionDiv.textContent = option;
+                optionDiv.onclick = () => selectQuizOption(index);
+                optionsContainer.appendChild(optionDiv);
+            });
+            
+            document.getElementById('quiz-panel').classList.add('visible');
+            document.getElementById('overlay').classList.add('visible');
+            
+            // Store current quiz data
+            gameState.currentQuiz = question;
+        }
+
+        function selectQuizOption(index) {
+            const options = document.querySelectorAll('.quiz-option');
+            options.forEach(option => option.classList.remove('selected'));
+            options[index].classList.add('selected');
+            gameState.selectedQuizAnswer = index;
+        }
+
+        function checkQuizAnswer() {
+            if (gameState.selectedQuizAnswer === undefined) return;
+            
+            const options = document.querySelectorAll('.quiz-option');
+            const isCorrect = gameState.selectedQuizAnswer === gameState.currentQuiz.correct;
+            
+            if (isCorrect) {
+                options[gameState.selectedQuizAnswer].classList.add('correct');
+                playSound('success');
+                gameState.score += 2; // Bonus points for quiz
+            } else {
+                options[gameState.selectedQuizAnswer].classList.add('incorrect');
+                options[gameState.currentQuiz.correct].classList.add('correct');
+                playSound('error');
+            }
+            
+            setTimeout(() => {
+                hideQuiz();
+                if (isCorrect) {
+                    showCharacterMessage('professor', 'Excellent knowledge!');
+                } else {
+                    showCharacterMessage('professor', gameState.currentQuiz.explanation);
+                }
+            }, 2000);
+            
+            updateUI();
+        }
+
+        function hideQuiz() {
+            document.getElementById('quiz-panel').classList.remove('visible');
+            document.getElementById('overlay').classList.remove('visible');
+            gameState.selectedQuizAnswer = undefined;
+        }
+
+        // Settings Functions
+        function resetProgress() {
+            if (confirm('Are you sure you want to reset all progress?')) {
+                gameState.score = 0;
+                gameState.currentLevel = 1;
+                gameState.streak = 0;
+                gameState.questionsAnswered = 0;
+                updateUI();
+                updateLevelText();
+                showMessage('Progress reset! Starting fresh!', 'info');
+            }
+        }
+
+        function exportProgress() {
+            const progress = {
+                level: gameState.currentLevel,
+                score: gameState.score,
+                streak: gameState.streak,
+                questionsAnswered: gameState.questionsAnswered,
+                settings: gameState.settings
+            };
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(progress, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "measurement-adventure-progress.json");
+            downloadAnchor.click();
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initAudio();
+            drawProfessorMeasure();
+            drawScaleSalamander();
+            generateQuestion();
+            updateUI();
+            updateLevelText();
+            
+            // Show welcome message
+            setTimeout(() => {
+                showCharacterMessage('professor', 'Welcome to Measurement Adventure! I\'m Professor Measure, and I\'ll help you become a measurement master!');
+            }, 1000);
+            
+            setTimeout(() => {
+                showCharacterMessage('salamander', 'Hi there! I\'m Scale, and I love all things about size and measurement!');
+            }, 3000);
+        });
+
+        // Measurement type selection
+        document.querySelectorAll('.measurement-type').forEach(button => {
+            button.addEventListener('click', function() {
+                document.querySelectorAll('.measurement-type').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                gameState.currentType = this.dataset.type;
+                generateQuestion();
+                showCharacterMessage('professor', `Great choice! Let's explore ${this.textContent}!`);
+            });
+        });
+
+        // Difficulty selection
+        document.querySelectorAll('.difficulty-badge').forEach(badge => {
+            badge.addEventListener('click', function() {
+                document.querySelectorAll('.difficulty-badge').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                gameState.currentDifficulty = this.dataset.difficulty;
+                generateQuestion();
+                showCharacterMessage('salamander', `${this.textContent} mode activated! ${this.textContent === 'Expert' ? 'You\'re brave!' : 'Good choice!'}`);
+            });
+        });
+
+        // Settings controls
+        document.getElementById('volume-slider').addEventListener('input', function() {
+            gameState.volume = this.value / 100;
+        });
+
+        document.getElementById('animation-speed').addEventListener('input', function() {
+            gameState.animationSpeed = this.value;
+            document.documentElement.style.setProperty('--animation-speed', this.value);
+        });
+
+        document.getElementById('questions-per-level').addEventListener('input', function() {
+            gameState.questionsPerLevel = parseInt(this.value);
+            updateUI();
+        });
+
+        document.getElementById('precision-level').addEventListener('change', function() {
+            gameState.precision = this.value;
+        });
+
+        document.getElementById('show-explanations').addEventListener('change', function() {
+            gameState.showExplanations = this.value;
+        });
+
+        document.getElementById('unit-select').addEventListener('change', function() {
+            gameState.unitSystem = this.value;
+            generateQuestion();
+        });
+
+        document.getElementById('ruler-type').addEventListener('change', function() {
+            gameState.rulerType = this.value;
+            setupCanvas();
+        });
+
+        // Answer input updates
+        document.getElementById('answer-input').addEventListener('input', updateUnitConverter);
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            switch(event.key) {
+                case 'Enter':
+                    checkAnswer();
+                    break;
+                case ' ':
+                    event.preventDefault();
+                    nextQuestion();
+                    break;
+                case 'h':
+                case 'H':
+                    showHint();
+                    break;
+                case 'q':
+                case 'Q':
+                    showQuiz();
+                    break;
+            }
+        });
+
+        // Overlay click to close
+        document.getElementById('overlay').addEventListener('click', hideQuiz);
+
+        // Random quiz trigger (every 5 questions)
+        setInterval(() => {
+            if (gameState.questionsAnswered > 0 && gameState.questionsAnswered % 5 === 0) {
+                setTimeout(showQuiz, 2000);
+            }
+        }, 1000);
+    </script>
+</body>
+</html>

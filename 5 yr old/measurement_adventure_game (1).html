@@ -1,0 +1,1839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Measurement Master Pro</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary-blue: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-gray: #f8fafc;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --border-light: #e2e8f0;
+            --white: #ffffff;
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--gradient-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .app-container {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-light);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        .logo-icon {
+            width: 2rem;
+            height: 2rem;
+            background: var(--primary-blue);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        .header-stats {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 320px 1fr 280px;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            height: calc(100vh - 80px);
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 1rem;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .panel-header {
+            padding: 1.5rem 1.5rem 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-light);
+            background: var(--secondary-gray);
+        }
+
+        .panel-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .panel-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .panel-content {
+            padding: 1.5rem;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        /* Measurement Canvas */
+        .canvas-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: var(--white);
+            border-radius: 1rem;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-light);
+        }
+
+        .measurement-canvas {
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 25% 25%, rgba(37, 99, 235, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+                linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            cursor: crosshair;
+            touch-action: none;
+            user-select: none;
+        }
+
+        /* Realistic Ruler */
+        .ruler {
+            position: absolute;
+            background: linear-gradient(180deg, 
+                #fdfbf7 0%, 
+                #f5f1e8 15%, 
+                #ede6d3 50%, 
+                #e8dcc0 85%, 
+                #d4c5a0 100%);
+            border: 1px solid #c4b59a;
+            border-radius: 6px;
+            box-shadow: 
+                0 4px 8px rgba(0, 0, 0, 0.15),
+                0 2px 4px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+            cursor: move;
+            z-index: 50;
+            transform-origin: center;
+            transition: transform 0.1s ease-out;
+        }
+
+        .ruler:hover {
+            box-shadow: 
+                0 6px 12px rgba(0, 0, 0, 0.2),
+                0 4px 8px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+        }
+
+        .ruler.dragging {
+            transform: scale(1.02);
+            box-shadow: 
+                0 8px 16px rgba(0, 0, 0, 0.25),
+                0 6px 12px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .ruler-markings {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .ruler-marking {
+            position: absolute;
+            background: #8b5a3c;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+        }
+
+        .ruler-number {
+            position: absolute;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            color: #5a3e2a;
+            text-shadow: 0 1px 1px rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Control Sections */
+        .control-section {
+            margin-bottom: 2rem;
+        }
+
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .section-icon {
+            width: 1rem;
+            height: 1rem;
+            color: var(--primary-blue);
+        }
+
+        /* Button Groups */
+        .button-group {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .button-group.single {
+            grid-template-columns: 1fr;
+        }
+
+        .btn {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-light);
+            border-radius: 0.5rem;
+            background: var(--white);
+            color: var(--text-primary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: var(--secondary-gray);
+            border-color: var(--primary-blue);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn-primary {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            border-color: #059669;
+        }
+
+        .btn-warning {
+            background: var(--accent-orange);
+            color: white;
+            border-color: var(--accent-orange);
+        }
+
+        .btn-warning:hover {
+            background: #d97706;
+            border-color: #d97706;
+        }
+
+        .btn.active {
+            background: var(--primary-blue);
+            color: white;
+            border-color: var(--primary-blue);
+        }
+
+        /* Form Controls */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            background: var(--white);
+            transition: all 0.2s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border-light);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-primary);
+            background: var(--white);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Answer Section */
+        .answer-section {
+            background: var(--secondary-gray);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-light);
+        }
+
+        .answer-input-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .answer-input {
+            flex: 1;
+            padding: 1rem;
+            border: 2px solid var(--border-light);
+            border-radius: 0.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            text-align: center;
+            color: var(--text-primary);
+            background: var(--white);
+            transition: all 0.2s ease;
+        }
+
+        .answer-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+        }
+
+        .unit-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        /* Progress Indicators */
+        .progress-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 0.5rem;
+            background: var(--border-light);
+            border-radius: 0.25rem;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-green), var(--primary-blue));
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .progress-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+        }
+
+        /* Character Assistant */
+        .character-assistant {
+            position: absolute;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 60;
+        }
+
+        .character-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: var(--white);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid var(--primary-blue);
+        }
+
+        .character-avatar:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .character-message {
+            position: absolute;
+            bottom: 100%;
+            right: 0;
+            background: var(--white);
+            border-radius: 1rem;
+            padding: 1rem;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--border-light);
+            max-width: 280px;
+            margin-bottom: 1rem;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .character-message.visible {
+            opacity: 1;
+            transform: translateY(0);
+            pointer-events: all;
+        }
+
+        .character-message::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            right: 2rem;
+            border: 8px solid transparent;
+            border-top-color: var(--white);
+        }
+
+        /* Floating Notifications */
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--white);
+            border-radius: 0.75rem;
+            padding: 1rem 1.5rem;
+            box-shadow: var(--shadow-xl);
+            border: 1px solid var(--border-light);
+            z-index: 200;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            max-width: 320px;
+        }
+
+        .notification.visible {
+            transform: translateX(0);
+        }
+
+        .notification-icon {
+            width: 1.5rem;
+            height: 1.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.875rem;
+        }
+
+        .notification-success .notification-icon {
+            background: var(--accent-green);
+        }
+
+        .notification-error .notification-icon {
+            background: #ef4444;
+        }
+
+        .notification-info .notification-icon {
+            background: var(--primary-blue);
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-text {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Measurement Object */
+        .measurement-object {
+            position: absolute;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            box-shadow: var(--shadow-md);
+            border: 2px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .measurement-object:hover {
+            transform: scale(1.02);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Celebration Effects */
+        .celebration-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 150;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 2px;
+            animation: confetti-fall 3s linear infinite;
+        }
+
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .sparkle {
+            position: absolute;
+            color: #fbbf24;
+            font-size: 1.5rem;
+            animation: sparkle-twinkle 2s ease-out forwards;
+            pointer-events: none;
+        }
+
+        @keyframes sparkle-twinkle {
+            0% {
+                transform: scale(0) rotate(0deg);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2) rotate(180deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1280px) {
+            .main-layout {
+                grid-template-columns: 280px 1fr 240px;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr;
+            }
+            
+            .header-stats {
+                gap: 1rem;
+            }
+            
+            .character-assistant {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .header {
+                padding: 1rem;
+            }
+            
+            .main-layout {
+                padding: 1rem;
+                gap: 1rem;
+            }
+            
+            .logo {
+                font-size: 1.25rem;
+            }
+            
+            .header-stats {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Touch Feedback */
+        .ruler.touch-active {
+            transform: scale(1.05);
+            box-shadow: 
+                0 12px 20px rgba(0, 0, 0, 0.3),
+                0 8px 16px rgba(0, 0, 0, 0.25),
+                inset 0 2px 0 rgba(255, 255, 255, 0.9),
+                inset 0 -2px 0 rgba(0, 0, 0, 0.25);
+        }
+
+        /* Grid Overlay */
+        .grid-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0.3;
+            z-index: 1;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .loading-spinner {
+            width: 2rem;
+            height: 2rem;
+            border: 2px solid var(--border-light);
+            border-top-color: var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">📏</div>
+                <span>Measurement Master Pro</span>
+            </div>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <div class="stat-label">Level</div>
+                    <div class="stat-value" id="header-level">1</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Score</div>
+                    <div class="stat-value" id="header-score">0</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Accuracy</div>
+                    <div class="stat-value" id="header-accuracy">0%</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">Streak</div>
+                    <div class="stat-value" id="header-streak">0</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <main class="main-layout">
+            <!-- Left Panel - Controls -->
+            <aside class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Measurement Tools</h2>
+                    <p class="panel-subtitle">Configure your learning experience</p>
+                </div>
+                <div class="panel-content">
+                    <!-- Measurement Type -->
+                    <div class="control-section">
+                        <h3 class="section-title">
+                            <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                            </svg>
+                            Measurement Type
+                        </h3>
+                        <div class="button-group">
+                            <button class="btn active" data-type="length">📏 Length</button>
+                            <button class="btn" data-type="area">📐 Area</button>
+                            <button class="btn" data-type="volume">📦 Volume</button>
+                            <button class="btn" data-type="angle">📐 Angle</button>
+                        </div>
+                    </div>
+
+                    <!-- Difficulty -->
+                    <div class="control-section">
+                        <h3 class="section-title">
+                            <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            Difficulty Level
+                        </h3>
+                        <div class="button-group">
+                            <button class="btn active" data-difficulty="beginner">🟢 Beginner</button>
+                            <button class="btn" data-difficulty="intermediate">🟡 Intermediate</button>
+                            <button class="btn" data-difficulty="advanced">🟠 Advanced</button>
+                            <button class="btn" data-difficulty="expert">🔴 Expert</button>
+                        </div>
+                    </div>
+
+                    <!-- Units -->
+                    <div class="control-section">
+                        <h3 class="section-title">
+                            <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
+                            </svg>
+                            Unit System
+                        </h3>
+                        <div class="button-group">
+                            <button class="btn active" data-units="metric">Metric</button>
+                            <button class="btn" data-units="imperial">Imperial</button>
+                        </div>
+                    </div>
+
+                    <!-- Answer Section -->
+                    <div class="answer-section">
+                        <h3 class="section-title">
+                            <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Your Answer
+                        </h3>
+                        <div class="answer-input-group">
+                            <input type="number" class="answer-input" id="answer-input" placeholder="0.0" step="0.1">
+                            <span class="unit-label" id="unit-display">cm</span>
+                        </div>
+                        <div class="button-group single">
+                            <button class="btn btn-success" id="check-answer">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                                Check Answer
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="control-section">
+                        <div class="button-group">
+                            <button class="btn" id="hint-btn">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                                Hint
+                            </button>
+                            <button class="btn" id="new-question">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                New Question
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center Panel - Canvas -->
+            <section class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Measurement Canvas</h2>
+                    <p class="panel-subtitle">Use two fingers to move the ruler around</p>
+                </div>
+                <div class="canvas-container">
+                    <canvas id="measurement-canvas" class="measurement-canvas"></canvas>
+                    <div class="grid-overlay" id="grid-overlay"></div>
+                    
+                    <!-- Realistic Ruler -->
+                    <div class="ruler" id="ruler">
+                        <div class="ruler-markings" id="ruler-markings"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel - Progress & Settings -->
+            <aside class="panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">Progress & Settings</h2>
+                    <p class="panel-subtitle">Track your learning journey</p>
+                </div>
+                <div class="panel-content">
+                    <!-- Progress -->
+                    <div class="control-section">
+                        <h3 class="section-title">
+                            <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            Learning Progress
+                        </h3>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="progress-fill"></div>
+                            </div>
+                            <div class="progress-text" id="progress-text">0 / 10 Questions</div>
+                        </div>
+                    </div>
+
+                    <!-- Ruler Settings -->
+                    <div class="control-section">
+                        <h3 class="section-title">
+                            <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"></path>
+                            </svg>
+                            Ruler Settings
+                        </h3>
+                        <div class="form-group">
+                            <label class="form-label">Ruler Size</label>
+                            <select class="form-select" id="ruler-size">
+                                <option value="small">Small (15cm)</option>
+                                <option value="medium" selected>Medium (30cm)</option>
+                                <option value="large">Large (50cm)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Show Grid</label>
+                            <select class="form-select" id="show-grid">
+                                <option value="true">Yes</option>
+                                <option value="false" selected>No</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Sound Settings -->
+                    <div class="control-section">
+                        <h3 class="section-title">
+                            <svg class="section-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 14.142M5 15h4l5 5v-20l-5 5H5v5z"></path>
+                            </svg>
+                            Sound & Feedback
+                        </h3>
+                        <div class="form-group">
+                            <label class="form-label">Sound Volume</label>
+                            <input type="range" class="form-input" id="volume-slider" min="0" max="100" value="50">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Haptic Feedback</label>
+                            <select class="form-select" id="haptic-feedback">
+                                <option value="true" selected>Enabled</option>
+                                <option value="false">Disabled</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Reset Button -->
+                    <div class="control-section">
+                        <div class="button-group single">
+                            <button class="btn btn-warning" id="reset-progress">
+                                <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                </svg>
+                                Reset Progress
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Character Assistant -->
+        <div class="character-assistant">
+            <div class="character-message" id="character-message">
+                Welcome! Use two fingers to move the ruler around and measure objects. Try your first measurement!
+            </div>
+            <div class="character-avatar" id="character-avatar">
+                <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Celebration Container -->
+        <div class="celebration-container" id="celebration-container"></div>
+    </div>
+
+    <script>
+        // Game State
+        const gameState = {
+            currentType: 'length',
+            currentDifficulty: 'beginner',
+            currentUnits: 'metric',
+            currentLevel: 1,
+            score: 0,
+            streak: 0,
+            questionsAnswered: 0,
+            correctAnswers: 0,
+            questionsPerLevel: 10,
+            correctAnswer: 0,
+            currentObject: null,
+            rulerPosition: { x: 100, y: 300 },
+            rulerSize: 'medium',
+            showGrid: false,
+            soundVolume: 0.5,
+            hapticFeedback: true,
+            audioContext: null,
+            canvas: null,
+            ctx: null,
+            isDragging: false,
+            touchStartPos: { x: 0, y: 0 },
+            rulerStartPos: { x: 0, y: 0 },
+            activeFingers: 0
+        };
+
+        // Measurement configurations
+        const measurementConfig = {
+            length: {
+                units: {
+                    metric: { unit: 'cm', pixelsPerUnit: 20, max: 30 },
+                    imperial: { unit: 'in', pixelsPerUnit: 25, max: 12 }
+                }
+            },
+            area: {
+                units: {
+                    metric: { unit: 'cm²', pixelsPerUnit: 20, max: 25 },
+                    imperial: { unit: 'in²', pixelsPerUnit: 25, max: 10 }
+                }
+            },
+            volume: {
+                units: {
+                    metric: { unit: 'cm³', pixelsPerUnit: 20, max: 20 },
+                    imperial: { unit: 'in³', pixelsPerUnit: 25, max: 8 }
+                }
+            }
+        };
+
+        // Initialize application
+        function initApp() {
+            initAudio();
+            setupCanvas();
+            setupEventListeners();
+            setupRuler();
+            generateNewQuestion();
+            updateUI();
+            showCharacterMessage("Welcome! Use two fingers to move the ruler around and measure objects. Try your first measurement!");
+        }
+
+        // Audio initialization
+        function initAudio() {
+            try {
+                gameState.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.warn('Web Audio API not supported');
+            }
+        }
+
+        // Sound generation
+        function playSound(type, frequency = 440, duration = 0.2) {
+            if (!gameState.audioContext || gameState.soundVolume === 0) return;
+
+            const oscillator = gameState.audioContext.createOscillator();
+            const gainNode = gameState.audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(gameState.audioContext.destination);
+
+            gainNode.gain.setValueAtTime(gameState.soundVolume * 0.1, gameState.audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.001, gameState.audioContext.currentTime + duration);
+
+            switch (type) {
+                case 'success':
+                    [523, 659, 784, 1047].forEach((freq, i) => {
+                        const osc = gameState.audioContext.createOscillator();
+                        const gain = gameState.audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(gameState.audioContext.destination);
+                        osc.frequency.setValueAtTime(freq, gameState.audioContext.currentTime + i * 0.1);
+                        gain.gain.setValueAtTime(gameState.soundVolume * 0.05, gameState.audioContext.currentTime + i * 0.1);
+                        gain.gain.exponentialRampToValueAtTime(0.001, gameState.audioContext.currentTime + i * 0.1 + 0.3);
+                        osc.start(gameState.audioContext.currentTime + i * 0.1);
+                        osc.stop(gameState.audioContext.currentTime + i * 0.1 + 0.3);
+                    });
+                    return;
+                case 'error':
+                    oscillator.frequency.setValueAtTime(300, gameState.audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(200, gameState.audioContext.currentTime + duration);
+                    break;
+                case 'click':
+                    oscillator.frequency.setValueAtTime(800, gameState.audioContext.currentTime);
+                    duration = 0.1;
+                    break;
+                case 'move':
+                    oscillator.frequency.setValueAtTime(600, gameState.audioContext.currentTime);
+                    duration = 0.05;
+                    break;
+                default:
+                    oscillator.frequency.setValueAtTime(frequency, gameState.audioContext.currentTime);
+            }
+
+            oscillator.start();
+            oscillator.stop(gameState.audioContext.currentTime + duration);
+        }
+
+        // Haptic feedback
+        function triggerHaptic(intensity = 'medium') {
+            if (!gameState.hapticFeedback || !navigator.vibrate) return;
+            
+            const patterns = {
+                light: [10],
+                medium: [20],
+                strong: [50],
+                success: [10, 50, 10, 50],
+                error: [100, 50, 100]
+            };
+            
+            navigator.vibrate(patterns[intensity] || patterns.medium);
+        }
+
+        // Canvas setup
+        function setupCanvas() {
+            gameState.canvas = document.getElementById('measurement-canvas');
+            gameState.ctx = gameState.canvas.getContext('2d');
+            
+            // Set canvas size
+            const container = gameState.canvas.parentElement;
+            gameState.canvas.width = container.clientWidth;
+            gameState.canvas.height = container.clientHeight;
+            
+            // Setup resize observer
+            const resizeObserver = new ResizeObserver(entries => {
+                for (let entry of entries) {
+                    gameState.canvas.width = entry.contentRect.width;
+                    gameState.canvas.height = entry.contentRect.height;
+                    redrawCanvas();
+                }
+            });
+            resizeObserver.observe(container);
+        }
+
+        // Ruler setup
+        function setupRuler() {
+            const ruler = document.getElementById('ruler');
+            const rulerSize = gameState.rulerSize;
+            
+            let width, height;
+            switch (rulerSize) {
+                case 'small': width = 300; height = 40; break;
+                case 'medium': width = 600; height = 50; break;
+                case 'large': width = 1000; height = 60; break;
+            }
+            
+            ruler.style.width = width + 'px';
+            ruler.style.height = height + 'px';
+            ruler.style.left = gameState.rulerPosition.x + 'px';
+            ruler.style.top = gameState.rulerPosition.y + 'px';
+            
+            drawRulerMarkings();
+        }
+
+        // Draw ruler markings
+        function drawRulerMarkings() {
+            const markingsContainer = document.getElementById('ruler-markings');
+            markingsContainer.innerHTML = '';
+            
+            const ruler = document.getElementById('ruler');
+            const rulerWidth = parseInt(ruler.style.width);
+            const rulerHeight = parseInt(ruler.style.height);
+            
+            const config = measurementConfig[gameState.currentType].units[gameState.currentUnits];
+            const spacing = config.pixelsPerUnit;
+            const maxUnits = Math.floor(rulerWidth / spacing);
+            
+            // Draw major markings
+            for (let i = 0; i <= maxUnits; i++) {
+                const x = i * spacing;
+                
+                // Major tick
+                const majorTick = document.createElement('div');
+                majorTick.className = 'ruler-marking';
+                majorTick.style.left = x + 'px';
+                majorTick.style.top = '0px';
+                majorTick.style.width = '2px';
+                majorTick.style.height = rulerHeight + 'px';
+                markingsContainer.appendChild(majorTick);
+                
+                // Number label
+                const number = document.createElement('div');
+                number.className = 'ruler-number';
+                number.textContent = i.toString();
+                number.style.left = (x - 6) + 'px';
+                number.style.top = (rulerHeight + 5) + 'px';
+                number.style.fontSize = Math.max(10, rulerHeight * 0.2) + 'px';
+                markingsContainer.appendChild(number);
+                
+                // Minor ticks (between major units)
+                if (i < maxUnits) {
+                    const minorTicks = gameState.currentUnits === 'metric' ? 10 : 8;
+                    for (let j = 1; j < minorTicks; j++) {
+                        const minorX = x + (j * spacing / minorTicks);
+                        const minorTick = document.createElement('div');
+                        minorTick.className = 'ruler-marking';
+                        minorTick.style.left = minorX + 'px';
+                        minorTick.style.top = '0px';
+                        minorTick.style.width = '1px';
+                        minorTick.style.height = (j === minorTicks / 2 ? rulerHeight * 0.6 : rulerHeight * 0.3) + 'px';
+                        markingsContainer.appendChild(minorTick);
+                    }
+                }
+            }
+        }
+
+        // Generate new question
+        function generateNewQuestion() {
+            const config = measurementConfig[gameState.currentType].units[gameState.currentUnits];
+            
+            let dimensions;
+            switch (gameState.currentDifficulty) {
+                case 'beginner':
+                    dimensions = { 
+                        width: Math.floor(Math.random() * 8 + 2) * config.pixelsPerUnit,
+                        height: Math.floor(Math.random() * 5 + 2) * config.pixelsPerUnit 
+                    };
+                    break;
+                case 'intermediate':
+                    dimensions = { 
+                        width: Math.floor(Math.random() * 12 + 3) * config.pixelsPerUnit,
+                        height: Math.floor(Math.random() * 8 + 2) * config.pixelsPerUnit 
+                    };
+                    break;
+                case 'advanced':
+                    dimensions = { 
+                        width: (Math.random() * 15 + 3) * config.pixelsPerUnit,
+                        height: (Math.random() * 10 + 2) * config.pixelsPerUnit 
+                    };
+                    break;
+                case 'expert':
+                    dimensions = { 
+                        width: (Math.random() * 20 + 2) * config.pixelsPerUnit,
+                        height: (Math.random() * 15 + 2) * config.pixelsPerUnit 
+                    };
+                    break;
+            }
+            
+            const colors = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'];
+            
+            gameState.currentObject = {
+                x: Math.random() * (gameState.canvas.width - dimensions.width - 100) + 50,
+                y: Math.random() * (gameState.canvas.height - dimensions.height - 100) + 50,
+                width: dimensions.width,
+                height: dimensions.height,
+                color: colors[Math.floor(Math.random() * colors.length)]
+            };
+            
+            // Calculate correct answer
+            switch (gameState.currentType) {
+                case 'length':
+                    gameState.correctAnswer = dimensions.width / config.pixelsPerUnit;
+                    break;
+                case 'area':
+                    gameState.correctAnswer = (dimensions.width / config.pixelsPerUnit) * (dimensions.height / config.pixelsPerUnit);
+                    break;
+                case 'volume':
+                    const depth = Math.random() * 8 + 2;
+                    gameState.correctAnswer = (dimensions.width / config.pixelsPerUnit) * (dimensions.height / config.pixelsPerUnit) * depth;
+                    gameState.currentObject.depth = depth;
+                    break;
+            }
+            
+            redrawCanvas();
+        }
+
+        // Redraw canvas
+        function redrawCanvas() {
+            if (!gameState.ctx) return;
+            
+            const ctx = gameState.ctx;
+            ctx.clearRect(0, 0, gameState.canvas.width, gameState.canvas.height);
+            
+            // Draw grid if enabled
+            if (gameState.showGrid) {
+                drawGrid();
+            }
+            
+            // Draw measurement object
+            if (gameState.currentObject) {
+                drawMeasurementObject();
+            }
+        }
+
+        // Draw grid
+        function drawGrid() {
+            const ctx = gameState.ctx;
+            const config = measurementConfig[gameState.currentType].units[gameState.currentUnits];
+            const spacing = config.pixelsPerUnit;
+            
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+            ctx.lineWidth = 1;
+            
+            // Vertical lines
+            for (let x = 0; x < gameState.canvas.width; x += spacing) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, gameState.canvas.height);
+                ctx.stroke();
+            }
+            
+            // Horizontal lines
+            for (let y = 0; y < gameState.canvas.height; y += spacing) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(gameState.canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        // Draw measurement object
+        function drawMeasurementObject() {
+            const ctx = gameState.ctx;
+            const obj = gameState.currentObject;
+            
+            ctx.fillStyle = obj.color;
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.2)';
+            ctx.lineWidth = 2;
+            
+            // Add shadow
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.1)';
+            ctx.shadowBlur = 4;
+            ctx.shadowOffsetX = 2;
+            ctx.shadowOffsetY = 2;
+            
+            switch (gameState.currentType) {
+                case 'length':
+                case 'area':
+                    ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+                    ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+                    break;
+                case 'volume':
+                    draw3DBox(ctx, obj);
+                    break;
+            }
+            
+            // Reset shadow
+            ctx.shadowColor = 'transparent';
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+        }
+
+        // Draw 3D box for volume
+        function draw3DBox(ctx, obj) {
+            const depth = 40;
+            
+            // Front face
+            ctx.fillStyle = obj.color;
+            ctx.fillRect(obj.x, obj.y, obj.width, obj.height);
+            ctx.strokeRect(obj.x, obj.y, obj.width, obj.height);
+            
+            // Top face
+            ctx.fillStyle = adjustBrightness(obj.color, 20);
+            ctx.beginPath();
+            ctx.moveTo(obj.x, obj.y);
+            ctx.lineTo(obj.x + depth, obj.y - depth);
+            ctx.lineTo(obj.x + obj.width + depth, obj.y - depth);
+            ctx.lineTo(obj.x + obj.width, obj.y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Right face
+            ctx.fillStyle = adjustBrightness(obj.color, -20);
+            ctx.beginPath();
+            ctx.moveTo(obj.x + obj.width, obj.y);
+            ctx.lineTo(obj.x + obj.width + depth, obj.y - depth);
+            ctx.lineTo(obj.x + obj.width + depth, obj.y + obj.height - depth);
+            ctx.lineTo(obj.x + obj.width, obj.y + obj.height);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // Adjust color brightness
+        function adjustBrightness(color, amount) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * amount);
+            const R = (num >> 16) + amt;
+            const G = (num >> 8 & 0x00FF) + amt;
+            const B = (num & 0x0000FF) + amt;
+            return '#' + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
+                (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
+                (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+        }
+
+        // Event listeners setup
+        function setupEventListeners() {
+            // Button events
+            document.querySelectorAll('[data-type]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('[data-type]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    gameState.currentType = btn.dataset.type;
+                    updateUI();
+                    generateNewQuestion();
+                    playSound('click');
+                });
+            });
+
+            document.querySelectorAll('[data-difficulty]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('[data-difficulty]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    gameState.currentDifficulty = btn.dataset.difficulty;
+                    generateNewQuestion();
+                    playSound('click');
+                });
+            });
+
+            document.querySelectorAll('[data-units]').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    document.querySelectorAll('[data-units]').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    gameState.currentUnits = btn.dataset.units;
+                    updateUI();
+                    setupRuler();
+                    generateNewQuestion();
+                    playSound('click');
+                });
+            });
+
+            // Control events
+            document.getElementById('check-answer').addEventListener('click', checkAnswer);
+            document.getElementById('hint-btn').addEventListener('click', showHint);
+            document.getElementById('new-question').addEventListener('click', () => {
+                generateNewQuestion();
+                playSound('click');
+                showCharacterMessage("New challenge! Measure this object carefully.");
+            });
+
+            // Settings events
+            document.getElementById('ruler-size').addEventListener('change', (e) => {
+                gameState.rulerSize = e.target.value;
+                setupRuler();
+            });
+
+            document.getElementById('show-grid').addEventListener('change', (e) => {
+                gameState.showGrid = e.target.value === 'true';
+                redrawCanvas();
+            });
+
+            document.getElementById('volume-slider').addEventListener('input', (e) => {
+                gameState.soundVolume = e.target.value / 100;
+            });
+
+            document.getElementById('haptic-feedback').addEventListener('change', (e) => {
+                gameState.hapticFeedback = e.target.value === 'true';
+            });
+
+            document.getElementById('reset-progress').addEventListener('click', resetProgress);
+
+            // Character assistant
+            document.getElementById('character-avatar').addEventListener('click', () => {
+                const messages = [
+                    "Great job measuring! Keep practicing to improve your skills.",
+                    "Remember, precision is key in measurement!",
+                    "Try using different difficulty levels to challenge yourself.",
+                    "The ruler can be moved with two fingers for better positioning.",
+                    "Each measurement type teaches different concepts!"
+                ];
+                const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+                showCharacterMessage(randomMessage);
+            });
+
+            // Touch events for ruler
+            setupRulerTouchEvents();
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', handleKeyboard);
+        }
+
+        // Setup ruler touch events (two-finger movement)
+        function setupRulerTouchEvents() {
+            const ruler = document.getElementById('ruler');
+            
+            // Touch events
+            ruler.addEventListener('touchstart', handleTouchStart, { passive: false });
+            ruler.addEventListener('touchmove', handleTouchMove, { passive: false });
+            ruler.addEventListener('touchend', handleTouchEnd, { passive: false });
+            
+            // Mouse events (fallback)
+            ruler.addEventListener('mousedown', handleMouseDown);
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+        }
+
+        function handleTouchStart(e) {
+            e.preventDefault();
+            gameState.activeFingers = e.touches.length;
+            
+            if (e.touches.length === 2) {
+                // Two-finger gesture
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const centerX = (touch1.clientX + touch2.clientX) / 2;
+                const centerY = (touch1.clientY + touch2.clientY) / 2;
+                
+                gameState.isDragging = true;
+                gameState.touchStartPos = { x: centerX, y: centerY };
+                gameState.rulerStartPos = { ...gameState.rulerPosition };
+                
+                ruler.classList.add('touch-active');
+                playSound('click');
+                triggerHaptic('light');
+            }
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            
+            if (gameState.isDragging && e.touches.length === 2) {
+                const touch1 = e.touches[0];
+                const touch2 = e.touches[1];
+                const centerX = (touch1.clientX + touch2.clientX) / 2;
+                const centerY = (touch1.clientY + touch2.clientY) / 2;
+                
+                const deltaX = centerX - gameState.touchStartPos.x;
+                const deltaY = centerY - gameState.touchStartPos.y;
+                
+                moveRuler(
+                    gameState.rulerStartPos.x + deltaX,
+                    gameState.rulerStartPos.y + deltaY
+                );
+            }
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            
+            if (gameState.isDragging) {
+                gameState.isDragging = false;
+                gameState.activeFingers = e.touches.length;
+                
+                const ruler = document.getElementById('ruler');
+                ruler.classList.remove('touch-active');
+                triggerHaptic('medium');
+            }
+        }
+
+        // Mouse event handlers (fallback)
+        function handleMouseDown(e) {
+            gameState.isDragging = true;
+            gameState.touchStartPos = { x: e.clientX, y: e.clientY };
+            gameState.rulerStartPos = { ...gameState.rulerPosition };
+            
+            const ruler = document.getElementById('ruler');
+            ruler.classList.add('dragging');
+            playSound('click');
+        }
+
+        function handleMouseMove(e) {
+            if (gameState.isDragging) {
+                const deltaX = e.clientX - gameState.touchStartPos.x;
+                const deltaY = e.clientY - gameState.touchStartPos.y;
+                
+                moveRuler(
+                    gameState.rulerStartPos.x + deltaX,
+                    gameState.rulerStartPos.y + deltaY
+                );
+            }
+        }
+
+        function handleMouseUp(e) {
+            if (gameState.isDragging) {
+                gameState.isDragging = false;
+                const ruler = document.getElementById('ruler');
+                ruler.classList.remove('dragging');
+            }
+        }
+
+        // Move ruler function
+        function moveRuler(x, y) {
+            const ruler = document.getElementById('ruler');
+            const canvasRect = gameState.canvas.getBoundingClientRect();
+            const rulerRect = ruler.getBoundingClientRect();
+            
+            // Constrain to canvas bounds
+            const minX = canvasRect.left - rulerRect.width / 2;
+            const maxX = canvasRect.right - rulerRect.width / 2;
+            const minY = canvasRect.top - rulerRect.height / 2;
+            const maxY = canvasRect.bottom - rulerRect.height / 2;
+            
+            x = Math.max(minX, Math.min(maxX, x));
+            y = Math.max(minY, Math.min(maxY, y));
+            
+            gameState.rulerPosition.x = x - canvasRect.left;
+            gameState.rulerPosition.y = y - canvasRect.top;
+            
+            ruler.style.left = gameState.rulerPosition.x + 'px';
+            ruler.style.top = gameState.rulerPosition.y + 'px';
+            
+            playSound('move');
+        }
+
+        // Keyboard handler
+        function handleKeyboard(e) {
+            switch (e.key) {
+                case 'Enter':
+                    checkAnswer();
+                    break;
+                case ' ':
+                    e.preventDefault();
+                    generateNewQuestion();
+                    break;
+                case 'h':
+                case 'H':
+                    showHint();
+                    break;
+            }
+        }
+
+        // Check answer
+        function checkAnswer() {
+            const userAnswer = parseFloat(document.getElementById('answer-input').value);
+            
+            if (isNaN(userAnswer)) {
+                showNotification('Please enter a valid number!', 'error');
+                playSound('error');
+                return;
+            }
+            
+            const tolerance = getTolerance();
+            const isCorrect = Math.abs(userAnswer - gameState.correctAnswer) <= tolerance;
+            
+            gameState.questionsAnswered++;
+            
+            if (isCorrect) {
+                gameState.correctAnswers++;
+                gameState.score += getScorePoints();
+                gameState.streak++;
+                
+                playSound('success');
+                triggerHaptic('success');
+                createCelebration();
+                showNotification('Excellent! Correct answer!', 'success');
+                showCharacterMessage(`Perfect! The answer is ${gameState.correctAnswer.toFixed(1)} ${getCurrentUnit()}.`);
+                
+                // Level up check
+                if (gameState.questionsAnswered % gameState.questionsPerLevel === 0) {
+                    levelUp();
+                }
+            } else {
+                gameState.streak = 0;
+                playSound('error');
+                triggerHaptic('error');
+                showNotification(`Not quite right. The answer is ${gameState.correctAnswer.toFixed(1)} ${getCurrentUnit()}`, 'error');
+                showCharacterMessage(`Try again! The correct answer is ${gameState.correctAnswer.toFixed(1)} ${getCurrentUnit()}. Keep practicing!`);
+            }
+            
+            updateUI();
+            
+            // Auto-generate new question after delay
+            setTimeout(() => {
+                generateNewQuestion();
+                document.getElementById('answer-input').value = '';
+            }, 3000);
+        }
+
+        // Get tolerance based on difficulty
+        function getTolerance() {
+            const tolerances = {
+                beginner: 0.5,
+                intermediate: 0.3,
+                advanced: 0.2,
+                expert: 0.1
+            };
+            return tolerances[gameState.currentDifficulty];
+        }
+
+        // Get score points based on difficulty
+        function getScorePoints() {
+            const points = {
+                beginner: 10,
+                intermediate: 15,
+                advanced: 20,
+                expert: 25
+            };
+            return points[gameState.currentDifficulty] + (gameState.streak * 2);
+        }
+
+        // Get current unit
+        function getCurrentUnit() {
+            return measurementConfig[gameState.currentType].units[gameState.currentUnits].unit;
+        }
+
+        // Show hint
+        function showHint() {
+            playSound('hint');
+            triggerHaptic('light');
+            
+            const hints = {
+                length: "Use the ruler to measure from one end of the object to the other. Count the units carefully!",
+                area: "For area, multiply the length by the width. Use the ruler to measure both dimensions!",
+                volume: "For volume, multiply length × width × height. This gives you the 3D space inside!"
+            };
+            
+            const hint = hints[gameState.currentType] || "Use the ruler to measure carefully!";
+            showCharacterMessage(hint);
+        }
+
+        // Level up
+        function levelUp() {
+            gameState.currentLevel++;
+            createCelebration();
+            playSound('success');
+            triggerHaptic('success');
+            showNotification(`Level Up! You're now level ${gameState.currentLevel}!`, 'success');
+            showCharacterMessage(`Congratulations! You've reached level ${gameState.currentLevel}! Your measuring skills are improving!`);
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('header-level').textContent = gameState.currentLevel;
+            document.getElementById('header-score').textContent = gameState.score;
+            document.getElementById('header-streak').textContent = gameState.streak;
+            
+            const accuracy = gameState.questionsAnswered > 0 ? 
+                Math.round((gameState.correctAnswers / gameState.questionsAnswered) * 100) : 0;
+            document.getElementById('header-accuracy').textContent = accuracy + '%';
+            
+            // Update progress
+            const progress = (gameState.questionsAnswered % gameState.questionsPerLevel) / gameState.questionsPerLevel * 100;
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = 
+                `${gameState.questionsAnswered % gameState.questionsPerLevel} / ${gameState.questionsPerLevel} Questions`;
+            
+            // Update unit display
+            document.getElementById('unit-display').textContent = getCurrentUnit();
+        }
+
+        // Show character message
+        function showCharacterMessage(message) {
+            const messageElement = document.getElementById('character-message');
+            messageElement.textContent = message;
+            messageElement.classList.add('visible');
+            
+            setTimeout(() => {
+                messageElement.classList.remove('visible');
+            }, 4000);
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            
+            const icons = {
+                success: '✓',
+                error: '✕',
+                info: 'i'
+            };
+            
+            notification.innerHTML = `
+                <div class="notification-icon">${icons[type]}</div>
+                <div class="notification-content">
+                    <div class="notification-title">${message}</div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('visible'), 100);
+            
+            // Hide and remove notification
+            setTimeout(() => {
+                notification.classList.remove('visible');
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
+
+        // Create celebration
+        function createCelebration() {
+            const container = document.getElementById('celebration-container');
+            
+            // Create confetti
+            for (let i = 0; i < 30; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + '%';
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 70%, 60%)`;
+                confetti.style.animationDelay = Math.random() * 3 + 's';
+                confetti.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                container.appendChild(confetti);
+            }
+            
+            // Create sparkles
+            for (let i = 0; i < 10; i++) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'sparkle';
+                sparkle.textContent = '✨';
+                sparkle.style.left = Math.random() * 100 + '%';
+                sparkle.style.top = Math.random() * 100 + '%';
+                sparkle.style.animationDelay = Math.random() * 1 + 's';
+                container.appendChild(sparkle);
+            }
+            
+            // Clean up after animation
+            setTimeout(() => {
+                container.innerHTML = '';
+            }, 5000);
+        }
+
+        // Reset progress
+        function resetProgress() {
+            if (confirm('Are you sure you want to reset all progress?')) {
+                gameState.score = 0;
+                gameState.currentLevel = 1;
+                gameState.streak = 0;
+                gameState.questionsAnswered = 0;
+                gameState.correctAnswers = 0;
+                updateUI();
+                generateNewQuestion();
+                showNotification('Progress reset successfully!', 'info');
+                showCharacterMessage('Fresh start! Let\'s begin your measurement journey again!');
+                playSound('click');
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Handle page visibility change
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                // Pause any ongoing animations or sounds
+                gameState.isDragging = false;
+            }
+        });
+    </script>
+</body>
+</html>

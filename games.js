@@ -56,8 +56,10 @@ const repository = {
         ,"Guess country v9.html" 
         ,"Hexcells_Minesweeper.html" 
         ,"LearnExponents.html" 
+        ,"learning_universe_explorer.html" 
         ,"mahjong tiles matching-game.html" 
         ,"mahjong.html" 
+        ,"measurement_adventure_game.html" 
         ,"melody-hop-premium.html" 
         ,"melody-hop.html" 
         ,"MIDI music painting v2 additional features.html" 
@@ -88,6 +90,7 @@ const repository = {
         ,"SliderPic.html" 
         ,"Snake game v2.html" 
         ,"soduku.html" 
+        ,"solar_system_explorer.html" 
         ,"solitaire-game v2.html" 
         ,"space-adventure-learn.html" 
         ,"space-explorer-game.html" 
@@ -116,7 +119,7 @@ const recentlyAddedGames = [
         subCategory: "puzzleGames", 
         description: "Explore and learn with this interactive educational activity.", 
         path: "5 yr old/decimal multiply v0.1.html ", 
-        lastUpdated: "2025-05-20" 
+        lastUpdated: "2025-05-21" 
     }, 
     { 
         name: "decimal add and subtract v0.1 ", 
@@ -125,7 +128,7 @@ const recentlyAddedGames = [
         subCategory: "puzzleGames", 
         description: "Explore and learn with this interactive educational activity.", 
         path: "5 yr old/decimal add and subtract v0.1.html ", 
-        lastUpdated: "2025-05-20" 
+        lastUpdated: "2025-05-21" 
     }, 
     { 
         name: "factortree v2 ", 
@@ -134,7 +137,7 @@ const recentlyAddedGames = [
         subCategory: "puzzleGames", 
         description: "Explore and learn with this interactive educational activity.", 
         path: "5 yr old/factortree_v2.html ", 
-        lastUpdated: "2025-05-20" 
+        lastUpdated: "2025-05-21" 
     }, 
     { 
         name: "numberline negatives ", 
@@ -143,7 +146,7 @@ const recentlyAddedGames = [
         subCategory: "puzzleGames", 
         description: "Explore and learn with this interactive educational activity.", 
         path: "5 yr old/numberline_negatives.html ", 
-        lastUpdated: "2025-05-20" 
+        lastUpdated: "2025-05-21" 
     }, 
     { 
         name: "reducing fractions ", 
@@ -152,13 +155,13 @@ const recentlyAddedGames = [
         subCategory: "puzzleGames", 
         description: "Explore and learn with this interactive educational activity.", 
         path: "5 yr old/reducing fractions.html ", 
-        lastUpdated: "2025-05-20" 
+        lastUpdated: "2025-05-21" 
     } 
 ]; 
  
 // DIRECT DISPLAY CODE - FORCES ALL GAMES TO DISPLAY 
 document.addEventListener('DOMContentLoaded', function() { 
-    console.log("Showing ALL games - 3 toddler games + 99 elementary games"); 
+    console.log("Showing ALL games - 3 toddler games + 102 elementary games"); 
  
     // Force display all toddler games 
     const toddlerGrid = document.getElementById('toddlerGrid'); 

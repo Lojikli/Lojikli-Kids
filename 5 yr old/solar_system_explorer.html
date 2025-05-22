@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System Explorer - Ultimate Learning Adventure</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Nunito', sans-serif;
+        }
+
+        :root {
+            --primary: #2563EB;
+            --secondary: #F59E0B;
+            --success: #10B981;
+            --error: #EF4444;
+            --space-dark: #0F0F23;
+            --space-blue: #1E1B4B;
+            --star-yellow: #FBBF24;
+            --planet-mars: #DC2626;
+            --planet-earth: #059669;
+        }
+
+        body {
+            background: linear-gradient(45deg, var(--space-dark), var(--space-blue));
+            color: white;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle 2s infinite alternate;
+        }
+
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: scale(1); }
+            100% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .game-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            position: relative;
+            z-index: 10;
+        }
+
+        .solar-system-view {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1000px;
+        }
+
+        .solar-system {
+            position: relative;
+            width: 800px;
+            height: 800px;
+            transform-style: preserve-3d;
+            animation: rotate 60s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotateY(0deg); }
+            to { transform: rotateY(360deg); }
+        }
+
+        .sun {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #FFD700 0%, #FFA500 50%, #FF8C00 100%);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 50px #FFD700, 0 0 100px #FFA500;
+            animation: pulse 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { transform: translate(-50%, -50%) scale(1); }
+            100% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .orbit {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .planet {
+            position: absolute;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            transform-style: preserve-3d;
+        }
+
+        .planet:hover {
+            transform: scale(1.3);
+            z-index: 100;
+        }
+
+        .planet.selected {
+            animation: planetPulse 1s ease-in-out infinite alternate;
+            box-shadow: 0 0 30px white;
+        }
+
+        @keyframes planetPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.2); }
+        }
+
+        .planet-info {
+            position: absolute;
+            bottom: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .planet:hover .planet-info {
+            opacity: 1;
+        }
+
+        .side-panel {
+            width: 400px;
+            background: linear-gradient(135deg, rgba(30, 27, 75, 0.95), rgba(15, 15, 35, 0.95));
+            padding: 20px;
+            overflow-y: auto;
+            backdrop-filter: blur(10px);
+            border-left: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--star-yellow);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        .control-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #E5E7EB;
+        }
+
+        .control-input {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 0.9rem;
+        }
+
+        .control-input:focus {
+            outline: none;
+            box-shadow: 0 0 10px var(--primary);
+        }
+
+        .quiz-container {
+            display: none;
+            text-align: center;
+        }
+
+        .quiz-question {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .quiz-option {
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid transparent;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .quiz-option:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: var(--primary);
+        }
+
+        .quiz-option.selected {
+            background: rgba(37, 99, 235, 0.3);
+            border-color: var(--primary);
+        }
+
+        .quiz-option.correct {
+            background: rgba(16, 185, 129, 0.3);
+            border-color: var(--success);
+        }
+
+        .quiz-option.incorrect {
+            background: rgba(239, 68, 68, 0.3);
+            border-color: var(--error);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1D4ED8;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #D97706;
+            transform: translateY(-2px);
+        }
+
+        .score-display {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+        }
+
+        .characters {
+            position: fixed;
+            z-index: 100;
+        }
+
+        .character {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .character:hover {
+            transform: scale(1.1);
+        }
+
+        .astronaut {
+            bottom: 20px;
+            left: 20px;
+        }
+
+        .alien {
+            bottom: 20px;
+            right: 440px;
+        }
+
+        .speech-bubble {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 15px;
+            border-radius: 20px;
+            max-width: 250px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+
+        .speech-bubble.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .astronaut .speech-bubble {
+            bottom: 110px;
+            left: 0;
+        }
+
+        .alien .speech-bubble {
+            bottom: 110px;
+            right: 0;
+        }
+
+        .celebration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 200;
+        }
+
+        .firework {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: firework 2s ease-out forwards;
+        }
+
+        @keyframes firework {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(2);
+                opacity: 0;
+            }
+        }
+
+        .planet-detail {
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 10px;
+            display: none;
+        }
+
+        .planet-detail.show {
+            display: block;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .learning-level {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .level-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .level-badge.beginner {
+            background: #10B981;
+        }
+
+        .level-badge.intermediate {
+            background: #F59E0B;
+        }
+
+        .level-badge.advanced {
+            background: #EF4444;
+        }
+
+        .level-badge.active {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--success), var(--secondary));
+            transition: width 0.5s ease;
+            border-radius: 10px;
+        }
+
+        .mini-game {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 15px;
+            margin-top: 15px;
+            text-align: center;
+        }
+
+        .orbit-animation {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+        }
+
+        .mini-planet {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            animation: orbit 3s linear infinite;
+        }
+
+        @keyframes orbit {
+            from { transform: rotate(0deg) translateX(80px) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(80px) rotate(-360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="stars" id="stars"></div>
+    
+    <div class="game-container">
+        <div class="solar-system-view">
+            <div class="solar-system" id="solarSystem">
+                <div class="sun" id="sun"></div>
+                <!-- Planets will be generated dynamically -->
+            </div>
+        </div>
+        
+        <div class="side-panel">
+            <div class="score-display">
+                <div>🚀 Space Explorer Level: <span id="explorerLevel">1</span></div>
+                <div>⭐ Knowledge Points: <span id="knowledgePoints">0</span></div>
+                <div>🌟 Discoveries: <span id="discoveries">0</span>/8</div>
+            </div>
+            
+            <div class="panel-section">
+                <div class="section-title">🎯 Learning Controls</div>
+                <div class="learning-level">
+                    <div class="level-badge beginner active" data-level="beginner">🌱 Explorer</div>
+                    <div class="level-badge intermediate" data-level="intermediate">🔬 Scientist</div>
+                    <div class="level-badge advanced" data-level="advanced">🎓 Professor</div>
+                </div>
+                
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <div class="control-label">🚀 Animation Speed</div>
+                        <input type="range" class="control-input" id="animationSpeed" min="0.5" max="3" step="0.1" value="1">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">🔍 Zoom Level</div>
+                        <input type="range" class="control-input" id="zoomLevel" min="0.5" max="2" step="0.1" value="1">
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">🌍 Focus Planet</div>
+                        <select class="control-input" id="focusPlanet">
+                            <option value="">All Planets</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <div class="control-label">📚 Learning Mode</div>
+                        <select class="control-input" id="learningMode">
+                            <option value="explore">Free Explore</option>
+                            <option value="guided">Guided Tour</option>
+                            <option value="quiz">Quiz Challenge</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div style="text-align: center; font-size: 0.9rem;">Mission Progress</div>
+            </div>
+            
+            <div class="panel-section" id="planetInfo">
+                <div class="section-title">🪐 Planet Explorer</div>
+                <div id="planetDetails">
+                    <p>Click on any planet to begin your cosmic adventure! Each world holds amazing secrets waiting to be discovered.</p>
+                    <div class="mini-game">
+                        <h4>🎮 Solar System Memory</h4>
+                        <p>Try to remember the order of planets from the Sun!</p>
+                        <button class="btn btn-secondary" onclick="startMemoryGame()">Play Memory Game</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-section quiz-container" id="quizContainer">
+                <div class="section-title">🧠 Knowledge Challenge</div>
+                <div class="quiz-question" id="quizQuestion"></div>
+                <div class="quiz-options" id="quizOptions"></div>
+                <button class="btn btn-success" id="submitAnswer" onclick="checkAnswer()">Submit Answer</button>
+                <button class="btn btn-primary" id="nextQuestion" onclick="nextQuestion()" style="display: none;">Next Question</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="characters">
+        <div class="character astronaut" id="astronaut" onclick="showAstronautMessage()">
+            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                <!-- Astronaut Suit -->
+                <ellipse cx="50" cy="70" rx="25" ry="20" fill="#E5E7EB"/>
+                <!-- Helmet -->
+                <circle cx="50" cy="35" r="22" fill="#60A5FA" opacity="0.7"/>
+                <circle cx="50" cy="35" r="18" fill="#FEF3C7"/>
+                <!-- Face -->
+                <circle cx="45" cy="32" r="2" fill="#1F2937"/>
+                <circle cx="55" cy="32" r="2" fill="#1F2937"/>
+                <path d="M45,40 Q50,45 55,40" stroke="#1F2937" stroke-width="1.5" fill="none"/>
+                <!-- Reflection -->
+                <circle cx="45" cy="25" r="8" fill="#FFFFFF" opacity="0.3"/>
+            </svg>
+            <div class="speech-bubble" id="astronautSpeech"></div>
+        </div>
+        
+        <div class="character alien" id="alien" onclick="showAlienMessage()">
+            <svg viewBox="0 0 100 100" style="width: 100%; height: 100%;">
+                <!-- Alien Body -->
+                <ellipse cx="50" cy="70" rx="20" ry="15" fill="#10B981"/>
+                <!-- Head -->
+                <ellipse cx="50" cy="35" rx="25" ry="20" fill="#34D399"/>
+                <!-- Eyes -->
+                <circle cx="42" cy="30" r="5" fill="#1F2937"/>
+                <circle cx="58" cy="30" r="5" fill="#1F2937"/>
+                <circle cx="42" cy="28" r="2" fill="#FFFFFF"/>
+                <circle cx="58" cy="28" r="2" fill="#FFFFFF"/>
+                <!-- Antennae -->
+                <line x1="40" y1="15" x2="38" y2="8" stroke="#34D399" stroke-width="2"/>
+                <line x1="60" y1="15" x2="62" y2="8" stroke="#34D399" stroke-width="2"/>
+                <circle cx="38" cy="8" r="2" fill="#F59E0B"/>
+                <circle cx="62" cy="8" r="2" fill="#F59E0B"/>
+            </svg>
+            <div class="speech-bubble" id="alienSpeech"></div>
+        </div>
+    </div>
+    
+    <div class="celebration" id="celebration"></div>
+
+    <script>
+        // Game State
+        const gameState = {
+            currentLevel: 'beginner',
+            explorerLevel: 1,
+            knowledgePoints: 0,
+            discoveries: 0,
+            selectedPlanet: null,
+            currentQuiz: null,
+            soundEnabled: true,
+            animationSpeed: 1,
+            zoomLevel: 1,
+            learningMode: 'explore'
+        };
+
+        // Planet Data with Multi-Level Learning
+        const planetData = {
+            mercury: {
+                name: 'Mercury',
+                size: 15,
+                color: '#8C7853',
+                distance: 120,
+                speed: 4,
+                learning: {
+                    beginner: {
+                        title: 'The Speedy Planet',
+                        description: 'Mercury is the closest planet to the Sun! It\'s very hot during the day and very cold at night. It moves super fast around the Sun - like a race car!',
+                        facts: ['Closest to the Sun', 'Very hot and cold', 'Moves very fast', 'No moons'],
+                        quiz: {
+                            question: 'Which planet is closest to the Sun?',
+                            options: ['Mercury', 'Venus', 'Earth', 'Mars'],
+                            correct: 0
+                        }
+                    },
+                    intermediate: {
+                        title: 'Mercury: The Swift Messenger',
+                        description: 'Mercury completes an orbit around the Sun in just 88 Earth days! It has extreme temperature variations from 427°C to -173°C. It\'s named after the Roman messenger god.',
+                        facts: ['88-day year', 'Temperature: 427°C to -173°C', 'No atmosphere', 'Heavily cratered'],
+                        quiz: {
+                            question: 'How long is a year on Mercury?',
+                            options: ['88 Earth days', '225 Earth days', '365 Earth days', '687 Earth days'],
+                            correct: 0
+                        }
+                    },
+                    advanced: {
+                        title: 'Mercury: Orbital Mechanics & Thermodynamics',
+                        description: 'Mercury\'s high orbital eccentricity (0.21) and tidal locking creates a 3:2 spin-orbit resonance. Its iron core comprises 75% of its radius, creating a magnetic field 1% of Earth\'s strength.',
+                        facts: ['3:2 spin-orbit resonance', 'Eccentricity: 0.21', 'Iron core: 75% radius', 'Magnetic field: 1% of Earth'],
+                        quiz: {
+                            question: 'What is Mercury\'s spin-orbit resonance ratio?',
+                            options: ['1:1', '2:3', '3:2', '4:3'],
+                            correct: 2
+                        }
+                    }
+                }
+            },
+            venus: {
+                name: 'Venus',
+                size: 20,
+                color: '#FFC649',
+                distance: 160,
+                speed: 3.5,
+                learning: {
+                    beginner: {
+                        title: 'The Bright Planet',
+                        description: 'Venus is the brightest planet we can see from Earth! It\'s covered in thick clouds that make it very hot - even hotter than Mercury!',
+                        facts: ['Brightest planet', 'Very thick clouds', 'Hottest planet', 'Like Earth\'s sister'],
+                        quiz: {
+                            question: 'Which planet is the brightest in our sky?',
+                            options: ['Mars', 'Venus', 'Jupiter', 'Saturn'],
+                            correct: 1
+                        }
+                    },
+                    intermediate: {
+                        title: 'Venus: The Greenhouse Effect',
+                        description: 'Venus has a runaway greenhouse effect with surface temperatures of 462°C. Its atmosphere is 96.5% carbon dioxide with sulfuric acid clouds. A day on Venus is longer than its year!',
+                        facts: ['Surface temp: 462°C', '96.5% CO₂ atmosphere', 'Sulfuric acid clouds', 'Day longer than year'],
+                        quiz: {
+                            question: 'What causes Venus to be hotter than Mercury?',
+                            options: ['Closer to Sun', 'Greenhouse effect', 'Volcanic activity', 'Large size'],
+                            correct: 1
+                        }
+                    },
+                    advanced: {
+                        title: 'Venus: Atmospheric Dynamics & Retrograde Rotation',
+                        description: 'Venus exhibits retrograde rotation with a period of 243 Earth days. The atmospheric super-rotation reaches 120 m/s at cloud level. Surface pressure is 92 times Earth\'s at sea level.',
+                        facts: ['Retrograde rotation: 243 days', 'Super-rotation: 120 m/s', 'Surface pressure: 92 atm', 'Atmospheric mass: 90x Earth'],
+                        quiz: {
+                            question: 'How many times higher is Venus\'s surface pressure compared to Earth?',
+                            options: ['50 times', '75 times', '92 times', '120 times'],
+                            correct: 2
+                        }
+                    }
+                }
+            },
+            earth: {
+                name: 'Earth',
+                size: 22,
+                color: '#6366F1',
+                distance: 200,
+                speed: 3,
+                learning: {
+                    beginner: {
+                        title: 'Our Beautiful Home',
+                        description: 'Earth is our home planet! It has water, air, and life. It\'s the perfect distance from the Sun - not too hot and not too cold. We have one moon!',
+                        facts: ['Our home planet', 'Has water and air', 'Perfect temperature', 'One moon'],
+                        quiz: {
+                            question: 'What makes Earth special for life?',
+                            options: ['It\'s biggest', 'Has water and air', 'Closest to Sun', 'Has rings'],
+                            correct: 1
+                        }
+                    },
+                    intermediate: {
+                        title: 'Earth: The Goldilocks Planet',
+                        description: 'Earth orbits in the habitable zone where liquid water can exist. Our atmosphere is 78% nitrogen and 21% oxygen. The magnetic field protects us from solar radiation.',
+                        facts: ['Habitable zone orbit', '78% N₂, 21% O₂', 'Magnetic field protection', '71% water surface'],
+                        quiz: {
+                            question: 'What percentage of Earth\'s atmosphere is oxygen?',
+                            options: ['15%', '21%', '30%', '45%'],
+                            correct: 1
+                        }
+                    },
+                    advanced: {
+                        title: 'Earth: Geodynamics & Biogeochemical Cycles',
+                        description: 'Earth\'s magnetic field is generated by dynamo action in the liquid iron outer core. Plate tectonics drive the carbon cycle, regulating climate through the carbonate-silicate cycle.',
+                        facts: ['Geodynamo magnetic field', 'Plate tectonic cycles', 'Carbonate-silicate regulation', 'Obliquity: 23.44°'],
+                        quiz: {
+                            question: 'What generates Earth\'s magnetic field?',
+                            options: ['Solar wind', 'Core dynamo', 'Atmospheric currents', 'Tidal forces'],
+                            correct: 1
+                        }
+                    }
+                }
+            },
+            mars: {
+                name: 'Mars',
+                size: 18,
+                color: '#DC2626',
+                distance: 240,
+                speed: 2.5,
+                learning: {
+                    beginner: {
+                        title: 'The Red Planet',
+                        description: 'Mars looks red because it has rusty dust on it! It has two small moons and the biggest volcano in our solar system. Scientists think it might have had water long ago!',
+                        facts: ['Looks red and rusty', 'Two small moons', 'Biggest volcano', 'Might have had water'],
+                        quiz: {
+                            question: 'Why does Mars look red?',
+                            options: ['It\'s hot', 'Rusty dust', 'Red rocks', 'Fire volcanoes'],
+                            correct: 1
+                        }
+                    },
+                    intermediate: {
+                        title: 'Mars: The Search for Life',
+                        description: 'Mars has iron oxide (rust) giving it the red color. Olympus Mons is 21km high - nearly 3 times Mount Everest! Evidence suggests ancient river valleys and possible subsurface water.',
+                        facts: ['Iron oxide surface', 'Olympus Mons: 21km high', 'Ancient water evidence', 'Polar ice caps'],
+                        quiz: {
+                            question: 'How tall is Olympus Mons compared to Mount Everest?',
+                            options: ['Same height', '2 times taller', '3 times taller', '5 times taller'],
+                            correct: 2
+                        }
+                    },
+                    advanced: {
+                        title: 'Mars: Astrobiology & Terraforming Potential',
+                        description: 'Mars lost its magnetic field 4.2 billion years ago, causing atmospheric loss. Perchlorate salts allow liquid brines at low temperatures. Seasonal methane variations suggest possible biological activity.',
+                        facts: ['Magnetic field lost: 4.2 Gya', 'Perchlorate brines', 'Seasonal methane', 'Atmospheric escape'],
+                        quiz: {
+                            question: 'When did Mars lose its magnetic field?',
+                            options: ['1 billion years ago', '2.5 billion years ago', '4.2 billion years ago', '6 billion years ago'],
+                            correct: 2
+                        }
+                    }
+                }
+            },
+            jupiter: {
+                name: 'Jupiter',
+                size: 45,
+                color: '#D97706',
+                distance: 350,
+                speed: 1.5,
+                learning: {
+                    beginner: {
+                        title: 'The Giant Planet',
+                        description: 'Jupiter is HUGE! It\'s the biggest planet in our solar system. It has a giant red spot that\'s actually a storm bigger than Earth! It has many moons - at least 79!',
+                        facts: ['Biggest planet', 'Giant red storm spot', 'At least 79 moons', 'Made of gas'],
+                        quiz: {
+                            question: 'What is Jupiter\'s Great Red Spot?',
+                            options: ['A moon', 'A giant storm', 'A mountain', 'A crater'],
+                            correct: 1
+                        }
+                    },
+                    intermediate: {
+                        title: 'Jupiter: The Gas Giant Guardian',
+                        description: 'Jupiter acts as a "cosmic vacuum cleaner" protecting inner planets from asteroids. The Great Red Spot has been raging for over 400 years. Jupiter has 95 known moons including the four Galilean moons.',
+                        facts: ['Protects inner planets', 'Great Red Spot: 400+ years', '95 known moons', 'Galilean moons'],
+                        quiz: {
+                            question: 'How does Jupiter protect the inner planets?',
+                            options: ['Blocks sunlight', 'Attracts asteroids', 'Creates magnetic field', 'Generates heat'],
+                            correct: 1
+                        }
+                    },
+                    advanced: {
+                        title: 'Jupiter: Magnetosphere & Tidal Heating',
+                        description: 'Jupiter\'s magnetosphere extends to Saturn\'s orbit. Tidal heating from Jupiter powers volcanic activity on Io and maintains Europa\'s subsurface ocean. Jupiter emits 2.5x more energy than it receives.',
+                        facts: ['Magnetosphere to Saturn', 'Tidal heating mechanism', 'Energy emission: 2.5x input', 'Failed star classification'],
+                        quiz: {
+                            question: 'How much more energy does Jupiter emit than it receives?',
+                            options: ['1.5 times', '2.5 times', '3.5 times', '5 times'],
+                            correct: 1
+                        }
+                    }
+                }
+            },
+            saturn: {
+                name: 'Saturn',
+                size: 40,
+                color: '#F59E0B',
+                distance: 450,
+                speed: 1.2,
+                learning: {
+                    beginner: {
+                        title: 'The Ringed Beauty',
+                        description: 'Saturn has amazing rings made of ice and rocks! It\'s so light that it could float in a giant bathtub full of water. It has many moons too!',
+                        facts: ['Beautiful rings', 'Could float in water', 'Made of gas', 'Many moons'],
+                        quiz: {
+                            question: 'What are Saturn\'s rings made of?',
+                            options: ['Gas', 'Ice and rocks', 'Metal', 'Fire'],
+                            correct: 1
+                        }
+                    },
+                    intermediate: {
+                        title: 'Saturn: The Ring System Wonder',
+                        description: 'Saturn has the most extensive ring system with density 0.687 g/cm³ - less than water! The rings span 282,000 km but are only 10 meters thick. Titan, its largest moon, has a thick atmosphere.',
+                        facts: ['Density: 0.687 g/cm³', 'Rings: 282,000 km wide', 'Ring thickness: 10m', 'Titan has atmosphere'],
+                        quiz: {
+                            question: 'How thick are Saturn\'s rings?',
+                            options: ['1 meter', '10 meters', '100 meters', '1 kilometer'],
+                            correct: 1
+                        }
+                    },
+                    advanced: {
+                        title: 'Saturn: Ring Dynamics & Shepherd Moons',
+                        description: 'Saturn\'s rings are maintained by shepherd moons and resonance gaps. The Cassini Division is caused by 2:1 orbital resonance with Mimas. Ring particles undergo collisional evolution and viscous spreading.',
+                        facts: ['Shepherd moon dynamics', '2:1 Mimas resonance', 'Collisional evolution', 'Viscous spreading'],
+                        quiz: {
+                            question: 'What causes the Cassini Division in Saturn\'s rings?',
+                            options: ['Solar wind', 'Orbital resonance', 'Magnetic field', 'Tidal forces'],
+                            correct: 1
+                        }
+                    }
+                }
+            },
+            uranus: {
+                name: 'Uranus',
+                size: 30,
+                color: '#06B6D4',
+                distance: 550,
+                speed: 0.8,
+                learning: {
+                    beginner: {
+                        title: 'The Sideways Planet',
+                        description: 'Uranus is very special because it spins on its side! It looks blue-green and is very cold. It has rings too, but they\'re much fainter than Saturn\'s.',
+                        facts: ['Spins on its side', 'Blue-green color', 'Very cold', 'Has faint rings'],
+                        quiz: {
+                            question: 'What makes Uranus different from other planets?',
+                            options: ['It\'s biggest', 'Spins on its side', 'Has no moons', 'Is closest to Sun'],
+                            correct: 1
+                        }
+                    },
+                    intermediate: {
+                        title: 'Uranus: The Tilted Ice Giant',
+                        description: 'Uranus has an axial tilt of 98°, essentially rolling along its orbit. It\'s composed of water, methane, and ammonia ices. The methane in its atmosphere absorbs red light, giving it the blue-green color.',
+                        facts: ['Axial tilt: 98°', 'Ice giant composition', 'Methane atmosphere', '27 known moons'],
+                        quiz: {
+                            question: 'What gives Uranus its blue-green color?',
+                            options: ['Oxygen', 'Methane', 'Nitrogen', 'Helium'],
+                            correct: 1
+                        }
+                    },
+                    advanced: {
+                        title: 'Uranus: Magnetic Field Anomalies',
+                        description: 'Uranus\'s magnetic field is tilted 59° from its rotational axis and offset from the center. This unusual configuration suggests the magnetic field originates in the mantle rather than the core.',
+                        facts: ['Magnetic tilt: 59°', 'Offset magnetic center', 'Mantle-generated field', 'Extreme seasonal variation'],
+                        quiz: {
+                            question: 'Where does Uranus\'s magnetic field likely originate?',
+                            options: ['Core', 'Mantle', 'Atmosphere', 'Rings'],
+                            correct: 1
+                        }
+                    }
+                }
+            },
+            neptune: {
+                name: 'Neptune',
+                size: 28,
+                color: '#3B82F6',
+                distance: 650,
+                speed: 0.6,
+                learning: {
+                    beginner: {
+                        title: 'The Windy Blue Planet',
+                        description: 'Neptune is the farthest planet from the Sun and it\'s very windy! It has the strongest winds in the solar system. It\'s deep blue and very cold.',
+                        facts: ['Farthest from Sun', 'Strongest winds', 'Deep blue color', 'Very cold'],
+                        quiz: {
+                            question: 'Which planet has the strongest winds?',
+                            options: ['Jupiter', 'Saturn', 'Uranus', 'Neptune'],
+                            correct: 3
+                        }
+                    },
+                    intermediate: {
+                        title: 'Neptune: The Windy Giant',
+                        description: 'Neptune has winds reaching 2,100 km/h - faster than sound! It takes 165 Earth years to orbit the Sun. It was discovered through mathematical calculations before being observed.',
+                        facts: ['Wind speeds: 2,100 km/h', 'Orbital period: 165 years', 'Discovered mathematically', '16 known moons'],
+                        quiz: {
+                            question: 'How fast are Neptune\'s winds?',
+                            options: ['500 km/h', '1,200 km/h', '2,100 km/h', '3,000 km/h'],
+                            correct: 2
+                        }
+                    },
+                    advanced: {
+                        title: 'Neptune: Supersonic Atmospheric Dynamics',
+                        description: 'Neptune\'s supersonic winds are powered by internal heat sources, not solar energy. The Great Dark Spot shows anticyclonic circulation with Mach 1.5 winds. Triton orbits retrograde, suggesting capture.',
+                        facts: ['Internal heat driving winds', 'Mach 1.5 wind speeds', 'Great Dark Spot dynamics', 'Triton retrograde orbit'],
+                        quiz: {
+                            question: 'What powers Neptune\'s extreme winds?',
+                            options: ['Solar energy', 'Internal heat', 'Magnetic field', 'Tidal forces'],
+                            correct: 1
+                        }
+                    }
+                }
+            }
+        };
+
+        // Audio Context for Sound Effects
+        let audioContext;
+        
+        function initAudioContext() {
+            try {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Web Audio API not supported');
+            }
+        }
+
+        // Sound Generation Functions
+        function playSound(type, frequency = 440, duration = 0.3) {
+            if (!audioContext || !gameState.soundEnabled) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            
+            switch(type) {
+                case 'click':
+                    oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.1);
+                    break;
+                case 'success':
+                    oscillator.frequency.setValueAtTime(523, audioContext.currentTime);
+                    oscillator.frequency.setValueAtTime(659, audioContext.currentTime + 0.1);
+                    oscillator.frequency.setValueAtTime(784, audioContext.currentTime + 0.2);
+                    break;
+                case 'discovery':
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(880, audioContext.currentTime + duration);
+                    break;
+                case 'wrong':
+                    oscillator.frequency.setValueAtTime(300, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(150, audioContext.currentTime + duration);
+                    break;
+            }
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + duration);
+        }
+
+        // Initialize Game
+        function initGame() {
+            initAudioContext();
+            createStars();
+            createPlanets();
+            setupEventListeners();
+            showWelcomeMessage();
+            
+            // Populate planet dropdown
+            const dropdown = document.getElementById('focusPlanet');
+            Object.keys(planetData).forEach(planet => {
+                const option = document.createElement('option');
+                option.value = planet;
+                option.textContent = planetData[planet].name;
+                dropdown.appendChild(option);
+            });
+        }
+
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 200; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = star.style.height = (Math.random() * 3 + 1) + 'px';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        function createPlanets() {
+            const solarSystem = document.getElementById('solarSystem');
+            
+            Object.keys(planetData).forEach(planetKey => {
+                const planet = planetData[planetKey];
+                
+                // Create orbit
+                const orbit = document.createElement('div');
+                orbit.className = 'orbit';
+                orbit.style.width = orbit.style.height = (planet.distance * 2) + 'px';
+                solarSystem.appendChild(orbit);
+                
+                // Create planet
+                const planetElement = document.createElement('div');
+                planetElement.className = 'planet';
+                planetElement.id = planetKey;
+                planetElement.style.width = planetElement.style.height = planet.size + 'px';
+                planetElement.style.background = `radial-gradient(circle at 30% 30%, ${planet.color}dd, ${planet.color}88, ${planet.color}44)`;
+                planetElement.style.position = 'absolute';
+                planetElement.style.left = '50%';
+                planetElement.style.top = '50%';
+                planetElement.style.transform = `translate(-50%, -50%) translateX(${planet.distance}px)`;
+                planetElement.style.transformOrigin = `-${planet.distance}px center`;
+                planetElement.style.animation = `rotate ${60/planet.speed}s linear infinite`;
+                
+                // Add planet info tooltip
+                const info = document.createElement('div');
+                info.className = 'planet-info';
+                info.textContent = planet.name;
+                planetElement.appendChild(info);
+                
+                planetElement.addEventListener('click', () => selectPlanet(planetKey));
+                
+                solarSystem.appendChild(planetElement);
+            });
+        }
+
+        function selectPlanet(planetKey) {
+            playSound('click');
+            gameState.selectedPlanet = planetKey;
+            
+            // Remove previous selection
+            document.querySelectorAll('.planet').forEach(p => p.classList.remove('selected'));
+            
+            // Add selection to clicked planet
+            document.getElementById(planetKey).classList.add('selected');
+            
+            showPlanetInfo(planetKey);
+            
+            // Award discovery points
+            if (!gameState.discoveredPlanets) gameState.discoveredPlanets = new Set();
+            if (!gameState.discoveredPlanets.has(planetKey)) {
+                gameState.discoveredPlanets.add(planetKey);
+                gameState.discoveries++;
+                gameState.knowledgePoints += 10;
+                updateScore();
+                playSound('discovery');
+                createCelebration();
+            }
+        }
+
+        function showPlanetInfo(planetKey) {
+            const planet = planetData[planetKey];
+            const level = gameState.currentLevel;
+            const info = planet.learning[level];
+            
+            const planetDetails = document.getElementById('planetDetails');
+            planetDetails.innerHTML = `
+                <h3 style="color: ${planet.color}; margin-bottom: 10px;">${info.title}</h3>
+                <p style="margin-bottom: 15px; line-height: 1.5;">${info.description}</p>
+                
+                <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px;">
+                    <h4 style="margin-bottom: 10px;">🔍 Cool Facts:</h4>
+                    <ul style="margin-left: 20px;">
+                        ${info.facts.map(fact => `<li style="margin-bottom: 5px;">${fact}</li>`).join('')}
+                    </ul>
+                </div>
+                
+                <button class="btn btn-primary" onclick="startQuiz('${planetKey}')">
+                    🧠 Test Your Knowledge!
+                </button>
+                
+                <div class="mini-game">
+                    <h4>🎮 Orbit Simulator</h4>
+                    <div class="orbit-animation">
+                        <div class="mini-planet" style="background: ${planet.color}; animation-duration: ${3/planet.speed}s;"></div>
+                    </div>
+                    <p>Watch how ${planet.name} orbits the Sun!</p>
+                </div>
+            `;
+            
+            // Show alien message about the planet
+            const alienMessages = {
+                beginner: `Wow! ${planet.name} is amazing! I love learning about space with you!`,
+                intermediate: `Fascinating! The science behind ${planet.name} is incredible!`,
+                advanced: `The physics and chemistry of ${planet.name} demonstrate remarkable planetary formation processes!`
+            };
+            
+            showCharacterMessage('alien', alienMessages[level]);
+        }
+
+        function startQuiz(planetKey) {
+            playSound('click');
+            gameState.currentQuiz = planetData[planetKey].learning[gameState.currentLevel].quiz;
+            gameState.currentQuiz.planet = planetKey;
+            
+            document.getElementById('quizContainer').style.display = 'block';
+            document.getElementById('planetInfo').style.display = 'none';
+            
+            displayQuiz();
+        }
+
+        function displayQuiz() {
+            const quiz = gameState.currentQuiz;
+            document.getElementById('quizQuestion').textContent = quiz.question;
+            
+            const optionsContainer = document.getElementById('quizOptions');
+            optionsContainer.innerHTML = '';
+            
+            quiz.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'quiz-option';
+                optionElement.textContent = option;
+                optionElement.onclick = () => selectOption(index);
+                optionsContainer.appendChild(optionElement);
+            });
+            
+            document.getElementById('submitAnswer').style.display = 'inline-block';
+            document.getElementById('nextQuestion').style.display = 'none';
+        }
+
+        function selectOption(index) {
+            playSound('click');
+            document.querySelectorAll('.quiz-option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelectorAll('.quiz-option')[index].classList.add('selected');
+            gameState.currentQuiz.selectedAnswer = index;
+        }
+
+        function checkAnswer() {
+            if (gameState.currentQuiz.selectedAnswer === undefined) {
+                showCharacterMessage('astronaut', 'Please select an answer first!');
+                return;
+            }
+            
+            const isCorrect = gameState.currentQuiz.selectedAnswer === gameState.currentQuiz.correct;
+            const options = document.querySelectorAll('.quiz-option');
+            
+            options[gameState.currentQuiz.correct].classList.add('correct');
+            
+            if (!isCorrect) {
+                options[gameState.currentQuiz.selectedAnswer].classList.add('incorrect');
+                playSound('wrong');
+                showCharacterMessage('astronaut', 'Not quite right! The correct answer is highlighted. Keep learning!');
+                gameState.knowledgePoints += 2; // Participation points
+            } else {
+                playSound('success');
+                showCharacterMessage('astronaut', 'Excellent! You\'re becoming a true space expert!');
+                gameState.knowledgePoints += 10;
+                createCelebration();
+                
+                // Level up check
+                if (gameState.knowledgePoints > gameState.explorerLevel * 50) {
+                    gameState.explorerLevel++;
+                    showCharacterMessage('alien', `Amazing! You've reached Explorer Level ${gameState.explorerLevel}! 🚀`);
+                }
+            }
+            
+            updateScore();
+            document.getElementById('submitAnswer').style.display = 'none';
+            document.getElementById('nextQuestion').style.display = 'inline-block';
+        }
+
+        function nextQuestion() {
+            document.getElementById('quizContainer').style.display = 'none';
+            document.getElementById('planetInfo').style.display = 'block';
+            
+            // Reset quiz state
+            gameState.currentQuiz = null;
+            
+            playSound('click');
+        }
+
+        function changeLearningLevel(level) {
+            gameState.currentLevel = level;
+            
+            // Update UI
+            document.querySelectorAll('.level-badge').forEach(badge => {
+                badge.classList.remove('active');
+            });
+            document.querySelector(`[data-level="${level}"]`).classList.add('active');
+            
+            // Refresh planet info if a planet is selected
+            if (gameState.selectedPlanet) {
+                showPlanetInfo(gameState.selectedPlanet);
+            }
+            
+            playSound('click');
+            
+            const levelMessages = {
+                beginner: 'Welcome, young explorer! Let\'s discover the wonders of space together!',
+                intermediate: 'Ready for some exciting science? Let\'s dive deeper into space mysteries!',
+                advanced: 'Prepare for advanced astrophysics! You\'re becoming a real space scientist!'
+            };
+            
+            showCharacterMessage('astronaut', levelMessages[level]);
+        }
+
+        function updateScore() {
+            document.getElementById('explorerLevel').textContent = gameState.explorerLevel;
+            document.getElementById('knowledgePoints').textContent = gameState.knowledgePoints;
+            document.getElementById('discoveries').textContent = gameState.discoveries;
+            
+            // Update progress bar
+            const progress = Math.min(100, (gameState.knowledgePoints / (gameState.explorerLevel * 50)) * 100);
+            document.getElementById('progressFill').style.width = progress + '%';
+        }
+
+        function createCelebration() {
+            const celebration = document.getElementById('celebration');
+            
+            for (let i = 0; i < 20; i++) {
+                const firework = document.createElement('div');
+                firework.className = 'firework';
+                firework.style.left = Math.random() * 100 + '%';
+                firework.style.top = Math.random() * 100 + '%';
+                firework.style.background = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'][Math.floor(Math.random() * 5)];
+                firework.style.animationDelay = Math.random() * 0.5 + 's';
+                
+                celebration.appendChild(firework);
+                
+                setTimeout(() => firework.remove(), 2000);
+            }
+        }
+
+        function showCharacterMessage(character, message) {
+            const speechElement = document.getElementById(character + 'Speech');
+            speechElement.textContent = message;
+            speechElement.classList.add('show');
+            
+            setTimeout(() => {
+                speechElement.classList.remove('show');
+            }, 4000);
+        }
+
+        function showAstronautMessage() {
+            const messages = [
+                'Hi there, space explorer! Click on planets to learn amazing facts!',
+                'Did you know that space is completely silent because there\'s no air?',
+                'The Sun is so big that 1.3 million Earths could fit inside it!',
+                'Keep exploring! There\'s so much to discover in our solar system!'
+            ];
+            showCharacterMessage('astronaut', messages[Math.floor(Math.random() * messages.length)]);
+            playSound('click');
+        }
+
+        function showAlienMessage() {
+            const messages = [
+                'Greetings, Earth friend! I love learning about your solar system!',
+                'On my planet, we have three suns! Your single sun is quite special!',
+                'The math and science behind planets is fascinating!',
+                'Your curiosity about space reminds me of young aliens on my world!'
+            ];
+            showCharacterMessage('alien', messages[Math.floor(Math.random() * messages.length)]);
+            playSound('click');
+        }
+
+        function showWelcomeMessage() {
+            setTimeout(() => {
+                showCharacterMessage('astronaut', 'Welcome to the Solar System Explorer! I\'m Captain Cosmos, your space guide!');
+            }, 1000);
+            
+            setTimeout(() => {
+                showCharacterMessage('alien', 'Hello! I\'m Zyx from the Andromeda Galaxy! Let\'s explore together!');
+            }, 3000);
+        }
+
+        function startMemoryGame() {
+            const planetOrder = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+            let currentIndex = 0;
+            
+            function highlightNext() {
+                if (currentIndex < planetOrder.length) {
+                    const planet = document.getElementById(planetOrder[currentIndex]);
+                    planet.style.transform += ' scale(1.5)';
+                    planet.style.boxShadow = '0 0 30px white';
+                    
+                    setTimeout(() => {
+                        planet.style.transform = planet.style.transform.replace(' scale(1.5)', '');
+                        planet.style.boxShadow = '';
+                        currentIndex++;
+                        if (currentIndex < planetOrder.length) {
+                            setTimeout(highlightNext, 800);
+                        } else {
+                            showCharacterMessage('astronaut', 'Great! You\'ve seen the order from Mercury to Neptune!');
+                            gameState.knowledgePoints += 15;
+                            updateScore();
+                        }
+                    }, 600);
+                }
+            }
+            
+            showCharacterMessage('astronaut', 'Watch as I show you the planets in order from the Sun!');
+            setTimeout(highlightNext, 1000);
+            playSound('click');
+        }
+
+        function setupEventListeners() {
+            // Learning level buttons
+            document.querySelectorAll('.level-badge').forEach(badge => {
+                badge.addEventListener('click', () => {
+                    changeLearningLevel(badge.dataset.level);
+                });
+            });
+            
+            // Control inputs
+            document.getElementById('animationSpeed').addEventListener('input', (e) => {
+                const speed = e.target.value;
+                gameState.animationSpeed = speed;
+                document.documentElement.style.setProperty('--animation-speed', speed);
+                document.querySelectorAll('.planet').forEach(planet => {
+                    const currentDuration = parseFloat(planet.style.animationDuration);
+                    planet.style.animationDuration = (currentDuration / speed) + 's';
+                });
+            });
+            
+            document.getElementById('zoomLevel').addEventListener('input', (e) => {
+                const zoom = e.target.value;
+                gameState.zoomLevel = zoom;
+                document.getElementById('solarSystem').style.transform = `scale(${zoom})`;
+            });
+            
+            document.getElementById('focusPlanet').addEventListener('change', (e) => {
+                if (e.target.value) {
+                    selectPlanet(e.target.value);
+                }
+            });
+            
+            document.getElementById('learningMode').addEventListener('change', (e) => {
+                gameState.learningMode = e.target.value;
+                if (e.target.value === 'guided') {
+                    startGuidedTour();
+                } else if (e.target.value === 'quiz') {
+                    startQuizChallenge();
+                }
+            });
+        }
+
+        function startGuidedTour() {
+            const planets = ['mercury', 'venus', 'earth', 'mars', 'jupiter', 'saturn', 'uranus', 'neptune'];
+            let currentPlanet = 0;
+            
+            function showNextPlanet() {
+                if (currentPlanet < planets.length) {
+                    selectPlanet(planets[currentPlanet]);
+                    showCharacterMessage('astronaut', `Let me tell you about ${planetData[planets[currentPlanet]].name}!`);
+                    currentPlanet++;
+                    setTimeout(showNextPlanet, 8000);
+                } else {
+                    showCharacterMessage('astronaut', 'Congratulations! You\'ve completed the guided tour!');
+                }
+            }
+            
+            showCharacterMessage('astronaut', 'Welcome to the guided tour! I\'ll show you each planet!');
+            setTimeout(showNextPlanet, 2000);
+        }
+
+        function startQuizChallenge() {
+            showCharacterMessage('astronaut', 'Quiz Challenge Mode activated! Test your knowledge on any planet!');
+            showCharacterMessage('alien', 'I\'ll ask you some tricky questions! Are you ready?');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case '1': case '2': case '3':
+                    const levels = ['beginner', 'intermediate', 'advanced'];
+                    changeLearningLevel(levels[parseInt(e.key) - 1]);
+                    break;
+                case 's':
+                    gameState.soundEnabled = !gameState.soundEnabled;
+                    showCharacterMessage('astronaut', `Sound ${gameState.soundEnabled ? 'enabled' : 'disabled'}!`);
+                    break;
+                case 'r':
+                    // Reset game
+                    location.reload();
+                    break;
+            }
+        });
+
+        // Initialize the game when the page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

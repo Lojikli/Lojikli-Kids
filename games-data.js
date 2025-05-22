@@ -1,5 +1,5 @@
 // Auto-generated games data - DO NOT EDIT MANUALLY 
-// Generated on Thu 05/22/2025 at 16:08:49.61 
+// Generated on Thu 05/22/2025 at 16:30:11.54 
  
 window.gamesData = { 
     toddlerGames: [ 
@@ -84,6 +84,7 @@ window.gamesData = {
         ,{ filename: "Reducing fractions with algebra v3.html", displayName: "Reducing fractions with algebra   V3", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "reducing fractions.html", displayName: "reducing fractions", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "rotated-blocks-game v3.html", displayName: "rotated blocks game   V3", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "sat-prep-app with more questions.html", displayName: "sat prep app with more questions", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "sat-prep-app.html", displayName: "sat prep app", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "sat_study_app.html", displayName: "sat study app", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "scientific-notation-game with negative.html", displayName: "scientific notation game with negati  Ve", category: "games", icon: "fas fa-gamepad" } 

@@ -83,13 +83,13 @@ for %%f in ("5 yr old\*.html") do (
     set category=games
     set icon=fas fa-gamepad
     
-    echo !filename! | findstr /i "math fraction algebra calculus factor equation pemdas division multiply" >nul
+    echo !filename! | findstr /i "math fraction algebra calculus factor equation pemdas division multiply measurement coordinates area volume" >nul
     if !errorlevel!==0 (
         set category=math
         set icon=fas fa-calculator
     )
     
-    echo !filename! | findstr /i "music piano midi note" >nul
+    echo !filename! | findstr /i "music piano midi note melody" >nul
     if !errorlevel!==0 (
         set category=music
         set icon=fas fa-music
@@ -107,13 +107,13 @@ for %%f in ("5 yr old\*.html") do (
         set icon=fas fa-book
     )
     
-    echo !filename! | findstr /i "element genetic space" >nul
+    echo !filename! | findstr /i "element genetic space solar universe learning drone" >nul
     if !errorlevel!==0 (
         set category=science
         set icon=fas fa-flask
     )
     
-    echo !filename! | findstr /i "neural ai tech" >nul
+    echo !filename! | findstr /i "neural ai tech drone" >nul
     if !errorlevel!==0 (
         set category=technology
         set icon=fas fa-microchip
@@ -128,83 +128,68 @@ for %%f in ("5 yr old\*.html") do (
 )
 echo     ], >> games-data.js
 
-rem Find 5 most recent files for featured section
+rem Find 5 most recent files for featured section based on your newest games
 echo     recentGames: [ >> games-data.js
 
-rem Create temporary file with all files and their timestamps
-if exist temp_files.txt del temp_files.txt
-for %%f in ("2 yr old\*.html") do echo %%~tf^|2 yr old^|%%~nxf >> temp_files.txt
-for %%f in ("5 yr old\*.html") do echo %%~tf^|5 yr old^|%%~nxf >> temp_files.txt
+rem Manually specify the most recent games based on your file listing
+set recent1=learning_universe_explorer.html
+set recent2=solar_system_explorer.html  
+set recent3=measurement_adventure_game.html
+set recent4=drone-show-explorer.html
+set recent5=melody-hop-premium.html
 
-rem Sort by date (newest first) and take first 5
-sort /r temp_files.txt > sorted_files.txt
-
+rem Process the 5 most recent games
 set count=0
-for /f "tokens=1,2,3 delims=|" %%a in (sorted_files.txt) do (
-    set /a count+=1
-    if !count! leq 5 (
-        set datestamp=%%a
-        set folder=%%b
-        set filename=%%c
-        
-        set displayname=!filename:.html=!
-        set displayname=!displayname:v= v!
-        set displayname=!displayname:V= V!
-        set displayname=!displayname:-= !
-        set displayname=!displayname:_= !
-        
-        rem Determine category and icon
-        set category=games
-        set icon=fas fa-gamepad
-        set description=An interactive educational game that makes learning fun.
-        
-        echo !filename! | findstr /i "fraction" >nul
-        if !errorlevel!==0 (
-            set category=math
-            set icon=fas fa-calculator
-            set description=Learn fractions through fun interactive activities.
-        )
-        
-        echo !filename! | findstr /i "piano" >nul
-        if !errorlevel!==0 (
-            set category=music
-            set icon=fas fa-music
-            set description=Learn to play piano with visual guides and feedback.
-        )
-        
-        echo !filename! | findstr /i "geo" >nul
-        if !errorlevel!==0 (
-            set category=geography
-            set icon=fas fa-globe-americas
-            set description=Explore the world and learn about geography.
-        )
-        
-        echo !filename! | findstr /i "connect" >nul
-        if !errorlevel!==0 (
-            set description=Classic strategy game - get four in a row to win!
-        )
-        
-        echo !filename! | findstr /i "measurement" >nul
-        if !errorlevel!==0 (
-            set category=math
-            set icon=fas fa-ruler
-            set description=Learn about measurements and units in a fun way.
-        )
-        
-        echo !filename! | findstr /i "solar" >nul
-        if !errorlevel!==0 (
-            set category=science
-            set icon=fas fa-sun
-            set description=Explore our solar system and learn about planets.
-        )
-        
-        if !count!==5 (
-            echo         { filename: "!filename!", displayName: "!displayname!", folder: "!folder!", category: "!category!", icon: "!icon!", description: "!description!", dateModified: "!datestamp:~0,10!" } >> games-data.js
-        ) else (
-            echo         { filename: "!filename!", displayName: "!displayname!", folder: "!folder!", category: "!category!", icon: "!icon!", description: "!description!", dateModified: "!datestamp:~0,10!" }, >> games-data.js
-        )
-    )
-)
+
+rem Game 1: Learning Universe Explorer
+set /a count+=1
+set filename=!recent1!
+set folder=5 yr old
+set displayname=Learning Universe Explorer
+set category=science
+set icon=fas fa-rocket
+set description=Explore the universe and learn about space, stars, and galaxies.
+echo         { filename: "!filename!", displayName: "!displayname!", folder: "!folder!", category: "!category!", icon: "!icon!", description: "!description!", dateModified: "2025-05-21" }, >> games-data.js
+
+rem Game 2: Solar System Explorer  
+set /a count+=1
+set filename=!recent2!
+set folder=5 yr old
+set displayname=Solar System Explorer
+set category=science
+set icon=fas fa-sun
+set description=Explore our solar system and learn about planets, moons, and space.
+echo         { filename: "!filename!", displayName: "!displayname!", folder: "!folder!", category: "!category!", icon: "!icon!", description: "!description!", dateModified: "2025-05-21" }, >> games-data.js
+
+rem Game 3: Measurement Adventure
+set /a count+=1
+set filename=!recent3!
+set folder=5 yr old
+set displayname=Measurement Adventure
+set category=math
+set icon=fas fa-ruler
+set description=Learn about measurements, units, and conversions through fun activities.
+echo         { filename: "!filename!", displayName: "!displayname!", folder: "!folder!", category: "!category!", icon: "!icon!", description: "!description!", dateModified: "2025-05-21" }, >> games-data.js
+
+rem Game 4: Drone Show Explorer
+set /a count+=1
+set filename=!recent4!
+set folder=5 yr old
+set displayname=Drone Show Explorer
+set category=technology
+set icon=fas fa-drone
+set description=Learn about technology and programming through drone simulations.
+echo         { filename: "!filename!", displayName: "!displayname!", folder: "!folder!", category: "!category!", icon: "!icon!", description: "!description!", dateModified: "2025-05-21" }, >> games-data.js
+
+rem Game 5: Melody Hop Premium
+set /a count+=1
+set filename=!recent5!
+set folder=5 yr old
+set displayname=Melody Hop Premium
+set category=music
+set icon=fas fa-music
+set description=Enhanced music game with premium features and more songs.
+echo         { filename: "!filename!", displayName: "!displayname!", folder: "!folder!", category: "!category!", icon: "!icon!", description: "!description!", dateModified: "2025-05-21" } >> games-data.js
 
 echo     ] >> games-data.js
 echo }; >> games-data.js

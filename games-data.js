@@ -1,5 +1,5 @@
 // Auto-generated games data - DO NOT EDIT MANUALLY 
-// Generated on Wed 05/21/2025 at 20:12:54.32 
+// Generated on Wed 05/21/2025 at 20:24:28.96 
  
 window.gamesData = { 
     toddlerGames: [ 
@@ -12,7 +12,7 @@ window.gamesData = {
         ,{ filename: "Addition Strategies.html", displayName: "Addition Strategies", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "AIpathfinderV2.html", displayName: "AIpathfinder  V2", category: "technology", icon: "fas fa-microchip" } 
         ,{ filename: "algebra-levels.html", displayName: "algebra le  Vels", category: "math", icon: "fas fa-calculator" } 
-        ,{ filename: "area-volume-game.html", displayName: "area   Volume game", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "area-volume-game.html", displayName: "area   Volume game", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "asteroidBlasterV03.html", displayName: "asteroidBlaster  V03", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "battleshipv7.html", displayName: "battleship  V7", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "binomial insects game.html", displayName: "binomial insects game", category: "games", icon: "fas fa-gamepad" } 
@@ -24,7 +24,7 @@ window.gamesData = {
         ,{ filename: "Combine Like Terms.html", displayName: "Combine Like Terms", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "compareFractions v0.2.html", displayName: "compareFractions   V0.2", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "connect4.html", displayName: "connect4", category: "games", icon: "fas fa-gamepad" } 
-        ,{ filename: "coordinatesExplorer.html", displayName: "coordinatesExplorer", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "coordinatesExplorer.html", displayName: "coordinatesExplorer", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "decimal add and subtract v0.1.html", displayName: "decimal add and subtract   V0.1", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "decimal multiply v0.1.html", displayName: "decimal multiply   V0.1", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "Derivatives and Integrals.html", displayName: "Deri  Vati  Ves and Integrals", category: "games", icon: "fas fa-gamepad" } 
@@ -33,7 +33,7 @@ window.gamesData = {
         ,{ filename: "division-adventure-game.html", displayName: "di  Vision ad  Venture game", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "DotsGameV02.html", displayName: "DotsGame  V02", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "dress-up-game.html", displayName: "dress up game", category: "games", icon: "fas fa-gamepad" } 
-        ,{ filename: "drone-show-explorer.html", displayName: "drone show explorer", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "drone-show-explorer.html", displayName: "drone show explorer", category: "technology", icon: "fas fa-microchip" } 
         ,{ filename: "element-explorer-simplified.html", displayName: "element explorer simplified", category: "science", icon: "fas fa-flask" } 
         ,{ filename: "enhanced-division-game v3.html", displayName: "enhanced di  Vision game   V3", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "exponent-explorer-game.html", displayName: "exponent explorer game", category: "games", icon: "fas fa-gamepad" } 
@@ -43,8 +43,8 @@ window.gamesData = {
         ,{ filename: "factoring-game.html", displayName: "factoring game", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "factoringPolynomialsGCF.html", displayName: "factoringPolynomialsGCF", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "factortree_v2.html", displayName: "factortree   V2", category: "math", icon: "fas fa-calculator" } 
-        ,{ filename: "Find the area.html", displayName: "Find the area", category: "games", icon: "fas fa-gamepad" } 
-        ,{ filename: "find the coordinates.html", displayName: "find the coordinates", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "Find the area.html", displayName: "Find the area", category: "math", icon: "fas fa-calculator" } 
+        ,{ filename: "find the coordinates.html", displayName: "find the coordinates", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "fixed-tiles-hop-game.html", displayName: "fixed tiles hop game", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "fraction-adventure.html", displayName: "fraction ad  Venture", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "fraction-game.html", displayName: "fraction game", category: "math", icon: "fas fa-calculator" } 
@@ -58,13 +58,13 @@ window.gamesData = {
         ,{ filename: "Guess country v9.html", displayName: "Guess country   V9", category: "geography", icon: "fas fa-globe-americas" } 
         ,{ filename: "Hexcells_Minesweeper.html", displayName: "Hexcells Minesweeper", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "LearnExponents.html", displayName: "LearnExponents", category: "games", icon: "fas fa-gamepad" } 
-        ,{ filename: "learning_universe_explorer.html", displayName: "learning uni  Verse explorer", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "learning_universe_explorer.html", displayName: "learning uni  Verse explorer", category: "science", icon: "fas fa-flask" } 
         ,{ filename: "mahjong tiles matching-game.html", displayName: "mahjong tiles matching game", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "mahjong.html", displayName: "mahjong", category: "games", icon: "fas fa-gamepad" } 
-        ,{ filename: "measurement_adventure_game (1).html", displayName: "measurement ad  Venture game (1)", category: "games", icon: "fas fa-gamepad" } 
-        ,{ filename: "measurement_adventure_game.html", displayName: "measurement ad  Venture game", category: "games", icon: "fas fa-gamepad" } 
-        ,{ filename: "melody-hop-premium.html", displayName: "melody hop premium", category: "games", icon: "fas fa-gamepad" } 
-        ,{ filename: "melody-hop.html", displayName: "melody hop", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "measurement_adventure_game (1).html", displayName: "measurement ad  Venture game (1)", category: "math", icon: "fas fa-calculator" } 
+        ,{ filename: "measurement_adventure_game.html", displayName: "measurement ad  Venture game", category: "math", icon: "fas fa-calculator" } 
+        ,{ filename: "melody-hop-premium.html", displayName: "melody hop premium", category: "music", icon: "fas fa-music" } 
+        ,{ filename: "melody-hop.html", displayName: "melody hop", category: "music", icon: "fas fa-music" } 
         ,{ filename: "MIDI music painting v2 additional features.html", displayName: "MIDI music painting   V2 additional features", category: "technology", icon: "fas fa-microchip" } 
         ,{ filename: "MIDI Note analyzer V5.2.html", displayName: "MIDI Note analyzer   V5.2", category: "music", icon: "fas fa-music" } 
         ,{ filename: "money-garden-game.html", displayName: "money garden game", category: "games", icon: "fas fa-gamepad" } 
@@ -93,7 +93,7 @@ window.gamesData = {
         ,{ filename: "SliderPic.html", displayName: "SliderPic", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "Snake game v2.html", displayName: "Snake game   V2", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "soduku.html", displayName: "soduku", category: "games", icon: "fas fa-gamepad" } 
-        ,{ filename: "solar_system_explorer.html", displayName: "solar system explorer", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "solar_system_explorer.html", displayName: "solar system explorer", category: "science", icon: "fas fa-flask" } 
         ,{ filename: "solitaire-game v2.html", displayName: "solitaire game   V2", category: "technology", icon: "fas fa-microchip" } 
         ,{ filename: "space-adventure-learn.html", displayName: "space ad  Venture learn", category: "science", icon: "fas fa-flask" } 
         ,{ filename: "space-explorer-game.html", displayName: "space explorer game", category: "science", icon: "fas fa-flask" } 
@@ -113,10 +113,10 @@ window.gamesData = {
         ,{ filename: "zeroProperty_v2.4.html", displayName: "zeroProperty   V2.4", category: "games", icon: "fas fa-gamepad" } 
     ], 
     recentGames: [ 
-        { filename: "decimal multiply v0.1.html ", displayName: "decimal multiply   V0.1 ", folder: "5 yr old", category: "games", icon: "fas fa-gamepad", description: "An interactive educational game that makes learning fun.", dateModified: "12/25/2024" }, 
-        { filename: "decimal add and subtract v0.1.html ", displayName: "decimal add and subtract   V0.1 ", folder: "5 yr old", category: "games", icon: "fas fa-gamepad", description: "An interactive educational game that makes learning fun.", dateModified: "12/25/2024" }, 
-        { filename: "factortree_v2.html ", displayName: "factortree   V2 ", folder: "5 yr old", category: "games", icon: "fas fa-gamepad", description: "An interactive educational game that makes learning fun.", dateModified: "12/24/2024" }, 
-        { filename: "numberline_negatives.html ", displayName: "numberline negati  Ves ", folder: "5 yr old", category: "games", icon: "fas fa-gamepad", description: "An interactive educational game that makes learning fun.", dateModified: "12/24/2024" }, 
-        { filename: "reducing fractions.html ", displayName: "reducing fractions ", folder: "5 yr old", category: "math", icon: "fas fa-calculator", description: "Learn fractions through fun interactive activities.", dateModified: "12/21/2024" } 
+        { filename: "learning_universe_explorer.html", displayName: "Learning Universe Explorer", folder: "5 yr old", category: "science", icon: "fas fa-rocket", description: "Explore the universe and learn about space, stars, and galaxies.", dateModified: "2025-05-21" }, 
+        { filename: "solar_system_explorer.html  ", displayName: "Solar System Explorer", folder: "5 yr old", category: "science", icon: "fas fa-sun", description: "Explore our solar system and learn about planets, moons, and space.", dateModified: "2025-05-21" }, 
+        { filename: "measurement_adventure_game.html", displayName: "Measurement Adventure", folder: "5 yr old", category: "math", icon: "fas fa-ruler", description: "Learn about measurements, units, and conversions through fun activities.", dateModified: "2025-05-21" }, 
+        { filename: "drone-show-explorer.html", displayName: "Drone Show Explorer", folder: "5 yr old", category: "technology", icon: "fas fa-drone", description: "Learn about technology and programming through drone simulations.", dateModified: "2025-05-21" }, 
+        { filename: "melody-hop-premium.html", displayName: "Melody Hop Premium", folder: "5 yr old", category: "music", icon: "fas fa-music", description: "Enhanced music game with premium features and more songs.", dateModified: "2025-05-21" } 
     ] 
 }; 

@@ -184,6 +184,20 @@ for /f "tokens=1,2,3 delims=|" %%a in (sorted_files.txt) do (
             set description=Classic strategy game - get four in a row to win!
         )
         
+        echo !filename! | findstr /i "measurement" >nul
+        if !errorlevel!==0 (
+            set category=math
+            set icon=fas fa-ruler
+            set description=Learn about measurements and units in a fun way.
+        )
+        
+        echo !filename! | findstr /i "solar" >nul
+        if !errorlevel!==0 (
+            set category=science
+            set icon=fas fa-sun
+            set description=Explore our solar system and learn about planets.
+        )
+        
         if !count!==5 (
             echo         { filename: "!filename!", displayName: "!displayname!", folder: "!folder!", category: "!category!", icon: "!icon!", description: "!description!", dateModified: "!datestamp:~0,10!" } >> games-data.js
         ) else (
@@ -233,6 +247,10 @@ set commit_message=Updated games data - %total_games% total games (%toddler_coun
 echo Committing with message: %commit_message%
 git commit -m "%commit_message%"
 
+rem Get current branch name
+for /f "tokens=*" %%i in ('git branch --show-current') do set current_branch=%%i
+echo Current branch: !current_branch!
+
 rem Check if we have a remote
 git remote get-url origin >nul 2>&1
 if errorlevel 1 (
@@ -247,10 +265,6 @@ if errorlevel 1 (
         goto skip_push
     )
 )
-
-rem Get current branch name
-for /f "tokens=*" %%i in ('git branch --show-current') do set current_branch=%%i
-echo Current branch: !current_branch!
 
 rem Pull latest changes first
 echo Pulling latest changes from remote...
@@ -268,7 +282,7 @@ if %errorlevel% equ 0 (
     echo SUCCESS: Changes pushed to GitHub!
 ) else (
     echo ERROR: Failed to push. You may need to pull and merge changes manually.
-    echo Try running: git pull origin main
+    echo Try running: git pull origin !current_branch!
     echo Then run this script again.
 )
 

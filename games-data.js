@@ -1,5 +1,5 @@
 // Auto-generated games data - DO NOT EDIT MANUALLY 
-// Generated on Thu 05/22/2025 at 16:37:38.83 
+// Generated on Fri 05/23/2025 at 15:19:48.22 
  
 window.gamesData = { 
     toddlerGames: [ 
@@ -58,6 +58,7 @@ window.gamesData = {
         ,{ filename: "Guess country Globe v1.html", displayName: "Guess country Globe   V1", category: "geography", icon: "fas fa-globe-americas" } 
         ,{ filename: "Guess country v9.html", displayName: "Guess country   V9", category: "geography", icon: "fas fa-globe-americas" } 
         ,{ filename: "Hexcells_Minesweeper.html", displayName: "Hexcells Minesweeper", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "kids_graph_explorer.html", displayName: "kids graph explorer", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "LearnExponents.html", displayName: "LearnExponents", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "learning_universe_explorer.html", displayName: "learning uni  Verse explorer", category: "science", icon: "fas fa-flask" } 
         ,{ filename: "mahjong tiles matching-game.html", displayName: "mahjong tiles matching game", category: "games", icon: "fas fa-gamepad" } 

@@ -1,5 +1,5 @@
 // Auto-generated games data - DO NOT EDIT MANUALLY 
-// Generated on Sat 05/24/2025 at 10:59:41.39 
+// Generated on Sat 05/24/2025 at 11:05:45.21 
  
 window.gamesData = { 
     toddlerGames: [ 
@@ -14,7 +14,6 @@ window.gamesData = {
         ,{ filename: "algebra-levels.html", displayName: "algebra le  Vels", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "area-volume-game.html", displayName: "area   Volume game", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "asteroid blaster.html", displayName: "asteroid blaster", category: "games", icon: "fas fa-gamepad" } 
-        ,{ filename: "asteroidBlasterV03.html", displayName: "asteroidBlaster  V03", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "battleshipv7.html", displayName: "battleship  V7", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "binomial insects game.html", displayName: "binomial insects game", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "binomial-blocks-game.html", displayName: "binomial blocks game", category: "games", icon: "fas fa-gamepad" } 

@@ -1,5 +1,5 @@
 // Auto-generated games data - DO NOT EDIT MANUALLY 
-// Generated on Fri 05/23/2025 at 15:19:48.22 
+// Generated on Sat 05/24/2025 at 10:59:41.39 
  
 window.gamesData = { 
     toddlerGames: [ 
@@ -13,6 +13,7 @@ window.gamesData = {
         ,{ filename: "AIpathfinderV2.html", displayName: "AIpathfinder  V2", category: "technology", icon: "fas fa-microchip" } 
         ,{ filename: "algebra-levels.html", displayName: "algebra le  Vels", category: "math", icon: "fas fa-calculator" } 
         ,{ filename: "area-volume-game.html", displayName: "area   Volume game", category: "math", icon: "fas fa-calculator" } 
+        ,{ filename: "asteroid blaster.html", displayName: "asteroid blaster", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "asteroidBlasterV03.html", displayName: "asteroidBlaster  V03", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "battleshipv7.html", displayName: "battleship  V7", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "binomial insects game.html", displayName: "binomial insects game", category: "games", icon: "fas fa-gamepad" } 
@@ -87,6 +88,7 @@ window.gamesData = {
         ,{ filename: "rotated-blocks-game v3.html", displayName: "rotated blocks game   V3", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "sat-prep-app with more questions.html", displayName: "sat prep app with more questions", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "sat-prep-app.html", displayName: "sat prep app", category: "games", icon: "fas fa-gamepad" } 
+        ,{ filename: "sat_english_prep_game v2.html", displayName: "sat english prep game   V2", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "sat_study_app.html", displayName: "sat study app", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "scientific-notation-game with negative.html", displayName: "scientific notation game with negati  Ve", category: "games", icon: "fas fa-gamepad" } 
         ,{ filename: "scientific-notation-learn.html", displayName: "scientific notation learn", category: "games", icon: "fas fa-gamepad" } 

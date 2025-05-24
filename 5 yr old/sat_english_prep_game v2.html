@@ -1,0 +1,1517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"="width=device-width, initial-scale=1.0">
+    <title>SAT English Mastery Academy</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.7.77/Tone.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            overflow: hidden;
+            height: 100vh;
+            color: #2c3e50;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            touch-action: none;
+        }
+
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            pointer-events: none;
+        }
+
+        .stat-panel {
+            background: rgba(255,255,255,0.95);
+            padding: 15px;
+            border-radius: 15px;
+            border: 3px solid #3498db;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(52, 152, 219, 0.2);
+            font-weight: bold;
+            color: #2c3e50;
+            text-shadow: none;
+        }
+
+        .progress-bar {
+            width: 200px;
+            height: 20px;
+            background: rgba(236, 240, 241, 0.8);
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 5px 0;
+            border: 2px solid #3498db;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.5s ease;
+            box-shadow: 0 0 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .question-panel {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.98);
+            padding: 30px;
+            border-radius: 20px;
+            border: 3px solid #3498db;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 12px 48px rgba(52, 152, 219, 0.2);
+            pointer-events: auto;
+            transform: translateY(100%);
+            transition: transform 0.5s ease;
+            color: #2c3e50;
+        }
+
+        .question-panel.visible {
+            transform: translateY(0);
+        }
+
+        .question-text {
+            font-size: 18px;
+            line-height: 1.8;
+            margin-bottom: 25px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .question-text div {
+            background: rgba(52, 152, 219, 0.08) !important;
+            padding: 20px !important;
+            border-radius: 12px !important;
+            margin-bottom: 20px !important;
+            font-style: italic !important;
+            border-left: 4px solid #3498db !important;
+            line-height: 1.7 !important;
+        }
+
+        .answers-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .answer-btn {
+            background: linear-gradient(45deg, #ffffff, #f8f9fa);
+            border: 3px solid #3498db;
+            padding: 18px;
+            border-radius: 15px;
+            color: #2c3e50;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+            line-height: 1.4;
+        }
+
+        .answer-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.3);
+            border-color: #2980b9;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+        }
+
+        .answer-btn.correct {
+            background: linear-gradient(45deg, #d5f4e6, #a8e6cf);
+            border-color: #27ae60;
+            color: #1e8449;
+            animation: correctPulse 0.6s ease;
+        }
+
+        .answer-btn.incorrect {
+            background: linear-gradient(45deg, #fadbd8, #f1948a);
+            border-color: #e74c3c;
+            color: #c0392b;
+            animation: incorrectShake 0.6s ease;
+        }
+
+        @keyframes correctPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes incorrectShake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .menu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            pointer-events: auto;
+            backdrop-filter: blur(15px);
+        }
+
+        .menu h1 {
+            font-size: 3.5em;
+            margin-bottom: 20px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe, #667eea, #764ba2);
+            background-size: 300% 300%;
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientShift 3s ease-in-out infinite;
+            text-shadow: 0 0 30px rgba(255,255,255,0.3);
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .menu-btn {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            border: none;
+            padding: 18px 35px;
+            margin: 12px;
+            border-radius: 30px;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(79, 172, 254, 0.4);
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .menu-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 40px rgba(79, 172, 254, 0.6);
+            border-color: white;
+        }
+
+        .skill-tree {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            max-width: 800px;
+            margin: 20px;
+        }
+
+        .skill-card {
+            background: rgba(255,255,255,0.9);
+            padding: 25px;
+            border-radius: 20px;
+            border: 3px solid #3498db;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.2);
+            color: #2c3e50;
+        }
+
+        .skill-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 35px rgba(52, 152, 219, 0.3);
+            border-color: #2980b9;
+        }
+
+        .skill-card.completed {
+            border-color: #27ae60;
+            background: rgba(212, 237, 218, 0.9);
+            color: #1e8449;
+        }
+
+        .skill-card h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .skill-card p {
+            line-height: 1.5;
+            opacity: 0.8;
+        }
+
+        .difficulty-selector {
+            display: flex;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .difficulty-btn {
+            padding: 12px 25px;
+            border: 2px solid #4facfe;
+            background: rgba(79, 172, 254, 0.2);
+            color: white;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .difficulty-btn.active {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            box-shadow: 0 0 20px rgba(79, 172, 254, 0.5);
+        }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            border-radius: 50%;
+            animation: particleFloat 2s ease-out forwards;
+        }
+
+        @keyframes particleFloat {
+            0% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100px) scale(0.5);
+            }
+        }
+
+        .achievement-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: linear-gradient(45deg, #56ab2f, #a8e6cf);
+            padding: 30px;
+            border-radius: 20px;
+            border: 3px solid white;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            z-index: 1000;
+            animation: achievementShow 2s ease-out forwards;
+        }
+
+        @keyframes achievementShow {
+            0% { transform: translate(-50%, -50%) scale(0); }
+            20% { transform: translate(-50%, -50%) scale(1.2); }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
+        }
+
+        .combo-display {
+            position: absolute;
+            top: 30%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #ffff00;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.8);
+            animation: comboAnimation 1.5s ease-out forwards;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        @keyframes comboAnimation {
+            0% { transform: translateX(-50%) scale(0.5); opacity: 0; }
+            50% { transform: translateX(-50%) scale(1.3); opacity: 1; }
+            100% { transform: translateX(-50%) scale(1); opacity: 0; }
+        }
+
+        .timer-ring {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            pointer-events: none;
+        }
+
+        .timer-circle {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 5px solid rgba(79, 172, 254, 0.3);
+            border-top: 5px solid #4facfe;
+            animation: timerSpin 1s linear infinite;
+        }
+
+        @keyframes timerSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .explanation-panel {
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            margin-top: 15px;
+            border-radius: 15px;
+            border: 2px solid #56ab2f;
+            display: none;
+        }
+
+        .explanation-panel.visible {
+            display: block;
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 768px) {
+            .hud {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .answers-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .question-panel {
+                bottom: 10px;
+                left: 10px;
+                right: 10px;
+                padding: 20px;
+            }
+            
+            .menu h1 {
+                font-size: 2.5em;
+            }
+            
+            .skill-tree {
+                grid-template-columns: 1fr;
+                margin: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div class="ui-overlay">
+            <div class="hud">
+                <div class="stat-panel">
+                    <div>📊 Score: <span id="score">0</span></div>
+                    <div>🔥 Streak: <span id="streak">0</span></div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="xpProgress"></div>
+                    </div>
+                    <div>⭐ Level: <span id="level">1</span></div>
+                </div>
+                
+                <div class="stat-panel">
+                    <div>📚 Reading: <span id="readingScore">0</span>%</div>
+                    <div>✍️ Writing: <span id="writingScore">0</span>%</div>
+                    <div>📖 Vocab: <span id="vocabScore">0</span>%</div>
+                    <div>🎯 Overall: <span id="overallScore">0</span>%</div>
+                </div>
+            </div>
+
+            <div class="timer-ring" id="timerRing" style="display: none;">
+                <div class="timer-circle"></div>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold;" id="timerText">30</div>
+            </div>
+        </div>
+
+        <div class="question-panel" id="questionPanel">
+            <div class="question-text" id="questionText"></div>
+            <div class="answers-grid" id="answersGrid"></div>
+            <div class="explanation-panel" id="explanationPanel">
+                <h4>💡 Explanation:</h4>
+                <p id="explanationText"></p>
+            </div>
+            <button class="menu-btn" id="nextBtn" style="display: none;">Next Question →</button>
+        </div>
+
+        <!-- Main Menu -->
+        <div class="menu" id="mainMenu">
+            <h1>🎓 SAT ENGLISH MASTERY ACADEMY</h1>
+            <p style="font-size: 1.2em; margin-bottom: 30px; opacity: 0.9;">
+                Master SAT English with AI-powered adaptive learning!
+            </p>
+            <button class="menu-btn" id="skillTreeBtn">🌟 Skill Tree</button>
+            <button class="menu-btn" id="quickPlayBtn">⚡ Quick Play</button>
+            <button class="menu-btn" id="practiceTestBtn">📝 Practice Test</button>
+            <button class="menu-btn" id="achievementsBtn">🏆 Achievements</button>
+            <button class="menu-btn" id="settingsBtn">⚙️ Settings</button>
+        </div>
+
+        <!-- Skill Tree Menu -->
+        <div class="menu" id="skillTreeMenu" style="display: none;">
+            <h2>🌟 Choose Your Focus Area</h2>
+            <div class="difficulty-selector">
+                <button class="difficulty-btn active" data-difficulty="beginner">🌱 Beginner</button>
+                <button class="difficulty-btn" data-difficulty="intermediate">🚀 Intermediate</button>
+                <button class="difficulty-btn" data-difficulty="advanced">🎯 Advanced</button>
+                <button class="difficulty-btn" data-difficulty="expert">🏆 Expert</button>
+            </div>
+            <div class="skill-tree">
+                <div class="skill-card" data-skill="reading">
+                    <h3>📚 Reading Comprehension</h3>
+                    <p>Master passage analysis, main ideas, and inference skills</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="skill-card" data-skill="writing">
+                    <h3>✍️ Writing & Language</h3>
+                    <p>Grammar, usage, and rhetorical effectiveness</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="skill-card" data-skill="vocabulary">
+                    <h3>📖 Vocabulary in Context</h3>
+                    <p>Word meanings, nuances, and contextual usage</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="skill-card" data-skill="rhetoric">
+                    <h3>🎭 Rhetorical Analysis</h3>
+                    <p>Author's purpose, tone, and persuasive techniques</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="skill-card" data-skill="evidence">
+                    <h3>🔍 Evidence & Reasoning</h3>
+                    <p>Supporting claims with textual evidence</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div class="skill-card" data-skill="synthesis">
+                    <h3>🧩 Information Synthesis</h3>
+                    <p>Combining multiple sources and perspectives</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            <button class="menu-btn" id="backToMainBtn">🔙 Back to Main Menu</button>
+        </div>
+
+        <!-- Results Menu -->
+        <div class="menu" id="resultsMenu" style="display: none;">
+            <h2>📊 Session Complete!</h2>
+            <div class="stat-panel" style="margin: 20px; max-width: 500px;">
+                <div id="sessionStats"></div>
+            </div>
+            <button class="menu-btn" id="continueBtn">Continue Learning</button>
+            <button class="menu-btn" id="newSessionBtn">New Session</button>
+        </div>
+    </div>
+
+    <script>
+        // Wait for libraries to load
+        function waitForLibraries() {
+            return new Promise((resolve) => {
+                function checkLibraries() {
+                    if (typeof THREE !== 'undefined' && typeof Tone !== 'undefined') {
+                        resolve();
+                    } else {
+                        setTimeout(checkLibraries, 100);
+                    }
+                }
+                checkLibraries();
+            });
+        }
+
+        // Game state
+        const game = {
+            scene: null,
+            camera: null,
+            renderer: null,
+            currentQuestion: 0,
+            questions: [],
+            currentSkill: 'reading',
+            difficulty: 'beginner',
+            score: 0,
+            streak: 0,
+            level: 1,
+            xp: 0,
+            skillScores: {
+                reading: 0,
+                writing: 0,
+                vocabulary: 0,
+                rhetoric: 0,
+                evidence: 0,
+                synthesis: 0
+            },
+            correctAnswers: 0,
+            totalAnswers: 0,
+            sessionActive: false,
+            librariesLoaded: false
+        };
+
+        // Audio system with fallback
+        let audioInitialized = false;
+
+        async function initAudio() {
+            if (audioInitialized) return;
+            try {
+                if (typeof Tone !== 'undefined') {
+                    await Tone.start();
+                    audioInitialized = true;
+                } else {
+                    console.warn('Tone.js not available, using Web Audio API fallback');
+                    audioInitialized = 'fallback';
+                }
+            } catch (e) {
+                console.warn('Audio initialization failed:', e);
+                audioInitialized = 'fallback';
+            }
+        }
+
+        function playSound(type, note = 'C4', duration = '8n') {
+            if (!audioInitialized) return;
+            
+            try {
+                if (audioInitialized === true && typeof Tone !== 'undefined') {
+                    // Use Tone.js for rich sound effects
+                    const synth = new Tone.Synth().toDestination();
+                    const fmSynth = new Tone.FMSynth().toDestination();
+                    const polySynth = new Tone.PolySynth().toDestination();
+                    
+                    switch(type) {
+                        case 'correct':
+                            // Success chord progression
+                            synth.triggerAttackRelease('C5', '8n');
+                            setTimeout(() => synth.triggerAttackRelease('E5', '8n'), 120);
+                            setTimeout(() => synth.triggerAttackRelease('G5', '8n'), 240);
+                            setTimeout(() => synth.triggerAttackRelease('C6', '4n'), 360);
+                            break;
+                        case 'incorrect':
+                            // Gentle failure sound
+                            fmSynth.triggerAttackRelease('E3', '4n');
+                            setTimeout(() => fmSynth.triggerAttackRelease('D3', '4n'), 200);
+                            break;
+                        case 'levelup':
+                            // Triumphant ascending scale
+                            ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'].forEach((note, i) => {
+                                setTimeout(() => synth.triggerAttackRelease(note, '8n'), i * 100);
+                            });
+                            break;
+                        case 'achievement':
+                            // Magical sparkle effect
+                            for(let i = 0; i < 12; i++) {
+                                setTimeout(() => {
+                                    const note = ['C5', 'E5', 'G5', 'C6'][Math.floor(Math.random() * 4)];
+                                    synth.triggerAttackRelease(note, '16n');
+                                }, i * 50);
+                            }
+                            break;
+                        case 'hover':
+                            // Subtle UI hover sound
+                            synth.triggerAttackRelease('A4', '32n');
+                            break;
+                        case 'click':
+                            // Button click sound
+                            synth.triggerAttackRelease('C5', '16n');
+                            break;
+                        case 'combo':
+                            // Combo streak sound
+                            polySynth.triggerAttackRelease(['C4', 'E4', 'G4'], '4n');
+                            setTimeout(() => polySynth.triggerAttackRelease(['D4', 'F#4', 'A4'], '4n'), 200);
+                            break;
+                        case 'streak':
+                            // Building streak excitement
+                            for(let i = 0; i < 5; i++) {
+                                setTimeout(() => synth.triggerAttackRelease(`C${5 + i/10}`, '16n'), i * 40);
+                            }
+                            break;
+                        case 'page':
+                            // Page turn/transition
+                            fmSynth.triggerAttackRelease('G4', '8n');
+                            break;
+                        case 'star':
+                            // Collecting star/points
+                            synth.triggerAttackRelease('E5', '16n');
+                            setTimeout(() => synth.triggerAttackRelease('G5', '16n'), 50);
+                            setTimeout(() => synth.triggerAttackRelease('B5', '16n'), 100);
+                            break;
+                        case 'whoosh':
+                            // UI transition whoosh
+                            const noise = new Tone.Noise("pink").toDestination();
+                            const filter = new Tone.Filter(400, "highpass").toDestination();
+                            noise.connect(filter);
+                            noise.start();
+                            setTimeout(() => noise.stop(), 200);
+                            break;
+                    }
+                } else {
+                    // Enhanced Web Audio API fallback
+                    playEnhancedSimpleSound(type);
+                }
+            } catch (e) {
+                console.warn('Sound playback failed:', e);
+                playEnhancedSimpleSound(type);
+            }
+        }
+
+        function playEnhancedSimpleSound(type) {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                switch(type) {
+                    case 'correct':
+                        // Multi-tone success
+                        [523, 659, 784].forEach((freq, i) => {
+                            setTimeout(() => {
+                                const osc = audioContext.createOscillator();
+                                const gain = audioContext.createGain();
+                                osc.connect(gain);
+                                gain.connect(audioContext.destination);
+                                osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+                                gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                                osc.start(audioContext.currentTime);
+                                osc.stop(audioContext.currentTime + 0.3);
+                            }, i * 120);
+                        });
+                        break;
+                    case 'incorrect':
+                        // Gentle descending tone
+                        [329, 293].forEach((freq, i) => {
+                            setTimeout(() => {
+                                const osc = audioContext.createOscillator();
+                                const gain = audioContext.createGain();
+                                osc.connect(gain);
+                                gain.connect(audioContext.destination);
+                                osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+                                gain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.4);
+                                osc.start(audioContext.currentTime);
+                                osc.stop(audioContext.currentTime + 0.4);
+                            }, i * 200);
+                        });
+                        break;
+                    case 'hover':
+                    case 'click':
+                        // Quick UI feedback
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.frequency.setValueAtTime(type === 'hover' ? 440 : 523, audioContext.currentTime);
+                        gain.gain.setValueAtTime(0.1, audioContext.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+                        osc.start(audioContext.currentTime);
+                        osc.stop(audioContext.currentTime + 0.1);
+                        break;
+                    default:
+                        // Default tone
+                        const defaultOsc = audioContext.createOscillator();
+                        const defaultGain = audioContext.createGain();
+                        defaultOsc.connect(defaultGain);
+                        defaultGain.connect(audioContext.destination);
+                        defaultOsc.frequency.setValueAtTime(440, audioContext.currentTime);
+                        defaultGain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                        defaultGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                        defaultOsc.start(audioContext.currentTime);
+                        defaultOsc.stop(audioContext.currentTime + 0.3);
+                }
+            } catch (e) {
+                console.warn('Enhanced fallback audio failed:', e);
+            }
+        }
+
+        // Question database with comprehensive SAT English content
+        const questionDatabase = {
+            reading: {
+                beginner: [
+                    {
+                        passage: "The ancient library of Alexandria was one of the largest and most significant libraries of the ancient world. It was part of a larger research institution called the Mouseion, which was dedicated to the Muses, the nine goddesses of the arts. The library was created by Ptolemy I and expanded by his successors.",
+                        question: "Based on the passage, the Mouseion was primarily dedicated to:",
+                        options: ["Military training", "The nine goddesses of the arts", "Agricultural research", "Political meetings"],
+                        correct: 1,
+                        explanation: "The passage states that the Mouseion 'was dedicated to the Muses, the nine goddesses of the arts.'"
+                    },
+                    {
+                        passage: "Climate change affects ecosystems in numerous ways. Rising temperatures can alter the timing of natural events like flowering and migration. These changes can disrupt food chains and affect biodiversity.",
+                        question: "According to the passage, rising temperatures primarily affect ecosystems by:",
+                        options: ["Destroying habitats completely", "Altering the timing of natural events", "Increasing rainfall", "Reducing oxygen levels"],
+                        correct: 1,
+                        explanation: "The passage explicitly states that 'Rising temperatures can alter the timing of natural events like flowering and migration.'"
+                    },
+                    {
+                        passage: "Marie Curie was the first woman to win a Nobel Prize and the only person to win Nobel Prizes in two different scientific fields. Her groundbreaking research on radioactivity laid the foundation for modern atomic physics.",
+                        question: "What makes Marie Curie unique among Nobel Prize winners?",
+                        options: ["She was the youngest winner", "She won in two different scientific fields", "She declined the prize", "She was self-taught"],
+                        correct: 1,
+                        explanation: "The passage states she was 'the only person to win Nobel Prizes in two different scientific fields.'"
+                    }
+                ],
+                intermediate: [
+                    {
+                        passage: "The Renaissance marked a period of renewed interest in classical learning and humanistic values. This cultural movement, spanning roughly from the 14th to the 17th century, emphasized individual achievement and the potential for human progress. Artists and scholars looked to ancient Greek and Roman texts for inspiration, leading to innovations in art, science, and philosophy.",
+                        question: "The author's attitude toward the Renaissance can best be described as:",
+                        options: ["Critical and dismissive", "Neutral and objective", "Appreciative and admiring", "Skeptical and questioning"],
+                        correct: 2,
+                        explanation: "The author uses positive language like 'renewed interest,' 'innovations,' and emphasizes achievements, showing appreciation for the Renaissance period."
+                    },
+                    {
+                        passage: "Modern social media platforms have fundamentally altered how we communicate and form relationships. While these technologies offer unprecedented connectivity, critics argue they may be contributing to increased isolation and decreased face-to-face interaction skills among users.",
+                        question: "The passage suggests that social media platforms have:",
+                        options: ["Eliminated all forms of isolation", "Only positive effects on communication", "Both benefits and drawbacks", "No significant impact on relationships"],
+                        correct: 2,
+                        explanation: "The passage presents both sides: 'unprecedented connectivity' (positive) and 'increased isolation' (negative), indicating both benefits and drawbacks."
+                    }
+                ],
+                advanced: [
+                    {
+                        passage: "The concept of artificial intelligence has evolved dramatically since its inception in the mid-20th century. Early pioneers envisioned machines that could replicate human cognitive processes, but contemporary AI research has shifted toward more pragmatic applications. This paradigm shift reflects both technological limitations and a deeper understanding of the complexity inherent in human intelligence.",
+                        question: "The 'paradigm shift' mentioned in the passage refers to a change from:",
+                        options: ["Simple to complex applications", "Theoretical to practical approaches", "Human to machine intelligence", "Academic to commercial research"],
+                        correct: 1,
+                        explanation: "The passage contrasts early visions of replicating human cognition with contemporary focus on 'pragmatic applications,' indicating a shift from theoretical to practical approaches."
+                    }
+                ]
+            },
+            writing: {
+                beginner: [
+                    {
+                        question: "Which sentence is grammatically correct?",
+                        options: [
+                            "Me and my sister went to the store.",
+                            "My sister and I went to the store.",
+                            "My sister and me went to the store.",
+                            "I and my sister went to the store."
+                        ],
+                        correct: 1,
+                        explanation: "When using compound subjects with 'I,' the correct form is 'My sister and I.' You can test this by removing the other person: 'I went to the store' is correct, while 'Me went to the store' is not."
+                    },
+                    {
+                        question: "Choose the sentence with correct comma usage:",
+                        options: [
+                            "The dog was large brown and friendly.",
+                            "The dog was large, brown, and friendly.",
+                            "The dog was large brown, and friendly.",
+                            "The dog was, large brown and friendly."
+                        ],
+                        correct: 1,
+                        explanation: "When listing three or more adjectives, use commas to separate them. This is called the Oxford comma or serial comma."
+                    }
+                ],
+                intermediate: [
+                    {
+                        question: "Which revision best improves the following sentence: 'The scientist studied the data and then he made conclusions about it.'",
+                        options: [
+                            "The scientist studied the data and then made conclusions about it.",
+                            "The scientist studied the data; then he made conclusions.",
+                            "After studying the data, the scientist drew conclusions.",
+                            "The scientist studied the data, and then he made conclusions about it."
+                        ],
+                        correct: 2,
+                        explanation: "Option C eliminates redundancy ('about it') and improves flow by using a subordinate clause. It's more concise and sophisticated."
+                    }
+                ],
+                advanced: [
+                    {
+                        question: "In the context of formal academic writing, which sentence demonstrates the most effective use of parallel structure?",
+                        options: [
+                            "The study examined how students learn, their motivation levels, and what teaching methods work best.",
+                            "The study examined student learning patterns, motivation levels, and effective teaching methods.",
+                            "The study examined how students learn, how motivated they are, and how teachers teach effectively.",
+                            "The study examined learning, motivation, and teaching in students."
+                        ],
+                        correct: 1,
+                        explanation: "Option B maintains parallel structure with three noun phrases of similar construction, making the sentence clear and balanced."
+                    }
+                ]
+            },
+            vocabulary: {
+                beginner: [
+                    {
+                        question: "In the sentence 'The artist's vivid paintings captured everyone's attention,' the word 'vivid' most nearly means:",
+                        options: ["Dull", "Bright and striking", "Small", "Expensive"],
+                        correct: 1,
+                        explanation: "'Vivid' means bright, intense, or striking in appearance. In this context, it describes paintings that are visually compelling."
+                    },
+                    {
+                        question: "What does 'reluctant' mean in: 'She was reluctant to speak in public'?",
+                        options: ["Eager", "Unwilling", "Prepared", "Excited"],
+                        correct: 1,
+                        explanation: "'Reluctant' means unwilling or hesitant to do something. The context suggests hesitation about public speaking."
+                    }
+                ],
+                intermediate: [
+                    {
+                        question: "In the phrase 'an astute observation,' the word 'astute' most likely means:",
+                        options: ["Obvious", "Clever and perceptive", "Incorrect", "Lengthy"],
+                        correct: 1,
+                        explanation: "'Astute' means having sharp intelligence and good judgment. An astute observation shows keen insight."
+                    }
+                ],
+                advanced: [
+                    {
+                        question: "The word 'ubiquitous' in 'Smartphones have become ubiquitous in modern society' means:",
+                        options: ["Expensive", "Present everywhere", "Unnecessary", "Complicated"],
+                        correct: 1,
+                        explanation: "'Ubiquitous' means present, appearing, or found everywhere. The context suggests smartphones are found throughout modern society."
+                    }
+                ]
+            }
+        };
+
+        // 3D Scene Setup with fallback
+        async function init3D() {
+            try {
+                await waitForLibraries();
+                
+                if (typeof THREE === 'undefined') {
+                    console.warn('THREE.js not loaded, using 2D fallback');
+                    init2DFallback();
+                    return;
+                }
+
+                const canvas = document.getElementById('gameCanvas');
+                
+                // Scene setup
+                game.scene = new THREE.Scene();
+                game.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                game.renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
+                
+                game.renderer.setSize(window.innerWidth, window.innerHeight);
+                game.renderer.setClearColor(0x000000, 0);
+                
+                // Check for shadow support
+                if (game.renderer.capabilities.maxVertexTextures > 0) {
+                    game.renderer.shadowMap.enabled = true;
+                    game.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+                }
+
+                // Create floating book models
+                createFloatingBooks();
+                
+                // Create particle system
+                createParticleSystem();
+                
+                // Lighting
+                const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+                game.scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+                directionalLight.position.set(10, 10, 5);
+                if (game.renderer.shadowMap.enabled) {
+                    directionalLight.castShadow = true;
+                }
+                game.scene.add(directionalLight);
+                
+                // Camera position
+                game.camera.position.z = 10;
+                game.camera.position.y = 2;
+                
+                game.librariesLoaded = true;
+                
+                // Start render loop
+                animate3D();
+                
+            } catch (error) {
+                console.warn('3D initialization failed, using 2D fallback:', error);
+                init2DFallback();
+            }
+        }
+
+        function init2DFallback() {
+            // Create a beautiful 2D animated background with light theme
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Animated background with floating elements
+            let animationFrame = 0;
+            
+            function animate2D() {
+                animationFrame++;
+                
+                // Clear and create light gradient background
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#f5f7fa');
+                gradient.addColorStop(0.5, '#c3cfe2');
+                gradient.addColorStop(1, '#f5f7fa');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw floating books as 2D shapes with light theme colors
+                for (let i = 0; i < 15; i++) {
+                    ctx.save();
+                    
+                    const x = (i * 60 + Math.sin(animationFrame * 0.008 + i) * 40) % (canvas.width + 100);
+                    const y = (i * 40 + Math.cos(animationFrame * 0.006 + i) * 30) % (canvas.height + 100);
+                    
+                    ctx.translate(x, y);
+                    ctx.rotate(animationFrame * 0.001 + i);
+                    
+                    // Book shadow
+                    ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
+                    ctx.fillRect(-13, -18, 30, 40);
+                    
+                    // Book shape with light colors
+                    const colors = ['#3498db', '#2ecc71', '#9b59b6', '#e74c3c', '#f39c12'];
+                    ctx.fillStyle = colors[i % colors.length];
+                    ctx.globalAlpha = 0.7;
+                    ctx.fillRect(-15, -20, 30, 40);
+                    
+                    // Book details
+                    ctx.fillStyle = 'white';
+                    ctx.globalAlpha = 0.9;
+                    ctx.fillRect(-12, -15, 24, 2);
+                    ctx.fillRect(-12, -10, 24, 2);
+                    ctx.fillRect(-12, -5, 24, 2);
+                    
+                    ctx.globalAlpha = 1;
+                    ctx.restore();
+                }
+                
+                // Floating particles with light theme
+                for (let i = 0; i < 30; i++) {
+                    const x = (i * 30 + Math.sin(animationFrame * 0.003 + i) * 20) % canvas.width;
+                    const y = (i * 25 + Math.cos(animationFrame * 0.004 + i) * 25) % canvas.height;
+                    
+                    ctx.fillStyle = `rgba(52, 152, 219, ${0.2 + Math.sin(animationFrame * 0.008 + i) * 0.2})`;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 3, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                
+                // Subtle text elements floating
+                ctx.font = '20px Arial';
+                ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
+                const words = ['READ', 'LEARN', 'GROW', 'EXCEL', 'MASTER'];
+                words.forEach((word, i) => {
+                    const x = (i * 200 + Math.sin(animationFrame * 0.002 + i) * 50) % canvas.width;
+                    const y = (i * 150 + Math.cos(animationFrame * 0.0015 + i) * 30) % canvas.height;
+                    ctx.fillText(word, x, y);
+                });
+                
+                requestAnimationFrame(animate2D);
+            }
+            
+            animate2D();
+        }
+
+        function createFloatingBooks() {
+            const bookGeometry = new THREE.BoxGeometry(0.8, 1.2, 0.1);
+            const colors = [0x4facfe, 0x00f2fe, 0x667eea, 0x764ba2, 0x56ab2f];
+            
+            for (let i = 0; i < 20; i++) {
+                const bookMaterial = new THREE.MeshPhongMaterial({ 
+                    color: colors[i % colors.length],
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const book = new THREE.Mesh(bookGeometry, bookMaterial);
+                book.position.set(
+                    (Math.random() - 0.5) * 20,
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10
+                );
+                book.rotation.set(
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI,
+                    Math.random() * Math.PI
+                );
+                book.userData = {
+                    originalPosition: book.position.clone(),
+                    floatSpeed: Math.random() * 0.02 + 0.01,
+                    rotationSpeed: Math.random() * 0.02 + 0.01
+                };
+                
+                game.scene.add(book);
+            }
+        }
+
+        function createParticleSystem() {
+            const particleCount = 100;
+            const particleGeometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(particleCount * 3);
+            
+            for (let i = 0; i < particleCount * 3; i += 3) {
+                positions[i] = (Math.random() - 0.5) * 50;
+                positions[i + 1] = (Math.random() - 0.5) * 50;
+                positions[i + 2] = (Math.random() - 0.5) * 50;
+            }
+            
+            particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            
+            const particleMaterial = new THREE.PointsMaterial({
+                color: 0x4facfe,
+                size: 0.1,
+                transparent: true,
+                opacity: 0.6
+            });
+            
+            const particles = new THREE.Points(particleGeometry, particleMaterial);
+            game.scene.add(particles);
+        }
+
+        function animate3D() {
+            if (!game.librariesLoaded || !game.scene || !game.camera || !game.renderer) {
+                return;
+            }
+            
+            requestAnimationFrame(animate3D);
+            
+            try {
+                // Animate floating books
+                game.scene.children.forEach(child => {
+                    if (child.userData && child.userData.originalPosition) {
+                        child.position.y = child.userData.originalPosition.y + 
+                            Math.sin(Date.now() * child.userData.floatSpeed) * 0.5;
+                        child.rotation.y += child.userData.rotationSpeed;
+                        child.rotation.x += child.userData.rotationSpeed * 0.5;
+                    }
+                });
+                
+                // Rotate camera slightly
+                game.camera.position.x = Math.sin(Date.now() * 0.0005) * 2;
+                game.camera.lookAt(0, 0, 0);
+                
+                game.renderer.render(game.scene, game.camera);
+            } catch (error) {
+                console.warn('3D animation error:', error);
+            }
+        }
+
+        // Game Logic
+        function generateQuestions(skill, difficulty, count = 10) {
+            const availableQuestions = questionDatabase[skill][difficulty] || [];
+            const questions = [];
+            
+            for (let i = 0; i < count; i++) {
+                if (availableQuestions.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availableQuestions.length);
+                    questions.push({...availableQuestions[randomIndex]});
+                }
+            }
+            
+            return questions;
+        }
+
+        function startSession(skill, difficulty) {
+            game.currentSkill = skill;
+            game.difficulty = difficulty;
+            game.questions = generateQuestions(skill, difficulty, 10);
+            game.currentQuestion = 0;
+            game.sessionActive = true;
+            
+            hideAllMenus();
+            showQuestion();
+            
+            // Show timer for advanced difficulties
+            if (difficulty === 'advanced' || difficulty === 'expert') {
+                document.getElementById('timerRing').style.display = 'block';
+                startTimer(30);
+            }
+        }
+
+        function showQuestion() {
+            const question = game.questions[game.currentQuestion];
+            if (!question) {
+                endSession();
+                return;
+            }
+            
+            document.getElementById('questionText').innerHTML = 
+                question.passage ? 
+                `<div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-bottom: 15px; font-style: italic;">${question.passage}</div>${question.question}` : 
+                question.question;
+            
+            const answersGrid = document.getElementById('answersGrid');
+            answersGrid.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'answer-btn';
+                btn.textContent = option;
+                btn.onclick = () => selectAnswer(index);
+                answersGrid.appendChild(btn);
+            });
+            
+            document.getElementById('explanationPanel').classList.remove('visible');
+            document.getElementById('nextBtn').style.display = 'none';
+            document.getElementById('questionPanel').classList.add('visible');
+        }
+
+        function selectAnswer(selectedIndex) {
+            const question = game.questions[game.currentQuestion];
+            const buttons = document.querySelectorAll('.answer-btn');
+            const isCorrect = selectedIndex === question.correct;
+            
+            // Disable all buttons
+            buttons.forEach(btn => btn.onclick = null);
+            
+            // Show correct/incorrect feedback
+            buttons[selectedIndex].classList.add(isCorrect ? 'correct' : 'incorrect');
+            if (!isCorrect) {
+                buttons[question.correct].classList.add('correct');
+            }
+            
+            // Update scores
+            game.totalAnswers++;
+            if (isCorrect) {
+                game.correctAnswers++;
+                game.score += 10 + (game.streak * 2);
+                game.streak++;
+                playSound('correct');
+                createParticleEffect('correct');
+                
+                if (game.streak > 0 && game.streak % 5 === 0) {
+                    showCombo(game.streak);
+                }
+            } else {
+                game.streak = 0;
+                playSound('incorrect');
+                createParticleEffect('incorrect');
+            }
+            
+            // Show explanation
+            document.getElementById('explanationText').textContent = question.explanation;
+            document.getElementById('explanationPanel').classList.add('visible');
+            document.getElementById('nextBtn').style.display = 'block';
+            
+            updateUI();
+            updateSkillProgress();
+        }
+
+        function nextQuestion() {
+            game.currentQuestion++;
+            if (game.currentQuestion < game.questions.length) {
+                showQuestion();
+            } else {
+                endSession();
+            }
+        }
+
+        function endSession() {
+            game.sessionActive = false;
+            document.getElementById('questionPanel').classList.remove('visible');
+            document.getElementById('timerRing').style.display = 'none';
+            
+            const accuracy = Math.round((game.correctAnswers / game.totalAnswers) * 100);
+            game.skillScores[game.currentSkill] = Math.max(game.skillScores[game.currentSkill], accuracy);
+            
+            // Show results
+            document.getElementById('sessionStats').innerHTML = `
+                <h3>🎉 Great Job!</h3>
+                <div style="margin: 15px 0;">
+                    <div>Questions Answered: ${game.totalAnswers}</div>
+                    <div>Correct Answers: ${game.correctAnswers}</div>
+                    <div>Accuracy: ${accuracy}%</div>
+                    <div>Final Score: ${game.score}</div>
+                    <div>Best Streak: ${game.streak}</div>
+                </div>
+                ${accuracy >= 80 ? '<div style="color: #56ab2f;">🌟 Excellent Performance!</div>' : 
+                  accuracy >= 60 ? '<div style="color: #ffaa00;">👍 Good Job! Keep Practicing!</div>' : 
+                  '<div style="color: #4facfe;">📚 Review and Try Again!</div>'}
+            `;
+            
+            document.getElementById('resultsMenu').style.display = 'flex';
+            
+            // Level up check
+            const totalXP = Object.values(game.skillScores).reduce((sum, score) => sum + score, 0);
+            const newLevel = Math.floor(totalXP / 100) + 1;
+            if (newLevel > game.level) {
+                game.level = newLevel;
+                playSound('levelup');
+                showAchievement(`🆙 Level Up! You're now Level ${game.level}!`);
+            }
+            
+            updateUI();
+        }
+
+        function createParticleEffect(type) {
+            const colors = type === 'correct' ? ['#56ab2f', '#a8e6cf', '#4facfe'] : ['#ff6b6b', '#ee5a24', '#ff9999'];
+            
+            for (let i = 0; i < 10; i++) {
+                setTimeout(() => {
+                    const particle = document.createElement('div');
+                    particle.className = 'particle';
+                    particle.style.left = Math.random() * window.innerWidth + 'px';
+                    particle.style.top = Math.random() * window.innerHeight + 'px';
+                    particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    particle.style.width = particle.style.height = (Math.random() * 10 + 5) + 'px';
+                    
+                    document.body.appendChild(particle);
+                    
+                    setTimeout(() => document.body.removeChild(particle), 2000);
+                }, i * 50);
+            }
+        }
+
+        function showCombo(streak) {
+            const comboDiv = document.createElement('div');
+            comboDiv.className = 'combo-display';
+            comboDiv.textContent = `${streak} STREAK! 🔥`;
+            document.body.appendChild(comboDiv);
+            
+            playSound('achievement');
+            
+            setTimeout(() => {
+                if (document.body.contains(comboDiv)) {
+                    document.body.removeChild(comboDiv);
+                }
+            }, 1500);
+        }
+
+        function showAchievement(text) {
+            const achievementDiv = document.createElement('div');
+            achievementDiv.className = 'achievement-popup';
+            achievementDiv.textContent = text;
+            document.body.appendChild(achievementDiv);
+            
+            setTimeout(() => {
+                if (document.body.contains(achievementDiv)) {
+                    document.body.removeChild(achievementDiv);
+                }
+            }, 2000);
+        }
+
+        function updateUI() {
+            document.getElementById('score').textContent = game.score;
+            document.getElementById('streak').textContent = game.streak;
+            document.getElementById('level').textContent = game.level;
+            
+            const totalXP = Object.values(game.skillScores).reduce((sum, score) => sum + score, 0);
+            const xpProgress = (totalXP % 100);
+            document.getElementById('xpProgress').style.width = xpProgress + '%';
+            
+            // Update skill scores
+            document.getElementById('readingScore').textContent = game.skillScores.reading;
+            document.getElementById('writingScore').textContent = game.skillScores.writing;
+            document.getElementById('vocabScore').textContent = game.skillScores.vocabulary;
+            
+            const overall = Math.round(Object.values(game.skillScores).reduce((sum, score) => sum + score, 0) / 6);
+            document.getElementById('overallScore').textContent = overall;
+        }
+
+        function updateSkillProgress() {
+            const cards = document.querySelectorAll('.skill-card');
+            cards.forEach(card => {
+                const skill = card.dataset.skill;
+                if (game.skillScores[skill]) {
+                    const progressBar = card.querySelector('.progress-fill');
+                    progressBar.style.width = game.skillScores[skill] + '%';
+                    
+                    if (game.skillScores[skill] >= 80) {
+                        card.classList.add('completed');
+                    }
+                }
+            });
+        }
+
+        function startTimer(seconds) {
+            let timeLeft = seconds;
+            document.getElementById('timerText').textContent = timeLeft;
+            
+            const timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timerText').textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    // Auto-select random answer if time runs out
+                    if (game.sessionActive) {
+                        const randomIndex = Math.floor(Math.random() * 4);
+                        selectAnswer(randomIndex);
+                    }
+                }
+            }, 1000);
+        }
+
+        function hideAllMenus() {
+            document.getElementById('mainMenu').style.display = 'none';
+            document.getElementById('skillTreeMenu').style.display = 'none';
+            document.getElementById('resultsMenu').style.display = 'none';
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Initialize 3D graphics (with 2D fallback)
+                await init3D();
+                
+                // Initialize UI
+                updateUI();
+                
+                // Main menu buttons with sound effects
+                document.getElementById('skillTreeBtn').onclick = () => {
+                    playSound('click');
+                    setTimeout(() => {
+                        document.getElementById('mainMenu').style.display = 'none';
+                        document.getElementById('skillTreeMenu').style.display = 'flex';
+                        playSound('whoosh');
+                    }, 100);
+                };
+                
+                document.getElementById('quickPlayBtn').onclick = () => {
+                    playSound('click');
+                    initAudio();
+                    const skills = ['reading', 'writing', 'vocabulary'];
+                    const randomSkill = skills[Math.floor(Math.random() * skills.length)];
+                    setTimeout(() => {
+                        startSession(randomSkill, 'intermediate');
+                    }, 200);
+                };
+                
+                document.getElementById('backToMainBtn').onclick = () => {
+                    playSound('click');
+                    setTimeout(() => {
+                        document.getElementById('skillTreeMenu').style.display = 'none';
+                        document.getElementById('mainMenu').style.display = 'flex';
+                        playSound('whoosh');
+                    }, 100);
+                };
+                
+                // Add hover effects to all menu buttons
+                document.querySelectorAll('.menu-btn').forEach(btn => {
+                    btn.addEventListener('mouseenter', () => playSound('hover'));
+                    btn.addEventListener('mouseleave', () => {});
+                });
+                
+                // Skill tree interactions with enhanced sound
+                document.querySelectorAll('.skill-card').forEach(card => {
+                    card.addEventListener('mouseenter', () => playSound('hover'));
+                    card.onclick = () => {
+                        playSound('click');
+                        initAudio();
+                        const skill = card.dataset.skill;
+                        const difficulty = document.querySelector('.difficulty-btn.active').dataset.difficulty;
+                        setTimeout(() => {
+                            startSession(skill, difficulty);
+                        }, 200);
+                    };
+                });
+                
+                // Difficulty selection with sound
+                document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                    btn.addEventListener('mouseenter', () => playSound('hover'));
+                    btn.onclick = () => {
+                        playSound('click');
+                        document.querySelectorAll('.difficulty-btn').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        playSound('star'); // Confirmation sound
+                    };
+                });
+                
+                // Next button with sound
+                document.getElementById('nextBtn').onclick = () => {
+                    playSound('click');
+                    nextQuestion();
+                };
+                
+                // Add hover effect to next button
+                document.getElementById('nextBtn').addEventListener('mouseenter', () => playSound('hover'));
+                
+                // Results menu with sound
+                document.getElementById('continueBtn').onclick = () => {
+                    playSound('click');
+                    setTimeout(() => {
+                        document.getElementById('resultsMenu').style.display = 'none';
+                        document.getElementById('skillTreeMenu').style.display = 'flex';
+                        playSound('whoosh');
+                    }, 100);
+                };
+                
+                document.getElementById('newSessionBtn').onclick = () => {
+                    playSound('click');
+                    setTimeout(() => {
+                        document.getElementById('resultsMenu').style.display = 'none';
+                        document.getElementById('mainMenu').style.display = 'flex';
+                        playSound('whoosh');
+                    }, 100);
+                };
+                
+                // Add hover effects to result buttons
+                document.getElementById('continueBtn').addEventListener('mouseenter', () => playSound('hover'));
+                document.getElementById('newSessionBtn').addEventListener('mouseenter', () => playSound('hover'));
+                
+                // Add sound to answer buttons when they're created
+                const originalShowQuestion = showQuestion;
+                window.showQuestion = function() {
+                    originalShowQuestion();
+                    // Add sound effects to answer buttons after they're created
+                    setTimeout(() => {
+                        document.querySelectorAll('.answer-btn').forEach(btn => {
+                            btn.addEventListener('mouseenter', () => playSound('hover'));
+                        });
+                    }, 100);
+                };
+                
+            } catch (error) {
+                console.error('Game initialization error:', error);
+                // Still show the game interface even if some features fail
+                updateUI();
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (game.camera && game.renderer) {
+                try {
+                    game.camera.aspect = window.innerWidth / window.innerHeight;
+                    game.camera.updateProjectionMatrix();
+                    game.renderer.setSize(window.innerWidth, window.innerHeight);
+                } catch (error) {
+                    console.warn('Resize error:', error);
+                }
+            }
+            
+            // Handle 2D canvas resize
+            const canvas = document.getElementById('gameCanvas');
+            if (canvas && canvas.getContext && !game.librariesLoaded) {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+        });
+    </script>
+</body>
+</html>
